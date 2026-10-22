@@ -6,6 +6,25 @@
 
 html {
   scroll-behavior: smooth;
+  height: 100%;
+}
+
+body {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+main.main-content {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+footer.site-footer {
+  margin-top: auto;
+  width: 100%;
 }
 
 /* Contain */
