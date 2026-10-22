@@ -21,14 +21,19 @@ afterAll(async () => {
 
 describe("Tích hợp Đăng nhập Google (Google OAuth 2.0)", () => {
   test("Redirect to Google Auth returns notice if GOOGLE_CLIENT_ID is not configured", async () => {
-    // Khi chưa có GOOGLE_CLIENT_ID
-    const resCandidate = await request(app).get("/candidate/auth/google");
-    expect(resCandidate.status).toBe(302);
-    expect(resCandidate.headers.location).toContain("/candidate/login");
+    const origConfigured = googleAuthService.isGoogleConfigured;
+    googleAuthService.isGoogleConfigured = () => false;
+    try {
+      const resCandidate = await request(app).get("/candidate/auth/google");
+      expect(resCandidate.status).toBe(302);
+      expect(resCandidate.headers.location).toContain("/candidate/login");
 
-    const resEmployer = await request(app).get("/employer/auth/google");
-    expect(resEmployer.status).toBe(302);
-    expect(resEmployer.headers.location).toContain("/employer/login");
+      const resEmployer = await request(app).get("/employer/auth/google");
+      expect(resEmployer.status).toBe(302);
+      expect(resEmployer.headers.location).toContain("/employer/login");
+    } finally {
+      googleAuthService.isGoogleConfigured = origConfigured;
+    }
   });
 
   test("googleAuthService.getCallbackUrl calculates proper dynamic callback", () => {

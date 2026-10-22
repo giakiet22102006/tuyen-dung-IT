@@ -10,6 +10,8 @@ const { getCVPath } = require("../src/services/storage.service");
 
 let mongoServer;
 
+jest.setTimeout(20000);
+
 const validPdfBuffer = Buffer.from("%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF");
 
 beforeAll(async () => {

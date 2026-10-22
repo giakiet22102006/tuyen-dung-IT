@@ -10,7 +10,6 @@ const { GoogleGenAI } = require("@google/genai");
 const env = require("../config/env");
 
 let aiClient = null;
-let PDFParseClass = null;
 if (env.GEMINI_API_KEY && env.GEMINI_API_KEY.trim()) {
   try {
     aiClient = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY.trim() });
@@ -54,23 +53,56 @@ async function callGemini(prompt, systemInstruction = "") {
 
 /**
  * Trích xuất text từ Buffer file PDF
+ * - Cấp 1: pdf-parse@1.1.1 (Pure JavaScript, không native canvas, tương thích 100% Vercel Serverless & Node)
+ * - Cấp 2: Gemini Multimodal Vision/OCR (Nếu PDF dạng ảnh scan / Canva flattened không có text stream)
  */
 async function extractTextFromPdf(pdfBuffer) {
   if (!pdfBuffer || !Buffer.isBuffer(pdfBuffer) || pdfBuffer.length < 4) return "";
+
+  // 1. Bước 1: Trích xuất text nhanh bằng pdf-parse chuẩn pure-JS
   try {
-    if (!PDFParseClass) {
-      const pdfModule = require("pdf-parse");
-      PDFParseClass = pdfModule.PDFParse;
-    }
-    const parser = new PDFParseClass({ data: pdfBuffer });
-    const data = await parser.getText();
-    if (data && typeof data.text === "string") {
+    const pdfParse = require("pdf-parse");
+    const data = await pdfParse(pdfBuffer);
+    if (data && typeof data.text === "string" && data.text.trim().length >= 20) {
       return data.text.trim();
     }
-    return typeof data === "string" ? data.trim() : "";
-  } catch (err) {
-    return "";
+  } catch (parseErr) {
+    console.warn("⚠️ [PDF Extractor] pdf-parse cảnh báo:", parseErr.message);
   }
+
+  // 2. Bước 2 (Fallback): Nếu pdf-parse không đọc được hoặc PDF là dạng scan/ảnh (Canva, Photoshop không nhúng text stream), dùng Gemini Multimodal Vision/OCR
+  if (aiClient) {
+    try {
+      const primaryModel = env.GEMINI_MODEL || "gemini-3.8-flash";
+      const response = await aiClient.models.generateContent({
+        model: primaryModel,
+        contents: [
+          {
+            role: "user",
+            parts: [
+              {
+                inlineData: {
+                  mimeType: "application/pdf",
+                  data: pdfBuffer.toString("base64"),
+                },
+              },
+              {
+                text: "Hãy đọc và trích xuất toàn bộ nội dung văn bản trong file CV này dưới dạng plain text. Không thêm lời chào, nhận xét hay định dạng markdown, chỉ trả về nội dung của CV.",
+              },
+            ],
+          },
+        ],
+      });
+
+      if (response && response.text && response.text.trim().length >= 20) {
+        return response.text.trim();
+      }
+    } catch (geminiOcrErr) {
+      console.warn("⚠️ [PDF Extractor] Gemini Multimodal OCR không đọc được:", geminiOcrErr.message);
+    }
+  }
+
+  return "";
 }
 
 /**
