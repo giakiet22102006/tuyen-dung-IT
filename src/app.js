@@ -136,6 +136,9 @@ app.use((req, res) => {
 // Error handler (CSRF & server errors)
 app.use((err, req, res, next) => {
   if (err.code === "EBADCSRFTOKEN" || err.message?.includes("csrf")) {
+    if (req.xhr || req.headers.accept?.includes("json") || req.path.startsWith("/api")) {
+      return res.status(403).json({ success: false, message: "Mã bảo mật (CSRF) không hợp lệ hoặc đã hết hạn." });
+    }
     if (req.flash) {
       req.flash("error", "Phiên làm việc đã hết hạn hoặc mã bảo mật (CSRF) không hợp lệ. Vui lòng thử lại.");
     }
@@ -143,6 +146,9 @@ app.use((err, req, res, next) => {
   }
 
   console.error("Unhandled Error:", err);
+  if (req.xhr || req.headers.accept?.includes("json") || req.path.startsWith("/api")) {
+    return res.status(500).json({ success: false, message: "Đã xảy ra lỗi máy chủ nội bộ: " + err.message });
+  }
   res.status(500).send("Đã xảy ra lỗi máy chủ nội bộ (500)");
 });
 

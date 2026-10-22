@@ -113,6 +113,9 @@ function requireCandidate(req, res, next) {
  */
 function requireEmployer(req, res, next) {
   if (!req.user || req.role !== "employer") {
+    if (req.xhr || req.headers.accept?.includes("json") || req.path.startsWith("/api")) {
+      return res.status(401).json({ success: false, message: "Vui lòng đăng nhập với tư cách Nhà tuyển dụng." });
+    }
     if (req.flash) {
       req.flash("error", "Vui lòng đăng nhập với tư cách Nhà tuyển dụng để tiếp tục.");
     }
@@ -127,6 +130,9 @@ function requireEmployer(req, res, next) {
  */
 function requireAdmin(req, res, next) {
   if (!req.admin) {
+    if (req.xhr || req.headers.accept?.includes("json") || req.path.startsWith("/api")) {
+      return res.status(401).json({ success: false, message: "Vui lòng đăng nhập vào trang Quản trị viên." });
+    }
     if (req.flash) {
       req.flash("error", "Vui lòng đăng nhập vào trang Quản trị.");
     }

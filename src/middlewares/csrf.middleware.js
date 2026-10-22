@@ -17,7 +17,7 @@ const { generateCsrfToken, doubleCsrfProtection } = doubleCsrf({
     return req.body?._csrf || req.headers["x-csrf-token"] || req.query?._csrf;
   },
   getSessionIdentifier: (req) => {
-    return req.cookies?.itj_token || "anonymous";
+    return req.cookies?.itj_admin_token || req.cookies?.itj_token || "anonymous";
   },
 });
 

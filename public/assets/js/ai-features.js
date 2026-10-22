@@ -1,14 +1,21 @@
 // public/assets/js/ai-features.js
-// Quản lý tất cả tương tác Client-side cho 6 tính năng AI của VN.ITJobs
+// Quản lý tất cả tính năng AI (VN.ITJobs AI Suite)
 
 function getCsrfToken() {
   const meta = document.querySelector('meta[name="csrf-token"]');
-  return meta ? meta.getAttribute('content') : '';
+  if (meta && meta.getAttribute('content')) {
+    return meta.getAttribute('content');
+  }
+  const input = document.querySelector('input[name="_csrf"]');
+  if (input && input.value) {
+    return input.value;
+  }
+  return '';
 }
 
-// -------------------------------------------------------------
+// =========================================================================
 // 1. Candidate: AI CV Match & Gap Analysis
-// -------------------------------------------------------------
+// =========================================================================
 window.initAiCvMatch = function (jobId) {
   const modal = document.getElementById('modalAiCvMatch');
   const openBtn = document.getElementById('btnOpenAiCvMatch');
@@ -31,7 +38,6 @@ window.initAiCvMatch = function (jobId) {
     });
   }
 
-  // Đóng khi click ngoài modal
   modal.addEventListener('click', (e) => {
     if (e.target === modal) {
       modal.classList.add('hidden');
@@ -48,12 +54,12 @@ window.initAiCvMatch = function (jobId) {
       const formData = new FormData();
       formData.append('jobId', jobId);
 
-      if (fileInput && fileInput.files[0]) {
+      if (fileInput && fileInput.files && fileInput.files[0]) {
         formData.append('cv', fileInput.files[0]);
       } else if (cvTextInput && cvTextInput.value.trim()) {
         formData.append('cvText', cvTextInput.value.trim());
       } else {
-        alert('Vui lòng chọn 1 file PDF CV hoặc dán văn bản CV của bạn.');
+        alert('Vui lòng chọn 1 file PDF CV hoặc dán văn bản tóm tắt CV của bạn.');
         return;
       }
 
@@ -118,7 +124,8 @@ window.initAiCvMatch = function (jobId) {
     }
 
     if (adviceEl) {
-      adviceEl.innerHTML = (match.advice || [])
+      const list = match.advice || match.improvements || [];
+      adviceEl.innerHTML = list
         .map(adv => `<li class="flex items-start gap-2 text-sm text-gray-700"><i class="fa-solid fa-lightbulb text-amber-500 mt-1 shrink-0"></i> <span>${adv}</span></li>`)
         .join('');
     }
@@ -133,9 +140,9 @@ window.initAiCvMatch = function (jobId) {
   }
 };
 
-// -------------------------------------------------------------
+// =========================================================================
 // 2. Candidate: AI Interview Prep
-// -------------------------------------------------------------
+// =========================================================================
 window.initAiInterviewPrep = function (jobId) {
   const modal = document.getElementById('modalAiInterview');
   const openBtn = document.getElementById('btnOpenAiInterview');
@@ -149,8 +156,7 @@ window.initAiInterviewPrep = function (jobId) {
     modal.classList.remove('hidden');
     modal.classList.add('flex');
 
-    // Nếu chưa load câu hỏi thì tải ngay
-    if (container.dataset.loaded !== 'true') {
+    if (container && container.dataset.loaded !== 'true') {
       await loadQuestions();
     }
   });
@@ -170,8 +176,8 @@ window.initAiInterviewPrep = function (jobId) {
   });
 
   async function loadQuestions() {
-    loading.classList.remove('hidden');
-    container.innerHTML = '';
+    if (loading) loading.classList.remove('hidden');
+    if (container) container.innerHTML = '';
 
     try {
       const res = await fetch('/api/ai/interview-prep', {
@@ -184,31 +190,34 @@ window.initAiInterviewPrep = function (jobId) {
       });
 
       const data = await res.json();
-      loading.classList.add('hidden');
+      if (loading) loading.classList.add('hidden');
 
       if (!res.ok || !data.success) {
-        container.innerHTML = `<div class="p-4 bg-red-50 text-red-700 text-sm rounded">Không thể tải bộ câu hỏi lúc này: ${data.message || ''}</div>`;
+        if (container) container.innerHTML = `<div class="p-4 bg-red-50 text-red-700 text-sm rounded">Không thể tải bộ câu hỏi lúc này: ${data.message || ''}</div>`;
         return;
       }
 
-      container.dataset.loaded = 'true';
-      const questions = data.data || [];
-      renderQuestions(questions);
+      if (container) {
+        container.dataset.loaded = 'true';
+        const questions = Array.isArray(data.data) ? data.data : (data.data && data.data.questions) || [];
+        renderQuestions(questions);
+      }
     } catch (err) {
-      loading.classList.add('hidden');
-      container.innerHTML = `<div class="p-4 bg-red-50 text-red-700 text-sm rounded">Lỗi kết nối khi tạo câu hỏi phỏng vấn.</div>`;
+      console.error(err);
+      if (loading) loading.classList.add('hidden');
+      if (container) container.innerHTML = `<div class="p-4 bg-red-50 text-red-700 text-sm rounded">Lỗi kết nối khi tạo câu hỏi phỏng vấn.</div>`;
     }
   }
 
   function renderQuestions(questions) {
-    if (!questions.length) {
+    if (!questions || !questions.length) {
       container.innerHTML = `<p class="text-sm text-gray-500">Chưa có câu hỏi phỏng vấn cho vị trí này.</p>`;
       return;
     }
 
     container.innerHTML = questions
       .map((item, index) => {
-        const isTech = item.type === 'technical';
+        const isTech = (item.type || '').toLowerCase() === 'technical';
         const badgeColor = isTech ? 'bg-blue-50 text-[#0088FF] border-blue-200' : 'bg-purple-50 text-purple-700 border-purple-200';
         const badgeLabel = isTech ? 'Kỹ thuật (Technical)' : 'Hành vi (Behavioral)';
 
@@ -245,9 +254,9 @@ window.initAiInterviewPrep = function (jobId) {
   }
 };
 
-// -------------------------------------------------------------
+// =========================================================================
 // 3. Employer: AI Smart Job Description Generator
-// -------------------------------------------------------------
+// =========================================================================
 window.initAiJdGenerator = function () {
   const triggerBtn = document.getElementById('btnAiGenerateJd');
   const titleInput = document.getElementById('title');
@@ -294,7 +303,7 @@ window.initAiJdGenerator = function () {
       }
 
       const generated = data.data;
-      const htmlContent = generated.descriptionHtml || generated.text || '';
+      const htmlContent = generated.descriptionHtml || generated.text || (typeof generated === 'string' ? generated : '');
       
       descTextarea.value = htmlContent;
       alert('✨ Đã sinh bản mô tả công việc (JD) chuyên nghiệp thành công! Bạn có thể chỉnh sửa lại theo ý muốn trước khi lưu.');
@@ -308,9 +317,9 @@ window.initAiJdGenerator = function () {
   });
 };
 
-// -------------------------------------------------------------
+// =========================================================================
 // 4. Employer: AI CV Screening & Executive Summary
-// -------------------------------------------------------------
+// =========================================================================
 window.initAiCvScreening = function (applicationId) {
   const btn = document.getElementById('btnAiScreenCv');
   const resultCard = document.getElementById('aiScreenResultCard');
@@ -321,7 +330,7 @@ window.initAiCvScreening = function (applicationId) {
   btn.addEventListener('click', async () => {
     btn.disabled = true;
     btn.classList.add('opacity-75');
-    loading.classList.remove('hidden');
+    if (loading) loading.classList.remove('hidden');
     resultCard.classList.add('hidden');
 
     try {
@@ -336,7 +345,7 @@ window.initAiCvScreening = function (applicationId) {
       const data = await res.json();
       btn.disabled = false;
       btn.classList.remove('opacity-75');
-      loading.classList.add('hidden');
+      if (loading) loading.classList.add('hidden');
 
       if (!res.ok || !data.success) {
         alert(data.message || 'Không thể sàng lọc hồ sơ bằng AI.');
@@ -351,7 +360,7 @@ window.initAiCvScreening = function (applicationId) {
       console.error(err);
       btn.disabled = false;
       btn.classList.remove('opacity-75');
-      loading.classList.add('hidden');
+      if (loading) loading.classList.add('hidden');
       alert('Lỗi kết nối khi chạy AI sàng lọc CV.');
     }
   });
@@ -369,16 +378,18 @@ window.initAiCvScreening = function (applicationId) {
       scoreEl.className = 'text-3xl font-black ' + (score >= 80 ? 'text-emerald-600' : score >= 60 ? 'text-blue-600' : 'text-amber-600');
     }
 
-    if (summaryEl) summaryEl.innerText = screen.executiveSummary || '';
+    if (summaryEl) summaryEl.innerText = screen.executiveSummary || screen.candidateSummary || '';
 
+    const strengthsList = screen.strengths || screen.pros || [];
     if (strengthsEl) {
-      strengthsEl.innerHTML = (screen.strengths || [])
+      strengthsEl.innerHTML = strengthsList
         .map(s => `<li class="flex items-start gap-2 text-sm text-gray-700"><i class="fa-solid fa-circle-check text-emerald-600 mt-1 shrink-0 text-xs"></i><span>${s}</span></li>`)
         .join('');
     }
 
+    const concernsList = screen.concerns || screen.cons || [];
     if (concernsEl) {
-      concernsEl.innerHTML = (screen.concerns || [])
+      concernsEl.innerHTML = concernsList
         .map(c => `<li class="flex items-start gap-2 text-sm text-gray-700"><i class="fa-solid fa-circle-question text-amber-500 mt-1 shrink-0 text-xs"></i><span>${c}</span></li>`)
         .join('');
     }
@@ -403,63 +414,55 @@ window.initAiCvScreening = function (applicationId) {
   }
 };
 
-// -------------------------------------------------------------
-// 5. Admin: AI Job Fraud & Policy Moderation Scan
-// -------------------------------------------------------------
-window.initAiJobModeration = function () {
+// =========================================================================
+// 5. Admin: AI Job Fraud & Policy Moderation Scan (GLOBAL)
+// =========================================================================
+window.scanJobWithAi = async function (jobId) {
+  console.log('[AI Job Moderation] Scanning job ID:', jobId);
   const modal = document.getElementById('modalAiJobModeration');
-  const closeBtn = document.getElementById('btnCloseAiJobMod');
-
-  if (closeBtn && modal) {
-    closeBtn.addEventListener('click', () => {
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
-    });
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-      }
-    });
+  if (!modal) {
+    console.error('Không tìm thấy #modalAiJobModeration');
+    alert('Không tìm thấy giao diện kiểm duyệt AI.');
+    return;
   }
 
-  window.scanJobWithAi = async function (jobId) {
-    if (!modal) return;
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
 
-    const loading = document.getElementById('aiModLoading');
-    const content = document.getElementById('aiModContent');
+  const loading = document.getElementById('aiModLoading');
+  const content = document.getElementById('aiModContent');
 
-    loading.classList.remove('hidden');
-    content.classList.add('hidden');
+  if (loading) loading.classList.remove('hidden');
+  if (content) content.classList.add('hidden');
 
-    try {
-      const res = await fetch(`/api/ai/moderate-job/${jobId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-csrf-token': getCsrfToken(),
-        },
-      });
+  try {
+    const res = await fetch(`/api/ai/moderate-job/${jobId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-csrf-token': getCsrfToken(),
+      },
+    });
 
-      const data = await res.json();
-      loading.classList.add('hidden');
+    const data = await res.json();
+    if (loading) loading.classList.add('hidden');
 
-      if (!res.ok || !data.success) {
-        alert(data.message || 'Lỗi quét AI tin tuyển dụng.');
-        modal.classList.add('hidden');
-        return;
-      }
-
-      renderModResult(data.data);
-      content.classList.remove('hidden');
-    } catch (err) {
-      loading.classList.add('hidden');
-      alert('Lỗi kết nối khi quét an toàn tin tuyển dụng.');
+    if (!res.ok || !data.success) {
+      alert(data.message || 'Lỗi quét AI tin tuyển dụng.');
       modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      return;
     }
-  };
+
+    renderModResult(data.data);
+    if (content) content.classList.remove('hidden');
+  } catch (err) {
+    console.error(err);
+    if (loading) loading.classList.add('hidden');
+    alert('Lỗi kết nối khi quét an toàn tin tuyển dụng.');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
 
   function renderModResult(mod) {
     const badge = document.getElementById('aiModRiskBadge');
@@ -496,64 +499,131 @@ window.initAiJobModeration = function () {
   }
 };
 
-// -------------------------------------------------------------
-// 6. Admin: AI Market Insights Report
-// -------------------------------------------------------------
-window.initAiMarketInsights = function () {
-  const openBtn = document.getElementById('btnAiMarketInsights');
-  const modal = document.getElementById('modalAiMarketInsights');
-  const closeBtn = document.getElementById('btnCloseAiMarketInsights');
-  const loading = document.getElementById('aiMarketLoading');
-  const content = document.getElementById('aiMarketContent');
+// Cho phép Admin quét kiểm tra nhanh một đoạn văn bản tin tuyển dụng bất kỳ từ Dashboard
+window.openQuickAiJobScanner = function () {
+  const modal = document.getElementById('modalAiJobModeration');
+  if (!modal) return;
 
-  if (!openBtn || !modal) return;
+  const sampleTitle = prompt("Nhập tiêu đề công việc cần kiểm duyệt:", "Tuyển Lập Trình Viên Backend NodeJS");
+  if (!sampleTitle) return;
+  const sampleDesc = prompt("Nhập mô tả / yêu cầu công việc:", "Lương 1500$ - 2500$, làm việc tại văn phòng Hà Nội, không thu bất kỳ chi phí nào.");
 
-  openBtn.addEventListener('click', async () => {
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
 
-    if (content.dataset.loaded !== 'true') {
-      await loadInsights();
-    }
-  });
+  const loading = document.getElementById('aiModLoading');
+  const content = document.getElementById('aiModContent');
+  if (loading) loading.classList.remove('hidden');
+  if (content) content.classList.add('hidden');
 
-  if (closeBtn) {
-    closeBtn.addEventListener('click', () => {
+  fetch('/api/ai/moderate-job/custom', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-csrf-token': getCsrfToken(),
+    },
+    body: JSON.stringify({
+      title: sampleTitle,
+      description: sampleDesc,
+      companyName: "Công ty Kiểm Duyệt Mẫu",
+      salary: "1500$ - 2500$"
+    })
+  })
+    .then(r => r.json())
+    .then(data => {
+      if (loading) loading.classList.add('hidden');
+      if (data && data.success) {
+        const mod = data.data;
+        const badge = document.getElementById('aiModRiskBadge');
+        const scoreEl = document.getElementById('aiModScore');
+        const flagsDiv = document.getElementById('aiModFlags');
+        const assessmentEl = document.getElementById('aiModAssessment');
+
+        if (scoreEl) scoreEl.innerText = (mod.score || 0) + ' / 100';
+        if (badge) {
+          if (mod.riskLevel === 'safe') {
+            badge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-300';
+            badge.innerHTML = '<i class="fa-solid fa-shield-check mr-1"></i> An toàn (Safe)';
+          } else if (mod.riskLevel === 'warning') {
+            badge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-300';
+            badge.innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-1"></i> Cảnh báo (Warning)';
+          } else {
+            badge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-300';
+            badge.innerHTML = '<i class="fa-solid fa-ban mr-1"></i> Rủi ro cao / Gian lận (Danger)';
+          }
+        }
+        if (assessmentEl) assessmentEl.innerText = mod.assessment || '';
+        if (flagsDiv) {
+          if (mod.flags && mod.flags.length) {
+            flagsDiv.innerHTML = mod.flags
+              .map(f => `<span class="inline-block px-2.5 py-1 bg-red-50 text-red-700 border border-red-200 rounded text-xs font-medium mr-2 mb-2"><i class="fa-solid fa-flag mr-1"></i> ${f}</span>`)
+              .join('');
+          } else {
+            flagsDiv.innerHTML = '<span class="text-xs text-emerald-700 font-medium"><i class="fa-solid fa-circle-check mr-1"></i> Nội dung an toàn, không có dấu hiệu vi phạm.</span>';
+          }
+        }
+        if (content) content.classList.remove('hidden');
+      } else {
+        alert(data.message || 'Lỗi quét tin mẫu.');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      if (loading) loading.classList.add('hidden');
+      alert('Lỗi kết nối khi quét tin mẫu.');
       modal.classList.add('hidden');
       modal.classList.remove('flex');
     });
+};
+
+// =========================================================================
+// 6. Admin: AI Market Insights Report (GLOBAL)
+// =========================================================================
+window.openAiMarketInsights = async function () {
+  console.log('[AI Market Insights] Opening report modal...');
+  const modal = document.getElementById('modalAiMarketInsights');
+  if (!modal) {
+    console.error('Không tìm thấy #modalAiMarketInsights');
+    alert('Không tìm thấy giao diện báo cáo thị trường AI.');
+    return;
   }
 
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+
+  const content = document.getElementById('aiMarketContent');
+  const loading = document.getElementById('aiMarketLoading');
+
+  if (content && content.dataset.loaded === 'true') {
+    return;
+  }
+
+  if (loading) loading.classList.remove('hidden');
+  if (content) content.classList.add('hidden');
+
+  try {
+    const res = await fetch('/api/ai/market-insights');
+    const data = await res.json();
+    if (loading) loading.classList.add('hidden');
+
+    if (!res.ok || !data.success) {
+      alert(data.message || 'Không thể tải báo cáo thị trường lúc này.');
       modal.classList.add('hidden');
       modal.classList.remove('flex');
+      return;
     }
-  });
 
-  async function loadInsights() {
-    loading.classList.remove('hidden');
-    content.classList.add('hidden');
-
-    try {
-      const res = await fetch('/api/ai/market-insights');
-      const data = await res.json();
-      loading.classList.add('hidden');
-
-      if (!res.ok || !data.success) {
-        alert(data.message || 'Không thể tải báo cáo thị trường.');
-        modal.classList.add('hidden');
-        return;
-      }
-
-      content.dataset.loaded = 'true';
-      renderInsights(data.data);
-      content.classList.remove('hidden');
-    } catch (err) {
-      loading.classList.add('hidden');
-      alert('Lỗi kết nối khi tải báo cáo thị trường AI.');
-      modal.classList.add('hidden');
-    }
+    if (content) content.dataset.loaded = 'true';
+    renderInsights(data.data);
+    if (content) content.classList.remove('hidden');
+  } catch (err) {
+    console.error(err);
+    if (loading) loading.classList.add('hidden');
+    alert('Lỗi kết nối khi tải báo cáo thị trường AI.');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
   }
 
   function renderInsights(marketData) {
@@ -576,3 +646,60 @@ window.initAiMarketInsights = function () {
     if (adviceEl) adviceEl.innerText = insights.strategicAdvice || '';
   }
 };
+
+// Tự động gắn sự kiện đóng modal chung khi DOM sẵn sàng
+document.addEventListener('DOMContentLoaded', () => {
+  // Modal Market Insights
+  const modalMarket = document.getElementById('modalAiMarketInsights');
+  const closeBtnMarket = document.getElementById('btnCloseAiMarketInsights');
+  if (closeBtnMarket && modalMarket) {
+    closeBtnMarket.addEventListener('click', () => {
+      modalMarket.classList.add('hidden');
+      modalMarket.classList.remove('flex');
+    });
+    modalMarket.addEventListener('click', (e) => {
+      if (e.target === modalMarket) {
+        modalMarket.classList.add('hidden');
+        modalMarket.classList.remove('flex');
+      }
+    });
+  }
+
+  const btnOpenMarket = document.getElementById('btnAiMarketInsights');
+  if (btnOpenMarket) {
+    btnOpenMarket.addEventListener('click', () => {
+      window.openAiMarketInsights();
+    });
+  }
+
+  // Modal Moderation Scan
+  const modalMod = document.getElementById('modalAiJobModeration');
+  const closeBtnMod = document.getElementById('btnCloseAiJobMod');
+  if (closeBtnMod && modalMod) {
+    closeBtnMod.addEventListener('click', () => {
+      modalMod.classList.add('hidden');
+      modalMod.classList.remove('flex');
+    });
+    modalMod.addEventListener('click', (e) => {
+      if (e.target === modalMod) {
+        modalMod.classList.add('hidden');
+        modalMod.classList.remove('flex');
+      }
+    });
+  }
+
+  // Khởi tạo Smart JD Generator nếu trang có các input tương ứng
+  if (document.getElementById('btnAiGenerateJd')) {
+    window.initAiJdGenerator();
+  }
+
+  // Đóng modal bằng phím ESC
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.fixed.inset-0.z-50.flex').forEach((m) => {
+        m.classList.add('hidden');
+        m.classList.remove('flex');
+      });
+    }
+  });
+});

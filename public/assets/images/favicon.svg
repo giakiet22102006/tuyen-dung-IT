@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#000065"/>
+      <stop offset="100%" stop-color="#0A1128"/>
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00A6FF"/>
+      <stop offset="100%" stop-color="#0066FF"/>
+    </linearGradient>
+  </defs>
+  <!-- Background with smooth rounded corners -->
+  <rect width="64" height="64" rx="14" fill="url(#bgGrad)"/>
+  <rect x="1" y="1" width="62" height="62" rx="13" fill="none" stroke="#0088FF" stroke-width="1.5" stroke-opacity="0.4"/>
+  <!-- Code brackets / IT motif -->
+  <path d="M 22 23 L 13 32 L 22 41" fill="none" stroke="#00A6FF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 42 23 L 51 32 L 42 41" fill="none" stroke="#00A6FF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 35 20 L 29 44" fill="none" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Tech dot -->
+  <circle cx="50" cy="14" r="3" fill="#10B981"/>
+</svg>

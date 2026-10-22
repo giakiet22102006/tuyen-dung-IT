@@ -5,6 +5,8 @@ html(lang="vi")
         meta(name="viewport" content="width=device-width, initial-scale=1.0")
         meta(name="csrf-token" content=csrfToken)
         meta(name="robots" content="noindex, nofollow")
+        link(rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg")
+        link(rel="alternate icon" href="/favicon.ico")
         block title
             title #{title || "Quản trị viên - VN.ITJobs"}
         link(rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css")
@@ -86,6 +88,91 @@ html(lang="vi")
                             span #{flash.error}
 
                 block main
+
+        //- ========================================================
+        //- MODAL 1: AI BÁO CÁO XU HƯỚNG THỊ TRƯỜNG IT (MARKET INSIGHTS)
+        //- ========================================================
+        div(id="modalAiMarketInsights" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-xs p-[16px]")
+            div(class="bg-white rounded-[12px] shadow-2xl max-w-[760px] w-full max-h-[90vh] flex flex-col overflow-hidden animate-fadeIn")
+                div(class="p-[20px] border-b border-[#E5E7EB] flex items-center justify-between bg-gradient-to-r from-blue-50 to-indigo-50")
+                    div(class="flex items-center gap-[10px]")
+                        div(class="w-[38px] h-[38px] rounded-full bg-[#000065] text-white flex items-center justify-center")
+                            <i class="fa-solid fa-chart-line text-[#0088FF]"></i>
+                        div
+                            h3(class="font-[700] text-[18px] text-[#111827]") Báo Cáo Xu Hướng Thị Trường Tuyển Dụng IT
+                            p(class="text-[12px] text-[#6B7280]") Báo cáo tự động tổng hợp từ dữ liệu thực tế trên sàn VN.ITJobs
+                    button(type="button" id="btnCloseAiMarketInsights" class="text-gray-400 hover:text-gray-600 text-[20px] p-[4px] cursor-pointer")
+                        <i class="fa-solid fa-xmark"></i>
+
+                div(class="p-[24px] overflow-y-auto flex-1 space-y-[20px]")
+                    div(id="aiMarketLoading" class="py-[40px] text-center space-y-[12px]")
+                        div(class="inline-block animate-spin text-[#0088FF] text-[36px]")
+                            <i class="fa-solid fa-circle-notch"></i>
+                        p(class="font-[600] text-[16px] text-gray-800") 🤖 AI đang phân tích dữ liệu thị trường và tổng hợp xu hướng...
+                        p(class="text-[13px] text-gray-500 max-w-[360px] mx-auto") Đang tổng hợp phân tích từ toàn bộ tin tuyển dụng, nhà tuyển dụng và kỹ năng hot.
+
+                    div(id="aiMarketContent" class="hidden space-y-[20px]")
+                        div(class="bg-blue-50/60 p-[16px] rounded-[8px] border border-blue-200")
+                            h4(class="text-[13px] font-[700] text-[#000065] mb-[8px] flex items-center gap-[6px]")
+                                <i class="fa-solid fa-fire text-amber-500"></i>
+                                span Top Kỹ Năng "Săn Đón" Nhất Hiện Tại
+                            div(id="aiMarketHotSkills" class="flex flex-wrap gap-[6px]")
+
+                        div(class="bg-white p-[16px] rounded-[8px] border border-gray-200")
+                            h4(class="text-[14px] font-[700] text-gray-900 mb-[6px] flex items-center gap-[6px]")
+                                <i class="fa-solid fa-money-bill-trend-up text-emerald-600"></i>
+                                span Xu hướng Mức Lương IT
+                            p(id="aiMarketSalary" class="text-[14px] text-gray-700 leading-relaxed")
+
+                        div(class="bg-white p-[16px] rounded-[8px] border border-gray-200")
+                            h4(class="text-[14px] font-[700] text-gray-900 mb-[6px] flex items-center gap-[6px]")
+                                <i class="fa-solid fa-chart-pie text-blue-600"></i>
+                                span Đánh giá Nhu Cầu Tuyển Dụng Theo Mảng Công Nghệ
+                            p(id="aiMarketDemand" class="text-[14px] text-gray-700 leading-relaxed")
+
+                        div(class="bg-amber-50/70 p-[16px] rounded-[8px] border border-amber-200")
+                            h4(class="text-[14px] font-[700] text-amber-900 mb-[6px] flex items-center gap-[6px]")
+                                <i class="fa-solid fa-lightbulb text-amber-600"></i>
+                                span Khuyến Nghị Chiến Lược Cho Quản Trị Viên & Doanh Nghiệp
+                            p(id="aiMarketAdvice" class="text-[14px] text-amber-950 leading-relaxed")
+
+        //- ========================================================
+        //- MODAL 2: AI QUÉT GIAN LẬN & AN TOÀN TIN TUYỂN DỤNG (MODERATION SCAN)
+        //- ========================================================
+        div(id="modalAiJobModeration" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-xs p-[16px]")
+            div(class="bg-white rounded-[12px] shadow-2xl max-w-[560px] w-full max-h-[90vh] flex flex-col overflow-hidden animate-fadeIn")
+                div(class="p-[20px] border-b border-[#E5E7EB] flex items-center justify-between bg-gradient-to-r from-indigo-50 to-purple-50")
+                    div(class="flex items-center gap-[10px]")
+                        div(class="w-[36px] h-[36px] rounded-full bg-indigo-600 text-white flex items-center justify-center")
+                            <i class="fa-solid fa-shield-halved"></i>
+                        div
+                            h3(class="font-[700] text-[17px] text-[#111827]") Kết Quả Quét An Toàn Tin Tuyển Dụng
+                            p(class="text-[12px] text-[#6B7280]") Kiểm tra tự động bằng AI phát hiện gian lận & vi phạm
+                    button(type="button" id="btnCloseAiJobMod" class="text-gray-400 hover:text-gray-600 text-[20px] p-[4px] cursor-pointer")
+                        <i class="fa-solid fa-xmark"></i>
+
+                div(class="p-[24px] overflow-y-auto flex-1 space-y-[16px]")
+                    div(id="aiModLoading" class="py-[32px] text-center space-y-[10px]")
+                        div(class="inline-block animate-spin text-indigo-600 text-[32px]")
+                            <i class="fa-solid fa-circle-notch"></i>
+                        p(class="font-[600] text-[15px] text-gray-800") 🤖 AI đang quét nội dung tin tuyển dụng...
+
+                    div(id="aiModContent" class="hidden space-y-[16px]")
+                        div(class="flex items-center justify-between p-[16px] rounded-[8px] bg-gray-50 border border-gray-200")
+                            div
+                                p(class="text-[12px] font-[600] text-gray-500 uppercase") Mức độ an toàn
+                                div(id="aiModRiskBadge" class="mt-[4px]")
+                            div(class="text-right")
+                                p(class="text-[12px] font-[600] text-gray-500 uppercase") Điểm tin cậy
+                                span(id="aiModScore" class="text-2xl font-bold text-gray-900")
+
+                        div
+                            h4(class="text-[13px] font-[700] text-gray-800 mb-[6px]") Dấu hiệu cảnh báo phát hiện:
+                            div(id="aiModFlags")
+
+                        div
+                            h4(class="text-[13px] font-[700] text-gray-800 mb-[6px]") Đánh giá chi tiết từ AI:
+                            p(id="aiModAssessment" class="text-[14px] text-gray-700 leading-relaxed bg-gray-50 p-[12px] rounded-[6px] border border-gray-200")
 
         script(src="/assets/js/ai-features.js")
         script.
