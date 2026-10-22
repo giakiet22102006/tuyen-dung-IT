@@ -13,6 +13,7 @@ const clientRoutes = require("./routes/client.route");
 const candidateRoutes = require("./routes/candidate.route");
 const employerRoutes = require("./routes/employer.route");
 const adminRoutes = require("./routes/admin.route");
+const aiRoutes = require("./routes/ai.route");
 
 const app = express();
 
@@ -122,6 +123,7 @@ app.use("/", clientRoutes);
 app.use("/candidate", candidateRoutes);
 app.use("/employer", employerRoutes);
 app.use("/" + env.ADMIN_PATH, adminRoutes);
+app.use("/api/ai", aiRoutes);
 
 // Healthcheck
 app.get("/healthz", (req, res) => res.status(200).json({ status: "ok" }));

@@ -42,6 +42,49 @@ block main
                             input(type="hidden" name="status" value="rejected")
                             button(type="submit" class="bg-[#FF5100] rounded-[4px] py-[8px] px-[20px] cursor-pointer font-[400] text-[14px] text-white") Từ chối hồ sơ
 
+                    //- Trợ lý AI Tuyển Dụng (CV Screening & Executive Summary)
+                    div(class="mt-[24px] p-[20px] bg-gradient-to-r from-blue-50/70 via-indigo-50/50 to-white rounded-[10px] border border-blue-200")
+                        div(class="flex flex-col sm:flex-row sm:items-center justify-between gap-[12px] mb-[16px]")
+                            div(class="flex items-center gap-[10px]")
+                                div(class="w-[38px] h-[38px] rounded-full bg-[#0088FF] text-white flex items-center justify-center text-[18px]")
+                                    <i class="fa-solid fa-brain"></i>
+                                div
+                                    h3(class="font-[700] text-[16px] text-gray-900") Trợ Lý AI: Sàng Lọc & Tóm Tắt CV Tự Động
+                                    p(class="text-[12px] text-gray-500") Phân tích mức độ đáp ứng năng lực & tóm tắt nhanh cho nhà tuyển dụng
+                            button(type="button" id="btnAiScreenCv" class="inline-flex items-center gap-[8px] bg-[#0088FF] hover:bg-[#0070D2] text-white font-[600] text-[14px] px-[16px] py-[10px] rounded-[6px] cursor-pointer shadow-xs transition-all shrink-0")
+                                <i class="fa-solid fa-bolt"></i>
+                                span ✨ Phân Tích Hồ Sơ Này
+
+                        //- Trạng thái loading
+                        div(id="aiScreenLoading" class="hidden py-[24px] text-center space-y-[10px]")
+                            div(class="inline-block animate-spin text-[#0088FF] text-[28px]")
+                                <i class="fa-solid fa-circle-notch"></i>
+                            p(class="text-[14px] font-[500] text-gray-700") 🤖 AI đang đọc và phân tích file PDF của ứng viên...
+
+                        //- Kết quả phân tích
+                        div(id="aiScreenResultCard" class="hidden space-y-[16px] pt-[12px] border-t border-blue-200/80")
+                            div(class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-[10px] bg-white p-[16px] rounded-[8px] border border-gray-200")
+                                div
+                                    div(class="flex items-center gap-[10px]")
+                                        span(class="text-[13px] font-[700] text-gray-700") Đề xuất tuyển dụng:
+                                        span(id="aiScreenRecommendation" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold")
+                                    p(id="aiScreenSummary" class="text-[14px] text-gray-700 mt-[8px] leading-relaxed")
+                                div(class="text-right shrink-0")
+                                    span(id="aiScreenScore" class="text-3xl font-black text-emerald-600") 88%
+                                    p(class="text-[11px] text-gray-500") Độ phù hợp
+
+                            div(class="grid sm:grid-cols-2 grid-cols-1 gap-[14px]")
+                                div(class="bg-white p-[14px] rounded-[8px] border border-gray-200")
+                                    h4(class="text-[13px] font-[700] text-emerald-800 mb-[8px] flex items-center gap-[6px]")
+                                        <i class="fa-solid fa-circle-check text-emerald-600"></i>
+                                        span Điểm mạnh nổi bật (Strengths)
+                                    ul(id="aiScreenStrengths" class="space-y-[6px]")
+                                div(class="bg-white p-[14px] rounded-[8px] border border-gray-200")
+                                    h4(class="text-[13px] font-[700] text-amber-800 mb-[8px] flex items-center gap-[6px]")
+                                        <i class="fa-solid fa-circle-question text-amber-500"></i>
+                                        span Điểm cần làm rõ khi phỏng vấn (Probes)
+                                    ul(id="aiScreenConcerns" class="space-y-[6px]")
+
                     div(class="mt-[20px]")
                         div(class="font-[400] text-[16px] my-[10px] flex justify-between items-center")
                             span File CV:
@@ -61,4 +104,9 @@ block main
                             div(class="font-[400] text-[16px] mb-[10px]") Công nghệ: <span class="font-[600] text-[16px]">#{application.jobId.skills.map(s => s.name).join(', ')}</span> 
                         a(href="/jobs/" + application.jobId.slug target="_blank" class="font-[400] text-[14px] text-[#0088FF] underline") Xem chi tiết công việc 
                 //- Hết Thông tin công việc
+
+    script.
+        document.addEventListener("DOMContentLoaded", () => {
+            if (window.initAiCvScreening) window.initAiCvScreening("#{application._id}");
+        });
     //- Hết Chi tiết CV

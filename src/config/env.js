@@ -28,6 +28,8 @@ const envSchema = z.object({
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
   SMTP_FROM: z.string().default("VN.ITJobs <noreply@vnitjobs.vn>"),
+  GEMINI_API_KEY: z.string().optional(),
+  GEMINI_MODEL: z.string().default("gemini-2.5-flash"),
 });
 
 const parsed = envSchema.safeParse(process.env);

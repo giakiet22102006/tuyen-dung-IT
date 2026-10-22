@@ -3,6 +3,7 @@ html(lang="vi")
     head
         meta(charset="UTF-8")
         meta(name="viewport" content="width=device-width, initial-scale=1.0")
+        meta(name="csrf-token" content=csrfToken)
         meta(name="robots" content="noindex, nofollow")
         block title
             title #{title || "Quản trị viên - VN.ITJobs"}
@@ -86,6 +87,7 @@ html(lang="vi")
 
                 block main
 
+        script(src="/assets/js/ai-features.js")
         script.
             const toggleBtn = document.getElementById('sidebarToggleBtn');
             const closeBtn = document.getElementById('sidebarCloseBtn');

@@ -73,9 +73,18 @@ block main
                         input(type="file" id="images" name="images" multiple accept="image/*" class="border border-[#DEDEDE] rounded-[4px] py-[11px] px-[20px] block w-full")
 
                     div(class="mb-[15px]")
-                        label(for="description" class="font-[500] text-[14px] mb-[5px]") Mô tả chi tiết
+                        div(class="flex items-center justify-between mb-[6px]")
+                            label(for="description" class="font-[500] text-[14px]") Mô tả chi tiết
+                            button(type="button" id="btnAiGenerateJd" class="inline-flex items-center gap-[6px] px-[14px] py-[6px] rounded-[4px] bg-[#0088FF] hover:bg-[#0070D2] text-white text-[13px] font-[600] cursor-pointer shadow-xs transition-all")
+                                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                span ✨ AI Viết Lại Mô Tả Việc Làm
                         textarea(id="description" name="description" placeholder="Mô tả trách nhiệm, yêu cầu công việc, quyền lợi..." class="border border-[#DEDEDE] rounded-[4px] py-[11px] px-[20px] block w-full min-h-[350px]")= (job && job.description || "")
   
                     div(class="")
                         button(type="submit" class="bg-[#0088FF] rounded-[4px] py-[14px] px-[20px] font-[700] text-[16px] text-white cursor-pointer") Cập nhật
+
+    script.
+        document.addEventListener("DOMContentLoaded", () => {
+            if (window.initAiJdGenerator) window.initAiJdGenerator();
+        });
     //- Hết Chỉnh sửa công việc

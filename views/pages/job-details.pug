@@ -16,6 +16,15 @@ block main
                         div(class="font-[700] text-[20px] text-[#0088FF] mb-[20px]") #{formatSalary(job.salaryMin, job.salaryMax)}
                         a(href="#boxApply" class="bg-[#0088FF] rounded-[4px] p-[14px] font-[700] text-[16px] text-white block text-center cursor-pointer") Ứng tuyển
 
+                        //- AI Career Assist Actions
+                        div(class="grid grid-cols-1 sm:grid-cols-2 gap-[10px] mt-[12px]")
+                            button(type="button" id="btnOpenAiCvMatch" class="flex items-center justify-center gap-[8px] bg-[#059669] hover:bg-[#047857] text-white font-[600] text-[14px] py-[12px] px-[16px] rounded-[4px] cursor-pointer transition-all")
+                                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                span ✨ AI So Khớp Độ Phù Hợp CV
+                            button(type="button" id="btnOpenAiInterview" class="flex items-center justify-center gap-[8px] bg-[#4F46E5] hover:bg-[#4338CA] text-white font-[600] text-[14px] py-[12px] px-[16px] rounded-[4px] cursor-pointer transition-all")
+                                <i class="fa-solid fa-comments"></i>
+                                span 💡 Luyện Phỏng Vấn Với AI
+
                         if job.images && job.images.length > 0
                             div(class="grid grid-cols-3 gap-[16px] mt-[20px]") 
                                 each imgItem, idx in job.images.slice(0, 3)
@@ -98,4 +107,106 @@ block main
                                     div(class="font-[400] text-[16px] text-[#121212]") #{company.overtime || "Không có OT"}
                     //- Hết Thông tin công ty
 
+        //- ==========================================
+        //- MODAL 1: AI SO KHỚP CV & KHOẢNG TRỐNG KỸ NĂNG
+        //- ==========================================
+        div(id="modalAiCvMatch" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-xs p-[16px]")
+            div(class="bg-white rounded-[12px] shadow-2xl max-w-[650px] w-full max-h-[90vh] flex flex-col overflow-hidden animate-fadeIn")
+                //- Modal Header
+                div(class="p-[20px] border-b border-[#E5E7EB] flex items-center justify-between bg-gradient-to-r from-emerald-50 to-teal-50")
+                    div(class="flex items-center gap-[10px]")
+                        div(class="w-[36px] h-[36px] rounded-full bg-emerald-600 text-white flex items-center justify-center")
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        div
+                            h3(class="font-[700] text-[17px] text-[#111827]") AI Phân Tích Độ Phù Hợp CV
+                            p(class="text-[12px] text-[#6B7280]") So khớp kỹ năng, kinh nghiệm với yêu cầu của #{job.title}
+                    button(type="button" id="btnCloseAiCvMatch" class="text-gray-400 hover:text-gray-600 text-[20px] p-[4px] cursor-pointer")
+                        <i class="fa-solid fa-xmark"></i>
+
+                //- Modal Body
+                div(class="p-[24px] overflow-y-auto flex-1")
+                    //- Form nộp CV để phân tích
+                    form(id="formAiCvMatch" class="space-y-[16px]")
+                        div
+                            label(class="block font-[600] text-[14px] text-gray-800 mb-[6px]") Cách 1: Tải lên file CV PDF của bạn
+                            input(type="file" id="aiCvFileInput" accept="application/pdf" class="border border-dashed border-[#D1D5DB] rounded-[8px] p-[16px] w-full text-[14px] text-gray-600 bg-gray-50 hover:bg-gray-100 cursor-pointer")
+                        
+                        div(class="text-center text-[12px] text-gray-400 font-[600]") — HOẶC —
+
+                        div
+                            label(class="block font-[600] text-[14px] text-gray-800 mb-[6px]") Cách 2: Dán văn bản tóm tắt CV / Kinh nghiệm
+                            textarea(id="aiCvTextInput" rows="4" placeholder="Ví dụ: 3 năm kinh nghiệm lập trình NodeJS, ReactJS, MongoDB, RESTful API, Docker, AWS..." class="border border-[#D1D5DB] rounded-[8px] p-[12px] w-full text-[14px]")
+
+                        button(type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-[700] py-[12px] px-[20px] rounded-[6px] text-[15px] cursor-pointer transition-colors shadow-sm")
+                            <i class="fa-solid fa-bolt mr-[6px]"></i> Bắt đầu phân tích với AI
+
+                    //- Trạng thái đang tải AI
+                    div(id="aiCvMatchLoading" class="hidden py-[40px] text-center space-y-[12px]")
+                        div(class="inline-block animate-spin text-emerald-600 text-[36px]")
+                            <i class="fa-solid fa-circle-notch"></i>
+                        p(class="font-[600] text-[16px] text-gray-800") 🤖 AI đang phân tích CV của bạn...
+                        p(class="text-[13px] text-gray-500 max-w-[360px] mx-auto") Quá trình này so khớp toàn diện kỹ năng, kinh nghiệm và khoảng trống kiến thức so với yêu cầu tuyển dụng.
+
+                    //- Kết quả phân tích AI
+                    div(id="aiCvMatchResult" class="hidden space-y-[20px]")
+                        div(class="bg-emerald-50/60 border border-emerald-200 rounded-[10px] p-[20px] flex items-center justify-between")
+                            div
+                                p(class="text-[13px] font-[600] text-emerald-800 uppercase tracking-wide") Điểm phù hợp ước tính
+                                p(id="aiMatchSummary" class="text-[14px] text-gray-700 mt-[6px] leading-relaxed")
+                            div(class="text-right shrink-0 ml-[16px]")
+                                span(id="aiMatchScore" class="text-4xl font-black text-emerald-600") 85%
+                                p(class="text-[11px] font-[500] text-gray-500 mt-[2px]") Phù hợp
+
+                        div
+                            h4(class="font-[700] text-[14px] text-gray-900 mb-[8px] flex items-center gap-[6px]")
+                                <i class="fa-solid fa-circle-check text-emerald-600"></i>
+                                span Kỹ năng bạn đã đáp ứng (Matched Skills)
+                            div(id="aiMatchedSkills" class="flex flex-wrap gap-[6px]")
+
+                        div
+                            h4(class="font-[700] text-[14px] text-gray-900 mb-[8px] flex items-center gap-[6px]")
+                                <i class="fa-solid fa-triangle-exclamation text-amber-500"></i>
+                                span Kỹ năng nên bổ sung thêm (Skill Gaps)
+                            div(id="aiMissingSkills" class="flex flex-wrap gap-[6px]")
+
+                        div
+                            h4(class="font-[700] text-[14px] text-gray-900 mb-[8px] flex items-center gap-[6px]")
+                                <i class="fa-solid fa-lightbulb text-amber-500"></i>
+                                span Lời khuyên tối ưu CV & Phỏng vấn
+                            ul(id="aiMatchAdvice" class="space-y-[8px] bg-gray-50 p-[16px] rounded-[8px] border border-gray-200")
+
+                        div(class="pt-[10px] flex justify-end")
+                            button(type="button" id="btnResetAiCvMatch" class="text-[13px] text-gray-600 hover:text-gray-900 underline cursor-pointer") Phân tích lại với CV khác
+
+        //- ==========================================
+        //- MODAL 2: AI LUYỆN PHỎNG VẤN
+        //- ==========================================
+        div(id="modalAiInterview" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-xs p-[16px]")
+            div(class="bg-white rounded-[12px] shadow-2xl max-w-[750px] w-full max-h-[90vh] flex flex-col overflow-hidden animate-fadeIn")
+                //- Modal Header
+                div(class="p-[20px] border-b border-[#E5E7EB] flex items-center justify-between bg-gradient-to-r from-indigo-50 to-blue-50")
+                    div(class="flex items-center gap-[10px]")
+                        div(class="w-[36px] h-[36px] rounded-full bg-indigo-600 text-white flex items-center justify-center")
+                            <i class="fa-solid fa-comments"></i>
+                        div
+                            h3(class="font-[700] text-[17px] text-[#111827]") Luyện Phỏng Vấn Với Trợ Lý AI
+                            p(class="text-[12px] text-[#6B7280]") 7 câu hỏi phỏng vấn thực chiến chuyên sâu cho vị trí #{job.title}
+                    button(type="button" id="btnCloseAiInterview" class="text-gray-400 hover:text-gray-600 text-[20px] p-[4px] cursor-pointer")
+                        <i class="fa-solid fa-xmark"></i>
+
+                //- Modal Body
+                div(class="p-[24px] overflow-y-auto flex-1 space-y-[16px]")
+                    div(id="aiInterviewLoading" class="py-[40px] text-center space-y-[12px]")
+                        div(class="inline-block animate-spin text-indigo-600 text-[36px]")
+                            <i class="fa-solid fa-circle-notch"></i>
+                        p(class="font-[600] text-[16px] text-gray-800") 🤖 AI đang tạo bộ câu hỏi phỏng vấn cá nhân hóa...
+                        p(class="text-[13px] text-gray-500 max-w-[360px] mx-auto") Phân tích chuyên môn kỹ thuật và tình huống phù hợp với cấp bậc #{labels.getPositionLabel(job.position)}.
+
+                    div(id="aiInterviewQuestions" class="space-y-[16px]")
+
+    script.
+        document.addEventListener("DOMContentLoaded", () => {
+            if (window.initAiCvMatch) window.initAiCvMatch("#{job._id}");
+            if (window.initAiInterviewPrep) window.initAiInterviewPrep("#{job._id}");
+        });
     //- Hết Chi tiết công việc

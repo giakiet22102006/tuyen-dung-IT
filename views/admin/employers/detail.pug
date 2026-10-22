@@ -130,7 +130,9 @@ block main
                                             span(class="px-[8px] py-[2px] rounded text-[12px] font-[600] bg-emerald-50 text-emerald-700") Công khai
                                         else
                                             span(class="px-[8px] py-[2px] rounded text-[12px] font-[600] bg-red-50 text-red-700") Đã ẩn
-                                    td(class="py-[14px] px-[20px] text-right")
+                                    td(class="py-[14px] px-[20px] text-right space-x-[6px]")
+                                        button(type="button" onclick="window.scanJobWithAi('" + job._id + "')" class="px-[10px] py-[5px] bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded text-[12px] font-[600] cursor-pointer")
+                                            <i class="fa-solid fa-shield-halved mr-[4px]"></i> AI Quét
                                         form(action="/" + adminPath + "/jobs/" + job._id + "/moderation" method="POST" class="inline")
                                             input(type="hidden" name="_csrf" value=csrfToken)
                                             if job.moderation === 'visible'
@@ -177,3 +179,44 @@ block main
                 div(class="flex justify-end gap-[10px]")
                     button(type="button" onclick="document.getElementById('banModal').classList.add('hidden')" class="px-[16px] py-[8px] bg-gray-100 hover:bg-gray-200 text-[#374151] rounded text-[13px] font-[500] cursor-pointer") Hủy bỏ
                     button(type="submit" class="px-[16px] py-[8px] bg-[#DC2626] hover:bg-[#B91C1C] text-white rounded text-[13px] font-[600] cursor-pointer") Xác nhận khóa
+
+    //- Modal AI Moderation Scan Result
+    div(id="modalAiJobModeration" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-xs p-[16px]")
+        div(class="bg-white rounded-[12px] shadow-2xl max-w-[560px] w-full max-h-[90vh] flex flex-col overflow-hidden animate-fadeIn")
+            div(class="p-[20px] border-b border-[#E5E7EB] flex items-center justify-between bg-gradient-to-r from-indigo-50 to-purple-50")
+                div(class="flex items-center gap-[10px]")
+                    div(class="w-[36px] h-[36px] rounded-full bg-indigo-600 text-white flex items-center justify-center")
+                        <i class="fa-solid fa-shield-halved"></i>
+                    div
+                        h3(class="font-[700] text-[17px] text-[#111827]") Kết Quả Quét An Toàn Tin Tuyển Dụng
+                        p(class="text-[12px] text-[#6B7280]") Kiểm tra tự động bằng AI phát hiện gian lận & vi phạm
+                button(type="button" id="btnCloseAiJobMod" class="text-gray-400 hover:text-gray-600 text-[20px] p-[4px] cursor-pointer")
+                    <i class="fa-solid fa-xmark"></i>
+
+            div(class="p-[24px] overflow-y-auto flex-1 space-y-[16px]")
+                div(id="aiModLoading" class="py-[32px] text-center space-y-[10px]")
+                    div(class="inline-block animate-spin text-indigo-600 text-[32px]")
+                        <i class="fa-solid fa-circle-notch"></i>
+                    p(class="font-[600] text-[15px] text-gray-800") 🤖 AI đang quét nội dung tin tuyển dụng...
+
+                div(id="aiModContent" class="hidden space-y-[16px]")
+                    div(class="flex items-center justify-between p-[16px] rounded-[8px] bg-gray-50 border border-gray-200")
+                        div
+                            p(class="text-[12px] font-[600] text-gray-500 uppercase") Mức độ an toàn
+                            div(id="aiModRiskBadge" class="mt-[4px]")
+                        div(class="text-right")
+                            p(class="text-[12px] font-[600] text-gray-500 uppercase") Điểm tin cậy
+                            span(id="aiModScore" class="text-2xl font-bold text-gray-900")
+
+                    div
+                        h4(class="text-[13px] font-[700] text-gray-800 mb-[6px]") Dấu hiệu cảnh báo phát hiện:
+                        div(id="aiModFlags")
+
+                    div
+                        h4(class="text-[13px] font-[700] text-gray-800 mb-[6px]") Đánh giá chi tiết từ AI:
+                        p(id="aiModAssessment" class="text-[14px] text-gray-700 leading-relaxed bg-gray-50 p-[12px] rounded-[6px] border border-gray-200")
+
+    script.
+        document.addEventListener("DOMContentLoaded", () => {
+            if (window.initAiJobModeration) window.initAiJobModeration();
+        });
