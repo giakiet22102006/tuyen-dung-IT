@@ -18,7 +18,7 @@ if (env.GEMINI_API_KEY && env.GEMINI_API_KEY.trim()) {
  */
 async function callGemini(prompt, systemInstruction = "") {
   if (!aiClient) return null;
-  const modelName = env.GEMINI_MODEL || "gemini-2.5-flash";
+  const modelName = env.GEMINI_MODEL || "gemini-3.8-flash";
 
   try {
     const response = await aiClient.models.generateContent({
@@ -31,7 +31,7 @@ async function callGemini(prompt, systemInstruction = "") {
     console.warn(`⚠️ Gemini API (${modelName}) gặp sự cố: ${err.message}. Thử model dự phòng...`);
     try {
       const fallbackResponse = await aiClient.models.generateContent({
-        model: "gemini-1.5-flash",
+        model: "gemini-2.5-flash-lite",
         contents: prompt,
         config: systemInstruction ? { systemInstruction } : undefined,
       });
