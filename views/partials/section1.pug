@@ -1,7 +1,7 @@
 div(class="bg-[#000065] py-[60px]")
     .contain 
         h1(class="font-[700] text-[28px] text-white text-center mb-[30px]") #{totalPublicJobs !== undefined ? totalPublicJobs : 887} Việc làm IT cho Developer "Chất"
-        form(action="/search" method="GET" class="flex gap-[15px] md:flex-nowrap flex-wrap")
+        form(action="/search" method="GET" class="flex gap-[15px] md:flex-nowrap flex-wrap relative" id="headerSearchForm")
             select(name="city" class="md:w-[240px] w-full h-[56px] rounded-[4px] bg-white font-[500] text-[16px] px-[20px] text-[#121212]")
                 option(value="") Tất cả thành phố
                 if cities && cities.length > 0
@@ -13,8 +13,11 @@ div(class="bg-[#000065] py-[60px]")
                     option(value="ho-chi-minh" selected=(selectedCity === 'ho-chi-minh')) TP. Hồ Chí Minh
                     option(value="khac" selected=(selectedCity === 'khac')) Khác
 
-            input(type="text" name="keyword" value=(keyword || "") placeholder="Nhập từ khóa..." class="flex-1 h-[56px] rounded-[4px] bg-white font-[500] text-[16px] px-[20px] text-[#121212]")
-            button(type="submit" class="md:w-[240px] w-full h-[56px] bg-[#0088FF] font-[500] text-[16px] text-white flex justify-center items-center gap-[10px] rounded-[4px] cursor-pointer")
+            div(class="flex-1 relative")
+                input(type="text" name="keyword" id="searchKeywordInput" value=(keyword || "") placeholder="Nhập từ khóa (vd: ReactJS, Python, Frontend...)" autocomplete="off" class="w-full h-[56px] rounded-[4px] bg-white font-[500] text-[16px] px-[20px] text-[#121212] focus:outline-none focus:ring-2 focus:ring-[#0088FF]")
+                div(id="searchSuggestionsDropdown" class="hidden absolute left-0 right-0 top-[60px] bg-white rounded-[6px] shadow-2xl border border-gray-200 z-50 overflow-hidden text-left")
+
+            button(type="submit" class="md:w-[240px] w-full h-[56px] bg-[#0088FF] hover:bg-[#0070d6] transition-colors font-[500] text-[16px] text-white flex justify-center items-center gap-[10px] rounded-[4px] cursor-pointer")
                 <i class="fa-solid fa-magnifying-glass text-[20px]"></i> Tìm Kiếm
 
         div(class="sm:mt-[30px] mt-[38px] flex items-center gap-[12px] flex-wrap")

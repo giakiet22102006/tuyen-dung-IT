@@ -7,6 +7,7 @@ const {
   getCompanyDetails,
   getJobDetails,
 } = require("../../services/job.service");
+const { getAutocompleteSuggestions } = require("../../services/fuzzySearch.service");
 const { CITIES, POSITIONS, WORKING_FORMS, JOB_MODERATION } = require("../../config/constants");
 const { Skill, Job, Application } = require("../../models");
 const { uploadCV } = require("../../services/storage.service");
@@ -30,17 +31,28 @@ const renderIndex = async (req, res) => {
 };
 
 const renderSearch = async (req, res) => {
-  const { city, keyword, skill, position, workingForm, company, page } = req.query;
+  const { city, keyword, skill, position, workingForm, company, page, exact } = req.query;
 
-  const [{ jobs, pagination }, totalPublicJobs, topSkills] = await Promise.all([
+  const [searchResult, totalPublicJobs, topSkills] = await Promise.all([
     searchJobs(req.query),
     getTotalPublicJobsCount(),
     Skill.find({}).limit(5).select("name slug").lean(),
   ]);
 
+  const {
+    jobs,
+    pagination,
+    isFuzzyApplied,
+    originalKeyword,
+    suggestedKeyword,
+    didYouMean,
+  } = searchResult;
+
   // Xác định tiêu đề hiển thị
   let searchTitle = `${pagination.totalItems} việc làm IT`;
-  if (skill) {
+  if (isFuzzyApplied) {
+    searchTitle = `${pagination.totalItems} việc làm cho từ khóa gợi ý <span class="text-[#0088FF]">"${suggestedKeyword}"</span>`;
+  } else if (skill) {
     searchTitle = `${pagination.totalItems} việc làm <span class="text-[#0088FF]">${skill}</span>`;
   } else if (keyword) {
     searchTitle = `${pagination.totalItems} việc làm cho từ khóa <span class="text-[#0088FF]">"${keyword}"</span>`;
@@ -64,6 +76,11 @@ const renderSearch = async (req, res) => {
     selectedWorkingForm: workingForm || "",
     keyword: keyword || "",
     selectedSkill: skill || "",
+    isFuzzyApplied: !!isFuzzyApplied,
+    originalKeyword: originalKeyword || "",
+    suggestedKeyword: suggestedKeyword || "",
+    didYouMean: didYouMean || "",
+    exact: exact === "true",
   });
 };
 
@@ -183,6 +200,12 @@ const postApplyJob = async (req, res) => {
   res.redirect(`/jobs/${slug}`);
 };
 
+const getSearchSuggestions = async (req, res) => {
+  const { q } = req.query;
+  const data = await getAutocompleteSuggestions(q || "", 6);
+  res.json(data);
+};
+
 module.exports = {
   renderIndex,
   renderSearch,
@@ -190,4 +213,5 @@ module.exports = {
   renderCompanyDetails,
   renderJobDetails,
   postApplyJob,
+  getSearchSuggestions,
 };

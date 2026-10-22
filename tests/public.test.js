@@ -102,4 +102,36 @@ describe("Phase 3: Public Pages Integration Tests", () => {
     const res = await request(app).get("/jobs/job-khong-ton-tai");
     expect(res.status).toBe(404);
   });
+
+  describe("Fuzzy Search & Typo Tolerance (Tìm kiếm mờ & Có phải bạn muốn tìm...)", () => {
+    test("Fuzzy search tự động gợi ý và hiển thị kết quả khi gõ sai chính tả (recat -> react)", async () => {
+      const res = await request(app).get("/search?keyword=recat");
+      expect(res.status).toBe(200);
+      expect(res.text).toContain("Senior ReactJS Developer");
+      expect(res.text).toContain("Không tìm thấy kết quả cho từ khóa");
+      expect(res.text).toContain("react");
+    });
+
+    test("Người dùng chọn exact=true thì bỏ qua Fuzzy Search và không trả kết quả", async () => {
+      const res = await request(app).get("/search?keyword=recat&exact=true");
+      expect(res.status).toBe(200);
+      expect(res.text).not.toContain("Senior ReactJS Developer");
+      expect(res.text).toContain("Không tìm thấy việc làm nào phù hợp");
+    });
+
+    test("GET /api/search/suggestions trả về 'Có phải bạn muốn tìm...' khi có lỗi chính tả", async () => {
+      const res = await request(app).get("/api/search/suggestions?q=pythn");
+      expect(res.status).toBe(200);
+      expect(res.body.didYouMean).toBeTruthy();
+      expect(res.body.didYouMean.suggestion).toBe("python");
+    });
+
+    test("GET /api/search/suggestions trả về danh sách tiền tố khớp (autocomplete)", async () => {
+      const res = await request(app).get("/api/search/suggestions?q=Rea");
+      expect(res.status).toBe(200);
+      expect(res.body.suggestions.length).toBeGreaterThan(0);
+      const hasReact = res.body.suggestions.some((s) => s.text.toLowerCase().includes("react"));
+      expect(hasReact).toBe(true);
+    });
+  });
 });

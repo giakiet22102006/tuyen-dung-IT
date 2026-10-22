@@ -12,6 +12,7 @@ const { doubleCsrfProtection } = require("../middlewares/csrf.middleware");
 
 router.get("/", asyncHandler(clientController.renderIndex));
 router.get("/search", asyncHandler(clientController.renderSearch));
+router.get("/api/search/suggestions", asyncHandler(clientController.getSearchSuggestions));
 router.get("/companies", asyncHandler(clientController.renderCompanyList));
 router.get("/companies/:slug", asyncHandler(clientController.renderCompanyDetails));
 router.get("/jobs/:slug", asyncHandler(clientController.renderJobDetails));

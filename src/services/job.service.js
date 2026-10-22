@@ -4,6 +4,7 @@ const { Job, Employer, Skill } = require("../models");
 const { EMPLOYER_STATUS, JOB_MODERATION, CITIES, POSITIONS, WORKING_FORMS } = require("../config/constants");
 const normalizeVi = require("../utils/normalizeVi");
 const paginate = require("../utils/pagination");
+const { findDidYouMean, clearVocabCache } = require("./fuzzySearch.service");
 
 const statsCache = new NodeCache({ stdTTL: 300, checkperiod: 60 });
 const TOTAL_JOBS_KEY = "total_public_jobs";
@@ -23,6 +24,7 @@ async function getTotalPublicJobsCount() {
 
 function clearStatsCache() {
   statsCache.del(TOTAL_JOBS_KEY);
+  clearVocabCache();
 }
 
 /**
@@ -94,52 +96,97 @@ async function getTopEmployers(limit = 9) {
 }
 
 /**
- * Tìm kiếm việc làm công khai với bộ lọc và phân trang
+ * Tìm kiếm việc làm công khai với bộ lọc, phân trang, Fuzzy Search và Typo Tolerance
  */
 async function searchJobs(query = {}) {
-  const { city, keyword, skill, position, workingForm, company, page } = query;
+  const { city, keyword, skill, position, workingForm, company, page, exact } = query;
 
-  const filter = {
+  const baseFilter = {
     employerActive: true,
     moderation: JOB_MODERATION.VISIBLE,
     deletedAt: null,
   };
 
   if (city && city.trim()) {
-    filter.city = city.trim();
+    baseFilter.city = city.trim();
   }
 
   if (position && position.trim()) {
-    filter.position = position.trim();
+    baseFilter.position = position.trim();
   }
 
   if (workingForm && workingForm.trim()) {
-    filter.workingForm = workingForm.trim();
+    baseFilter.workingForm = workingForm.trim();
   }
 
   if (skill && skill.trim()) {
-    filter["skills.slug"] = skill.toLowerCase().trim();
+    baseFilter["skills.slug"] = skill.toLowerCase().trim();
   }
 
   if (company && company.trim()) {
     const emp = await Employer.findOne({ slug: company.trim(), status: EMPLOYER_STATUS.ACTIVE });
     if (emp) {
-      filter.employerId = emp._id;
+      baseFilter.employerId = emp._id;
     } else {
       // Công ty không tồn tại thì không ra kết quả
       return {
         jobs: [],
         pagination: paginate(0, 1, 9),
+        isFuzzyApplied: false,
+        didYouMean: null,
       };
     }
   }
 
+  const filter = { ...baseFilter };
+  let originalKeyword = "";
+  let isFuzzyApplied = false;
+  let suggestedKeyword = "";
+  let didYouMean = null;
+
   if (keyword && keyword.trim()) {
-    const normalized = normalizeVi(keyword.trim());
+    originalKeyword = keyword.trim();
+    const normalized = normalizeVi(originalKeyword);
     filter.searchText = { $regex: normalized, $options: "i" };
   }
 
-  const total = await Job.countDocuments(filter);
+  let total = await Job.countDocuments(filter);
+
+  // LOGIC FUZZY SEARCH (TÌM KIẾM MỜ) & TYPO TOLERANCE (BỎ QUA LỖI CHÍNH TẢ)
+  if (originalKeyword) {
+    const suggestionInfo = await findDidYouMean(originalKeyword);
+
+    if (total > 0) {
+      // Đã có kết quả chính xác. Nếu có gợi ý chính tả khác với từ khóa nhập, hiển thị Did You Mean
+      if (suggestionInfo && normalizeVi(suggestionInfo.suggestion) !== normalizeVi(originalKeyword)) {
+        didYouMean = suggestionInfo.displayText || suggestionInfo.suggestion;
+      }
+    } else if (exact !== "true" && exact !== true) {
+      // 0 kết quả chính xác và người dùng không chọn chế độ bắt buộc tìm chính xác (&exact=true)
+      // Tự động kích hoạt Fuzzy Typo Tolerance:
+      if (suggestionInfo && suggestionInfo.suggestion) {
+        const fuzzyNormalized = normalizeVi(suggestionInfo.suggestion);
+        const fuzzyFilter = {
+          ...baseFilter,
+          searchText: { $regex: fuzzyNormalized, $options: "i" },
+        };
+
+        const fuzzyTotal = await Job.countDocuments(fuzzyFilter);
+        if (fuzzyTotal > 0) {
+          // Tìm thấy kết quả từ khóa gợi ý!
+          total = fuzzyTotal;
+          filter.searchText = fuzzyFilter.searchText;
+          isFuzzyApplied = true;
+          suggestedKeyword = suggestionInfo.displayText || suggestionInfo.suggestion;
+          didYouMean = suggestedKeyword;
+        } else {
+          // Dù chưa có job cho từ gợi ý, vẫn lưu để hiển thị "Có phải bạn muốn tìm..."
+          didYouMean = suggestionInfo.displayText || suggestionInfo.suggestion;
+        }
+      }
+    }
+  }
+
   const pagination = paginate(total, page || 1, 9);
 
   const jobs = await Job.find(filter)
@@ -150,7 +197,14 @@ async function searchJobs(query = {}) {
     .select("title slug salaryMin salaryMax position workingForm skills city createdAt employerId")
     .lean();
 
-  return { jobs, pagination };
+  return {
+    jobs,
+    pagination,
+    isFuzzyApplied,
+    originalKeyword,
+    suggestedKeyword,
+    didYouMean,
+  };
 }
 
 /**

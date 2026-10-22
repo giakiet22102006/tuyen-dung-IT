@@ -12,6 +12,29 @@ block main
     //- Kết quả tìm kiếm
     div(class="py-[60px]")
         .contain 
+            //- TH1: Đã tự động áp dụng Fuzzy Search (Typo Tolerance)
+            if isFuzzyApplied
+                div(class="bg-blue-50 border border-blue-200 rounded-[8px] p-[16px] mb-[25px] flex items-start gap-[12px] shadow-sm")
+                    i(class="fa-solid fa-wand-magic-sparkles text-[#0088FF] text-[20px] mt-[2px]")
+                    div(class="flex-1")
+                        p(class="text-[#121212] font-[500] text-[15px]")
+                            | Không tìm thấy kết quả cho từ khóa 
+                            span(class="font-[700] text-red-500") "#{originalKeyword}"
+                            | . Đang hiển thị kết quả cho từ khóa gợi ý: 
+                            span(class="font-[700] text-[#0088FF]") "#{suggestedKeyword}"
+                        div(class="mt-[6px] flex items-center gap-[10px] text-[13px] text-[#717171] flex-wrap")
+                            span Có phải bạn muốn tìm "#{suggestedKeyword}"?
+                            span •
+                            a(href=`/search?keyword=${encodeURIComponent(originalKeyword)}&exact=true&city=${selectedCity || ''}&position=${selectedPosition || ''}&workingForm=${selectedWorkingForm || ''}` class="text-[#0088FF] hover:underline font-[500]") Vẫn tìm kiếm chính xác "#{originalKeyword}"
+
+            //- TH2: Có gợi ý "Có phải bạn muốn tìm..." (Did You Mean)
+            else if didYouMean && didYouMean.toLowerCase() !== (keyword || '').toLowerCase().trim()
+                div(class="bg-amber-50 border border-amber-200 rounded-[8px] py-[12px] px-[16px] mb-[25px] flex items-center gap-[10px] shadow-sm")
+                    i(class="fa-regular fa-lightbulb text-amber-500 text-[18px]")
+                    span(class="text-[#414042] text-[14px]") Có phải bạn muốn tìm: 
+                    a(href=`/search?keyword=${encodeURIComponent(didYouMean)}&city=${selectedCity || ''}&position=${selectedPosition || ''}&workingForm=${selectedWorkingForm || ''}` class="font-[700] text-[#0088FF] hover:underline text-[14px]") #{didYouMean}
+                    span(class="text-[#717171] text-[13px]") ?
+
             h2(class="font-[700] text-[28px] text-[#121212] mb-[30px]") !{searchTitle || "Danh sách việc làm"}
             div(class="rounded-[8px] bg-white py-[10px] px-[20px] flex flex-wrap gap-[12px]" style="box-shadow: 0px 4px 20px 0px #0000000F;")
                 select(id="filterPosition" class="filter-select border border-[#DEDEDE] rounded-[20px] py-[8px] px-[18px] font-[400] text-[16px] text-[#414042] cursor-pointer") 
@@ -42,7 +65,18 @@ block main
                     each job in jobs
                         +jobCard(job)
                 else
-                    div(class="col-span-full py-[40px] text-center text-[#717171] text-[16px]") Không tìm thấy việc làm nào phù hợp với bộ lọc hiện tại.
+                    div(class="col-span-full py-[45px] px-[20px] text-center bg-gray-50 rounded-[8px] border border-dashed border-gray-300")
+                        i(class="fa-solid fa-magnifying-glass text-gray-400 text-[36px] mb-[15px]")
+                        p(class="text-[#121212] font-[600] text-[18px] mb-[6px]") Không tìm thấy việc làm nào phù hợp.
+                        if didYouMean
+                            p(class="text-[#414042] text-[15px] mt-[4px]")
+                                span Có phải bạn muốn tìm: 
+                                a(href=`/search?keyword=${encodeURIComponent(didYouMean)}&city=${selectedCity || ''}` class="text-[#0088FF] font-[700] underline hover:text-[#0066cc]") #{didYouMean}
+                                span ?
+                        p(class="text-[#717171] text-[14px] mt-[10px]") Thử kiểm tra lại lỗi chính tả hoặc bấm chọn các kỹ năng phổ biến bên dưới:
+                        div(class="flex justify-center gap-[8px] mt-[16px] flex-wrap")
+                            each sk in ['Frontend', 'Backend', 'Fullstack', 'Java', 'ReactJS', 'Python', 'NodeJS', 'DevOps', 'Golang']
+                                a(href=`/search?keyword=${encodeURIComponent(sk)}` class="bg-white border border-[#DEDEDE] hover:border-[#0088FF] text-[#414042] hover:text-[#0088FF] py-[6px] px-[14px] rounded-[16px] text-[13px] font-[500] transition-colors") #{sk}
 
             if pagination && pagination.totalPages > 1
                 select(class="pagination-select border border-[#DEDEDE] bg-white rounded-[8px] py-[12px] px-[18px] font-[400] text-[16px] text-[#414042] cursor-pointer") 
