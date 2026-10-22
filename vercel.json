@@ -1,9 +1,32 @@
 {
+  "regions": ["sin1"],
   "functions": {
     "api/index.js": {
-      "includeFiles": "views/**"
+      "includeFiles": "views/**",
+      "memory": 1024,
+      "maxDuration": 15
     }
   },
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/favicon.ico",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=604800, immutable"
+        }
+      ]
+    }
+  ],
   "rewrites": [
     {
       "source": "/(.*)",

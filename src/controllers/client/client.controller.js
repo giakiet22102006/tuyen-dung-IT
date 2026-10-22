@@ -13,11 +13,12 @@ const { Skill, Job, Application } = require("../../models");
 const { uploadCV } = require("../../services/storage.service");
 
 const renderIndex = async (req, res) => {
-  const [totalPublicJobs, topEmployers, topSkills] = await Promise.all([
+  const [totalPublicJobs, topEmployers] = await Promise.all([
     getTotalPublicJobsCount(),
     getTopEmployers(9),
-    Skill.find({}).limit(5).select("name slug").lean(),
   ]);
+
+  const topSkills = (res.locals.menuData && res.locals.menuData.skills) || [];
 
   res.render("pages/index", {
     title: "Trang chủ - VN.ITJobs",
@@ -33,11 +34,12 @@ const renderIndex = async (req, res) => {
 const renderSearch = async (req, res) => {
   const { city, keyword, skill, position, workingForm, company, page, exact } = req.query;
 
-  const [searchResult, totalPublicJobs, topSkills] = await Promise.all([
+  const [searchResult, totalPublicJobs] = await Promise.all([
     searchJobs(req.query),
     getTotalPublicJobsCount(),
-    Skill.find({}).limit(5).select("name slug").lean(),
   ]);
+
+  const topSkills = (res.locals.menuData && res.locals.menuData.skills) || [];
 
   const {
     jobs,

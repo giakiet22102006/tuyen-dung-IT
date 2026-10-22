@@ -3,8 +3,8 @@ const NodeCache = require("node-cache");
 const { Skill, Employer, Job } = require("../models");
 const { CITIES, EMPLOYER_STATUS, JOB_MODERATION } = require("../config/constants");
 
-// Cache TTL 300 giây (5 phút)
-const menuCache = new NodeCache({ stdTTL: 300, checkperiod: 60 });
+// Cache TTL 1800 giây (30 phút)
+const menuCache = new NodeCache({ stdTTL: 1800, checkperiod: 120 });
 const CACHE_KEY = "global_menu_data";
 
 async function getMenuData() {
@@ -12,19 +12,19 @@ async function getMenuData() {
   if (cached) return cached;
 
   try {
-    // 1. Top 5 Skills có nhiều job nhất (hoặc 5 skills đầu)
-    const skills = await Skill.find({}).limit(5).select("name slug").lean();
+    // Truy vấn song song Skills và Employers (giảm 50% thời gian)
+    const [skills, topEmployers] = await Promise.all([
+      Skill.find({}).limit(5).select("name slug").lean(),
+      Employer.find({
+        status: EMPLOYER_STATUS.ACTIVE,
+        deletedAt: null,
+      })
+        .limit(5)
+        .select("companyName slug logo")
+        .lean(),
+    ]);
 
-    // 2. Top 5 Công ty hàng đầu (active, có nhiều job nhất)
-    const topEmployers = await Employer.find({
-      status: EMPLOYER_STATUS.ACTIVE,
-      deletedAt: null,
-    })
-      .limit(5)
-      .select("companyName slug logo")
-      .lean();
-
-    // 3. Top 3 Thành phố chính
+    // Top 3 Thành phố chính
     const mainCities = CITIES.filter((c) => c.value !== "khac").slice(0, 3);
 
     const menuData = {
@@ -38,7 +38,13 @@ async function getMenuData() {
   } catch (err) {
     console.error("Lỗi lấy dữ liệu menu:", err);
     return {
-      skills: [],
+      skills: [
+        { name: "ReactJS", slug: "reactjs" },
+        { name: "NodeJS", slug: "nodejs" },
+        { name: "Javascript", slug: "javascript" },
+        { name: "HTML5", slug: "html5" },
+        { name: "CSS3", slug: "css3" },
+      ],
       topEmployers: [],
       cities: CITIES.slice(0, 3),
     };

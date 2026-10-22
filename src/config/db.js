@@ -3,8 +3,13 @@ const env = require("./env");
 
 let cachedPromise = null;
 
+// Tắt autoIndex trong production để tránh Mongoose quét toàn bộ index mỗi khi cold start
+if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
+  mongoose.set("autoIndex", false);
+}
+
 const connectDB = async () => {
-  if (mongoose.connection.readyState >= 1) {
+  if (mongoose.connection.readyState === 1) {
     return mongoose.connection;
   }
 
@@ -12,10 +17,11 @@ const connectDB = async () => {
     const opts = {
       bufferCommands: false, // Tắt buffering trong serverless để không treo truy vấn
       serverSelectionTimeoutMS: 5000,
-      maxPoolSize: 20,       // Tối ưu hóa connection pool để tái sử dụng kết nối
-      minPoolSize: 2,        // Giữ kết nối sẵn sàng để tránh cold connect
+      maxPoolSize: 10,       // Tối ưu hóa connection pool cho Serverless
+      minPoolSize: 0,
       maxIdleTimeMS: 30000,
-      socketTimeoutMS: 45000,
+      socketTimeoutMS: 30000,
+      connectTimeoutMS: 10000,
     };
 
     cachedPromise = mongoose

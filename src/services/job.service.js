@@ -6,7 +6,7 @@ const normalizeVi = require("../utils/normalizeVi");
 const paginate = require("../utils/pagination");
 const { findDidYouMean, clearVocabCache } = require("./fuzzySearch.service");
 
-const statsCache = new NodeCache({ stdTTL: 300, checkperiod: 60 });
+const statsCache = new NodeCache({ stdTTL: 600, checkperiod: 120 });
 const TOTAL_JOBS_KEY = "total_public_jobs";
 const TOP_EMPLOYERS_KEY = "top_employers_list";
 
