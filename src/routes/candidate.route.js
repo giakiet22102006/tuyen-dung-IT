@@ -23,6 +23,10 @@ router.post("/resend-registration-otp", requireGuest, otpRateLimiter, doubleCsrf
 router.get("/login", requireGuest, candidateAuth.renderLogin);
 router.post("/login", requireGuest, loginRateLimiter, doubleCsrfProtection, asyncHandler(candidateAuth.postLogin));
 
+// Đăng nhập / Đăng ký nhanh với Google
+router.get("/auth/google", requireGuest, candidateAuth.redirectToGoogle);
+router.get("/auth/google/callback", requireGuest, asyncHandler(candidateAuth.handleGoogleCallback));
+
 // Quên & Đặt lại mật khẩu (OTP qua Gmail)
 router.get("/forgot-password", requireGuest, passwordReset.renderForgotPassword("candidate"));
 router.post("/forgot-password", requireGuest, otpRateLimiter, doubleCsrfProtection, asyncHandler(passwordReset.postForgotPassword("candidate")));

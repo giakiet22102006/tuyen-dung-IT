@@ -22,6 +22,17 @@ const candidateSchema = new mongoose.Schema(
       required: [true, "Mật khẩu không được để trống"],
       select: false,
     },
+    googleId: {
+      type: String,
+      default: null,
+      sparse: true,
+      index: true,
+    },
+    authProvider: {
+      type: String,
+      enum: ["local", "google"],
+      default: "local",
+    },
     phone: {
       type: String,
       trim: true,

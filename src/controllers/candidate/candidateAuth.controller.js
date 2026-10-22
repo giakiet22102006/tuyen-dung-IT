@@ -378,6 +378,106 @@ const postChangePassword = async (req, res) => {
   res.redirect("/candidate/profile");
 };
 
+// Chuyển hướng sang Google OAuth Consent Screen
+const redirectToGoogle = (req, res) => {
+  const googleAuthService = require("../../services/googleAuth.service");
+  if (!googleAuthService.isGoogleConfigured()) {
+    req.flash("error", "Chưa cấu hình GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET để sử dụng đăng nhập Google.");
+    return res.redirect("/candidate/login");
+  }
+
+  const nextUrl = req.query.next || "/";
+  const authUrl = googleAuthService.getGoogleAuthUrl("candidate", nextUrl, req);
+  res.redirect(authUrl);
+};
+
+// Xử lý callback sau khi người dùng đồng ý đăng nhập Google
+const handleGoogleCallback = async (req, res) => {
+  const googleAuthService = require("../../services/googleAuth.service");
+  const { code, state, error } = req.query;
+
+  if (error || !code) {
+    req.flash("error", "Đăng nhập Google bị hủy hoặc gặp lỗi xác thực.");
+    return res.redirect("/candidate/login");
+  }
+
+  let nextUrl = "/";
+  if (state) {
+    try {
+      const decoded = JSON.parse(Buffer.from(state, "base64url").toString("utf8"));
+      if (decoded && decoded.next && decoded.next.startsWith("/")) {
+        nextUrl = decoded.next;
+      }
+    } catch (e) {}
+  }
+
+  try {
+    const redirectUri = googleAuthService.getCallbackUrl("candidate", req);
+    const tokens = await googleAuthService.exchangeCodeForTokens(code, redirectUri);
+    const profile = await googleAuthService.fetchGoogleUserInfo(tokens.access_token);
+
+    if (!profile || !profile.email) {
+      req.flash("error", "Không lấy được địa chỉ email từ tài khoản Google.");
+      return res.redirect("/candidate/login");
+    }
+
+    const cleanEmail = profile.email.toLowerCase().trim();
+
+    // Tìm ứng viên theo googleId hoặc email đã tồn tại
+    let candidate = await Candidate.findOne({
+      $or: [{ googleId: profile.sub }, { email: cleanEmail }],
+      deletedAt: null,
+    });
+
+    if (candidate) {
+      if (candidate.status === CANDIDATE_STATUS.BANNED) {
+        const reasonMsg = candidate.banReason ? ` Lí do: ${candidate.banReason}` : "";
+        req.flash("error", `Tài khoản của bạn đã bị khóa.${reasonMsg}`);
+        return res.redirect("/candidate/login");
+      }
+
+      candidate.googleId = profile.sub;
+      candidate.isEmailVerified = true;
+      if (!candidate.avatar || !candidate.avatar.url) {
+        candidate.avatar = { url: profile.picture || "", key: "" };
+      }
+      candidate.lastLoginAt = new Date();
+      await candidate.save();
+    } else {
+      // Đăng ký mới tự động cho Ứng viên đăng nhập lần đầu
+      const randomPass = crypto.randomBytes(32).toString("hex");
+      const hashedPassword = await hashPassword(randomPass);
+
+      candidate = await Candidate.create({
+        fullName: profile.name || cleanEmail.split("@")[0],
+        email: cleanEmail,
+        password: hashedPassword,
+        googleId: profile.sub,
+        authProvider: "google",
+        avatar: { url: profile.picture || "", key: "" },
+        isEmailVerified: true,
+        status: CANDIDATE_STATUS.ACTIVE,
+        lastLoginAt: new Date(),
+      });
+    }
+
+    const token = signUserToken(candidate, "candidate");
+    res.cookie("itj_token", token, {
+      httpOnly: true,
+      secure: env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    req.flash("success", "Đăng nhập tài khoản Google thành công!");
+    res.redirect(nextUrl);
+  } catch (err) {
+    console.error("Lỗi Google Auth Candidate Callback:", err);
+    req.flash("error", "Đăng nhập Google thất bại: " + err.message);
+    res.redirect("/candidate/login");
+  }
+};
+
 module.exports = {
   renderSignup,
   postSignup,
@@ -389,4 +489,6 @@ module.exports = {
   postLogout,
   renderChangePassword,
   postChangePassword,
+  redirectToGoogle,
+  handleGoogleCallback,
 };

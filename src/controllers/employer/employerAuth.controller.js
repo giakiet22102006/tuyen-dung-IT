@@ -383,6 +383,111 @@ const postChangePassword = async (req, res) => {
   res.redirect("/employer/company-profile");
 };
 
+// Chuyển hướng sang Google OAuth Consent Screen cho Nhà tuyển dụng
+const redirectToGoogle = (req, res) => {
+  const googleAuthService = require("../../services/googleAuth.service");
+  if (!googleAuthService.isGoogleConfigured()) {
+    req.flash("error", "Chưa cấu hình GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET để sử dụng đăng nhập Google.");
+    return res.redirect("/employer/login");
+  }
+
+  const nextUrl = req.query.next || "/employer/company-profile";
+  const authUrl = googleAuthService.getGoogleAuthUrl("employer", nextUrl, req);
+  res.redirect(authUrl);
+};
+
+// Xử lý callback sau khi Nhà tuyển dụng đồng ý đăng nhập Google
+const handleGoogleCallback = async (req, res) => {
+  const googleAuthService = require("../../services/googleAuth.service");
+  const { code, state, error } = req.query;
+
+  if (error || !code) {
+    req.flash("error", "Đăng nhập Google bị hủy hoặc gặp lỗi xác thực.");
+    return res.redirect("/employer/login");
+  }
+
+  let nextUrl = "/employer/company-profile";
+  if (state) {
+    try {
+      const decoded = JSON.parse(Buffer.from(state, "base64url").toString("utf8"));
+      if (decoded && decoded.next && decoded.next.startsWith("/")) {
+        nextUrl = decoded.next;
+      }
+    } catch (e) {}
+  }
+
+  try {
+    const redirectUri = googleAuthService.getCallbackUrl("employer", req);
+    const tokens = await googleAuthService.exchangeCodeForTokens(code, redirectUri);
+    const profile = await googleAuthService.fetchGoogleUserInfo(tokens.access_token);
+
+    if (!profile || !profile.email) {
+      req.flash("error", "Không lấy được địa chỉ email từ tài khoản Google.");
+      return res.redirect("/employer/login");
+    }
+
+    const cleanEmail = profile.email.toLowerCase().trim();
+
+    // Tìm nhà tuyển dụng theo googleId hoặc email đã tồn tại
+    let employer = await Employer.findOne({
+      $or: [{ googleId: profile.sub }, { email: cleanEmail }],
+      deletedAt: null,
+    });
+
+    if (employer) {
+      if (employer.status === EMPLOYER_STATUS.BANNED) {
+        const reasonMsg = employer.banReason ? ` Lí do: ${employer.banReason}` : "";
+        req.flash("error", `Tài khoản công ty của bạn đã bị khóa.${reasonMsg}`);
+        return res.redirect("/employer/login");
+      }
+
+      employer.googleId = profile.sub;
+      employer.isEmailVerified = true;
+      if (!employer.logo || !employer.logo.url) {
+        employer.logo = { url: profile.picture || "", key: "" };
+      }
+      employer.lastLoginAt = new Date();
+      await employer.save();
+    } else {
+      // Đăng ký mới tự động cho Nhà tuyển dụng đăng nhập lần đầu bằng Google
+      const randomPass = crypto.randomBytes(32).toString("hex");
+      const hashedPassword = await hashPassword(randomPass);
+
+      const baseCompanyName = profile.name ? `Công ty ${profile.name}` : `Công ty ${cleanEmail.split("@")[0]}`;
+      const slug = slugify(baseCompanyName, true);
+
+      employer = await Employer.create({
+        companyName: baseCompanyName,
+        slug,
+        email: cleanEmail,
+        password: hashedPassword,
+        googleId: profile.sub,
+        authProvider: "google",
+        logo: { url: profile.picture || "", key: "" },
+        isEmailVerified: true,
+        status: env.EMPLOYER_REQUIRE_APPROVAL ? EMPLOYER_STATUS.PENDING : EMPLOYER_STATUS.ACTIVE,
+        city: "ha-noi",
+        lastLoginAt: new Date(),
+      });
+    }
+
+    const token = signUserToken(employer, "employer");
+    res.cookie("itj_token", token, {
+      httpOnly: true,
+      secure: env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    req.flash("success", "Đăng nhập tài khoản Nhà tuyển dụng bằng Google thành công!");
+    res.redirect(nextUrl);
+  } catch (err) {
+    console.error("Lỗi Google Auth Employer Callback:", err);
+    req.flash("error", "Đăng nhập Google thất bại: " + err.message);
+    res.redirect("/employer/login");
+  }
+};
+
 module.exports = {
   renderSignup,
   postSignup,
@@ -394,4 +499,6 @@ module.exports = {
   postLogout,
   renderChangePassword,
   postChangePassword,
+  redirectToGoogle,
+  handleGoogleCallback,
 };

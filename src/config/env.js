@@ -30,6 +30,9 @@ const envSchema = z.object({
   SMTP_FROM: z.string().default("VN.ITJobs <noreply@vnitjobs.vn>"),
   GEMINI_API_KEY: z.string().optional(),
   GEMINI_MODEL: z.string().default("gemini-3.8-flash"),
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+  GOOGLE_CALLBACK_URL: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);
