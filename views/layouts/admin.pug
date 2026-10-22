@@ -136,68 +136,7 @@ html(lang="vi")
                                 span Khuyến Nghị Chiến Lược Cho Quản Trị Viên & Doanh Nghiệp
                             p(id="aiMarketAdvice" class="text-[14px] text-amber-950 leading-relaxed")
 
-        //- ========================================================
-        //- MODAL 2: AI QUÉT GIAN LẬN & AN TOÀN TIN TUYỂN DỤNG (MODERATION SCAN)
-        //- ========================================================
-        div(id="modalAiJobModeration" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-xs p-[16px]")
-            div(class="bg-white rounded-[12px] shadow-2xl max-w-[620px] w-full max-h-[92vh] flex flex-col overflow-hidden animate-fadeIn")
-                div(class="p-[20px] border-b border-[#E5E7EB] flex items-center justify-between bg-gradient-to-r from-indigo-50 to-purple-50")
-                    div(class="flex items-center gap-[10px]")
-                        div(class="w-[36px] h-[36px] rounded-full bg-indigo-600 text-white flex items-center justify-center")
-                            <i class="fa-solid fa-shield-halved"></i>
-                        div
-                            h3(class="font-[700] text-[17px] text-[#111827]") AI Quét An Toàn & Chống Lừa Đảo Tin Tuyển Dụng
-                            p(class="text-[12px] text-[#6B7280]") Quét tự động bằng Gemini 3.8 Flash phát hiện lừa đảo, cọc tiền, vi phạm
-                    button(type="button" id="btnCloseAiJobMod" class="text-gray-400 hover:text-gray-600 text-[20px] p-[4px] cursor-pointer")
-                        <i class="fa-solid fa-xmark"></i>
-
-                div(class="p-[24px] overflow-y-auto flex-1 space-y-[16px]")
-                    //- Form nhập liệu quét
-                    div(id="aiModFormBox" class="space-y-[12px] p-[16px] bg-gray-50 rounded-[8px] border border-gray-200")
-                        div
-                            label(class="block text-[13px] font-[600] text-gray-700 mb-[4px]") Tiêu đề tin tuyển dụng:
-                            input(type="text" id="aiModJobTitle" class="w-full px-[12px] py-[8px] border border-gray-300 rounded-[6px] text-[14px] bg-white focus:outline-none focus:border-indigo-500" placeholder="VD: Tuyển Lập Trình Viên Backend NodeJS" value="Tuyển Lập Trình Viên Backend NodeJS")
-                        div
-                            label(class="block text-[13px] font-[600] text-gray-700 mb-[4px]") Nội dung / Yêu cầu công việc:
-                            textarea(id="aiModJobDesc" rows="3" class="w-full px-[12px] py-[8px] border border-gray-300 rounded-[6px] text-[14px] bg-white focus:outline-none focus:border-indigo-500" placeholder="Nhập hoặc dán nội dung tin tuyển dụng...") Lương 1500$ - 2500$, làm việc tại văn phòng Hà Nội, công ty đóng đầy đủ bảo hiểm, không thu bất kỳ chi phí nào của ứng viên.
-                        
-                        div(class="flex flex-wrap items-center justify-between gap-[8px] pt-[4px]")
-                            div(class="flex flex-wrap gap-[6px]")
-                                button(type="button" id="btnPresetSafeJob" class="text-[11px] font-[600] px-[10px] py-[5px] rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 cursor-pointer")
-                                    <i class="fa-solid fa-circle-check mr-[4px]"></i> Thử tin IT chuẩn
-                                button(type="button" id="btnPresetScamJob" class="text-[11px] font-[600] px-[10px] py-[5px] rounded-full bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 cursor-pointer")
-                                    <i class="fa-solid fa-triangle-exclamation mr-[4px]"></i> Thử tin lừa đảo cọc tiền
-                            
-                            button(type="button" id="btnRunAiModScan" class="px-[16px] py-[8px] bg-indigo-600 hover:bg-indigo-700 text-white rounded-[6px] text-[13px] font-[600] cursor-pointer shadow-xs transition-colors flex items-center gap-[6px]")
-                                <i class="fa-solid fa-bolt"></i>
-                                span Quét Ngay Bằng AI
-
-                    //- Trạng thái Loading
-                    div(id="aiModLoading" class="hidden py-[24px] text-center space-y-[10px]")
-                        div(class="inline-block animate-spin text-indigo-600 text-[32px]")
-                            <i class="fa-solid fa-circle-notch"></i>
-                        p(class="font-[600] text-[15px] text-gray-800") 🤖 AI đang quét nội dung tin tuyển dụng...
-                        p(class="text-[12px] text-gray-500") Đang đối chiếu các dấu hiệu vi phạm và lừa đảo thị trường lao động.
-
-                    //- Kết quả quét
-                    div(id="aiModContent" class="hidden space-y-[16px]")
-                        div(class="flex items-center justify-between p-[16px] rounded-[8px] bg-gray-50 border border-gray-200")
-                            div
-                                p(class="text-[12px] font-[600] text-gray-500 uppercase") Mức độ an toàn
-                                div(id="aiModRiskBadge" class="mt-[4px]")
-                            div(class="text-right")
-                                p(class="text-[12px] font-[600] text-gray-500 uppercase") Điểm tin cậy
-                                span(id="aiModScore" class="text-2xl font-bold text-gray-900")
-
-                        div
-                            h4(class="text-[13px] font-[700] text-gray-800 mb-[6px]") Dấu hiệu cảnh báo phát hiện:
-                            div(id="aiModFlags")
-
-                        div
-                            h4(class="text-[13px] font-[700] text-gray-800 mb-[6px]") Đánh giá chi tiết từ AI:
-                            p(id="aiModAssessment" class="text-[14px] text-gray-700 leading-relaxed bg-gray-50 p-[12px] rounded-[6px] border border-gray-200")
-
-        script(src="/assets/js/ai-features.js?v=2.1")
+        script(src="/assets/js/ai-features.js?v=3.0")
         script.
             const toggleBtn = document.getElementById('sidebarToggleBtn');
             const closeBtn = document.getElementById('sidebarCloseBtn');

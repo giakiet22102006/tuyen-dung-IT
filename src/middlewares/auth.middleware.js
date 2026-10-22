@@ -99,6 +99,10 @@ async function authenticateAdmin(req, res, next) {
  */
 function requireCandidate(req, res, next) {
   if (!req.user || req.role !== "candidate") {
+    const isApi = req.originalUrl?.startsWith("/api") || req.baseUrl?.startsWith("/api") || req.path?.startsWith("/api") || req.xhr || req.headers.accept?.includes("json");
+    if (isApi) {
+      return res.status(401).json({ success: false, message: "Vui lòng đăng nhập với tư cách Ứng viên." });
+    }
     if (req.flash) {
       req.flash("error", "Vui lòng đăng nhập với tư cách Ứng viên để tiếp tục.");
     }
@@ -113,7 +117,8 @@ function requireCandidate(req, res, next) {
  */
 function requireEmployer(req, res, next) {
   if (!req.user || req.role !== "employer") {
-    if (req.xhr || req.headers.accept?.includes("json") || req.path.startsWith("/api")) {
+    const isApi = req.originalUrl?.startsWith("/api") || req.baseUrl?.startsWith("/api") || req.path?.startsWith("/api") || req.xhr || req.headers.accept?.includes("json");
+    if (isApi) {
       return res.status(401).json({ success: false, message: "Vui lòng đăng nhập với tư cách Nhà tuyển dụng." });
     }
     if (req.flash) {
@@ -130,7 +135,8 @@ function requireEmployer(req, res, next) {
  */
 function requireAdmin(req, res, next) {
   if (!req.admin) {
-    if (req.xhr || req.headers.accept?.includes("json") || req.path.startsWith("/api")) {
+    const isApi = req.originalUrl?.startsWith("/api") || req.baseUrl?.startsWith("/api") || req.path?.startsWith("/api") || req.xhr || req.headers.accept?.includes("json");
+    if (isApi) {
       return res.status(401).json({ success: false, message: "Vui lòng đăng nhập vào trang Quản trị viên." });
     }
     if (req.flash) {

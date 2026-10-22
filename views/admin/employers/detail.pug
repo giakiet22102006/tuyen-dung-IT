@@ -131,8 +131,6 @@ block main
                                         else
                                             span(class="px-[8px] py-[2px] rounded text-[12px] font-[600] bg-red-50 text-red-700") Đã ẩn
                                     td(class="py-[14px] px-[20px] text-right space-x-[6px]")
-                                        button(type="button" onclick="window.scanJobWithAi('" + job._id + "')" class="px-[10px] py-[5px] bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded text-[12px] font-[600] cursor-pointer")
-                                            <i class="fa-solid fa-shield-halved mr-[4px]"></i> AI Quét
                                         form(action="/" + adminPath + "/jobs/" + job._id + "/moderation" method="POST" class="inline")
                                             input(type="hidden" name="_csrf" value=csrfToken)
                                             if job.moderation === 'visible'
