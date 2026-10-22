@@ -11,6 +11,7 @@
     "build:css": "tailwindcss -i ./src/styles/input.css -o ./public/assets/css/tailwind.css --minify",
     "watch:css": "tailwindcss -i ./src/styles/input.css -o ./public/assets/css/tailwind.css --watch",
     "seed": "node src/scripts/seed.js",
+    "export:sql": "node src/scripts/export-sql.js",
     "create-admin": "node src/scripts/create-admin.js",
     "benchmark": "node src/scripts/benchmark.js",
     "test": "jest --runInBand --detectOpenHandles --forceExit",
