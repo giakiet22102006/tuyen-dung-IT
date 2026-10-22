@@ -146,7 +146,8 @@ const postModerateJob = async (req, res) => {
 
     if (jobId && jobId !== "custom" && require("mongoose").isValidObjectId(jobId)) {
       jobData = await Job.findById(jobId).populate("employerId").lean();
-    } else {
+    }
+    if (!jobData && req.body && (req.body.title || req.body.description)) {
       jobData = req.body;
     }
 

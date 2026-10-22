@@ -425,40 +425,72 @@ window.initAiCvScreening = function (applicationId) {
 // =========================================================================
 // 5. Admin: AI Job Fraud & Policy Moderation Scan (GLOBAL)
 // =========================================================================
-window.scanJobWithAi = async function (jobId) {
-  console.log('[AI Job Moderation] Scanning job ID:', jobId);
-  const modal = document.getElementById('modalAiJobModeration');
-  if (!modal) {
-    console.error('Không tìm thấy #modalAiJobModeration');
-    alert('Không tìm thấy giao diện kiểm duyệt AI.');
-    return;
+function renderModResult(mod) {
+  const badge = document.getElementById('aiModRiskBadge');
+  const scoreEl = document.getElementById('aiModScore');
+  const flagsDiv = document.getElementById('aiModFlags');
+  const assessmentEl = document.getElementById('aiModAssessment');
+
+  if (scoreEl) scoreEl.innerText = (mod.score !== undefined ? mod.score : 90) + ' / 100';
+
+  if (badge) {
+    if (mod.riskLevel === 'safe') {
+      badge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-300';
+      badge.innerHTML = '<i class="fa-solid fa-shield-check mr-1"></i> An toàn (Safe)';
+    } else if (mod.riskLevel === 'warning') {
+      badge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-300';
+      badge.innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-1"></i> Cảnh báo (Warning)';
+    } else {
+      badge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-300';
+      badge.innerHTML = '<i class="fa-solid fa-ban mr-1"></i> Rủi ro cao / Gian lận (Danger)';
+    }
   }
 
-  modal.classList.remove('hidden');
-  modal.classList.add('flex');
+  if (assessmentEl) assessmentEl.innerText = mod.assessment || 'Nội dung phù hợp tiêu chuẩn tin tuyển dụng.';
 
+  if (flagsDiv) {
+    if (mod.flags && mod.flags.length) {
+      flagsDiv.innerHTML = mod.flags
+        .map(f => `<span class="inline-block px-2.5 py-1 bg-red-50 text-red-700 border border-red-200 rounded text-xs font-medium mr-2 mb-2"><i class="fa-solid fa-flag mr-1"></i> ${f}</span>`)
+        .join('');
+    } else {
+      flagsDiv.innerHTML = '<span class="text-xs text-emerald-700 font-medium"><i class="fa-solid fa-circle-check mr-1"></i> Không phát hiện từ khóa lừa đảo hoặc dấu hiệu bất thường.</span>';
+    }
+  }
+}
+
+async function executeAiJobScan(url, bodyPayload = null) {
+  const modal = document.getElementById('modalAiJobModeration');
   const loading = document.getElementById('aiModLoading');
   const content = document.getElementById('aiModContent');
+
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+  modal.style.display = 'flex';
+  modal.style.display = 'flex';
 
   if (loading) loading.classList.remove('hidden');
   if (content) content.classList.add('hidden');
 
   try {
-    const res = await fetch(`/api/ai/moderate-job/${jobId}`, {
+    const options = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-csrf-token': getCsrfToken(),
       },
-    });
+    };
+    if (bodyPayload) {
+      options.body = JSON.stringify(bodyPayload);
+    }
 
+    const res = await fetch(url, options);
     const data = await res.json();
     if (loading) loading.classList.add('hidden');
 
     if (!res.ok || !data.success) {
-      alert(data.message || 'Lỗi quét AI tin tuyển dụng.');
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
+      alert(data.message || 'Lỗi phân tích AI.');
       return;
     }
 
@@ -467,123 +499,39 @@ window.scanJobWithAi = async function (jobId) {
   } catch (err) {
     console.error(err);
     if (loading) loading.classList.add('hidden');
-    alert('Lỗi kết nối khi quét an toàn tin tuyển dụng.');
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
+    alert('Lỗi kết nối khi quét an toàn tin tuyển dụng: ' + err.message);
   }
+}
 
-  function renderModResult(mod) {
-    const badge = document.getElementById('aiModRiskBadge');
-    const scoreEl = document.getElementById('aiModScore');
-    const flagsDiv = document.getElementById('aiModFlags');
-    const assessmentEl = document.getElementById('aiModAssessment');
-
-    if (scoreEl) scoreEl.innerText = (mod.score || 0) + ' / 100';
-
-    if (badge) {
-      if (mod.riskLevel === 'safe') {
-        badge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-300';
-        badge.innerHTML = '<i class="fa-solid fa-shield-check mr-1"></i> An toàn (Safe)';
-      } else if (mod.riskLevel === 'warning') {
-        badge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-300';
-        badge.innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-1"></i> Cảnh báo (Warning)';
-      } else {
-        badge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-300';
-        badge.innerHTML = '<i class="fa-solid fa-ban mr-1"></i> Rủi ro cao / Gian lận (Danger)';
-      }
-    }
-
-    if (assessmentEl) assessmentEl.innerText = mod.assessment || '';
-
-    if (flagsDiv) {
-      if (mod.flags && mod.flags.length) {
-        flagsDiv.innerHTML = mod.flags
-          .map(f => `<span class="inline-block px-2.5 py-1 bg-red-50 text-red-700 border border-red-200 rounded text-xs font-medium mr-2 mb-2"><i class="fa-solid fa-flag mr-1"></i> ${f}</span>`)
-          .join('');
-      } else {
-        flagsDiv.innerHTML = '<span class="text-xs text-emerald-700 font-medium"><i class="fa-solid fa-circle-check mr-1"></i> Không phát hiện từ khóa lừa đảo hoặc dấu hiệu bất thường.</span>';
-      }
-    }
-  }
+// Quét trực tiếp theo ID tin tuyển dụng (ở trang chi tiết công ty)
+window.scanJobWithAi = async function (jobId) {
+  console.log('[AI Job Moderation] Scanning job ID:', jobId);
+  executeAiJobScan(`/api/ai/moderate-job/${jobId}`);
 };
 
-// Cho phép Admin quét kiểm tra nhanh một đoạn văn bản tin tuyển dụng bất kỳ từ Dashboard
+// Mở giao diện AI Quét Tin Nhanh từ Dashboard
 window.openQuickAiJobScanner = function () {
   const modal = document.getElementById('modalAiJobModeration');
-  if (!modal) return;
-
-  const sampleTitle = prompt("Nhập tiêu đề công việc cần kiểm duyệt:", "Tuyển Lập Trình Viên Backend NodeJS");
-  if (!sampleTitle) return;
-  const sampleDesc = prompt("Nhập mô tả / yêu cầu công việc:", "Lương 1500$ - 2500$, làm việc tại văn phòng Hà Nội, không thu bất kỳ chi phí nào.");
+  if (!modal) {
+    console.error('Không tìm thấy #modalAiJobModeration');
+    return;
+  }
 
   modal.classList.remove('hidden');
   modal.classList.add('flex');
+  modal.style.display = 'flex';
+  modal.style.display = 'flex';
 
-  const loading = document.getElementById('aiModLoading');
+  // Tự động kích hoạt quét mẫu ngay lần đầu mở để quản trị viên thấy kết quả trực quan
+  const titleInput = document.getElementById('aiModJobTitle');
+  const descInput = document.getElementById('aiModJobDesc');
   const content = document.getElementById('aiModContent');
-  if (loading) loading.classList.remove('hidden');
-  if (content) content.classList.add('hidden');
 
-  fetch('/api/ai/moderate-job/custom', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-csrf-token': getCsrfToken(),
-    },
-    body: JSON.stringify({
-      title: sampleTitle,
-      description: sampleDesc,
-      companyName: "Công ty Kiểm Duyệt Mẫu",
-      salary: "1500$ - 2500$"
-    })
-  })
-    .then(r => r.json())
-    .then(data => {
-      if (loading) loading.classList.add('hidden');
-      if (data && data.success) {
-        const mod = data.data;
-        const badge = document.getElementById('aiModRiskBadge');
-        const scoreEl = document.getElementById('aiModScore');
-        const flagsDiv = document.getElementById('aiModFlags');
-        const assessmentEl = document.getElementById('aiModAssessment');
-
-        if (scoreEl) scoreEl.innerText = (mod.score || 0) + ' / 100';
-        if (badge) {
-          if (mod.riskLevel === 'safe') {
-            badge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-300';
-            badge.innerHTML = '<i class="fa-solid fa-shield-check mr-1"></i> An toàn (Safe)';
-          } else if (mod.riskLevel === 'warning') {
-            badge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-300';
-            badge.innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-1"></i> Cảnh báo (Warning)';
-          } else {
-            badge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-300';
-            badge.innerHTML = '<i class="fa-solid fa-ban mr-1"></i> Rủi ro cao / Gian lận (Danger)';
-          }
-        }
-        if (assessmentEl) assessmentEl.innerText = mod.assessment || '';
-        if (flagsDiv) {
-          if (mod.flags && mod.flags.length) {
-            flagsDiv.innerHTML = mod.flags
-              .map(f => `<span class="inline-block px-2.5 py-1 bg-red-50 text-red-700 border border-red-200 rounded text-xs font-medium mr-2 mb-2"><i class="fa-solid fa-flag mr-1"></i> ${f}</span>`)
-              .join('');
-          } else {
-            flagsDiv.innerHTML = '<span class="text-xs text-emerald-700 font-medium"><i class="fa-solid fa-circle-check mr-1"></i> Nội dung an toàn, không có dấu hiệu vi phạm.</span>';
-          }
-        }
-        if (content) content.classList.remove('hidden');
-      } else {
-        alert(data.message || 'Lỗi quét tin mẫu.');
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-      }
-    })
-    .catch(err => {
-      console.error(err);
-      if (loading) loading.classList.add('hidden');
-      alert('Lỗi kết nối khi quét tin mẫu.');
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
-    });
+  if (content && content.classList.contains('hidden')) {
+    const title = titleInput ? titleInput.value.trim() : 'Tuyển Lập Trình Viên Backend NodeJS';
+    const description = descInput ? descInput.value.trim() : 'Lương 1500$ - 2500$, làm việc tại Hà Nội, không thu phí.';
+    executeAiJobScan('/api/ai/moderate-job/custom', { title, description });
+  }
 };
 
 // =========================================================================
@@ -600,6 +548,7 @@ window.openAiMarketInsights = async function () {
 
   modal.classList.remove('hidden');
   modal.classList.add('flex');
+  modal.style.display = 'flex';
 
   const content = document.getElementById('aiMarketContent');
   const loading = document.getElementById('aiMarketLoading');
@@ -664,11 +613,13 @@ document.addEventListener('DOMContentLoaded', () => {
     closeBtnMarket.addEventListener('click', () => {
       modalMarket.classList.add('hidden');
       modalMarket.classList.remove('flex');
+      modalMarket.style.display = 'none';
     });
     modalMarket.addEventListener('click', (e) => {
       if (e.target === modalMarket) {
         modalMarket.classList.add('hidden');
         modalMarket.classList.remove('flex');
+        modalMarket.style.display = 'none';
       }
     });
   }
@@ -687,12 +638,64 @@ document.addEventListener('DOMContentLoaded', () => {
     closeBtnMod.addEventListener('click', () => {
       modalMod.classList.add('hidden');
       modalMod.classList.remove('flex');
+      modalMod.style.display = 'none';
     });
     modalMod.addEventListener('click', (e) => {
       if (e.target === modalMod) {
         modalMod.classList.add('hidden');
         modalMod.classList.remove('flex');
+        modalMod.style.display = 'none';
       }
+    });
+  }
+
+  // Nút Thử tin IT chuẩn
+  const btnSafe = document.getElementById('btnPresetSafeJob');
+  if (btnSafe) {
+    btnSafe.addEventListener('click', () => {
+      const titleInput = document.getElementById('aiModJobTitle');
+      const descInput = document.getElementById('aiModJobDesc');
+      if (titleInput) titleInput.value = 'Tuyển Senior Backend NodeJS Developer';
+      if (descInput) descInput.value = 'Mức lương thỏa thuận 1800$ - 3000$, làm việc tại Quận 1 TP.HCM hoặc Cầu Giấy Hà Nội. Chế độ bảo hiểm, khám sức khỏe cao cấp, thưởng dự án, không thu bất kỳ chi phí tuyển dụng nào.';
+      executeAiJobScan('/api/ai/moderate-job/custom', {
+        title: titleInput.value,
+        description: descInput.value,
+        companyName: 'FPT Software',
+        salary: '1800$ - 3000$'
+      });
+    });
+  }
+
+  // Nút Thử tin lừa đảo cọc tiền
+  const btnScam = document.getElementById('btnPresetScamJob');
+  if (btnScam) {
+    btnScam.addEventListener('click', () => {
+      const titleInput = document.getElementById('aiModJobTitle');
+      const descInput = document.getElementById('aiModJobDesc');
+      if (titleInput) titleInput.value = 'Việc nhẹ lương cao làm việc online tại nhà';
+      if (descInput) descInput.value = 'Công việc đơn giản gõ văn bản, thu nhập 2-5 triệu/ngày. Yêu cầu chuyển khoản nạp cọc 500k giữ chỗ làm nhiệm vụ, cam kết hoàn tiền trong 24h.';
+      executeAiJobScan('/api/ai/moderate-job/custom', {
+        title: titleInput.value,
+        description: descInput.value,
+        companyName: 'Công ty Đầu Tư Toàn Cầu',
+        salary: '2 - 5 triệu/ngày'
+      });
+    });
+  }
+
+  // Nút Quét ngay bằng AI từ Form
+  const btnRunScan = document.getElementById('btnRunAiModScan');
+  if (btnRunScan) {
+    btnRunScan.addEventListener('click', () => {
+      const titleInput = document.getElementById('aiModJobTitle');
+      const descInput = document.getElementById('aiModJobDesc');
+      const title = titleInput ? titleInput.value.trim() : '';
+      const description = descInput ? descInput.value.trim() : '';
+      if (!title && !description) {
+        alert('Vui lòng nhập tiêu đề hoặc nội dung tin tuyển dụng cần quét.');
+        return;
+      }
+      executeAiJobScan('/api/ai/moderate-job/custom', { title, description });
     });
   }
 
