@@ -1,0 +1,36 @@
+extends ../layouts/default.pug
+
+block title 
+    title #{title}
+
+block main
+    div(class="py-[60px]")
+        .contain 
+            div(class="border border-[#DEDEDE] rounded-[8px] py-[50px] px-[20px] max-w-[602px] mx-auto")
+                div(class="text-center text-[40px] text-[#0088FF] mb-[10px]")
+                    i(class="fa-solid fa-envelope-open-text")
+                h1(class="font-[700] text-[20px] text-center") Xác thực mã OTP
+                p(class="text-center text-[14px] text-[#414042] mt-[8px]") Mã xác thực gồm 6 chữ số đã được gửi tới:
+                p(class="text-center text-[15px] font-[600] text-[#000071]") #{email}
+
+                if flash && flash.success
+                    div(class="mt-[15px] p-[12px] bg-[#E8F5E9] border border-[#A5D6A7] text-[#2E7D32] rounded-[4px] text-[14px]") #{flash.success}
+                if flash && flash.error
+                    div(class="mt-[15px] p-[12px] bg-[#FFEBEE] border border-[#FFCDD2] text-[#C62828] rounded-[4px] text-[14px]") #{flash.error}
+                if errors && errors.otp
+                    div(class="mt-[15px] p-[12px] bg-[#FFEBEE] border border-[#FFCDD2] text-[#C62828] rounded-[4px] text-[14px]") #{errors.otp}
+
+                form(action=`/${userRole}/verify-otp` method="POST" class="mt-[20px]") 
+                    input(type="hidden" name="_csrf" value=csrfToken)
+                    input(type="hidden" name="email" value=email)
+
+                    div(class="")
+                        label(for="otp" class="font-[500] text-[14px] block text-center mb-[8px]") Nhập mã 6 chữ số:
+                        input(type="text" id="otp" name="otp" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" placeholder="123456" required autofocus class="border-2 border-[#0088FF] rounded-[8px] py-[12px] px-[16px] text-center font-[700] text-[24px] tracking-[8px] block w-[240px] mx-auto focus:outline-none") 
+                        p(class="text-center text-[12px] text-[#71717A] mt-[6px]") Mã này có hiệu lực trong vòng 10 phút.
+
+                    div(class="mt-[24px]") 
+                        button(type="submit" class="bg-[#0088FF] hover:bg-[#0070D2] transition py-[14px] rounded-[4px] font-[700] text-[16px] text-white text-center w-full cursor-pointer") Xác nhận mã OTP
+
+                div(class="mt-[20px] text-center font-[400] text-[14px] text-[#414042]") Chưa nhận được mã? 
+                    a(href=`/${userRole}/forgot-password` class="text-[#0088FF] hover:underline font-[600] ml-[4px]") Gửi lại mã mới

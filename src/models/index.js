@@ -6,6 +6,7 @@ const Job = require("./job.model");
 const Skill = require("./skill.model");
 const Application = require("./application.model");
 const AuditLog = require("./auditLog.model");
+const Otp = require("./otp.model");
 
 module.exports = {
   Candidate,
@@ -15,4 +16,5 @@ module.exports = {
   Skill,
   Application,
   AuditLog,
+  Otp,
 };

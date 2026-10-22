@@ -2,11 +2,12 @@
 const express = require("express");
 const router = express.Router();
 const employerAuth = require("../controllers/employer/employerAuth.controller");
+const passwordReset = require("../controllers/auth/passwordReset.controller");
 const employerJob = require("../controllers/employer/employerJob.controller");
 const employerCv = require("../controllers/employer/employerCv.controller");
 const { requireEmployer, requireGuest } = require("../middlewares/auth.middleware");
 const { doubleCsrfProtection } = require("../middlewares/csrf.middleware");
-const { loginRateLimiter } = require("../middlewares/rateLimit.middleware");
+const { loginRateLimiter, otpRateLimiter } = require("../middlewares/rateLimit.middleware");
 const { uploadLogoMiddleware, uploadJobImagesMiddleware } = require("../middlewares/upload.middleware");
 const asyncHandler = require("../utils/asyncHandler");
 
@@ -16,6 +17,16 @@ router.post("/signup", requireGuest, doubleCsrfProtection, asyncHandler(employer
 
 router.get("/login", requireGuest, employerAuth.renderLogin);
 router.post("/login", requireGuest, loginRateLimiter, doubleCsrfProtection, asyncHandler(employerAuth.postLogin));
+
+// Quên & Đặt lại mật khẩu (OTP qua Gmail)
+router.get("/forgot-password", requireGuest, passwordReset.renderForgotPassword("employer"));
+router.post("/forgot-password", requireGuest, otpRateLimiter, doubleCsrfProtection, asyncHandler(passwordReset.postForgotPassword("employer")));
+
+router.get("/verify-otp", requireGuest, passwordReset.renderVerifyOtp("employer"));
+router.post("/verify-otp", requireGuest, doubleCsrfProtection, asyncHandler(passwordReset.postVerifyOtp("employer")));
+
+router.get("/reset-password", requireGuest, asyncHandler(passwordReset.renderResetPassword("employer")));
+router.post("/reset-password", requireGuest, doubleCsrfProtection, asyncHandler(passwordReset.postResetPassword("employer")));
 
 // Authenticated routes
 router.post("/logout", doubleCsrfProtection, employerAuth.postLogout);

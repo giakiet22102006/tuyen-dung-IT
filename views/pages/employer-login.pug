@@ -29,7 +29,9 @@ block main
                             div(class="text-[#FF0000] text-[13px] mt-[-10px] mb-[10px]") #{errors.email}
 
                     div(class="")
-                        label(for="password" class="font-[500] text-[14px]") Mật khẩu *
+                        div(class="flex justify-between items-center")
+                            label(for="password" class="font-[500] text-[14px]") Mật khẩu *
+                            a(href="/employer/forgot-password" class="text-[#0088FF] text-[13px] hover:underline") Quên mật khẩu?
                         input(type="password" id="password" name="password" required class="border border-[#DEDEDE] rounded-[4px] py-[11px] px-[20px] mt-[5px] mb-[15px] block w-full") 
                         if errors && errors.password
                             div(class="text-[#FF0000] text-[13px] mt-[-10px] mb-[10px]") #{errors.password}

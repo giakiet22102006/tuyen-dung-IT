@@ -46,7 +46,29 @@ const adminLoginRateLimiter = rateLimit({
   },
 });
 
+const otpRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 phút
+  max: isTest ? 1000 : 5, // tối đa 5 yêu cầu gửi OTP trong 15 phút
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: {
+    keyGeneratorIpFallback: false,
+  },
+  keyGenerator: (req) => {
+    const email = req.body && req.body.email ? req.body.email.toLowerCase().trim() : "";
+    return `otp_${req.ip}_${email}`;
+  },
+  handler: (req, res) => {
+    if (req.flash) {
+      req.flash("error", "Bạn đã yêu cầu gửi mã OTP quá nhiều lần. Vui lòng thử lại sau 15 phút.");
+    }
+    const returnUrl = req.originalUrl.includes("employer") ? "/employer/forgot-password" : "/candidate/forgot-password";
+    return res.redirect(returnUrl);
+  },
+});
+
 module.exports = {
   loginRateLimiter,
   adminLoginRateLimiter,
+  otpRateLimiter,
 };
