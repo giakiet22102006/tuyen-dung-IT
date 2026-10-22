@@ -22,6 +22,7 @@ async function populateJobsIfEmpty() {
       city: "ha-noi",
       address: "Keangnam Landmark 72, Hà Nội",
       status: EMPLOYER_STATUS.ACTIVE,
+      isEmailVerified: true,
     });
   }
 
@@ -31,6 +32,7 @@ async function populateJobsIfEmpty() {
       fullName: "Nguyễn Văn Benchmark",
       email: "benchmark@candidate.com",
       password: "Password123",
+      isEmailVerified: true,
     });
   }
 

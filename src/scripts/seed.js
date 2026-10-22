@@ -230,6 +230,7 @@ async function seedData() {
       description: base.desc,
       status: i === 1 && !isBigMode ? EMPLOYER_STATUS.PENDING : EMPLOYER_STATUS.ACTIVE,
       approvedAt: new Date(),
+      isEmailVerified: true,
       searchText: normalizeVi(`${companyName} ${email} ${base.address}`),
     });
   }
@@ -255,6 +256,7 @@ async function seedData() {
       phone,
       avatar: { url: "/assets/images/demo/image1.png", key: "" },
       status: CANDIDATE_STATUS.ACTIVE,
+      isEmailVerified: true,
       searchText: normalizeVi(`${fullName} ${email} ${phone}`),
     });
   }
