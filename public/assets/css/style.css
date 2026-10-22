@@ -78,6 +78,8 @@ html {
     flex-direction: column;
     gap: 0;
     display: none;
+    z-index: 60;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
 }
 
 .menu ul li:hover > ul {
@@ -97,6 +99,8 @@ html {
     position: absolute;
     top: 0;
     left: 100%;
+    z-index: 70;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
 }
 /* End Menu */
 
