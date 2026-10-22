@@ -6,30 +6,30 @@ block title
 
 block main
     //- Chi tiết công ty
-    div(class="pt-[30px] pb-[60px]") 
+    div(class="pt-[20px] sm:pt-[30px] pb-[40px] sm:pb-[60px]") 
         .contain 
             //- Thông tin công ty
-            div(class="p-[20px] border border-[#DEDEDE] rounded-[8px]")
-                div(class="flex flex-wrap gap-[16px] mb-[20px]")
-                    img(src=(company.logo && company.logo.url) ? company.logo.url : "/assets/images/demo/demo4.png" alt=company.companyName class="w-[100px] h-[100px] object-contain rounded-[4px] border border-[#DEDEDE]")
-                    div(class="flex-1")
-                        div(class="font-[700] text-[28px] text-[#121212] mb-[10px]") #{company.companyName}
-                        div(class="font-[400] text-[14px] text-[#121212]") 
-                            <i class="fa-solid fa-location-dot text-[16px] mr-[4px]"></i> #{company.address || labels.getCityLabel(company.city)}
+            div(class="p-[16px] sm:p-[20px] border border-[#DEDEDE] rounded-[8px] bg-white")
+                div(class="flex flex-col sm:flex-row items-start sm:items-center gap-[16px] mb-[20px]")
+                    img(src=(company.logo && company.logo.url) ? company.logo.url : "/assets/images/demo/demo4.png" alt=company.companyName class="w-[80px] h-[80px] sm:w-[100px] sm:h-[100px] object-contain rounded-[4px] border border-[#DEDEDE] p-[4px]")
+                    div(class="flex-1 min-w-0")
+                        div(class="font-[700] text-[22px] sm:text-[28px] text-[#121212] mb-[6px] sm:mb-[10px]") #{company.companyName}
+                        div(class="font-[400] text-[13px] sm:text-[14px] text-[#121212]") 
+                            <i class="fa-solid fa-location-dot text-[15px] mr-[4px] text-[#0088FF]"></i> #{company.address || labels.getCityLabel(company.city)}
  
-                div(class="")
-                    div(class="flex gap-[4px] mb-[10px]")
-                        div(class="font-[400] text-[16px] text-[#A6A6A6]") Mô hình công ty:
-                        div(class="font-[400] text-[16px] text-[#121212]") #{company.companyModel || "Sản phẩm & Dịch vụ"}
-                    div(class="flex gap-[4px] mb-[10px]")
-                        div(class="font-[400] text-[16px] text-[#A6A6A6]") Quy mô công ty:
-                        div(class="font-[400] text-[16px] text-[#121212]") #{company.companySize || "100 - 500 nhân viên"}
-                    div(class="flex gap-[4px] mb-[10px]")
-                        div(class="font-[400] text-[16px] text-[#A6A6A6]") Thời gian làm việc:
-                        div(class="font-[400] text-[16px] text-[#121212]") #{company.workingTime || "Thứ 2 - Thứ 6"}
-                    div(class="flex gap-[4px]")
-                        div(class="font-[400] text-[16px] text-[#A6A6A6]") Làm việc ngoài giờ:
-                        div(class="font-[400] text-[16px] text-[#121212]") #{company.overtime || "Không có OT"}
+                div(class="grid grid-cols-1 sm:grid-cols-2 gap-x-[20px] gap-y-[8px] border-t border-gray-100 pt-[16px]")
+                    div(class="flex justify-between sm:justify-start gap-[8px]")
+                        span(class="font-[400] text-[13px] sm:text-[15px] text-[#A6A6A6]") Mô hình công ty:
+                        span(class="font-[500] text-[13px] sm:text-[15px] text-[#121212]") #{company.companyModel || "Sản phẩm & Dịch vụ"}
+                    div(class="flex justify-between sm:justify-start gap-[8px]")
+                        span(class="font-[400] text-[13px] sm:text-[15px] text-[#A6A6A6]") Quy mô công ty:
+                        span(class="font-[500] text-[13px] sm:text-[15px] text-[#121212]") #{company.companySize || "100 - 500 nhân viên"}
+                    div(class="flex justify-between sm:justify-start gap-[8px]")
+                        span(class="font-[400] text-[13px] sm:text-[15px] text-[#A6A6A6]") Thời gian làm việc:
+                        span(class="font-[500] text-[13px] sm:text-[15px] text-[#121212]") #{company.workingTime || "Thứ 2 - Thứ 6"}
+                    div(class="flex justify-between sm:justify-start gap-[8px]")
+                        span(class="font-[400] text-[13px] sm:text-[15px] text-[#A6A6A6]") Làm việc ngoài giờ:
+                        span(class="font-[500] text-[13px] sm:text-[15px] text-[#121212]") #{company.overtime || "Không có OT"}
             //- Hết Thông tin công ty
 
             //- Mô tả chi tiết

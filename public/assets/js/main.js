@@ -49,7 +49,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const mobileNav = document.querySelector("#mobileNav");
   if (mobileMenuBtn && mobileNav) {
     mobileMenuBtn.addEventListener("click", () => {
-      mobileNav.classList.toggle("hidden");
+      const isHidden = mobileNav.classList.toggle("hidden");
+      const icon = mobileMenuBtn.querySelector("i");
+      if (icon) {
+        if (isHidden) {
+          icon.className = "fa-solid fa-bars";
+        } else {
+          icon.className = "fa-solid fa-xmark";
+        }
+      }
     });
   }
 

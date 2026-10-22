@@ -1,5 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap');
 
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
 * {
     font-family: "Lexend", sans-serif;
 }
@@ -13,6 +17,13 @@ body {
   min-height: 100%;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
+  max-width: 100vw;
+  width: 100%;
+}
+
+img {
+  max-width: 100%;
 }
 
 main.main-content {
@@ -20,6 +31,7 @@ main.main-content {
   display: flex;
   flex-direction: column;
   width: 100%;
+  overflow-x: hidden;
 }
 
 footer.site-footer {
@@ -27,39 +39,39 @@ footer.site-footer {
   width: 100%;
 }
 
-/* Contain */
-/* Laptop cỡ to trở lên */
+/* Contain - Fluid Responsive Mobile-first */
 .contain {
-  width: 1184px;
+  width: 100%;
+  max-width: 1184px;
   margin: 0 auto;
+  padding: 0 16px;
 }
 
-/* Laptop cỡ nhỏ */
-@media (max-width: 1200px) {
+@media (min-width: 576px) {
   .contain {
-    width: 960px;
-  }
-}
-
-/* Ipad cỡ to */
-@media (max-width: 992px) {
-  .contain {
-    width: 720px;
-  }
-}
-
-/* Ipad cỡ nhỏ */
-@media (max-width: 768px) {
-  .contain {
-    width: 540px;
-  }
-}
-
-/* Điện thoại */
-@media (max-width: 576px) {
-  .contain {
-    width: 100%;
+    max-width: 540px;
     padding: 0 16px;
+  }
+}
+
+@media (min-width: 768px) {
+  .contain {
+    max-width: 720px;
+    padding: 0 20px;
+  }
+}
+
+@media (min-width: 992px) {
+  .contain {
+    max-width: 960px;
+    padding: 0 24px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .contain {
+    max-width: 1184px;
+    padding: 0;
   }
 }
 /* End Contain */
@@ -165,3 +177,25 @@ footer.site-footer {
   }
 }
 /* End Card Item  */
+
+/* Mobile UI Polish & Touch Ergonomics */
+@media (max-width: 768px) {
+  /* Prevent auto-zoom on iOS Safari when focusing input */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="tel"],
+  input[type="search"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  button, input, select, textarea, a {
+    touch-action: manipulation;
+  }
+}
+
+#mobileNav {
+  transition: max-height 0.3s ease, opacity 0.25s ease;
+}

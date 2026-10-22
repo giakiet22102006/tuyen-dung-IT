@@ -1,8 +1,8 @@
-div(class="bg-[#000065] py-[60px]")
+div(class="bg-[#000065] py-[35px] sm:py-[60px]")
     .contain 
-        h1(class="font-[700] text-[28px] text-white text-center mb-[30px]") #{totalPublicJobs !== undefined ? totalPublicJobs : 887} Việc làm IT cho Developer "Chất"
-        form(action="/search" method="GET" class="flex gap-[15px] md:flex-nowrap flex-wrap relative" id="headerSearchForm")
-            select(name="city" class="md:w-[240px] w-full h-[56px] rounded-[4px] bg-white font-[500] text-[16px] px-[20px] text-[#121212]")
+        h1(class="font-[700] text-[20px] sm:text-[28px] text-white text-center mb-[20px] sm:mb-[30px] leading-snug") #{totalPublicJobs !== undefined ? totalPublicJobs : 887} Việc làm IT cho Developer "Chất"
+        form(action="/search" method="GET" class="flex gap-[10px] sm:gap-[15px] md:flex-nowrap flex-wrap relative" id="headerSearchForm")
+            select(name="city" class="md:w-[220px] w-full h-[48px] sm:h-[56px] rounded-[6px] bg-white font-[500] text-[15px] sm:text-[16px] px-[16px] text-[#121212] border-0 shadow-sm cursor-pointer")
                 option(value="") Tất cả thành phố
                 if cities && cities.length > 0
                     each c in cities
@@ -13,20 +13,20 @@ div(class="bg-[#000065] py-[60px]")
                     option(value="ho-chi-minh" selected=(selectedCity === 'ho-chi-minh')) TP. Hồ Chí Minh
                     option(value="khac" selected=(selectedCity === 'khac')) Khác
 
-            div(class="flex-1 relative")
-                input(type="text" name="keyword" id="searchKeywordInput" value=(keyword || "") placeholder="Nhập từ khóa (vd: ReactJS, Python, Frontend...)" autocomplete="off" class="w-full h-[56px] rounded-[4px] bg-white font-[500] text-[16px] px-[20px] text-[#121212] focus:outline-none focus:ring-2 focus:ring-[#0088FF]")
-                div(id="searchSuggestionsDropdown" class="hidden absolute left-0 right-0 top-[60px] bg-white rounded-[6px] shadow-2xl border border-gray-200 z-50 overflow-hidden text-left")
+            div(class="flex-1 min-w-[200px] w-full md:w-auto relative")
+                input(type="text" name="keyword" id="searchKeywordInput" value=(keyword || "") placeholder="Nhập từ khóa (vd: ReactJS, Python, Frontend...)" autocomplete="off" class="w-full h-[48px] sm:h-[56px] rounded-[6px] bg-white font-[500] text-[15px] sm:text-[16px] px-[16px] text-[#121212] focus:outline-none focus:ring-2 focus:ring-[#0088FF] shadow-sm")
+                div(id="searchSuggestionsDropdown" class="hidden absolute left-0 right-0 top-[52px] sm:top-[60px] bg-white rounded-[6px] shadow-2xl border border-gray-200 z-50 overflow-hidden text-left")
 
-            button(type="submit" class="md:w-[240px] w-full h-[56px] bg-[#0088FF] hover:bg-[#0070d6] transition-colors font-[500] text-[16px] text-white flex justify-center items-center gap-[10px] rounded-[4px] cursor-pointer")
-                <i class="fa-solid fa-magnifying-glass text-[20px]"></i> Tìm Kiếm
+            button(type="submit" class="md:w-[200px] w-full h-[48px] sm:h-[56px] bg-[#0088FF] hover:bg-[#0070d6] transition-colors font-[600] text-[15px] sm:text-[16px] text-white flex justify-center items-center gap-[8px] rounded-[6px] cursor-pointer shadow-sm")
+                <i class="fa-solid fa-magnifying-glass text-[18px]"></i> Tìm Kiếm
 
-        div(class="sm:mt-[30px] mt-[38px] flex items-center gap-[12px] flex-wrap")
-            div(class="font-[500] text-[16px] text-[#DEDEDE]") Mọi người đang tìm kiếm:
-            div(class="flex gap-[10px] flex-wrap")
+        div(class="mt-[20px] sm:mt-[30px] flex items-center gap-[8px] sm:gap-[12px] flex-wrap")
+            div(class="font-[500] text-[13px] sm:text-[15px] text-[#DEDEDE]") Mọi người đang tìm kiếm:
+            div(class="flex gap-[6px] sm:gap-[8px] flex-wrap")
                 if topSkills && topSkills.length > 0
                     each sk in topSkills
-                        a(href="/search?skill=" + sk.slug class="bg-[#121212] hover:bg-[#414042] border border-[#414042] py-[8px] px-[12px] font-[500] text-[16px] text-[#DEDEDE] hover:text-white rounded-[20px]") #{sk.name}
+                        a(href="/search?skill=" + sk.slug class="bg-[#121212] hover:bg-[#414042] border border-[#414042] py-[5px] sm:py-[6px] px-[10px] sm:px-[12px] font-[500] text-[12px] sm:text-[14px] text-[#DEDEDE] hover:text-white rounded-[20px] transition-colors") #{sk.name}
                 else
-                    a(href="/search?skill=javascript" class="bg-[#121212] hover:bg-[#414042] border border-[#414042] py-[8px] px-[12px] font-[500] text-[16px] text-[#DEDEDE] hover:text-white rounded-[20px]") Javascript
-                    a(href="/search?skill=reactjs" class="bg-[#121212] hover:bg-[#414042] border border-[#414042] py-[8px] px-[12px] font-[500] text-[16px] text-[#DEDEDE] hover:text-white rounded-[20px]") ReactJS
-                    a(href="/search?skill=nodejs" class="bg-[#121212] hover:bg-[#414042] border border-[#414042] py-[8px] px-[12px] font-[500] text-[16px] text-[#DEDEDE] hover:text-white rounded-[20px]") NodeJS
+                    a(href="/search?skill=javascript" class="bg-[#121212] hover:bg-[#414042] border border-[#414042] py-[5px] sm:py-[6px] px-[10px] sm:px-[12px] font-[500] text-[12px] sm:text-[14px] text-[#DEDEDE] hover:text-white rounded-[20px] transition-colors") Javascript
+                    a(href="/search?skill=reactjs" class="bg-[#121212] hover:bg-[#414042] border border-[#414042] py-[5px] sm:py-[6px] px-[10px] sm:px-[12px] font-[500] text-[12px] sm:text-[14px] text-[#DEDEDE] hover:text-white rounded-[20px] transition-colors") ReactJS
+                    a(href="/search?skill=nodejs" class="bg-[#121212] hover:bg-[#414042] border border-[#414042] py-[5px] sm:py-[6px] px-[10px] sm:px-[12px] font-[500] text-[12px] sm:text-[14px] text-[#DEDEDE] hover:text-white rounded-[20px] transition-colors") NodeJS

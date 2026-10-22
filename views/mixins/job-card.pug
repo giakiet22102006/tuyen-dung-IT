@@ -1,20 +1,18 @@
 mixin jobCard(job)
-    div(class="card-item")
+    div(class="card-item hover:shadow-md transition-shadow")
         img(src="/assets/images/bg-card.png" class="inner-bg")
         a(href="/jobs/" + job.slug class="inner-box block") 
-            div(class="py-[20px] px-[16px]")
-                div(class="inner-img w-[116px]")
+            div(class="py-[20px] px-[14px] sm:px-[16px]")
+                div(class="inner-img w-[88px] sm:w-[116px]")
                     img(src=(job.employerId && job.employerId.logo && job.employerId.logo.url) ? job.employerId.logo.url : "/assets/images/demo/image1.png" alt=(job.employerId ? job.employerId.companyName : "Company Logo"))
-                h3(class="font-[700] text-[18px] text-[#121212] text-center line-clamp-[2] mb-[6px]") #{job.title}
-                div(class="font-[400] text-[14px] text-[#121212] text-center mb-[12px]") #{job.employerId ? job.employerId.companyName : ""}
-                div(class="font-[600] text-[16px] text-[#0088FF] text-center mb-[6px]") #{formatSalary(job.salaryMin, job.salaryMax)}
-                div(class="font-[400] text-[14px] text-[#121212] text-center") 
-                    <i class="fa-solid fa-user-tie text-[16px] mr-[8px]"></i> #{labels.getPositionLabel(job.position)}
-                div(class="font-[400] text-[14px] text-[#121212] text-center mt-[6px]") 
-                    <i class="fa-solid fa-briefcase text-[16px] mr-[8px]"></i> #{labels.getWorkingFormLabel(job.workingForm)}
-                div(class="font-[400] text-[14px] text-[#121212] text-center mt-[6px]") 
-                    <i class="fa-solid fa-location-dot text-[16px] mr-[8px]"></i> #{labels.getCityLabel(job.city)}
+                h3(class="font-[700] text-[16px] sm:text-[18px] text-[#121212] text-center line-clamp-[2] mb-[6px]") #{job.title}
+                div(class="font-[400] text-[13px] sm:text-[14px] text-[#414042] text-center mb-[10px] truncate") #{job.employerId ? job.employerId.companyName : ""}
+                div(class="font-[600] text-[15px] sm:text-[16px] text-[#0088FF] text-center mb-[6px]") #{formatSalary(job.salaryMin, job.salaryMax)}
+                div(class="flex flex-wrap justify-center gap-x-[10px] gap-y-[4px] text-[12px] sm:text-[14px] text-[#555]") 
+                    span: <i class="fa-solid fa-user-tie text-[13px] mr-[4px]"></i> #{labels.getPositionLabel(job.position)}
+                    span: <i class="fa-solid fa-briefcase text-[13px] mr-[4px]"></i> #{labels.getWorkingFormLabel(job.workingForm)}
+                    span: <i class="fa-solid fa-location-dot text-[13px] mr-[4px]"></i> #{labels.getCityLabel(job.city)}
                 if job.skills && job.skills.length > 0
-                    div(class="mt-[12px] flex justify-center items-center flex-wrap gap-[12px]") 
+                    div(class="mt-[12px] flex justify-center items-center flex-wrap gap-[6px] sm:gap-[8px]") 
                         each sk in job.skills
-                            div(class="border border-[#DEDEDE] rounded-[20px] py-[6px] px-[16px] font-[400] text-[12px] text-[#414042]") #{sk.name}
+                            div(class="border border-[#DEDEDE] rounded-[20px] py-[4px] sm:py-[6px] px-[12px] sm:px-[16px] font-[400] text-[11px] sm:text-[12px] text-[#414042] bg-white/70") #{sk.name}

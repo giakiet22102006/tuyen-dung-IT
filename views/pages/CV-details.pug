@@ -5,7 +5,7 @@ block title
 
 block main
     //- Chi tiết CV
-    div(class="py-[60px]")
+    div(class="py-[35px] sm:py-[60px]")
         .contain 
             div(class="")
                 if flash && flash.success
@@ -14,16 +14,16 @@ block main
                     div(class="mb-[20px] p-[12px] bg-[#FFEBEE] border border-[#FFCDD2] text-[#C62828] rounded-[4px] text-[14px]") #{flash.error}
 
                 //- Thông tin CV
-                div(class="border border-[#DEDEDE] rounded-[8px] p-[20px]")
-                    div(class="flex flex-col sm:flex-row justify-between mb-[20px] gap-[20px]")
-                        h1(class="font-[700] text-[20px]") Thông tin CV
-                        a(href="/employer/cvs" class="font-[400] text-[14px] text-[#0088FF] underline") Quay lại danh sách
+                div(class="border border-[#DEDEDE] rounded-[8px] p-[16px] sm:p-[20px] bg-white")
+                    div(class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-[20px] gap-[10px]")
+                        h1(class="font-[700] text-[18px] sm:text-[20px]") Thông tin CV
+                        a(href="/employer/cvs" class="font-[500] text-[14px] text-[#0088FF] hover:underline") <i class="fa-solid fa-arrow-left mr-[4px]"></i> Quay lại danh sách
 
-                    div(class="font-[400] text-[16px]") Họ tên: <span class="font-[600] text-[16px]">#{application.fullName}</span> 
-                    div(class="font-[400] text-[16px] mt-[10px]") Email: <span class="font-[600] text-[16px]">#{application.email}</span> 
-                    div(class="font-[400] text-[16px] mt-[10px]") Số điện thoại: <span class="font-[600] text-[16px]">#{application.phone}</span> 
+                    div(class="font-[400] text-[15px] sm:text-[16px]") Họ tên: <span class="font-[600]">#{application.fullName}</span> 
+                    div(class="font-[400] text-[15px] sm:text-[16px] mt-[10px]") Email: <span class="font-[600]">#{application.email}</span> 
+                    div(class="font-[400] text-[15px] sm:text-[16px] mt-[10px]") Số điện thoại: <span class="font-[600]">#{application.phone}</span> 
                     
-                    div(class="font-[400] text-[16px] mt-[10px]") Trạng thái hồ sơ: 
+                    div(class="font-[400] text-[15px] sm:text-[16px] mt-[10px]") Trạng thái hồ sơ: 
                         if application.status === 'pending'
                             span(class="font-[600] text-[#FFB200] ml-[6px]") <i class="fa-solid fa-clock mr-[2px]"></i> Chưa duyệt
                         else if application.status === 'approved'
@@ -31,16 +31,16 @@ block main
                         else if application.status === 'rejected'
                             span(class="font-[600] text-[#C62828] ml-[6px]") <i class="fa-solid fa-circle-xmark mr-[2px]"></i> Đã từ chối
 
-                    div(class="flex gap-[10px] mt-[15px]")
+                    div(class="flex flex-wrap gap-[10px] mt-[16px]")
                         form(action="/employer/cvs/" + application._id + "/status" method="POST" class="inline")
                             input(type="hidden" name="_csrf" value=csrfToken)
                             input(type="hidden" name="status" value="approved")
-                            button(type="submit" class="bg-[#9FDB7C] rounded-[4px] py-[8px] px-[20px] cursor-pointer font-[400] text-[14px] text-black") Duyệt phù hợp
+                            button(type="submit" class="bg-[#9FDB7C] hover:bg-[#8ccb6a] rounded-[6px] py-[8px] px-[20px] cursor-pointer font-[600] text-[13px] text-black shadow-xs") Duyệt phù hợp
 
                         form(action="/employer/cvs/" + application._id + "/status" method="POST" class="inline")
                             input(type="hidden" name="_csrf" value=csrfToken)
                             input(type="hidden" name="status" value="rejected")
-                            button(type="submit" class="bg-[#FF5100] rounded-[4px] py-[8px] px-[20px] cursor-pointer font-[400] text-[14px] text-white") Từ chối hồ sơ
+                            button(type="submit" class="bg-[#FF5100] hover:bg-[#e64900] rounded-[6px] py-[8px] px-[20px] cursor-pointer font-[600] text-[13px] text-white shadow-xs") Từ chối hồ sơ
 
                     //- Trợ lý AI Tuyển Dụng (CV Screening & Executive Summary)
                     div(class="mt-[24px] p-[20px] bg-gradient-to-r from-blue-50/70 via-indigo-50/50 to-white rounded-[10px] border border-blue-200")

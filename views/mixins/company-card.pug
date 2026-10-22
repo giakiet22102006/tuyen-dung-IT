@@ -1,12 +1,12 @@
 mixin companyCard(company)
-    div(class="card-item")
+    div(class="card-item hover:shadow-md transition-shadow")
         img(src="/assets/images/bg-card.png" class="inner-bg")
         a(href="/companies/" + company.slug class="inner-box block") 
-            div(class="sm:pt-[32px] pt-[20px] sm:pb-[24px] pb-[16px] sm:px-[16px] px-[8px]")
-                div(class="inner-img sm:w-[160px] w-[125px]")
+            div(class="pt-[24px] sm:pt-[32px] pb-[16px] sm:pb-[24px] px-[12px] sm:px-[16px]")
+                div(class="inner-img w-[110px] sm:w-[150px]")
                     img(src=(company.logo && company.logo.url) ? company.logo.url : "/assets/images/demo/image1.png" alt=company.companyName)
-                h3(class="font-[700] sm:text-[18px] text-[14px] text-[#121212] text-center line-clamp-[2]") #{company.companyName}
-            div(class="bg-[#F7F7F7] py-[12px] sm:px-[16px] px-[6px] flex items-center justify-between sm:flex-row flex-col gap-[12px]")
-                div(class="font-[400] sm:text-[14px] text-[12px] text-[#414042]") #{labels.getCityLabel(company.city)}
-                div(class="font-[400] sm:text-[14px] text-[12px] text-[#121212]") 
-                    <i class="fa-solid fa-user-tie text-[16px] mr-[6px] text-[#000096]"></i> #{company.jobCount || 0} Việc làm
+                h3(class="font-[700] text-[16px] sm:text-[18px] text-[#121212] text-center line-clamp-[2]") #{company.companyName}
+            div(class="bg-[#F7F7F7] py-[10px] sm:py-[12px] px-[12px] sm:px-[16px] flex items-center justify-between flex-row gap-[8px]")
+                div(class="font-[400] text-[12px] sm:text-[14px] text-[#414042] truncate max-w-[140px]") #{labels.getCityLabel(company.city)}
+                div(class="font-[500] text-[12px] sm:text-[14px] text-[#121212] shrink-0") 
+                    <i class="fa-solid fa-user-tie text-[14px] sm:text-[16px] mr-[4px] text-[#000096]"></i> #{company.jobCount || 0} Việc làm

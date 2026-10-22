@@ -5,12 +5,12 @@ block title
 
 block main
     //- Quản lý công việc
-    div(class="py-[60px]") 
+    div(class="py-[35px] sm:py-[60px]") 
         .contain 
             div(class="")
-                div(class="flex flex-col sm:flex-row justify-between mb-[20px] gap-[20px]")
-                    h1(class="font-[700] sm:text-[28px] text-[24px] text-[#121212]") Quản lý công việc
-                    a(href="/employer/jobs/create" class="bg-[#0088FF] rounded-[4px] py-[8px] px-[20px] font-[400] text-[14px] text-white flex items-center self-start sm:self-auto cursor-pointer") Thêm mới 
+                div(class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-[20px] gap-[12px] sm:gap-[20px]")
+                    h1(class="font-[700] text-[20px] sm:text-[28px] text-[#121212]") Quản lý công việc
+                    a(href="/employer/jobs/create" class="bg-[#0088FF] hover:bg-[#0070d6] rounded-[6px] py-[9px] px-[20px] font-[600] text-[14px] text-white flex items-center cursor-pointer shadow-sm") + Đăng việc làm mới 
 
                 if flash && flash.success
                     div(class="mb-[20px] p-[12px] bg-[#E8F5E9] border border-[#A5D6A7] text-[#2E7D32] rounded-[4px] text-[14px]") #{flash.success}
@@ -20,25 +20,25 @@ block main
                 div(class="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-[20px]")
                     if jobs && jobs.length > 0
                         each job in jobs
-                            div(class="card-item p-[20px]")
+                            div(class="card-item p-[16px] sm:p-[20px] hover:shadow-md transition-shadow")
                                 img(src="/assets/images/bg-card.png" class="inner-bg")
-                                div(class="font-[700] text-[18px] text-[#121212] text-center line-clamp-[2]") #{job.title}
-                                div(class="font-[600] text-[16px] text-[#0088FF] text-center mt-[12px]") #{formatSalary(job.salaryMin, job.salaryMax)}
-                                div(class="font-[400] text-[14px] text-[#121212] text-center mt-[6px]") 
-                                    <i class="fa-solid fa-user-tie text-[16px] mr-[8px]"></i> #{labels.getPositionLabel(job.position)}
-                                div(class="font-[400] text-[14px] text-[#121212] text-center mt-[6px]") 
-                                    <i class="fa-solid fa-briefcase text-[16px] mr-[8px]"></i> #{labels.getWorkingFormLabel(job.workingForm)}
+                                div(class="font-[700] text-[17px] sm:text-[18px] text-[#121212] text-center line-clamp-[2]") #{job.title}
+                                div(class="font-[600] text-[15px] sm:text-[16px] text-[#0088FF] text-center mt-[10px]") #{formatSalary(job.salaryMin, job.salaryMax)}
+                                div(class="font-[400] text-[13px] sm:text-[14px] text-[#121212] text-center mt-[6px]") 
+                                    <i class="fa-solid fa-user-tie text-[14px] mr-[6px]"></i> #{labels.getPositionLabel(job.position)}
+                                div(class="font-[400] text-[13px] sm:text-[14px] text-[#121212] text-center mt-[6px]") 
+                                    <i class="fa-solid fa-briefcase text-[14px] mr-[6px]"></i> #{labels.getWorkingFormLabel(job.workingForm)}
             
                                 if job.skills && job.skills.length > 0
-                                    div(class="mt-[12px] mb-[19px] flex justify-center items-center flex-wrap gap-[8px]") 
+                                    div(class="mt-[12px] mb-[16px] flex justify-center items-center flex-wrap gap-[6px]") 
                                         each sk in job.skills
-                                            div(class="border border-[#DEDEDE] rounded-[20px] py-[6px] px-[16px] font-[400] text-[12px] text-[#414042]") #{sk.name}
+                                            div(class="border border-[#DEDEDE] rounded-[20px] py-[4px] px-[12px] font-[400] text-[11px] sm:text-[12px] text-[#414042] bg-white/70") #{sk.name}
             
-                                div(class="flex justify-center gap-[12px]")
-                                    a(href="/employer/jobs/" + job._id + "/edit" class="bg-[#FFB200] rounded-[4px] py-[8px] px-[20px] font-[400] text-[14px] text-black cursor-pointer") Sửa
+                                div(class="flex justify-center gap-[10px] mt-[10px]")
+                                    a(href="/employer/jobs/" + job._id + "/edit" class="bg-[#FFB200] hover:bg-[#e5a000] rounded-[6px] py-[7px] px-[18px] font-[600] text-[13px] text-black cursor-pointer shadow-xs") Sửa
                                     form(action="/employer/jobs/" + job._id + "/delete" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa tin tuyển dụng này không?');" class="inline")
                                         input(type="hidden" name="_csrf" value=csrfToken)
-                                        button(type="submit" class="bg-[#FF0000] rounded-[4px] py-[8px] px-[20px] font-[400] text-[14px] text-white cursor-pointer") Xóa
+                                        button(type="submit" class="bg-[#FF0000] hover:bg-[#d60000] rounded-[6px] py-[7px] px-[18px] font-[600] text-[13px] text-white cursor-pointer shadow-xs") Xóa
                     else
                         div(class="col-span-full py-[40px] text-center text-[#717171] text-[16px]") Bạn chưa đăng tin tuyển dụng nào. Hãy nhấn nút "Thêm mới" để bắt đầu!
     

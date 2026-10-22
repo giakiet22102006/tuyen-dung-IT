@@ -5,10 +5,10 @@ block title
 
 block main
     //- Đăng nhập
-    div(class="py-[60px]")
+    div(class="py-[30px] sm:py-[60px]")
         .contain 
-            div(class="border border-[#DEDEDE] rounded-[8px] py-[50px] px-[20px] max-w-[602px] mx-auto")
-                h1(class="font-[700] text-[20px] text-center") Đăng nhập (Nhà tuyển dụng)
+            div(class="border border-[#DEDEDE] rounded-[8px] py-[30px] sm:py-[50px] px-[16px] sm:px-[30px] max-w-[602px] w-full mx-auto bg-white shadow-xs")
+                h1(class="font-[700] text-[20px] sm:text-[22px] text-center") Đăng nhập (Nhà tuyển dụng)
 
                 if flash && flash.success
                     div(class="mt-[15px] p-[12px] bg-[#E8F5E9] border border-[#A5D6A7] text-[#2E7D32] rounded-[4px] text-[14px]") #{flash.success}

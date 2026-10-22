@@ -5,10 +5,10 @@ block title
 
 block main
     //- Quản lý CV
-    div(class="py-[60px]") 
+    div(class="py-[35px] sm:py-[60px]") 
         .contain 
             div(class="")
-                h1(class="font-[700] text-[28px] text-[#121212] mb-[20px]") Quản lý CV
+                h1(class="font-[700] text-[20px] sm:text-[28px] text-[#121212] mb-[20px]") Quản lý CV
 
                 if flash && flash.success
                     div(class="mb-[20px] p-[12px] bg-[#E8F5E9] border border-[#A5D6A7] text-[#2E7D32] rounded-[4px] text-[14px]") #{flash.success}
@@ -18,46 +18,46 @@ block main
                 div(class="grid xl:grid-cols-3 lg:grid-cols-2 grid-cols-1 gap-[20px]")
                     if applications && applications.length > 0
                         each app in applications
-                            div(class="card-item p-[20px]")
+                            div(class="card-item p-[16px] sm:p-[20px] hover:shadow-md transition-shadow")
                                 img(src="/assets/images/bg-card.png" class="inner-bg")
-                                div(class="font-[700] text-[18px] text-[#121212] text-center line-clamp-[2]") #{app.jobId ? app.jobId.title : "Việc làm không còn tồn tại"}
-                                div(class="mt-[12px] font-[400] text-[14px] text-center") Ứng viên: <span class="font-[700] text-[14px]">#{app.fullName}</span>
-                                div(class="mt-[6px] font-[400] text-[14px] text-[#121212] text-center") <i class="fa-solid fa-envelope mr-[3px]"></i> #{app.email}
-                                div(class="mt-[7px] font-[400] text-[14px] text-[#121212] text-center") <i class="fa-solid fa-phone mr-[3px]"></i> #{app.phone}
-                                div(class="font-[600] text-[16px] text-[#0088FF] text-center mt-[12px]") #{app.jobId ? formatSalary(app.jobId.salaryMin, app.jobId.salaryMax) : "Thương lượng"}
-                                div(class="font-[400] text-[14px] text-[#121212] text-center mt-[6px]") 
-                                    <i class="fa-solid fa-user-tie text-[16px] mr-[1px]"></i> #{app.jobId ? labels.getPositionLabel(app.jobId.position) : "Khác"}
-                                div(class="font-[400] text-[14px] text-[#121212] text-center mt-[6px]") 
-                                    <i class="fa-solid fa-briefcase text-[16px] mr-[1px]"></i> #{app.jobId ? labels.getWorkingFormLabel(app.jobId.workingForm) : "Khác"}
+                                div(class="font-[700] text-[17px] sm:text-[18px] text-[#121212] text-center line-clamp-[2]") #{app.jobId ? app.jobId.title : "Việc làm không còn tồn tại"}
+                                div(class="mt-[10px] font-[400] text-[13px] sm:text-[14px] text-center") Ứng viên: <span class="font-[700]">#{app.fullName}</span>
+                                div(class="mt-[4px] font-[400] text-[13px] sm:text-[14px] text-[#121212] text-center truncate") <i class="fa-solid fa-envelope mr-[4px]"></i> #{app.email}
+                                div(class="mt-[4px] font-[400] text-[13px] sm:text-[14px] text-[#121212] text-center") <i class="fa-solid fa-phone mr-[4px]"></i> #{app.phone}
+                                div(class="font-[600] text-[15px] sm:text-[16px] text-[#0088FF] text-center mt-[10px]") #{app.jobId ? formatSalary(app.jobId.salaryMin, app.jobId.salaryMax) : "Thương lượng"}
+                                div(class="font-[400] text-[13px] sm:text-[14px] text-[#121212] text-center mt-[6px]") 
+                                    <i class="fa-solid fa-user-tie text-[14px] mr-[4px]"></i> #{app.jobId ? labels.getPositionLabel(app.jobId.position) : "Khác"}
+                                div(class="font-[400] text-[13px] sm:text-[14px] text-[#121212] text-center mt-[6px]") 
+                                    <i class="fa-solid fa-briefcase text-[14px] mr-[4px]"></i> #{app.jobId ? labels.getWorkingFormLabel(app.jobId.workingForm) : "Khác"}
 
                                 if !app.viewed
-                                    div(class="font-[400] text-[14px] text-[#FF0000] text-center mt-[6px]") <i class="fa-solid fa-eye text-[16px] mr-[1px]"></i> Chưa xem
+                                    div(class="font-[500] text-[13px] text-[#FF0000] text-center mt-[6px]") <i class="fa-solid fa-eye mr-[4px]"></i> Chưa xem
                                 else
-                                    div(class="font-[400] text-[14px] text-[#2E7D32] text-center mt-[6px]") <i class="fa-solid fa-eye text-[16px] mr-[1px]"></i> Đã xem
+                                    div(class="font-[500] text-[13px] text-[#2E7D32] text-center mt-[6px]") <i class="fa-solid fa-eye mr-[4px]"></i> Đã xem
 
                                 if app.status === 'pending'
-                                    div(class="font-[400] text-[14px] text-[#121212] text-center mt-[6px]") <i class="fa-solid fa-circle-check text-[16px] mr-[1px] text-[#FFB200]"></i> Chưa duyệt
+                                    div(class="font-[500] text-[13px] text-[#FFB200] text-center mt-[6px]") <i class="fa-solid fa-clock mr-[4px]"></i> Chưa duyệt
                                 else if app.status === 'approved'
-                                    div(class="font-[400] text-[14px] text-[#2E7D32] text-center mt-[6px]") <i class="fa-solid fa-circle-check text-[16px] mr-[1px]"></i> Đã duyệt phù hợp
+                                    div(class="font-[500] text-[13px] text-[#2E7D32] text-center mt-[6px]") <i class="fa-solid fa-circle-check mr-[4px]"></i> Đã duyệt phù hợp
                                 else if app.status === 'rejected'
-                                    div(class="font-[400] text-[14px] text-[#C62828] text-center mt-[6px]") <i class="fa-solid fa-circle-xmark text-[16px] mr-[1px]"></i> Đã từ chối
+                                    div(class="font-[500] text-[13px] text-[#C62828] text-center mt-[6px]") <i class="fa-solid fa-circle-xmark mr-[4px]"></i> Đã từ chối
                                 
-                                div(class="flex flex-wrap justify-center gap-[8px] mt-[12px]")
-                                    a(href="/employer/cvs/" + app._id class="bg-[#0088FF] rounded-[4px] py-[8px] px-[20px] cursor-pointer font-[400] text-[14px] text-white flex items-center") Xem
+                                div(class="grid grid-cols-2 sm:flex sm:flex-wrap justify-center gap-[6px] sm:gap-[8px] mt-[14px]")
+                                    a(href="/employer/cvs/" + app._id class="bg-[#0088FF] hover:bg-[#0070d6] rounded-[4px] py-[8px] px-[12px] cursor-pointer font-[500] text-[13px] text-white flex items-center justify-center text-center shadow-xs") Xem
                                     
                                     form(action="/employer/cvs/" + app._id + "/status" method="POST" class="inline")
                                         input(type="hidden" name="_csrf" value=csrfToken)
                                         input(type="hidden" name="status" value="approved")
-                                        button(type="submit" class="bg-[#9FDB7C] rounded-[4px] py-[8px] px-[20px] cursor-pointer font-[400] text-[14px] text-black") Duyệt
+                                        button(type="submit" class="bg-[#9FDB7C] hover:bg-[#8ccb6a] rounded-[4px] py-[8px] px-[12px] cursor-pointer font-[500] text-[13px] text-black w-full shadow-xs") Duyệt
 
                                     form(action="/employer/cvs/" + app._id + "/status" method="POST" class="inline")
                                         input(type="hidden" name="_csrf" value=csrfToken)
                                         input(type="hidden" name="status" value="rejected")
-                                        button(type="submit" class="bg-[#FF5100] rounded-[4px] py-[8px] px-[20px] cursor-pointer font-[400] text-[14px] text-white") Từ chối
+                                        button(type="submit" class="bg-[#FF5100] hover:bg-[#e64900] rounded-[4px] py-[8px] px-[12px] cursor-pointer font-[500] text-[13px] text-white w-full shadow-xs") Từ chối
 
                                     form(action="/employer/cvs/" + app._id + "/delete" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa hồ sơ CV này không?');" class="inline")
                                         input(type="hidden" name="_csrf" value=csrfToken)
-                                        button(type="submit" class="bg-[#FF0000] rounded-[4px] py-[8px] px-[20px] cursor-pointer font-[400] text-[14px] text-white") Xóa
+                                        button(type="submit" class="bg-[#FF0000] hover:bg-[#d60000] rounded-[4px] py-[8px] px-[12px] cursor-pointer font-[500] text-[13px] text-white w-full shadow-xs") Xóa
                     else
                         div(class="col-span-full py-[40px] text-center text-[#717171] text-[16px]") Hiện tại chưa có ứng viên nào nộp hồ sơ ứng tuyển.
 

@@ -5,30 +5,30 @@ block title
 
 block main
     //- Chi tiết công việc
-    div(class="pt-[30px] pb-[60px]")
+    div(class="pt-[20px] sm:pt-[30px] pb-[40px] sm:pb-[60px]")
         .contain 
             div(class="grid lg:grid-cols-[770fr_395fr] grid-cols-1 gap-[20px]")
                 div(class="") 
                     //- Thông tin công việc
-                    div(class="border border-[#DEDEDE] rounded-[8px] p-[20px]") 
-                        h1(class="font-[700] sm:text-[28px] text-[24px] text-[#121212] mb-[10px]") #{job.title}
-                        div(class="font-[400] text-[16px] text-[#414042] mb-[10px]") #{company ? company.companyName : (job.employerId ? job.employerId.companyName : "")}
-                        div(class="font-[700] text-[20px] text-[#0088FF] mb-[20px]") #{formatSalary(job.salaryMin, job.salaryMax)}
-                        a(href="#boxApply" class="bg-[#0088FF] rounded-[4px] p-[14px] font-[700] text-[16px] text-white block text-center cursor-pointer") Ứng tuyển
+                    div(class="border border-[#DEDEDE] rounded-[8px] p-[16px] sm:p-[20px]") 
+                        h1(class="font-[700] text-[20px] sm:text-[28px] text-[#121212] mb-[10px] leading-tight") #{job.title}
+                        div(class="font-[400] text-[14px] sm:text-[16px] text-[#414042] mb-[10px]") #{company ? company.companyName : (job.employerId ? job.employerId.companyName : "")}
+                        div(class="font-[700] text-[18px] sm:text-[20px] text-[#0088FF] mb-[16px] sm:mb-[20px]") #{formatSalary(job.salaryMin, job.salaryMax)}
+                        a(href="#boxApply" class="bg-[#0088FF] hover:bg-[#0070d6] rounded-[6px] p-[12px] sm:p-[14px] font-[700] text-[15px] sm:text-[16px] text-white block text-center cursor-pointer shadow-sm") Ứng tuyển ngay
 
                         //- AI Career Assist Actions
                         div(class="grid grid-cols-1 sm:grid-cols-2 gap-[10px] mt-[12px]")
-                            button(type="button" id="btnOpenAiCvMatch" class="flex items-center justify-center gap-[8px] bg-[#059669] hover:bg-[#047857] text-white font-[600] text-[14px] py-[12px] px-[16px] rounded-[4px] cursor-pointer transition-all")
+                            button(type="button" id="btnOpenAiCvMatch" class="flex items-center justify-center gap-[8px] bg-[#059669] hover:bg-[#047857] text-white font-[600] text-[13px] sm:text-[14px] py-[11px] sm:py-[12px] px-[14px] rounded-[6px] cursor-pointer transition-all shadow-xs")
                                 <i class="fa-solid fa-wand-magic-sparkles"></i>
                                 span ✨ AI So Khớp Độ Phù Hợp CV
-                            button(type="button" id="btnOpenAiInterview" class="flex items-center justify-center gap-[8px] bg-[#4F46E5] hover:bg-[#4338CA] text-white font-[600] text-[14px] py-[12px] px-[16px] rounded-[4px] cursor-pointer transition-all")
+                            button(type="button" id="btnOpenAiInterview" class="flex items-center justify-center gap-[8px] bg-[#4F46E5] hover:bg-[#4338CA] text-white font-[600] text-[13px] sm:text-[14px] py-[11px] sm:py-[12px] px-[14px] rounded-[6px] cursor-pointer transition-all shadow-xs")
                                 <i class="fa-solid fa-comments"></i>
                                 span 💡 Luyện Phỏng Vấn Với AI
 
                         if job.images && job.images.length > 0
-                            div(class="grid grid-cols-3 gap-[16px] mt-[20px]") 
+                            div(class="grid grid-cols-3 gap-[10px] sm:gap-[16px] mt-[20px]") 
                                 each imgItem, idx in job.images.slice(0, 3)
-                                    img(src=imgItem.url alt=(job.title + " - Ảnh " + (idx + 1)) class="rounded-[4px] w-full h-[140px] sm:h-[180px] object-cover")
+                                    img(src=imgItem.url alt=(job.title + " - Ảnh " + (idx + 1)) class="rounded-[4px] w-full h-[90px] sm:h-[160px] md:h-[180px] object-cover")
 
                         div(class="mt-[20px]")
                             div(class="font-[400] text-[14px] text-[#121212]") 
@@ -124,12 +124,12 @@ block main
                         <i class="fa-solid fa-xmark"></i>
 
                 //- Modal Body
-                div(class="p-[24px] overflow-y-auto flex-1")
+                div(class="p-[16px] sm:p-[24px] overflow-y-auto flex-1")
                     //- Form nộp CV để phân tích
                     form(id="formAiCvMatch" class="space-y-[16px]")
                         div
                             label(class="block font-[600] text-[14px] text-gray-800 mb-[6px]") Cách 1: Tải lên file CV PDF của bạn
-                            input(type="file" id="aiCvFileInput" accept="application/pdf" class="border border-dashed border-[#D1D5DB] rounded-[8px] p-[16px] w-full text-[14px] text-gray-600 bg-gray-50 hover:bg-gray-100 cursor-pointer")
+                            input(type="file" id="aiCvFileInput" accept="application/pdf" class="border border-dashed border-[#D1D5DB] rounded-[8px] p-[12px] sm:p-[16px] w-full text-[14px] text-gray-600 bg-gray-50 hover:bg-gray-100 cursor-pointer")
                         
                         div(class="text-center text-[12px] text-gray-400 font-[600]") — HOẶC —
 
@@ -149,12 +149,12 @@ block main
 
                     //- Kết quả phân tích AI
                     div(id="aiCvMatchResult" class="hidden space-y-[20px]")
-                        div(class="bg-emerald-50/60 border border-emerald-200 rounded-[10px] p-[20px] flex items-center justify-between")
+                        div(class="bg-emerald-50/60 border border-emerald-200 rounded-[10px] p-[16px] sm:p-[20px] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-[12px]")
                             div
                                 p(class="text-[13px] font-[600] text-emerald-800 uppercase tracking-wide") Điểm phù hợp ước tính
                                 p(id="aiMatchSummary" class="text-[14px] text-gray-700 mt-[6px] leading-relaxed")
-                            div(class="text-right shrink-0 ml-[16px]")
-                                span(id="aiMatchScore" class="text-4xl font-black text-emerald-600") 85%
+                            div(class="text-left sm:text-right shrink-0")
+                                span(id="aiMatchScore" class="text-3xl sm:text-4xl font-black text-emerald-600") 85%
                                 p(class="text-[11px] font-[500] text-gray-500 mt-[2px]") Phù hợp
 
                         div
@@ -195,7 +195,7 @@ block main
                         <i class="fa-solid fa-xmark"></i>
 
                 //- Modal Body
-                div(class="p-[24px] overflow-y-auto flex-1 space-y-[16px]")
+                div(class="p-[16px] sm:p-[24px] overflow-y-auto flex-1 space-y-[16px]")
                     div(id="aiInterviewLoading" class="py-[40px] text-center space-y-[12px]")
                         div(class="inline-block animate-spin text-indigo-600 text-[36px]")
                             <i class="fa-solid fa-circle-notch"></i>

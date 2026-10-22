@@ -10,7 +10,7 @@ block main
     //- End Section 1
 
     //- Kết quả tìm kiếm
-    div(class="py-[60px]")
+    div(class="py-[35px] sm:py-[60px]")
         .contain 
             //- TH1: Đã tự động áp dụng Fuzzy Search (Typo Tolerance)
             if isFuzzyApplied
@@ -35,9 +35,9 @@ block main
                     a(href=`/search?keyword=${encodeURIComponent(didYouMean)}&city=${selectedCity || ''}&position=${selectedPosition || ''}&workingForm=${selectedWorkingForm || ''}` class="font-[700] text-[#0088FF] hover:underline text-[14px]") #{didYouMean}
                     span(class="text-[#717171] text-[13px]") ?
 
-            h2(class="font-[700] text-[28px] text-[#121212] mb-[30px]") !{searchTitle || "Danh sách việc làm"}
-            div(class="rounded-[8px] bg-white py-[10px] px-[20px] flex flex-wrap gap-[12px]" style="box-shadow: 0px 4px 20px 0px #0000000F;")
-                select(id="filterPosition" class="filter-select border border-[#DEDEDE] rounded-[20px] py-[8px] px-[18px] font-[400] text-[16px] text-[#414042] cursor-pointer") 
+            h2(class="font-[700] text-[20px] sm:text-[28px] text-[#121212] mb-[20px] sm:mb-[30px]") !{searchTitle || "Danh sách việc làm"}
+            div(class="rounded-[8px] bg-white p-[12px] sm:py-[10px] sm:px-[20px] flex flex-col sm:flex-row gap-[10px] sm:gap-[12px] shadow-sm")
+                select(id="filterPosition" class="filter-select w-full sm:w-auto border border-[#DEDEDE] rounded-[20px] py-[8px] px-[16px] font-[400] text-[14px] sm:text-[16px] text-[#414042] cursor-pointer bg-white") 
                     option(value="") Cấp bậc
                     if positions && positions.length > 0
                         each p in positions
@@ -50,7 +50,7 @@ block main
                         option(value="senior") Senior
                         option(value="manager") Manager
 
-                select(id="filterWorkingForm" class="filter-select border border-[#DEDEDE] rounded-[20px] py-[8px] px-[18px] font-[400] text-[16px] text-[#414042] cursor-pointer")
+                select(id="filterWorkingForm" class="filter-select w-full sm:w-auto border border-[#DEDEDE] rounded-[20px] py-[8px] px-[16px] font-[400] text-[14px] sm:text-[16px] text-[#414042] cursor-pointer bg-white")
                     option(value="") Hình thức làm việc 
                     if workingForms && workingForms.length > 0
                         each w in workingForms
