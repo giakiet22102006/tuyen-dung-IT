@@ -1,0 +1,59 @@
+extends ../layouts/default.pug
+
+block title 
+    title #{title || "Quản lý CV đã gửi (Ứng viên)"}
+
+block main
+    //- Quản lý CV đã gửi
+    div(class="py-[60px]") 
+        .contain 
+            div(class="")
+                h1(class="font-[700] text-[28px] text-[#121212] mb-[20px]") Quản lý CV đã gửi
+
+                if flash && flash.success
+                    div(class="mb-[20px] p-[12px] bg-[#E8F5E9] border border-[#A5D6A7] text-[#2E7D32] rounded-[4px] text-[14px]") #{flash.success}
+                if flash && flash.error
+                    div(class="mb-[20px] p-[12px] bg-[#FFEBEE] border border-[#FFCDD2] text-[#C62828] rounded-[4px] text-[14px]") #{flash.error}
+
+                div(class="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-[20px]")
+                    if applications && applications.length > 0
+                        each app in applications
+                            div(class="card-item p-[20px]")
+                                img(src="/assets/images/bg-card.png" class="inner-bg")
+                                if app.jobId
+                                    a(href="/jobs/" + app.jobId.slug class="font-[700] text-[18px] text-[#121212] text-center line-clamp-[2] hover:text-[#0088FF]") #{app.jobId.title}
+                                else
+                                    div(class="font-[700] text-[18px] text-[#121212] text-center line-clamp-[2]") Công việc đã ngừng hiển thị
+
+                                div(class="mt-[12px] font-[400] text-[14px] text-center") Công ty: <span class="font-[700] text-[14px]">#{app.employerId ? app.employerId.companyName : "Công ty ẩn"}</span>
+                                div(class="font-[600] text-[16px] text-[#0088FF] text-center mt-[6px]") #{app.jobId ? formatSalary(app.jobId.salaryMin, app.jobId.salaryMax) : "Thương lượng"}
+                                div(class="font-[400] text-[14px] text-[#121212] text-center mt-[6px]") 
+                                    <i class="fa-solid fa-user-tie text-[16px] mr-[1px]"></i> #{app.jobId ? labels.getPositionLabel(app.jobId.position) : "Khác"}
+                                div(class="font-[400] text-[14px] text-[#121212] text-center mt-[6px]") 
+                                    <i class="fa-solid fa-briefcase text-[16px] mr-[1px]"></i> #{app.jobId ? labels.getWorkingFormLabel(app.jobId.workingForm) : "Khác"}
+                                
+                                div(class="font-[400] text-[14px] text-center mt-[6px]")
+                                    if app.status === 'pending'
+                                        span(class="text-[#FFB200]") <i class="fa-solid fa-clock text-[16px] mr-[1px]"></i> Chưa duyệt
+                                    else if app.status === 'approved'
+                                        span(class="text-[#2E7D32]") <i class="fa-solid fa-circle-check text-[16px] mr-[1px]"></i> Phù hợp
+                                    else if app.status === 'rejected'
+                                        span(class="text-[#C62828]") <i class="fa-solid fa-circle-xmark text-[16px] mr-[1px]"></i> Từ chối
+            
+                                div(class="flex flex-wrap justify-center gap-[8px] mt-[12px]")
+                                    a(href="/candidate/applied-jobs/" + app._id + "/pdf" target="_blank" class="bg-[#0088FF] rounded-[4px] py-[8px] px-[20px] cursor-pointer font-[400] text-[14px] text-white flex items-center") Xem
+                                    if app.status === 'pending'
+                                        form(action="/candidate/applied-jobs/" + app._id + "/delete" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn rút hồ sơ ứng tuyển này không?');" class="inline")
+                                            input(type="hidden" name="_csrf" value=csrfToken)
+                                            button(type="submit" class="bg-[#FF0000] rounded-[4px] py-[8px] px-[20px] cursor-pointer font-[400] text-[14px] text-white") Rút hồ sơ
+                                    else
+                                        button(disabled title="Hồ sơ đã được nhà tuyển dụng xem xét, không thể rút" class="bg-[#E0E0E0] rounded-[4px] py-[8px] px-[20px] cursor-not-allowed font-[400] text-[14px] text-[#888888]") Rút hồ sơ
+                    else
+                        div(class="col-span-full py-[40px] text-center text-[#717171] text-[16px]") Bạn chưa gửi hồ sơ ứng tuyển nào. Hãy tìm kiếm việc làm phù hợp và ứng tuyển ngay nhé!
+
+                if pagination && pagination.totalPages > 1
+                    div(class="mt-[30px]")
+                        select(class="pagination-select border border-[#DEDEDE] rounded-[8px] py-[12px] px-[18px] font-[400] text-[16px] text-[#414042] cursor-pointer")
+                            - for (let i = 1; i <= pagination.totalPages; i++)
+                                option(value=i selected=(pagination.currentPage === i)) Trang #{i}
+    //- Hết Quản lý CV đã gửi

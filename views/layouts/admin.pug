@@ -1,0 +1,102 @@
+doctype html
+html(lang="vi")
+    head
+        meta(charset="UTF-8")
+        meta(name="viewport" content="width=device-width, initial-scale=1.0")
+        meta(name="robots" content="noindex, nofollow")
+        block title
+            title #{title || "Quản trị viên - VN.ITJobs"}
+        link(rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css")
+        link(rel="stylesheet" href="/assets/css/tailwind.css")
+        script(src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js")
+    body(class="bg-[#F8F9FA] text-[#121212] font-['Lexend',sans-serif] antialiased min-h-screen flex flex-col lg:flex-row")
+        //- Sidebar Quản trị
+        aside(id="adminSidebar" class="w-full lg:w-[260px] bg-[#000065] text-white flex-shrink-0 flex flex-col justify-between py-[24px] px-[20px] transition-all")
+            div
+                div(class="flex items-center justify-between pb-[24px] border-b border-white/10 mb-[24px]")
+                    a(href="/" + adminPath class="font-[700] text-[20px] tracking-wide flex items-center gap-[10px]")
+                        span(class="text-[#0088FF]") VN.
+                        span ITJobs
+                        span(class="text-[12px] bg-[#0088FF] px-[8px] py-[2px] rounded font-[600]") ADMIN
+                    button(id="sidebarCloseBtn" class="lg:hidden text-white/80 hover:text-white text-[20px]")
+                        <i class="fa-solid fa-xmark"></i>
+
+                nav(class="space-y-[8px]")
+                    a(href="/" + adminPath class="flex items-center gap-[12px] px-[16px] py-[12px] rounded-[6px] text-[15px] font-[500] hover:bg-white/10 transition-colors " + (currentPath === "/" + adminPath ? "bg-[#0088FF] text-white font-[600]" : "text-white/80"))
+                        <i class="fa-solid fa-chart-pie w-[20px]"></i>
+                        span Bảng điều khiển
+
+                    a(href="/" + adminPath + "/employers" class="flex items-center gap-[12px] px-[16px] py-[12px] rounded-[6px] text-[15px] font-[500] hover:bg-white/10 transition-colors " + (currentPath.startsWith("/" + adminPath + "/employers") ? "bg-[#0088FF] text-white font-[600]" : "text-white/80"))
+                        <i class="fa-solid fa-building w-[20px]"></i>
+                        span Nhà tuyển dụng
+
+                    a(href="/" + adminPath + "/candidates" class="flex items-center gap-[12px] px-[16px] py-[12px] rounded-[6px] text-[15px] font-[500] hover:bg-white/10 transition-colors " + (currentPath.startsWith("/" + adminPath + "/candidates") ? "bg-[#0088FF] text-white font-[600]" : "text-white/80"))
+                        <i class="fa-solid fa-users w-[20px]"></i>
+                        span Ứng viên
+
+                    a(href="/" + adminPath + "/logs" class="flex items-center gap-[12px] px-[16px] py-[12px] rounded-[6px] text-[15px] font-[500] hover:bg-white/10 transition-colors " + (currentPath.startsWith("/" + adminPath + "/logs") ? "bg-[#0088FF] text-white font-[600]" : "text-white/80"))
+                        <i class="fa-solid fa-clock-rotate-left w-[20px]"></i>
+                        span Nhật ký hệ thống
+
+                    div(class="pt-[16px] mt-[16px] border-t border-white/10")
+                        a(href="/" target="_blank" class="flex items-center gap-[12px] px-[16px] py-[12px] rounded-[6px] text-[14px] text-white/70 hover:bg-white/10 transition-colors")
+                            <i class="fa-solid fa-arrow-up-right-from-square w-[20px]"></i>
+                            span Xem trang công khai
+
+            div(class="pt-[20px] border-t border-white/10 mt-[24px]")
+                if currentAdmin
+                    div(class="mb-[16px] px-[8px]")
+                        div(class="text-[14px] font-[600] truncate") #{currentAdmin.fullName}
+                        div(class="text-[12px] text-white/60 capitalize flex items-center gap-[6px] mt-[2px]")
+                            span(class="w-[8px] h-[8px] rounded-full bg-emerald-400 inline-block")
+                            span #{currentAdmin.role === 'superadmin' ? 'Super Administrator' : 'Administrator'}
+
+                form(action="/" + adminPath + "/logout" method="POST")
+                    input(type="hidden" name="_csrf" value=csrfToken)
+                    button(type="submit" class="w-full flex items-center gap-[10px] px-[16px] py-[10px] rounded-[6px] text-[14px] font-[500] bg-white/10 hover:bg-red-600/80 text-white transition-colors cursor-pointer")
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                        span Đăng xuất
+
+        //- Main Content
+        div(class="flex-1 flex flex-col min-w-0")
+            //- Header
+            header(class="bg-white border-b border-[#E5E7EB] px-[24px] py-[16px] flex items-center justify-between")
+                div(class="flex items-center gap-[16px]")
+                    button(id="sidebarToggleBtn" class="lg:hidden text-[#4B5563] text-[20px] cursor-pointer")
+                        <i class="fa-solid fa-bars"></i>
+                    div(class="font-[600] text-[18px] text-[#111827]") Hệ thống Quản trị VN.ITJobs
+
+                div(class="flex items-center gap-[16px]")
+                    if currentAdmin
+                        span(class="text-[13px] bg-blue-50 text-blue-700 font-[500] px-[10px] py-[4px] rounded-full border border-blue-200")
+                            <i class="fa-solid fa-shield-halved mr-[4px]"></i> #{currentAdmin.email}
+
+            //- Body Content
+            main(class="p-[20px] lg:p-[32px] flex-1")
+                if flash && flash.success
+                    div(class="mb-[24px] p-[16px] bg-[#E8F5E9] border border-[#A5D6A7] text-[#2E7D32] rounded-[8px] text-[15px] flex items-center justify-between")
+                        div(class="flex items-center gap-[10px]")
+                            <i class="fa-solid fa-circle-check text-[18px]"></i>
+                            span #{flash.success}
+                if flash && flash.error
+                    div(class="mb-[24px] p-[16px] bg-[#FFEBEE] border border-[#FFCDD2] text-[#C62828] rounded-[8px] text-[15px] flex items-center justify-between")
+                        div(class="flex items-center gap-[10px]")
+                            <i class="fa-solid fa-circle-exclamation text-[18px]"></i>
+                            span #{flash.error}
+
+                block main
+
+        script.
+            const toggleBtn = document.getElementById('sidebarToggleBtn');
+            const closeBtn = document.getElementById('sidebarCloseBtn');
+            const sidebar = document.getElementById('adminSidebar');
+            if (toggleBtn && sidebar) {
+                toggleBtn.addEventListener('click', () => {
+                    sidebar.classList.toggle('hidden');
+                });
+            }
+            if (closeBtn && sidebar) {
+                closeBtn.addEventListener('click', () => {
+                    sidebar.classList.add('hidden');
+                });
+            }

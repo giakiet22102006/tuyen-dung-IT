@@ -1,0 +1,47 @@
+extends ../layouts/default.pug
+
+block title 
+    title #{title || "Thông tin cá nhân (Ứng viên)"}
+
+block main
+    //- Thông tin cá nhân
+    div(class="py-[60px]")
+        .contain 
+            div(class="border border-[#DEDEDE] rounded-[8px] p-[20px]")
+                h1(class="font-[700] text-[20px] mb-[20px]") Thông tin cá nhân
+
+                if flash && flash.success
+                    div(class="mb-[20px] p-[12px] bg-[#E8F5E9] border border-[#A5D6A7] text-[#2E7D32] rounded-[4px] text-[14px]") #{flash.success}
+                if flash && flash.error
+                    div(class="mb-[20px] p-[12px] bg-[#FFEBEE] border border-[#FFCDD2] text-[#C62828] rounded-[4px] text-[14px]") #{flash.error}
+
+                form(action="/candidate/profile" method="POST" enctype="multipart/form-data" class="") 
+                    input(type="hidden" name="_csrf" value=csrfToken)
+
+                    div(class="")
+                        label(for="fullName" class="font-[500] text-[14px]") Họ tên *
+                        input(type="text" id="fullName" name="fullName" value=(candidate ? candidate.fullName : "") required class="border border-[#DEDEDE] rounded-[4px] py-[11px] px-[20px] mt-[5px] mb-[15px] block w-full")
+                        if errors && errors.fullName
+                            div(class="text-[#FF0000] text-[13px] mt-[-10px] mb-[15px]") #{errors.fullName}
+
+                    div(class="")
+                        label(for="avatar" class="font-[500] text-[14px]") Avatar (JPG, PNG, WebP ≤ 2MB)
+                        if candidate && candidate.avatar && candidate.avatar.url
+                            div(class="my-[10px] flex items-center gap-[15px]")
+                                img(src=candidate.avatar.url alt="Avatar hiện tại" class="w-[80px] h-[80px] object-cover rounded-full border border-[#DEDEDE]")
+                                span(class="text-[13px] text-[#717171]") Ảnh đại diện hiện tại
+                        input(type="file" id="avatar" name="avatar" accept="image/*" class="border border-[#DEDEDE] rounded-[4px] py-[11px] px-[20px] mt-[5px] mb-[15px] block w-full")
+                        if errors && errors.avatar
+                            div(class="text-[#FF0000] text-[13px] mt-[-10px] mb-[15px]") #{errors.avatar}
+
+                    div(class="grid md:grid-cols-2 grid-cols-1 md:gap-[20px] gap-[15px]")
+                        div(class="")
+                            label(for="email" class="font-[500] text-[14px]") Email *
+                            input(type="email" id="email" value=(candidate ? candidate.email : "") disabled class="border border-[#DEDEDE] bg-[#F5F5F5] rounded-[4px] py-[11px] px-[20px] mt-[5px] mb-[15px] block w-full cursor-not-allowed")
+                        div(class="")
+                            label(for="phone" class="font-[500] text-[14px]") Số điện thoại
+                            input(type="text" id="phone" name="phone" value=(candidate ? candidate.phone : "") placeholder="Ví dụ: 0912345678" class="border border-[#DEDEDE] rounded-[4px] py-[11px] px-[20px] mt-[5px] mb-[15px] block w-full")
+
+                    div(class="mt-[10px]")
+                        button(type="submit" class="bg-[#0088FF] py-[14px] px-[20px] rounded-[4px] font-[700] text-[16px] text-white cursor-pointer") Cập nhật
+    //- Hết Thông tin cá nhân

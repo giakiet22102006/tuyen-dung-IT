@@ -1,0 +1,154 @@
+extends ../layouts/admin.pug
+
+block title
+    title Bảng điều khiển Quản trị - VN.ITJobs
+
+block main
+    div(class="space-y-[32px]")
+        //- Header title
+        div(class="flex flex-col sm:flex-row sm:items-center justify-between gap-[16px]")
+            div
+                h1(class="font-[700] text-[24px] text-[#111827]") Bảng điều khiển Hệ thống
+                p(class="text-[14px] text-[#6B7280] mt-[4px]") Tổng hợp số liệu và hoạt động tuyển dụng thời gian thực
+
+        //- 5 Thẻ số liệu thống kê (Stats Cards)
+        div(class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-[16px]")
+            //- Tổng ứng viên
+            div(class="bg-white p-[20px] rounded-[10px] border border-[#E5E7EB] shadow-xs flex items-center justify-between")
+                div
+                    p(class="text-[13px] font-[500] text-[#6B7280]") Tổng Ứng viên
+                    p(class="text-[26px] font-[700] text-[#111827] mt-[4px]") #{stats.totalCandidates}
+                div(class="w-[48px] h-[48px] rounded-full bg-blue-50 text-[#0088FF] flex items-center justify-center text-[20px]")
+                    <i class="fa-solid fa-users"></i>
+
+            //- Tổng Nhà tuyển dụng
+            div(class="bg-white p-[20px] rounded-[10px] border border-[#E5E7EB] shadow-xs flex items-center justify-between")
+                div
+                    p(class="text-[13px] font-[500] text-[#6B7280]") Tổng Nhà tuyển dụng
+                    p(class="text-[26px] font-[700] text-[#111827] mt-[4px]") #{stats.totalEmployers}
+                div(class="w-[48px] h-[48px] rounded-full bg-indigo-50 text-[#4F46E5] flex items-center justify-center text-[20px]")
+                    <i class="fa-solid fa-building"></i>
+
+            //- NTD Chờ duyệt
+            div(class="bg-white p-[20px] rounded-[10px] border border-[#E5E7EB] shadow-xs flex items-center justify-between")
+                div
+                    p(class="text-[13px] font-[500] text-[#6B7280]") NTD Chờ duyệt
+                    p(class="text-[26px] font-[700] text-[#D97706] mt-[4px]") #{stats.pendingEmployers}
+                div(class="w-[48px] h-[48px] rounded-full bg-amber-50 text-[#D97706] flex items-center justify-center text-[20px]")
+                    <i class="fa-solid fa-clock"></i>
+
+            //- Tổng việc làm
+            div(class="bg-white p-[20px] rounded-[10px] border border-[#E5E7EB] shadow-xs flex items-center justify-between")
+                div
+                    p(class="text-[13px] font-[500] text-[#6B7280]") Tổng Việc làm
+                    p(class="text-[26px] font-[700] text-[#111827] mt-[4px]") #{stats.totalJobs}
+                div(class="w-[48px] h-[48px] rounded-full bg-emerald-50 text-[#059669] flex items-center justify-center text-[20px]")
+                    <i class="fa-solid fa-briefcase"></i>
+
+            //- Tổng CV đã nộp
+            div(class="bg-white p-[20px] rounded-[10px] border border-[#E5E7EB] shadow-xs flex items-center justify-between")
+                div
+                    p(class="text-[13px] font-[500] text-[#6B7280]") Tổng Hồ sơ CV
+                    p(class="text-[26px] font-[700] text-[#111827] mt-[4px]") #{stats.totalApplications}
+                div(class="w-[48px] h-[48px] rounded-full bg-purple-50 text-[#9333EA] flex items-center justify-center text-[20px]")
+                    <i class="fa-solid fa-file-lines"></i>
+
+        //- Biểu đồ tăng trưởng 30 ngày (Chart.js)
+        div(class="bg-white p-[24px] rounded-[10px] border border-[#E5E7EB] shadow-xs")
+            div(class="flex items-center justify-between mb-[20px]")
+                div
+                    h2(class="font-[700] text-[18px] text-[#111827]") Xu hướng Đăng ký Tài khoản (30 ngày gần nhất)
+                    p(class="text-[13px] text-[#6B7280] mt-[2px]") Thống kê số lượng Ứng viên và Nhà tuyển dụng mới
+                div(class="flex items-center gap-[16px] text-[13px]")
+                    span(class="flex items-center gap-[6px]")
+                        span(class="w-[12px] h-[12px] rounded-full bg-[#0088FF] inline-block")
+                        span Ứng viên
+                    span(class="flex items-center gap-[6px]")
+                        span(class="w-[12px] h-[12px] rounded-full bg-[#000065] inline-block")
+                        span Nhà tuyển dụng
+
+            div(class="w-full h-[320px]")
+                canvas(id="registrationChart")
+
+        //- Danh sách 5 Nhà tuyển dụng chờ duyệt mới nhất
+        div(class="bg-white rounded-[10px] border border-[#E5E7EB] shadow-xs overflow-hidden")
+            div(class="p-[20px] border-b border-[#E5E7EB] flex items-center justify-between")
+                div
+                    h2(class="font-[700] text-[18px] text-[#111827]") Nhà tuyển dụng chờ phê duyệt
+                    p(class="text-[13px] text-[#6B7280] mt-[2px]") 5 tài khoản công ty mới đăng ký gần nhất đang chờ kiểm duyệt
+                a(href="/" + adminPath + "/employers?status=pending" class="text-[13px] font-[600] text-[#0088FF] hover:underline") Xem tất cả <i class="fa-solid fa-arrow-right ml-[4px]"></i>
+
+            div(class="overflow-x-auto")
+                table(class="w-full text-left border-collapse text-[14px]")
+                    thead(class="bg-[#F9FAFB] text-[#4B5563] text-[12px] uppercase font-[600] border-b border-[#E5E7EB]")
+                        tr
+                            th(class="py-[12px] px-[20px]") Tên công ty
+                            th(class="py-[12px] px-[20px]") Email
+                            th(class="py-[12px] px-[20px]") Thành phố
+                            th(class="py-[12px] px-[20px]") Ngày đăng ký
+                            th(class="py-[12px] px-[20px] text-right") Thao tác
+                    tbody(class="divide-y divide-[#E5E7EB]")
+                        if latestPendingEmployers && latestPendingEmployers.length > 0
+                            each emp in latestPendingEmployers
+                                tr(class="hover:bg-gray-50 transition-colors")
+                                    td(class="py-[14px] px-[20px] font-[600] text-[#111827]")
+                                        a(href="/" + adminPath + "/employers/" + emp._id class="hover:text-[#0088FF]") #{emp.companyName}
+                                    td(class="py-[14px] px-[20px] text-[#4B5563]") #{emp.email}
+                                    td(class="py-[14px] px-[20px] text-[#4B5563] capitalize") #{labels.getCityLabel(emp.city)}
+                                    td(class="py-[14px] px-[20px] text-[#4B5563]") #{formatDate(emp.createdAt)}
+                                    td(class="py-[14px] px-[20px] text-right")
+                                        div(class="flex items-center justify-end gap-[8px]")
+                                            a(href="/" + adminPath + "/employers/" + emp._id class="px-[12px] py-[6px] bg-gray-100 hover:bg-gray-200 text-[#374151] rounded text-[13px] font-[500] transition-colors") Chi tiết
+                                            form(action="/" + adminPath + "/employers/" + emp._id + "/approve" method="POST" class="inline")
+                                                input(type="hidden" name="_csrf" value=csrfToken)
+                                                button(type="submit" class="px-[14px] py-[6px] bg-[#059669] hover:bg-[#047857] text-white rounded text-[13px] font-[600] cursor-pointer transition-colors") Duyệt nhanh
+                        else
+                            tr
+                                td(colspan="5" class="py-[32px] text-center text-[#6B7280]") Hiện tại không có Nhà tuyển dụng nào đang chờ phê duyệt.
+
+    script.
+        const chartData = !{JSON.stringify(chartData)};
+        const ctx = document.getElementById('registrationChart');
+        if (ctx && chartData) {
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartData.labels,
+                    datasets: [
+                        {
+                            label: 'Ứng viên',
+                            data: chartData.candidates,
+                            borderColor: '#0088FF',
+                            backgroundColor: 'rgba(0, 136, 255, 0.08)',
+                            fill: true,
+                            tension: 0.3,
+                            borderWidth: 2,
+                            pointRadius: 3,
+                        },
+                        {
+                            label: 'Nhà tuyển dụng',
+                            data: chartData.employers,
+                            borderColor: '#000065',
+                            backgroundColor: 'rgba(0, 0, 101, 0.08)',
+                            fill: true,
+                            tension: 0.3,
+                            borderWidth: 2,
+                            pointRadius: 3,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { precision: 0 }
+                        }
+                    }
+                }
+            });
+        }

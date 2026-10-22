@@ -1,0 +1,101 @@
+extends ../layouts/default.pug
+
+block title 
+    title #{title || (job ? job.title : "Chi tiết công việc")}
+
+block main
+    //- Chi tiết công việc
+    div(class="pt-[30px] pb-[60px]")
+        .contain 
+            div(class="grid lg:grid-cols-[770fr_395fr] grid-cols-1 gap-[20px]")
+                div(class="") 
+                    //- Thông tin công việc
+                    div(class="border border-[#DEDEDE] rounded-[8px] p-[20px]") 
+                        h1(class="font-[700] sm:text-[28px] text-[24px] text-[#121212] mb-[10px]") #{job.title}
+                        div(class="font-[400] text-[16px] text-[#414042] mb-[10px]") #{company ? company.companyName : (job.employerId ? job.employerId.companyName : "")}
+                        div(class="font-[700] text-[20px] text-[#0088FF] mb-[20px]") #{formatSalary(job.salaryMin, job.salaryMax)}
+                        a(href="#boxApply" class="bg-[#0088FF] rounded-[4px] p-[14px] font-[700] text-[16px] text-white block text-center cursor-pointer") Ứng tuyển
+
+                        if job.images && job.images.length > 0
+                            div(class="grid grid-cols-3 gap-[16px] mt-[20px]") 
+                                each imgItem, idx in job.images.slice(0, 3)
+                                    img(src=imgItem.url alt=(job.title + " - Ảnh " + (idx + 1)) class="rounded-[4px] w-full h-[140px] sm:h-[180px] object-cover")
+
+                        div(class="mt-[20px]")
+                            div(class="font-[400] text-[14px] text-[#121212]") 
+                                <i class="fa-solid fa-user-tie text-[16px] mr-[8px]"></i> #{labels.getPositionLabel(job.position)}
+                            div(class="font-[400] text-[14px] text-[#121212] mt-[6px]") 
+                                <i class="fa-solid fa-briefcase text-[16px] mr-[8px]"></i> #{labels.getWorkingFormLabel(job.workingForm)}
+                            div(class="font-[400] text-[14px] text-[#121212] mt-[6px]") 
+                                <i class="fa-solid fa-location-dot text-[16px] mr-[8px]"></i> #{job.address || labels.getCityLabel(job.city)}
+                        
+                        if job.skills && job.skills.length > 0
+                            div(class="flex flex-wrap gap-[8px] mt-[10px]")
+                                each sk in job.skills
+                                    div(class="border border-[#DEDEDE] rounded-[20px] py-[6px] px-[16px] font-[400] text-[12px] text-[#414042]") #{sk.name}
+                    //- Hết Thông tin công việc
+
+                    //- Mô tả chi tiết
+                    if job.description
+                        div(class="border border-[#DEDEDE] rounded-[8px] p-[20px] mt-[20px]")
+                            div(class="prose max-w-none text-[#121212]") !{job.description}
+                    //- Hết Mô tả chi tiết
+
+                    //- Form ứng tuyển
+                    div(id="boxApply" class="border border-[#DEDEDE] rounded-[8px] p-[20px] mt-[20px]")
+                        h2(class="font-[700] text-[20px] text-black mb-[20px]") Ứng tuyển ngay
+
+                        if flash && flash.error
+                            div(class="mb-[15px] p-[12px] bg-[#FFEBEE] border border-[#FFCDD2] text-[#C62828] rounded-[4px] text-[14px]") #{flash.error}
+                        if flash && flash.success
+                            div(class="mb-[15px] p-[12px] bg-[#E8F5E9] border border-[#A5D6A7] text-[#2E7D32] rounded-[4px] text-[14px]") #{flash.success}
+
+                        form(action="/jobs/" + job.slug + "/apply" method="POST" enctype="multipart/form-data" class="grid gap-[15px]")
+                            input(type="hidden" name="_csrf" value=csrfToken)
+
+                            div(class="")
+                                label(for="applyFullName" class="font-[500] text-[14px]") Họ tên *
+                                input(type="text" id="applyFullName" name="fullName" value=(currentUser ? currentUser.fullName : "") required class="border border-[#DEDEDE] rounded-[4px] px-[20px] py-[12px] font-[500] text-[14px] text-black block w-full mt-[5px]")
+
+                            div(class="")
+                                label(for="applyEmail" class="font-[500] text-[14px]") Email *
+                                input(type="email" id="applyEmail" name="email" value=(currentUser ? currentUser.email : "") required class="border border-[#DEDEDE] rounded-[4px] px-[20px] py-[12px] font-[500] text-[14px] text-black block w-full mt-[5px]")
+
+                            div(class="")
+                                label(for="applyPhone" class="font-[500] text-[14px]") Số điện thoại *
+                                input(type="text" id="applyPhone" name="phone" value=(currentUser ? currentUser.phone : "") required class="border border-[#DEDEDE] rounded-[4px] px-[20px] py-[12px] font-[500] text-[14px] text-black block w-full mt-[5px]")
+
+                            div(class="")
+                                label(for="applyCv" class="font-[500] text-[14px]") File CV dạng PDF (tối đa 5MB) *
+                                input(type="file" id="applyCv" name="cv" accept="application/pdf" required class="border border-[#DEDEDE] rounded-[4px] px-[20px] py-[12px] font-[500] text-[14px] text-black block w-full mt-[5px]")
+
+                            div(class="")
+                                button(type="submit" class="bg-[#0088FF] p-[14px] rounded-[4px] w-full font-[700] text-[16px] text-white text-center cursor-pointer") Gửi CV ứng tuyển
+                    //- Hết Form ứng tuyển
+
+                div(class="") 
+                    //- Thông tin công ty
+                    if company
+                        div(class="p-[20px] border border-[#DEDEDE] rounded-[8px]")
+                            div(class="flex gap-[12px] mb-[20px]")
+                                img(src=(company.logo && company.logo.url) ? company.logo.url : "/assets/images/demo/demo4.png" alt=company.companyName class="w-[100px] h-[100px] object-contain rounded-[4px] border border-[#DEDEDE]")
+                                div(class="flex-1")
+                                    div(class="font-[700] text-[18px] text-[#121212] mb-[10px]") #{company.companyName}
+                                    a(href="/companies/" + company.slug class="font-[400] text-[16px] text-[#0088FF]") Xem công ty <i class="fa-solid fa-arrow-right-long ml-[4px]"></i>
+
+                            div(class="")
+                                div(class="flex justify-between mb-[10px]")
+                                    div(class="font-[400] text-[16px] text-[#A6A6A6]") Mô hình công ty
+                                    div(class="font-[400] text-[16px] text-[#121212]") #{company.companyModel || "Sản phẩm & Dịch vụ"}
+                                div(class="flex justify-between mb-[10px]")
+                                    div(class="font-[400] text-[16px] text-[#A6A6A6]") Quy mô công ty
+                                    div(class="font-[400] text-[16px] text-[#121212]") #{company.companySize || "100 - 500 nhân viên"}
+                                div(class="flex justify-between mb-[10px]")
+                                    div(class="font-[400] text-[16px] text-[#A6A6A6]") Thời gian làm việc
+                                    div(class="font-[400] text-[16px] text-[#121212]") #{company.workingTime || "Thứ 2 - Thứ 6"}
+                                div(class="flex justify-between")
+                                    div(class="font-[400] text-[16px] text-[#A6A6A6]") Làm việc ngoài giờ
+                                    div(class="font-[400] text-[16px] text-[#121212]") #{company.overtime || "Không có OT"}
+                    //- Hết Thông tin công ty
+
+    //- Hết Chi tiết công việc

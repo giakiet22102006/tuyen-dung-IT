@@ -1,0 +1,29 @@
+div(class="bg-[#000065] py-[60px]")
+    .contain 
+        h1(class="font-[700] text-[28px] text-white text-center mb-[30px]") #{totalPublicJobs !== undefined ? totalPublicJobs : 887} Việc làm IT cho Developer "Chất"
+        form(action="/search" method="GET" class="flex gap-[15px] md:flex-nowrap flex-wrap")
+            select(name="city" class="md:w-[240px] w-full h-[56px] rounded-[4px] bg-white font-[500] text-[16px] px-[20px] text-[#121212]")
+                option(value="") Tất cả thành phố
+                if cities && cities.length > 0
+                    each c in cities
+                        option(value=c.value selected=(selectedCity === c.value)) #{c.label}
+                else
+                    option(value="ha-noi" selected=(selectedCity === 'ha-noi')) Hà Nội
+                    option(value="da-nang" selected=(selectedCity === 'da-nang')) Đà Nẵng
+                    option(value="ho-chi-minh" selected=(selectedCity === 'ho-chi-minh')) TP. Hồ Chí Minh
+                    option(value="khac" selected=(selectedCity === 'khac')) Khác
+
+            input(type="text" name="keyword" value=(keyword || "") placeholder="Nhập từ khóa..." class="flex-1 h-[56px] rounded-[4px] bg-white font-[500] text-[16px] px-[20px] text-[#121212]")
+            button(type="submit" class="md:w-[240px] w-full h-[56px] bg-[#0088FF] font-[500] text-[16px] text-white flex justify-center items-center gap-[10px] rounded-[4px] cursor-pointer")
+                <i class="fa-solid fa-magnifying-glass text-[20px]"></i> Tìm Kiếm
+
+        div(class="sm:mt-[30px] mt-[38px] flex items-center gap-[12px] flex-wrap")
+            div(class="font-[500] text-[16px] text-[#DEDEDE]") Mọi người đang tìm kiếm:
+            div(class="flex gap-[10px] flex-wrap")
+                if topSkills && topSkills.length > 0
+                    each sk in topSkills
+                        a(href="/search?skill=" + sk.slug class="bg-[#121212] hover:bg-[#414042] border border-[#414042] py-[8px] px-[12px] font-[500] text-[16px] text-[#DEDEDE] hover:text-white rounded-[20px]") #{sk.name}
+                else
+                    a(href="/search?skill=javascript" class="bg-[#121212] hover:bg-[#414042] border border-[#414042] py-[8px] px-[12px] font-[500] text-[16px] text-[#DEDEDE] hover:text-white rounded-[20px]") Javascript
+                    a(href="/search?skill=reactjs" class="bg-[#121212] hover:bg-[#414042] border border-[#414042] py-[8px] px-[12px] font-[500] text-[16px] text-[#DEDEDE] hover:text-white rounded-[20px]") ReactJS
+                    a(href="/search?skill=nodejs" class="bg-[#121212] hover:bg-[#414042] border border-[#414042] py-[8px] px-[12px] font-[500] text-[16px] text-[#DEDEDE] hover:text-white rounded-[20px]") NodeJS

@@ -1,0 +1,83 @@
+extends ../layouts/default.pug
+
+block title 
+    title #{title || "Thông tin công ty (Nhà tuyển dụng)"}
+
+block main
+    //- Thông tin công ty (Nhà tuyển dụng)
+    div(class="py-[60px]")     
+        .contain
+            div(class="border border-[#DEDEDE] rounded-[8px] p-[20px]")
+                h1(class="font-[700] text-[20px] mb-[20px]") Thông tin công ty
+
+                if flash && flash.success
+                    div(class="mb-[15px] p-[12px] bg-[#E8F5E9] border border-[#A5D6A7] text-[#2E7D32] rounded-[4px] text-[14px]") #{flash.success}
+                if flash && flash.error
+                    div(class="mb-[15px] p-[12px] bg-[#FFEBEE] border border-[#FFCDD2] text-[#C62828] rounded-[4px] text-[14px]") #{flash.error}
+
+                form(action="/employer/company-profile" method="POST" enctype="multipart/form-data" class="") 
+                    input(type="hidden" name="_csrf" value=csrfToken)
+
+                    div(class="mb-[15px]")
+                        label(for="companyName" class="font-[500] text-[14px]") Tên công ty *
+                        input(type="text" id="companyName" name="companyName" value=(company ? company.companyName : "") required class="border border-[#DEDEDE] rounded-[4px] py-[11px] px-[20px] mt-[5px] block w-full")  
+                        if errors && errors.companyName
+                            div(class="text-[#FF0000] text-[13px] mt-[4px]") #{errors.companyName}
+
+                    div(class="mb-[15px]")
+                        label(for="logo" class="font-[500] text-[14px]") Logo công ty (JPG, PNG, WebP ≤ 2MB)
+                        if company && company.logo && company.logo.url
+                            div(class="my-[10px] flex items-center gap-[15px]")
+                                img(src=company.logo.url alt="Logo hiện tại" class="w-[80px] h-[80px] object-contain border border-[#DEDEDE] rounded-[4px] p-[5px]")
+                                span(class="text-[13px] text-[#717171]") Logo hiện tại
+                        input(type="file" id="logo" name="logo" accept="image/*" class="border border-[#DEDEDE] rounded-[4px] py-[11px] px-[20px] mt-[5px] block w-full")  
+                        if errors && errors.logo
+                            div(class="text-[#FF0000] text-[13px] mt-[4px]") #{errors.logo}
+
+                    div(class="grid md:grid-cols-2 grid-cols-1 md:gap-[20px] gap-[15px] mb-[15px]")
+                        div(class="")
+                            label(for="city" class="font-[500] text-[14px]") Thành phố
+                            select(id="city" name="city" class="border border-[#DEDEDE] rounded-[4px] py-[11px] px-[20px] mt-[5px] block w-full cursor-pointer") 
+                                if cities && cities.length > 0
+                                    each c in cities
+                                        option(value=c.value selected=(company && company.city === c.value)) #{c.label}
+                                else
+                                    option(value="ha-noi" selected=(company && company.city === 'ha-noi')) Hà Nội 
+                                    option(value="da-nang" selected=(company && company.city === 'da-nang')) Đà Nẵng
+                                    option(value="ho-chi-minh" selected=(company && company.city === 'ho-chi-minh')) TP. Hồ Chí Minh
+                                    option(value="khac" selected=(company && company.city === 'khac')) Khác
+                        div(class="")
+                            label(for="address" class="font-[500] text-[14px]") Địa chỉ chi tiết
+                            input(type="text" id="address" name="address" value=(company ? company.address : "") placeholder="Ví dụ: Tầng 15 Keangnam Landmark 72..." class="border border-[#DEDEDE] rounded-[4px] py-[11px] px-[20px] mt-[5px] block w-full")
+                    
+                    div(class="grid md:grid-cols-2 grid-cols-1 md:gap-[20px] gap-[15px] mb-[15px]")
+                        div(class="")
+                            label(for="companyModel" class="font-[500] text-[14px]") Mô hình công ty
+                            input(type="text" id="companyModel" name="companyModel" value=(company ? company.companyModel : "") placeholder="Sản phẩm / Dịch vụ / Outsourcing" class="border border-[#DEDEDE] rounded-[4px] py-[11px] px-[20px] mt-[5px] block w-full")
+                        div(class="")
+                            label(for="companySize" class="font-[500] text-[14px]") Quy mô công ty
+                            input(type="text" id="companySize" name="companySize" value=(company ? company.companySize : "") placeholder="Ví dụ: 151 - 300 nhân viên" class="border border-[#DEDEDE] rounded-[4px] py-[11px] px-[20px] mt-[5px] block w-full")
+
+                    div(class="grid md:grid-cols-2 grid-cols-1 md:gap-[20px] gap-[15px] mb-[15px]")
+                        div(class="")
+                            label(for="workingTime" class="font-[500] text-[14px]") Thời gian làm việc
+                            input(type="text" id="workingTime" name="workingTime" value=(company ? company.workingTime : "") placeholder="Ví dụ: Thứ 2 - Thứ 6" class="border border-[#DEDEDE] rounded-[4px] py-[11px] px-[20px] mt-[5px] block w-full")
+                        div(class="")
+                            label(for="overtime" class="font-[500] text-[14px]") Làm việc ngoài giờ
+                            input(type="text" id="overtime" name="overtime" value=(company ? company.overtime : "") placeholder="Không có OT / Trả lương OT theo luật" class="border border-[#DEDEDE] rounded-[4px] py-[11px] px-[20px] mt-[5px] block w-full")
+
+                    div(class="grid md:grid-cols-2 grid-cols-1 md:gap-[20px] gap-[15px] mb-[15px]")
+                        div(class="")
+                            label(for="email" class="font-[500] text-[14px]") Email đăng nhập *
+                            input(type="email" id="email" value=(company ? company.email : "") disabled class="border border-[#DEDEDE] bg-[#F5F5F5] rounded-[4px] py-[11px] px-[20px] mt-[5px] block w-full cursor-not-allowed")
+                        div(class="")
+                            label(for="phone" class="font-[500] text-[14px]") Số điện thoại liên hệ
+                            input(type="text" id="phone" name="phone" value=(company ? company.phone : "") placeholder="Số điện thoại liên hệ" class="border border-[#DEDEDE] rounded-[4px] py-[11px] px-[20px] mt-[5px] block w-full")
+
+                    div(class="mb-[20px]")
+                        label(for="companyDescription" class="font-[500] text-[14px]") Mô tả chi tiết
+                        textarea(id="companyDescription" name="description" placeholder="Giới thiệu về công ty, môi trường làm việc..." class="border border-[#DEDEDE] rounded-[4px] py-[11px] px-[20px] mt-[5px] block w-full min-h-[200px]") !{company ? company.description : ""}
+
+                    div(class="")
+                        button(type="submit" class="bg-[#0088FF] py-[14px] px-[30px] rounded-[4px] font-[700] text-[16px] text-white cursor-pointer") Cập nhật
+    //- Hết Thông tin công ty (Nhà tuyển dụng)

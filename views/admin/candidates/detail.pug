@@ -1,0 +1,165 @@
+extends ../../layouts/admin.pug
+
+block title
+    title Chi tiết Ứng viên: #{candidate.fullName} - VN.ITJobs Admin
+
+block main
+    div(class="space-y-[24px]")
+        //- Breadcrumb & Actions
+        div(class="flex flex-col sm:flex-row sm:items-center justify-between gap-[16px]")
+            div(class="flex items-center gap-[10px]")
+                a(href="/" + adminPath + "/candidates" class="text-[#0088FF] hover:underline text-[14px]")
+                    <i class="fa-solid fa-arrow-left mr-[4px]"></i> Danh sách Ứng viên
+                span(class="text-gray-400") /
+                span(class="font-[600] text-[#111827] text-[14px]") #{candidate.fullName}
+
+            div(class="flex items-center gap-[8px] flex-wrap")
+                a(href="/" + adminPath + "/candidates/" + candidate._id + "/edit" class="bg-amber-500 hover:bg-amber-600 text-white px-[14px] py-[8px] rounded-[6px] text-[13px] font-[600] flex items-center gap-[6px]")
+                    <i class="fa-solid fa-pen-to-square"></i>
+                    span Sửa thông tin
+
+                form(action="/" + adminPath + "/candidates/" + candidate._id + "/reset-password" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn đặt lại mật khẩu ngẫu nhiên cho Ứng viên này?');" class="inline")
+                    input(type="hidden" name="_csrf" value=csrfToken)
+                    button(type="submit" class="bg-gray-700 hover:bg-gray-800 text-white px-[14px] py-[8px] rounded-[6px] text-[13px] font-[600] flex items-center gap-[6px] cursor-pointer")
+                        <i class="fa-solid fa-key"></i>
+                        span Đặt lại MK
+
+                if candidate.status === 'active'
+                    button(type="button" onclick="document.getElementById('banCandModal').classList.remove('hidden')" class="bg-[#DC2626] hover:bg-[#B91C1C] text-white px-[14px] py-[8px] rounded-[6px] text-[13px] font-[600] flex items-center gap-[6px] cursor-pointer")
+                        <i class="fa-solid fa-ban"></i>
+                        span Khóa tài khoản
+
+                if candidate.status === 'banned'
+                    form(action="/" + adminPath + "/candidates/" + candidate._id + "/unban" method="POST" class="inline")
+                        input(type="hidden" name="_csrf" value=csrfToken)
+                        button(type="submit" class="bg-[#059669] hover:bg-[#047857] text-white px-[14px] py-[8px] rounded-[6px] text-[13px] font-[600] flex items-center gap-[6px] cursor-pointer")
+                            <i class="fa-solid fa-unlock"></i>
+                            span Mở khóa
+
+                if !candidate.deletedAt
+                    form(action="/" + adminPath + "/candidates/" + candidate._id + "/delete" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa mềm Ứng viên này không?');" class="inline")
+                        input(type="hidden" name="_csrf" value=csrfToken)
+                        button(type="submit" class="bg-gray-600 hover:bg-gray-700 text-white px-[14px] py-[8px] rounded-[6px] text-[13px] font-[600] flex items-center gap-[6px] cursor-pointer")
+                            <i class="fa-solid fa-trash"></i>
+                            span Xóa mềm
+                else
+                    form(action="/" + adminPath + "/candidates/" + candidate._id + "/restore" method="POST" class="inline")
+                        input(type="hidden" name="_csrf" value=csrfToken)
+                        button(type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-[14px] py-[8px] rounded-[6px] text-[13px] font-[600] flex items-center gap-[6px] cursor-pointer")
+                            <i class="fa-solid fa-rotate-left"></i>
+                            span Khôi phục
+
+                if currentAdmin && currentAdmin.role === 'superadmin'
+                    form(action="/" + adminPath + "/candidates/" + candidate._id + "/hard-delete" method="POST" onsubmit="return confirm('CẢNH BÁO: Hành động này sẽ XÓA VĨNH VIỄN ứng viên cùng toàn bộ hồ sơ ứng tuyển liên quan. Không thể phục hồi! Bạn có chắc chắn không?');" class="inline")
+                        input(type="hidden" name="_csrf" value=csrfToken)
+                        button(type="submit" class="bg-red-800 hover:bg-red-900 text-white px-[14px] py-[8px] rounded-[6px] text-[13px] font-[600] flex items-center gap-[6px] cursor-pointer")
+                            <i class="fa-solid fa-trash-can"></i>
+                            span Xóa vĩnh viễn
+
+        //- Thông tin ứng viên Card
+        div(class="bg-white p-[24px] rounded-[10px] border border-[#E5E7EB] shadow-xs")
+            div(class="flex flex-col sm:flex-row items-start sm:items-center gap-[20px] pb-[20px] border-b border-[#E5E7EB]")
+                img(src=(candidate.avatar && candidate.avatar.url ? candidate.avatar.url : "/assets/images/avatar.svg") alt=candidate.fullName class="w-[80px] h-[80px] object-cover rounded-full border border-[#E5E7EB]")
+                div(class="flex-1")
+                    div(class="flex items-center gap-[12px] flex-wrap")
+                        h2(class="font-[700] text-[22px] text-[#111827]") #{candidate.fullName}
+                        if candidate.deletedAt
+                            span(class="px-[10px] py-[2px] rounded-full text-[12px] font-[600] bg-gray-100 text-gray-700 border border-gray-300") Đã xóa mềm
+                        else if candidate.status === 'active'
+                            span(class="px-[10px] py-[2px] rounded-full text-[12px] font-[600] bg-emerald-50 text-emerald-700 border border-emerald-300") Hoạt động
+                        else if candidate.status === 'banned'
+                            span(class="px-[10px] py-[2px] rounded-full text-[12px] font-[600] bg-red-50 text-red-700 border border-red-300") Đã khóa
+
+                    p(class="text-[14px] text-[#6B7280] mt-[4px]") Tham gia từ ngày #{formatDate(candidate.createdAt)}
+
+            div(class="grid grid-cols-1 sm:grid-cols-3 gap-[20px] pt-[20px]")
+                div
+                    p(class="text-[13px] text-[#6B7280]") Email đăng nhập
+                    p(class="font-[600] text-[15px] text-[#111827] mt-[2px]") #{candidate.email}
+                div
+                    p(class="text-[13px] text-[#6B7280]") Số điện thoại
+                    p(class="font-[600] text-[15px] text-[#111827] mt-[2px]") #{candidate.phone || "Chưa có"}
+                div
+                    p(class="text-[13px] text-[#6B7280]") Tổng số CV đã nộp
+                    p(class="font-[600] text-[15px] text-[#0088FF] mt-[2px]") #{applications ? applications.length : 0} việc làm
+
+            if candidate.banReason
+                div(class="mt-[20px] p-[12px] bg-red-50 border border-red-200 rounded-[6px] text-red-700 text-[14px]")
+                    span(class="font-[600]") Lý do khóa tài khoản: 
+                    span #{candidate.banReason}
+
+        //- Danh sách CV ứng tuyển của ứng viên này
+        div(class="bg-white rounded-[10px] border border-[#E5E7EB] shadow-xs overflow-hidden")
+            div(class="p-[20px] border-b border-[#E5E7EB]")
+                h3(class="font-[700] text-[17px] text-[#111827]") Lịch sử nộp hồ sơ ứng tuyển (#{applications ? applications.length : 0})
+
+            div(class="overflow-x-auto")
+                table(class="w-full text-left border-collapse text-[14px]")
+                    thead(class="bg-[#F9FAFB] text-[#4B5563] text-[12px] uppercase font-[600] border-b border-[#E5E7EB]")
+                        tr
+                            th(class="py-[12px] px-[20px]") Việc làm ứng tuyển
+                            th(class="py-[12px] px-[20px]") Công ty
+                            th(class="py-[12px] px-[20px]") Ngày nộp
+                            th(class="py-[12px] px-[20px]") Trạng thái hồ sơ
+                    tbody(class="divide-y divide-[#E5E7EB]")
+                        if applications && applications.length > 0
+                            each app in applications
+                                tr(class="hover:bg-gray-50 transition-colors")
+                                    td(class="py-[14px] px-[20px] font-[600] text-[#111827]")
+                                        if app.jobId
+                                            a(href="/jobs/" + app.jobId.slug target="_blank" class="hover:text-[#0088FF]") #{app.jobId.title}
+                                        else
+                                            span(class="text-gray-400") Việc làm đã bị xóa
+                                    td(class="py-[14px] px-[20px] text-[#4B5563]")
+                                        if app.employerId
+                                            a(href="/" + adminPath + "/employers/" + app.employerId._id class="hover:text-[#0088FF]") #{app.employerId.companyName}
+                                        else
+                                            span Không rõ
+                                    td(class="py-[14px] px-[20px] text-[#4B5563]") #{formatDate(app.createdAt)}
+                                    td(class="py-[14px] px-[20px]")
+                                        if app.status === 'pending'
+                                            span(class="px-[8px] py-[2px] rounded text-[12px] font-[600] bg-amber-50 text-amber-700") Chờ duyệt
+                                        else if app.status === 'approved'
+                                            span(class="px-[8px] py-[2px] rounded text-[12px] font-[600] bg-emerald-50 text-emerald-700") Phù hợp
+                                        else if app.status === 'rejected'
+                                            span(class="px-[8px] py-[2px] rounded text-[12px] font-[600] bg-red-50 text-red-700") Từ chối
+                        else
+                            tr
+                                td(colspan="4" class="py-[24px] text-center text-[#6B7280]") Ứng viên chưa nộp hồ sơ vào công việc nào.
+
+        //- Lịch sử thao tác Audit Logs của ứng viên này
+        div(class="bg-white rounded-[10px] border border-[#E5E7EB] shadow-xs overflow-hidden")
+            div(class="p-[20px] border-b border-[#E5E7EB]")
+                h3(class="font-[700] text-[17px] text-[#111827]") Lịch sử can thiệp của Quản trị viên (Audit Logs)
+
+            div(class="overflow-x-auto")
+                table(class="w-full text-left border-collapse text-[13px]")
+                    thead(class="bg-[#F9FAFB] text-[#4B5563] text-[12px] uppercase font-[600] border-b border-[#E5E7EB]")
+                        tr
+                            th(class="py-[10px] px-[20px]") Thời gian
+                            th(class="py-[10px] px-[20px]") Admin thực hiện
+                            th(class="py-[10px] px-[20px]") Hành động
+                            th(class="py-[10px] px-[20px]") Chi tiết (Meta)
+                    tbody(class="divide-y divide-[#E5E7EB]")
+                        if auditLogs && auditLogs.length > 0
+                            each log in auditLogs
+                                tr
+                                    td(class="py-[12px] px-[20px] text-[#6B7280]") #{formatDateTime(log.createdAt)}
+                                    td(class="py-[12px] px-[20px] font-[500] text-[#111827]") #{log.adminId ? log.adminId.fullName : "Hệ thống"}
+                                    td(class="py-[12px] px-[20px] font-[600] text-[#0088FF]") #{log.action}
+                                    td(class="py-[12px] px-[20px] text-[#4B5563]") #{JSON.stringify(log.meta || {})}
+                        else
+                            tr
+                                td(colspan="4" class="py-[20px] text-center text-[#6B7280]") Chưa có nhật ký thao tác nào đối với ứng viên này.
+
+    //- Modal Nhập lý do khóa tài khoản Ứng viên
+    div(id="banCandModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-[20px]")
+        div(class="bg-white rounded-[10px] max-w-[480px] w-full p-[24px] shadow-lg")
+            h3(class="font-[700] text-[18px] text-[#111827] mb-[12px]") Khóa tài khoản Ứng viên
+            p(class="text-[14px] text-[#6B7280] mb-[16px]") Vui lòng nhập lý do khóa tài khoản. Người dùng sẽ nhìn thấy lý do này khi cố gắng đăng nhập.
+            form(action="/" + adminPath + "/candidates/" + candidate._id + "/ban" method="POST")
+                input(type="hidden" name="_csrf" value=csrfToken)
+                textarea(name="reason" required rows="3" placeholder="Ví dụ: Spam hồ sơ tuyển dụng..." class="w-full border border-[#D1D5DB] rounded-[6px] p-[12px] text-[14px] focus:outline-none focus:border-[#0088FF] mb-[16px]")
+                div(class="flex justify-end gap-[10px]")
+                    button(type="button" onclick="document.getElementById('banCandModal').classList.add('hidden')" class="px-[16px] py-[8px] bg-gray-100 hover:bg-gray-200 text-[#374151] rounded text-[13px] font-[500] cursor-pointer") Hủy bỏ
+                    button(type="submit" class="px-[16px] py-[8px] bg-[#DC2626] hover:bg-[#B91C1C] text-white rounded text-[13px] font-[600] cursor-pointer") Xác nhận khóa

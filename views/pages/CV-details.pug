@@ -1,0 +1,64 @@
+extends ../layouts/default.pug
+
+block title 
+    title #{title || "Chi tiết CV (Nhà tuyển dụng)"}
+
+block main
+    //- Chi tiết CV
+    div(class="py-[60px]")
+        .contain 
+            div(class="")
+                if flash && flash.success
+                    div(class="mb-[20px] p-[12px] bg-[#E8F5E9] border border-[#A5D6A7] text-[#2E7D32] rounded-[4px] text-[14px]") #{flash.success}
+                if flash && flash.error
+                    div(class="mb-[20px] p-[12px] bg-[#FFEBEE] border border-[#FFCDD2] text-[#C62828] rounded-[4px] text-[14px]") #{flash.error}
+
+                //- Thông tin CV
+                div(class="border border-[#DEDEDE] rounded-[8px] p-[20px]")
+                    div(class="flex flex-col sm:flex-row justify-between mb-[20px] gap-[20px]")
+                        h1(class="font-[700] text-[20px]") Thông tin CV
+                        a(href="/employer/cvs" class="font-[400] text-[14px] text-[#0088FF] underline") Quay lại danh sách
+
+                    div(class="font-[400] text-[16px]") Họ tên: <span class="font-[600] text-[16px]">#{application.fullName}</span> 
+                    div(class="font-[400] text-[16px] mt-[10px]") Email: <span class="font-[600] text-[16px]">#{application.email}</span> 
+                    div(class="font-[400] text-[16px] mt-[10px]") Số điện thoại: <span class="font-[600] text-[16px]">#{application.phone}</span> 
+                    
+                    div(class="font-[400] text-[16px] mt-[10px]") Trạng thái hồ sơ: 
+                        if application.status === 'pending'
+                            span(class="font-[600] text-[#FFB200] ml-[6px]") <i class="fa-solid fa-clock mr-[2px]"></i> Chưa duyệt
+                        else if application.status === 'approved'
+                            span(class="font-[600] text-[#2E7D32] ml-[6px]") <i class="fa-solid fa-circle-check mr-[2px]"></i> Đã duyệt phù hợp
+                        else if application.status === 'rejected'
+                            span(class="font-[600] text-[#C62828] ml-[6px]") <i class="fa-solid fa-circle-xmark mr-[2px]"></i> Đã từ chối
+
+                    div(class="flex gap-[10px] mt-[15px]")
+                        form(action="/employer/cvs/" + application._id + "/status" method="POST" class="inline")
+                            input(type="hidden" name="_csrf" value=csrfToken)
+                            input(type="hidden" name="status" value="approved")
+                            button(type="submit" class="bg-[#9FDB7C] rounded-[4px] py-[8px] px-[20px] cursor-pointer font-[400] text-[14px] text-black") Duyệt phù hợp
+
+                        form(action="/employer/cvs/" + application._id + "/status" method="POST" class="inline")
+                            input(type="hidden" name="_csrf" value=csrfToken)
+                            input(type="hidden" name="status" value="rejected")
+                            button(type="submit" class="bg-[#FF5100] rounded-[4px] py-[8px] px-[20px] cursor-pointer font-[400] text-[14px] text-white") Từ chối hồ sơ
+
+                    div(class="mt-[20px]")
+                        div(class="font-[400] text-[16px] my-[10px] flex justify-between items-center")
+                            span File CV:
+                            a(href="/employer/cvs/" + application._id + "/pdf" target="_blank" class="text-[#0088FF] text-[14px] underline") Mở xem toàn màn hình <i class="fa-solid fa-arrow-up-right-from-square ml-[4px]"></i>
+                        embed(src="/employer/cvs/" + application._id + "/pdf" type="application/pdf" class="bg-[#D9D9D9] w-full h-[736px] rounded-[4px]") 
+                //- Hết Thông tin CV
+
+                //- Thông tin công việc
+                if application.jobId
+                    div(class="border border-[#DEDEDE] rounded-[8px] p-[20px] mt-[20px]")
+                        div(class="font-[700] text-[20px] mb-[20px]") Thông tin công việc
+                        div(class="font-[400] text-[16px] mb-[10px]") Tên công việc: <span class="font-[600] text-[16px]">#{application.jobId.title}</span> 
+                        div(class="font-[400] text-[16px] mb-[10px]") Mức lương: <span class="font-[600] text-[16px]">#{formatSalary(application.jobId.salaryMin, application.jobId.salaryMax)}</span> 
+                        div(class="font-[400] text-[16px] mb-[10px]") Cấp bậc: <span class="font-[600] text-[16px]">#{labels.getPositionLabel(application.jobId.position)}</span> 
+                        div(class="font-[400] text-[16px] mb-[10px]") Hình thức làm việc: <span class="font-[600] text-[16px]">#{labels.getWorkingFormLabel(application.jobId.workingForm)}</span> 
+                        if application.jobId.skills && application.jobId.skills.length > 0
+                            div(class="font-[400] text-[16px] mb-[10px]") Công nghệ: <span class="font-[600] text-[16px]">#{application.jobId.skills.map(s => s.name).join(', ')}</span> 
+                        a(href="/jobs/" + application.jobId.slug target="_blank" class="font-[400] text-[14px] text-[#0088FF] underline") Xem chi tiết công việc 
+                //- Hết Thông tin công việc
+    //- Hết Chi tiết CV

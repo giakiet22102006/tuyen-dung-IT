@@ -1,0 +1,35 @@
+doctype html
+html(lang="vi")
+    head
+        meta(charset="UTF-8")
+        meta(name="viewport", content="width=device-width, initial-scale=1.0")
+        link(rel="stylesheet", href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css")
+        link(rel="stylesheet", href="/assets/css/tailwind.css")
+        link(rel="stylesheet", href="/assets/css/style.css")
+        block title 
+    body
+        //- Header
+        include ../partials/header.pug
+        //- End Header
+
+        //- Banner cảnh báo cho Employer pending
+        if role === 'employer' && currentUser && currentUser.status === 'pending'
+            div(class="bg-[#FFF3CD] border-b border-[#FFEEBA] text-[#856404] py-[12px] px-[20px] text-center font-[500] text-[14px]")
+                <i class="fa-solid fa-circle-exclamation mr-[8px]"></i>
+                | Tài khoản công ty của bạn đang chờ quản trị viên phê duyệt. Trong thời gian này, bạn chưa thể đăng hoặc chỉnh sửa việc làm.
+
+        //- Flash messages toàn cục (nếu có)
+        if flash && flash.success && !currentPath.includes("/login") && !currentPath.includes("/signup") && !currentPath.includes("/change-password")
+            .contain(class="mt-[20px]")
+                div(class="p-[12px] bg-[#E8F5E9] border border-[#A5D6A7] text-[#2E7D32] rounded-[4px] text-[14px]") #{flash.success}
+        if flash && flash.error && !currentPath.includes("/login") && !currentPath.includes("/signup") && !currentPath.includes("/change-password")
+            .contain(class="mt-[20px]")
+                div(class="p-[12px] bg-[#FFEBEE] border border-[#FFCDD2] text-[#C62828] rounded-[4px] text-[14px]") #{flash.error}
+
+        block main
+
+        //- Footer 
+        include ../partials/footer.pug
+        //- End Footer 
+
+        script(src="/assets/js/main.js")

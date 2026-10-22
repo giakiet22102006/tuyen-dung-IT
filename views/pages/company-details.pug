@@ -1,0 +1,52 @@
+extends ../layouts/default.pug
+include ../mixins/job-card.pug
+
+block title 
+    title #{title || (company ? company.companyName : "Chi tiết công ty")}
+
+block main
+    //- Chi tiết công ty
+    div(class="pt-[30px] pb-[60px]") 
+        .contain 
+            //- Thông tin công ty
+            div(class="p-[20px] border border-[#DEDEDE] rounded-[8px]")
+                div(class="flex flex-wrap gap-[16px] mb-[20px]")
+                    img(src=(company.logo && company.logo.url) ? company.logo.url : "/assets/images/demo/demo4.png" alt=company.companyName class="w-[100px] h-[100px] object-contain rounded-[4px] border border-[#DEDEDE]")
+                    div(class="flex-1")
+                        div(class="font-[700] text-[28px] text-[#121212] mb-[10px]") #{company.companyName}
+                        div(class="font-[400] text-[14px] text-[#121212]") 
+                            <i class="fa-solid fa-location-dot text-[16px] mr-[4px]"></i> #{company.address || labels.getCityLabel(company.city)}
+ 
+                div(class="")
+                    div(class="flex gap-[4px] mb-[10px]")
+                        div(class="font-[400] text-[16px] text-[#A6A6A6]") Mô hình công ty:
+                        div(class="font-[400] text-[16px] text-[#121212]") #{company.companyModel || "Sản phẩm & Dịch vụ"}
+                    div(class="flex gap-[4px] mb-[10px]")
+                        div(class="font-[400] text-[16px] text-[#A6A6A6]") Quy mô công ty:
+                        div(class="font-[400] text-[16px] text-[#121212]") #{company.companySize || "100 - 500 nhân viên"}
+                    div(class="flex gap-[4px] mb-[10px]")
+                        div(class="font-[400] text-[16px] text-[#A6A6A6]") Thời gian làm việc:
+                        div(class="font-[400] text-[16px] text-[#121212]") #{company.workingTime || "Thứ 2 - Thứ 6"}
+                    div(class="flex gap-[4px]")
+                        div(class="font-[400] text-[16px] text-[#A6A6A6]") Làm việc ngoài giờ:
+                        div(class="font-[400] text-[16px] text-[#121212]") #{company.overtime || "Không có OT"}
+            //- Hết Thông tin công ty
+
+            //- Mô tả chi tiết
+            if company.description
+                div(class="border border-[#DEDEDE] rounded-[8px] p-[20px] mt-[20px]") 
+                    div(class="prose max-w-none text-[#121212]") !{company.description}
+            //- Hết Mô tả chi tiết
+
+            //- Công việc
+            div(class="mt-[30px]")
+                h1(class="font-[700] text-[28px] text-[#121212] mb-[20px]") Công ty có #{jobs ? jobs.length : 0} việc làm
+                div(class="grid lg:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-[20px]") 
+                    if jobs && jobs.length > 0
+                        each job in jobs
+                            +jobCard(job)
+                    else
+                        div(class="col-span-full py-[30px] text-center text-[#717171] text-[16px]") Hiện tại công ty chưa có vị trí tuyển dụng mới.
+            //- Hết Công việc
+
+    //- Hết Chi tiết công ty

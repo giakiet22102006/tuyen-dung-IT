@@ -1,0 +1,51 @@
+extends ../layouts/default.pug
+include ../mixins/job-card.pug
+
+block title 
+    title #{title || "Kết quả tìm kiếm"}
+
+block main
+    //- Section 1
+    include ../partials/section1.pug
+    //- End Section 1
+
+    //- Kết quả tìm kiếm
+    div(class="py-[60px]")
+        .contain 
+            h2(class="font-[700] text-[28px] text-[#121212] mb-[30px]") !{searchTitle || "Danh sách việc làm"}
+            div(class="rounded-[8px] bg-white py-[10px] px-[20px] flex flex-wrap gap-[12px]" style="box-shadow: 0px 4px 20px 0px #0000000F;")
+                select(id="filterPosition" class="filter-select border border-[#DEDEDE] rounded-[20px] py-[8px] px-[18px] font-[400] text-[16px] text-[#414042] cursor-pointer") 
+                    option(value="") Cấp bậc
+                    if positions && positions.length > 0
+                        each p in positions
+                            option(value=p.value selected=(selectedPosition === p.value)) #{p.label}
+                    else
+                        option(value="intern") Intern
+                        option(value="fresher") Fresher
+                        option(value="junior") Junior
+                        option(value="middle") Middle
+                        option(value="senior") Senior
+                        option(value="manager") Manager
+
+                select(id="filterWorkingForm" class="filter-select border border-[#DEDEDE] rounded-[20px] py-[8px] px-[18px] font-[400] text-[16px] text-[#414042] cursor-pointer")
+                    option(value="") Hình thức làm việc 
+                    if workingForms && workingForms.length > 0
+                        each w in workingForms
+                            option(value=w.value selected=(selectedWorkingForm === w.value)) #{w.label}
+                    else
+                        option(value="office") Tại văn phòng
+                        option(value="remote") Từ xa
+                        option(value="flexible") Linh hoạt
+
+            div(class="my-[30px] grid lg:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-[20px]") 
+                if jobs && jobs.length > 0
+                    each job in jobs
+                        +jobCard(job)
+                else
+                    div(class="col-span-full py-[40px] text-center text-[#717171] text-[16px]") Không tìm thấy việc làm nào phù hợp với bộ lọc hiện tại.
+
+            if pagination && pagination.totalPages > 1
+                select(class="pagination-select border border-[#DEDEDE] bg-white rounded-[8px] py-[12px] px-[18px] font-[400] text-[16px] text-[#414042] cursor-pointer") 
+                    - for (let i = 1; i <= pagination.totalPages; i++)
+                        option(value=i selected=(pagination.currentPage === i)) Trang #{i}
+    //- Hết kết quả tìm kiếm

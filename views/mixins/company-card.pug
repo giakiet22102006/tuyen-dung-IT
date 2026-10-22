@@ -1,0 +1,12 @@
+mixin companyCard(company)
+    div(class="card-item")
+        img(src="/assets/images/bg-card.png" class="inner-bg")
+        a(href="/companies/" + company.slug class="inner-box block") 
+            div(class="sm:pt-[32px] pt-[20px] sm:pb-[24px] pb-[16px] sm:px-[16px] px-[8px]")
+                div(class="inner-img sm:w-[160px] w-[125px]")
+                    img(src=(company.logo && company.logo.url) ? company.logo.url : "/assets/images/demo/image1.png" alt=company.companyName)
+                h3(class="font-[700] sm:text-[18px] text-[14px] text-[#121212] text-center line-clamp-[2]") #{company.companyName}
+            div(class="bg-[#F7F7F7] py-[12px] sm:px-[16px] px-[6px] flex items-center justify-between sm:flex-row flex-col gap-[12px]")
+                div(class="font-[400] sm:text-[14px] text-[12px] text-[#414042]") #{labels.getCityLabel(company.city)}
+                div(class="font-[400] sm:text-[14px] text-[12px] text-[#121212]") 
+                    <i class="fa-solid fa-user-tie text-[16px] mr-[6px] text-[#000096]"></i> #{company.jobCount || 0} Việc làm

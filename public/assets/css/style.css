@@ -1,0 +1,144 @@
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap');
+
+* {
+    font-family: "Lexend", sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Contain */
+/* Laptop cỡ to trở lên */
+.contain {
+  width: 1184px;
+  margin: 0 auto;
+}
+
+/* Laptop cỡ nhỏ */
+@media (max-width: 1200px) {
+  .contain {
+    width: 960px;
+  }
+}
+
+/* Ipad cỡ to */
+@media (max-width: 992px) {
+  .contain {
+    width: 720px;
+  }
+}
+
+/* Ipad cỡ nhỏ */
+@media (max-width: 768px) {
+  .contain {
+    width: 540px;
+  }
+}
+
+/* Điện thoại */
+@media (max-width: 576px) {
+  .contain {
+    width: 100%;
+    padding: 0 16px;
+  }
+}
+/* End Contain */
+
+/* Menu */
+.menu ul {
+    display: flex;
+    gap: 30px;
+}
+
+.menu ul li {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    position: relative;
+}
+
+.menu ul li a {
+    color: white;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.menu ul li i {
+    color: white;
+    font-size: 16px;
+}
+
+.menu ul li ul {
+    background-color: #000065;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 280px;
+    flex-direction: column;
+    gap: 0;
+    display: none;
+}
+
+.menu ul li:hover > ul {
+    display: flex;
+}
+
+.menu ul li ul li {
+    padding: 10px 16px;
+    justify-content: space-between;
+    position: relative;
+}
+.menu ul li ul li:hover {
+    background-color: #000096;
+}
+
+.menu ul li ul li ul {
+    position: absolute;
+    top: 0;
+    left: 100%;
+}
+/* End Menu */
+
+/* Card Item  */
+.card-item {
+    border: 1px solid #DEDEDE;
+    background: linear-gradient(180deg, #F6F6F6 2.38%, #FFFFFF 70.43%);
+    border-radius: 8px;
+    position: relative;
+}
+
+.card-item .inner-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: auto;
+}
+
+.card-item .inner-box {
+  position: relative;
+}
+
+.card-item .inner-img {
+  box-shadow: 0px 4px 24px 0px #0000001F;
+  background: #FFFFFF;
+  border-radius: 8px;
+  aspect-ratio: 1/1;
+  margin: 0 auto;
+  margin-bottom: 24px;
+}
+
+.card-item .inner-img img {
+  padding: 10px;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+@media (max-width: 576px) {
+  .card-item .inner-img {
+    margin-bottom: 16px;
+  }
+}
+/* End Card Item  */

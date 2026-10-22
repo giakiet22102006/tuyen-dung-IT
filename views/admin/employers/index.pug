@@ -1,0 +1,127 @@
+extends ../../layouts/admin.pug
+
+block title
+    title Quản lý Nhà tuyển dụng - VN.ITJobs Admin
+
+block main
+    div(class="space-y-[24px]")
+        //- Header
+        div(class="flex flex-col sm:flex-row sm:items-center justify-between gap-[16px]")
+            div
+                h1(class="font-[700] text-[24px] text-[#111827]") Quản lý Nhà tuyển dụng
+                p(class="text-[14px] text-[#6B7280] mt-[4px]") Danh sách toàn bộ tài khoản công ty trên hệ thống
+            a(href="/" + adminPath + "/employers/create" class="inline-flex items-center gap-[8px] bg-[#0088FF] hover:bg-[#0070D2] text-white px-[18px] py-[10px] rounded-[6px] font-[600] text-[14px] transition-colors")
+                <i class="fa-solid fa-plus"></i>
+                span Thêm Nhà tuyển dụng
+
+        //- Bộ lọc tìm kiếm
+        div(class="bg-white p-[20px] rounded-[10px] border border-[#E5E7EB] shadow-xs")
+            form(action="/" + adminPath + "/employers" method="GET" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[16px]")
+                div
+                    label(for="keyword" class="block text-[13px] font-[500] text-[#374151] mb-[6px]") Tìm kiếm từ khóa
+                    input(type="text" id="keyword" name="keyword" value=filter.keyword placeholder="Tên công ty, email, SĐT..." class="w-full border border-[#D1D5DB] rounded-[6px] px-[14px] py-[9px] text-[14px] focus:outline-none focus:border-[#0088FF]")
+
+                div
+                    label(for="status" class="block text-[13px] font-[500] text-[#374151] mb-[6px]") Trạng thái
+                    select(id="status" name="status" class="w-full border border-[#D1D5DB] rounded-[6px] px-[14px] py-[9px] text-[14px] focus:outline-none focus:border-[#0088FF] cursor-pointer")
+                        option(value="") -- Tất cả trạng thái --
+                        option(value="pending" selected=(filter.status === 'pending')) Chờ duyệt
+                        option(value="active" selected=(filter.status === 'active')) Hoạt động
+                        option(value="banned" selected=(filter.status === 'banned')) Đã bị khóa
+                        option(value="deleted" selected=(filter.status === 'deleted')) Đã xóa mềm
+
+                div
+                    label(for="city" class="block text-[13px] font-[500] text-[#374151] mb-[6px]") Thành phố
+                    select(id="city" name="city" class="w-full border border-[#D1D5DB] rounded-[6px] px-[14px] py-[9px] text-[14px] focus:outline-none focus:border-[#0088FF] cursor-pointer")
+                        option(value="") -- Tất cả thành phố --
+                        each c in cities
+                            option(value=c.value selected=(filter.city === c.value)) #{c.label}
+
+                div(class="flex items-end gap-[10px]")
+                    button(type="submit" class="flex-1 bg-[#000065] hover:bg-[#000050] text-white py-[9px] px-[16px] rounded-[6px] font-[600] text-[14px] transition-colors cursor-pointer flex items-center justify-center gap-[6px]")
+                        <i class="fa-solid fa-filter"></i>
+                        span Lọc
+                    a(href="/" + adminPath + "/employers" class="bg-gray-100 hover:bg-gray-200 text-[#4B5563] py-[9px] px-[16px] rounded-[6px] font-[500] text-[14px] transition-colors") Đặt lại
+
+        //- Bảng danh sách & Thao tác hàng loạt
+        form(action="/" + adminPath + "/employers/bulk" method="POST" id="bulkForm")
+            input(type="hidden" name="_csrf" value=csrfToken)
+
+            //- Thanh thao tác hàng loạt
+            div(class="bg-gray-50 border border-[#E5E7EB] rounded-t-[10px] px-[20px] py-[12px] flex items-center justify-between")
+                div(class="flex items-center gap-[12px]")
+                    input(type="checkbox" id="selectAll" class="w-[16px] h-[16px] rounded cursor-pointer")
+                    label(for="selectAll" class="text-[13px] font-[500] text-[#4B5563] cursor-pointer") Chọn tất cả trang này
+                div(class="flex items-center gap-[8px]")
+                    button(type="submit" name="action" value="approve" onclick="return confirm('Bạn có chắc chắn muốn phê duyệt các tài khoản đã chọn?');" class="bg-[#059669] hover:bg-[#047857] text-white px-[12px] py-[6px] rounded text-[13px] font-[600] transition-colors cursor-pointer") Duyệt đã chọn
+                    button(type="submit" name="action" value="ban" onclick="return confirm('Bạn có chắc chắn muốn khóa các tài khoản đã chọn?');" class="bg-[#DC2626] hover:bg-[#B91C1C] text-white px-[12px] py-[6px] rounded text-[13px] font-[600] transition-colors cursor-pointer") Khóa đã chọn
+
+            div(class="bg-white border-x border-b border-[#E5E7EB] rounded-b-[10px] shadow-xs overflow-x-auto")
+                table(class="w-full text-left border-collapse text-[14px]")
+                    thead(class="bg-[#F9FAFB] text-[#4B5563] text-[12px] uppercase font-[600] border-b border-[#E5E7EB]")
+                        tr
+                            th(class="py-[12px] px-[16px] w-[40px]")
+                            th(class="py-[12px] px-[16px]") Tên công ty
+                            th(class="py-[12px] px-[16px]") Email
+                            th(class="py-[12px] px-[16px]") Thành phố
+                            th(class="py-[12px] px-[16px] text-center") Số việc làm
+                            th(class="py-[12px] px-[16px]") Trạng thái
+                            th(class="py-[12px] px-[16px]") Ngày tạo
+                            th(class="py-[12px] px-[16px] text-right") Thao tác
+                    tbody(class="divide-y divide-[#E5E7EB]")
+                        if employers && employers.length > 0
+                            each emp in employers
+                                tr(class="hover:bg-gray-50 transition-colors")
+                                    td(class="py-[14px] px-[16px]")
+                                        input(type="checkbox" name="ids" value=emp._id class="item-checkbox w-[16px] h-[16px] rounded cursor-pointer")
+                                    td(class="py-[14px] px-[16px]")
+                                        div(class="flex items-center gap-[12px]")
+                                            img(src=(emp.logo && emp.logo.url ? emp.logo.url : "/assets/images/demo/demo4.png") alt=emp.companyName class="w-[36px] h-[36px] object-contain rounded border border-[#E5E7EB] p-[2px]")
+                                            div
+                                                a(href="/" + adminPath + "/employers/" + emp._id class="font-[600] text-[#111827] hover:text-[#0088FF]") #{emp.companyName}
+                                                if emp.phone
+                                                    div(class="text-[12px] text-[#6B7280]") #{emp.phone}
+                                    td(class="py-[14px] px-[16px] text-[#4B5563]") #{emp.email}
+                                    td(class="py-[14px] px-[16px] text-[#4B5563]") #{labels.getCityLabel(emp.city)}
+                                    td(class="py-[14px] px-[16px] text-center")
+                                        span(class="font-[600] text-[#111827]") #{emp.jobCount || 0}
+                                    td(class="py-[14px] px-[16px]")
+                                        if emp.deletedAt
+                                            span(class="px-[10px] py-[3px] rounded-full text-[12px] font-[600] bg-gray-100 text-gray-700 border border-gray-300") Đã xóa mềm
+                                        else if emp.status === 'pending'
+                                            span(class="px-[10px] py-[3px] rounded-full text-[12px] font-[600] bg-amber-50 text-amber-700 border border-amber-300") Chờ duyệt
+                                        else if emp.status === 'active'
+                                            span(class="px-[10px] py-[3px] rounded-full text-[12px] font-[600] bg-emerald-50 text-emerald-700 border border-emerald-300") Hoạt động
+                                        else if emp.status === 'banned'
+                                            span(class="px-[10px] py-[3px] rounded-full text-[12px] font-[600] bg-red-50 text-red-700 border border-red-300") Đã khóa
+                                    td(class="py-[14px] px-[16px] text-[#4B5563] text-[13px]") #{formatDate(emp.createdAt)}
+                                    td(class="py-[14px] px-[16px] text-right")
+                                        div(class="flex items-center justify-end gap-[8px]")
+                                            a(href="/" + adminPath + "/employers/" + emp._id class="p-[6px] text-[#4B5563] hover:text-[#0088FF] hover:bg-gray-100 rounded" title="Xem chi tiết")
+                                                <i class="fa-solid fa-eye"></i>
+                                            a(href="/" + adminPath + "/employers/" + emp._id + "/edit" class="p-[6px] text-[#4B5563] hover:text-amber-600 hover:bg-gray-100 rounded" title="Chỉnh sửa")
+                                                <i class="fa-solid fa-pen-to-square"></i>
+                        else
+                            tr
+                                td(colspan="8" class="py-[36px] text-center text-[#6B7280]") Không tìm thấy Nhà tuyển dụng nào phù hợp với điều kiện tìm kiếm.
+
+        //- Phân trang
+        if pagination && pagination.totalPages > 1
+            div(class="mt-[20px] flex items-center justify-between")
+                div(class="text-[13px] text-[#6B7280]") Hiển thị trang #{pagination.currentPage} / #{pagination.totalPages} (Tổng #{pagination.totalItems} NTD)
+                div(class="flex gap-[6px]")
+                    if pagination.hasPrevPage
+                        a(href="?page=" + pagination.prevPage + (filter.keyword ? "&keyword=" + filter.keyword : "") + (filter.status ? "&status=" + filter.status : "") + (filter.city ? "&city=" + filter.city : "") class="px-[12px] py-[6px] border border-[#D1D5DB] rounded bg-white text-[13px] hover:bg-gray-50") Trước
+                    - for (let p = 1; p <= pagination.totalPages; p++)
+                        a(href="?page=" + p + (filter.keyword ? "&keyword=" + filter.keyword : "") + (filter.status ? "&status=" + filter.status : "") + (filter.city ? "&city=" + filter.city : "") class="px-[12px] py-[6px] border rounded text-[13px] " + (pagination.currentPage === p ? "bg-[#0088FF] text-white border-[#0088FF] font-[600]" : "bg-white text-[#374151] border-[#D1D5DB] hover:bg-gray-50")) #{p}
+                    if pagination.hasNextPage
+                        a(href="?page=" + pagination.nextPage + (filter.keyword ? "&keyword=" + filter.keyword : "") + (filter.status ? "&status=" + filter.status : "") + (filter.city ? "&city=" + filter.city : "") class="px-[12px] py-[6px] border border-[#D1D5DB] rounded bg-white text-[13px] hover:bg-gray-50") Sau
+
+    script.
+        const selectAll = document.getElementById('selectAll');
+        const checkboxes = document.querySelectorAll('.item-checkbox');
+        if (selectAll) {
+            selectAll.addEventListener('change', (e) => {
+                checkboxes.forEach((cb) => (cb.checked = e.target.checked));
+            });
+        }

@@ -1,0 +1,79 @@
+extends ../../layouts/admin.pug
+
+block title
+    title Nhật ký hệ thống (Audit Logs) - VN.ITJobs Admin
+
+block main
+    div(class="space-y-[24px]")
+        div(class="flex flex-col sm:flex-row sm:items-center justify-between gap-[16px]")
+            div
+                h1(class="font-[700] text-[24px] text-[#111827]") Nhật ký can thiệp Hệ thống (Audit Logs)
+                p(class="text-[14px] text-[#6B7280] mt-[4px]") Lưu trữ lịch sử toàn bộ các thao tác quản trị trên dữ liệu (Lưu trữ 365 ngày)
+
+        //- Bộ lọc
+        div(class="bg-white p-[20px] rounded-[10px] border border-[#E5E7EB] shadow-xs")
+            form(action="/" + adminPath + "/logs" method="GET" class="grid grid-cols-1 sm:grid-cols-3 gap-[16px]")
+                div
+                    label(for="adminId" class="block text-[13px] font-[500] text-[#374151] mb-[6px]") Lọc theo Quản trị viên
+                    select(id="adminId" name="adminId" class="w-full border border-[#D1D5DB] rounded-[6px] px-[14px] py-[9px] text-[14px] focus:outline-none focus:border-[#0088FF] cursor-pointer")
+                        option(value="") -- Tất cả Quản trị viên --
+                        if adminList && adminList.length > 0
+                            each adm in adminList
+                                option(value=adm._id selected=(filter.adminId === String(adm._id))) #{adm.fullName} (#{adm.email})
+
+                div
+                    label(for="action" class="block text-[13px] font-[500] text-[#374151] mb-[6px]") Tên hành động
+                    input(type="text" id="action" name="action" value=filter.action placeholder="Ví dụ: employer.approve, ban, delete..." class="w-full border border-[#D1D5DB] rounded-[6px] px-[14px] py-[9px] text-[14px] focus:outline-none focus:border-[#0088FF]")
+
+                div(class="flex items-end gap-[10px]")
+                    button(type="submit" class="flex-1 bg-[#000065] hover:bg-[#000050] text-white py-[9px] px-[16px] rounded-[6px] font-[600] text-[14px] transition-colors cursor-pointer flex items-center justify-center gap-[6px]")
+                        <i class="fa-solid fa-filter"></i>
+                        span Lọc nhật ký
+                    a(href="/" + adminPath + "/logs" class="bg-gray-100 hover:bg-gray-200 text-[#4B5563] py-[9px] px-[16px] rounded-[6px] font-[500] text-[14px] transition-colors") Đặt lại
+
+        //- Bảng nhật ký
+        div(class="bg-white rounded-[10px] border border-[#E5E7EB] shadow-xs overflow-hidden")
+            div(class="overflow-x-auto")
+                table(class="w-full text-left border-collapse text-[13px]")
+                    thead(class="bg-[#F9FAFB] text-[#4B5563] text-[12px] uppercase font-[600] border-b border-[#E5E7EB]")
+                        tr
+                            th(class="py-[12px] px-[20px]") Thời gian
+                            th(class="py-[12px] px-[20px]") Admin thực hiện
+                            th(class="py-[12px] px-[20px]") Hành động
+                            th(class="py-[12px] px-[20px]") Đối tượng
+                            th(class="py-[12px] px-[20px]") IP
+                            th(class="py-[12px] px-[20px]") Chi tiết (Meta)
+                    tbody(class="divide-y divide-[#E5E7EB]")
+                        if logs && logs.length > 0
+                            each log in logs
+                                tr(class="hover:bg-gray-50 transition-colors")
+                                    td(class="py-[12px] px-[20px] text-[#6B7280] whitespace-nowrap") #{formatDateTime(log.createdAt)}
+                                    td(class="py-[12px] px-[20px] font-[600] text-[#111827]")
+                                        if log.adminId
+                                            span #{log.adminId.fullName}
+                                            div(class="text-[11px] text-[#6B7280]") #{log.adminId.email}
+                                        else
+                                            span(class="text-gray-400") Không rõ / Đã xóa
+                                    td(class="py-[12px] px-[20px]")
+                                        span(class="px-[8px] py-[3px] rounded text-[11px] font-[600] font-mono bg-blue-50 text-[#0088FF] border border-blue-200") #{log.action}
+                                    td(class="py-[12px] px-[20px] text-[#374151]")
+                                        span(class="font-[600]") #{log.targetType}: 
+                                        span(class="text-gray-500 font-mono text-[11px]") #{log.targetId}
+                                    td(class="py-[12px] px-[20px] text-gray-500 font-mono text-[11px]") #{log.ip || "127.0.0.1"}
+                                    td(class="py-[12px] px-[20px] text-[#4B5563] max-w-[320px] truncate")
+                                        code(class="bg-gray-100 px-[6px] py-[2px] rounded text-[11px]") #{JSON.stringify(log.meta || {})}
+                        else
+                            tr
+                                td(colspan="6" class="py-[36px] text-center text-[#6B7280]") Chưa có nhật ký thao tác nào được ghi nhận.
+
+        //- Phân trang
+        if pagination && pagination.totalPages > 1
+            div(class="mt-[20px] flex items-center justify-between")
+                div(class="text-[13px] text-[#6B7280]") Hiển thị trang #{pagination.currentPage} / #{pagination.totalPages} (Tổng #{pagination.totalItems} bản ghi)
+                div(class="flex gap-[6px]")
+                    if pagination.hasPrevPage
+                        a(href="?page=" + pagination.prevPage + (filter.adminId ? "&adminId=" + filter.adminId : "") + (filter.action ? "&action=" + filter.action : "") class="px-[12px] py-[6px] border border-[#D1D5DB] rounded bg-white text-[13px] hover:bg-gray-50") Trước
+                    - for (let p = 1; p <= pagination.totalPages; p++)
+                        a(href="?page=" + p + (filter.adminId ? "&adminId=" + filter.adminId : "") + (filter.action ? "&action=" + filter.action : "") class="px-[12px] py-[6px] border rounded text-[13px] " + (pagination.currentPage === p ? "bg-[#0088FF] text-white border-[#0088FF] font-[600]" : "bg-white text-[#374151] border-[#D1D5DB] hover:bg-gray-50")) #{p}
+                    if pagination.hasNextPage
+                        a(href="?page=" + pagination.nextPage + (filter.adminId ? "&adminId=" + filter.adminId : "") + (filter.action ? "&action=" + filter.action : "") class="px-[12px] py-[6px] border border-[#D1D5DB] rounded bg-white text-[13px] hover:bg-gray-50") Sau

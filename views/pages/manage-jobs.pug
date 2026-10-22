@@ -1,0 +1,50 @@
+extends ../layouts/default.pug
+
+block title 
+    title #{title || "Quản lý công việc (Nhà tuyển dụng)"}
+
+block main
+    //- Quản lý công việc
+    div(class="py-[60px]") 
+        .contain 
+            div(class="")
+                div(class="flex flex-col sm:flex-row justify-between mb-[20px] gap-[20px]")
+                    h1(class="font-[700] sm:text-[28px] text-[24px] text-[#121212]") Quản lý công việc
+                    a(href="/employer/jobs/create" class="bg-[#0088FF] rounded-[4px] py-[8px] px-[20px] font-[400] text-[14px] text-white flex items-center self-start sm:self-auto cursor-pointer") Thêm mới 
+
+                if flash && flash.success
+                    div(class="mb-[20px] p-[12px] bg-[#E8F5E9] border border-[#A5D6A7] text-[#2E7D32] rounded-[4px] text-[14px]") #{flash.success}
+                if flash && flash.error
+                    div(class="mb-[20px] p-[12px] bg-[#FFEBEE] border border-[#FFCDD2] text-[#C62828] rounded-[4px] text-[14px]") #{flash.error}
+
+                div(class="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-[20px]")
+                    if jobs && jobs.length > 0
+                        each job in jobs
+                            div(class="card-item p-[20px]")
+                                img(src="/assets/images/bg-card.png" class="inner-bg")
+                                div(class="font-[700] text-[18px] text-[#121212] text-center line-clamp-[2]") #{job.title}
+                                div(class="font-[600] text-[16px] text-[#0088FF] text-center mt-[12px]") #{formatSalary(job.salaryMin, job.salaryMax)}
+                                div(class="font-[400] text-[14px] text-[#121212] text-center mt-[6px]") 
+                                    <i class="fa-solid fa-user-tie text-[16px] mr-[8px]"></i> #{labels.getPositionLabel(job.position)}
+                                div(class="font-[400] text-[14px] text-[#121212] text-center mt-[6px]") 
+                                    <i class="fa-solid fa-briefcase text-[16px] mr-[8px]"></i> #{labels.getWorkingFormLabel(job.workingForm)}
+            
+                                if job.skills && job.skills.length > 0
+                                    div(class="mt-[12px] mb-[19px] flex justify-center items-center flex-wrap gap-[8px]") 
+                                        each sk in job.skills
+                                            div(class="border border-[#DEDEDE] rounded-[20px] py-[6px] px-[16px] font-[400] text-[12px] text-[#414042]") #{sk.name}
+            
+                                div(class="flex justify-center gap-[12px]")
+                                    a(href="/employer/jobs/" + job._id + "/edit" class="bg-[#FFB200] rounded-[4px] py-[8px] px-[20px] font-[400] text-[14px] text-black cursor-pointer") Sửa
+                                    form(action="/employer/jobs/" + job._id + "/delete" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa tin tuyển dụng này không?');" class="inline")
+                                        input(type="hidden" name="_csrf" value=csrfToken)
+                                        button(type="submit" class="bg-[#FF0000] rounded-[4px] py-[8px] px-[20px] font-[400] text-[14px] text-white cursor-pointer") Xóa
+                    else
+                        div(class="col-span-full py-[40px] text-center text-[#717171] text-[16px]") Bạn chưa đăng tin tuyển dụng nào. Hãy nhấn nút "Thêm mới" để bắt đầu!
+    
+                if pagination && pagination.totalPages > 1
+                    div(class="mt-[30px]")
+                        select(class="pagination-select border border-[#DEDEDE] rounded-[8px] py-[12px] px-[18px] font-[400] text-[16px] text-[#414042] cursor-pointer")
+                            - for (let i = 1; i <= pagination.totalPages; i++)
+                                option(value=i selected=(pagination.currentPage === i)) Trang #{i}
+    //- Hết Quản lý công việc

@@ -1,0 +1,62 @@
+extends ../../layouts/admin.pug
+
+block title
+    title Sửa thông tin: #{employer.companyName} - VN.ITJobs Admin
+
+block main
+    div(class="max-w-[800px] mx-auto space-y-[24px]")
+        div(class="flex items-center gap-[10px]")
+            a(href="/" + adminPath + "/employers/" + employer._id class="text-[#0088FF] hover:underline text-[14px]")
+                <i class="fa-solid fa-arrow-left mr-[4px]"></i> Chi tiết NTD
+            span(class="text-gray-400") /
+            span(class="font-[600] text-[#111827] text-[14px]") Chỉnh sửa
+
+        div(class="bg-white p-[28px] rounded-[10px] border border-[#E5E7EB] shadow-xs")
+            h1(class="font-[700] text-[20px] text-[#111827] mb-[20px]") Chỉnh sửa thông tin Nhà tuyển dụng
+
+            form(action="/" + adminPath + "/employers/" + employer._id + "/edit" method="POST" class="space-y-[18px]")
+                input(type="hidden" name="_csrf" value=csrfToken)
+
+                div
+                    label(for="companyName" class="block text-[14px] font-[500] text-[#374151] mb-[6px]") Tên công ty *
+                    input(type="text" id="companyName" name="companyName" value=employer.companyName required class="w-full border border-[#D1D5DB] rounded-[6px] px-[16px] py-[10px] text-[14px] focus:outline-none focus:border-[#0088FF]")
+                    if errors && errors.companyName
+                        p(class="text-red-500 text-[12px] mt-[4px]") #{errors.companyName}
+
+                div
+                    label(for="email" class="block text-[14px] font-[500] text-[#374151] mb-[6px]") Email đăng nhập (Không thể đổi)
+                    input(type="email" id="email" value=employer.email disabled class="w-full border border-[#E5E7EB] bg-gray-100 rounded-[6px] px-[16px] py-[10px] text-[14px] text-gray-500 cursor-not-allowed")
+
+                div(class="grid grid-cols-1 sm:grid-cols-2 gap-[16px]")
+                    div
+                        label(for="city" class="block text-[14px] font-[500] text-[#374151] mb-[6px]") Thành phố *
+                        select(id="city" name="city" class="w-full border border-[#D1D5DB] rounded-[6px] px-[16px] py-[10px] text-[14px] focus:outline-none focus:border-[#0088FF] cursor-pointer")
+                            each c in cities
+                                option(value=c.value selected=(employer.city === c.value)) #{c.label}
+                    div
+                        label(for="phone" class="block text-[14px] font-[500] text-[#374151] mb-[6px]") Số điện thoại liên hệ
+                        input(type="text" id="phone" name="phone" value=(employer.phone || "") class="w-full border border-[#D1D5DB] rounded-[6px] px-[16px] py-[10px] text-[14px] focus:outline-none focus:border-[#0088FF]")
+
+                div
+                    label(for="address" class="block text-[14px] font-[500] text-[#374151] mb-[6px]") Địa chỉ trụ sở / văn phòng
+                    input(type="text" id="address" name="address" value=(employer.address || "") class="w-full border border-[#D1D5DB] rounded-[6px] px-[16px] py-[10px] text-[14px] focus:outline-none focus:border-[#0088FF]")
+
+                div(class="grid grid-cols-1 sm:grid-cols-2 gap-[16px]")
+                    div
+                        label(for="companyModel" class="block text-[14px] font-[500] text-[#374151] mb-[6px]") Mô hình công ty
+                        input(type="text" id="companyModel" name="companyModel" value=(employer.companyModel || "") class="w-full border border-[#D1D5DB] rounded-[6px] px-[16px] py-[10px] text-[14px] focus:outline-none focus:border-[#0088FF]")
+                    div
+                        label(for="companySize" class="block text-[14px] font-[500] text-[#374151] mb-[6px]") Quy mô công ty
+                        input(type="text" id="companySize" name="companySize" value=(employer.companySize || "") placeholder="Ví dụ: 100 - 500 nhân viên" class="w-full border border-[#D1D5DB] rounded-[6px] px-[16px] py-[10px] text-[14px] focus:outline-none focus:border-[#0088FF]")
+
+                div(class="grid grid-cols-1 sm:grid-cols-2 gap-[16px]")
+                    div
+                        label(for="workingTime" class="block text-[14px] font-[500] text-[#374151] mb-[6px]") Thời gian làm việc
+                        input(type="text" id="workingTime" name="workingTime" value=(employer.workingTime || "") placeholder="Thứ 2 - Thứ 6" class="w-full border border-[#D1D5DB] rounded-[6px] px-[16px] py-[10px] text-[14px] focus:outline-none focus:border-[#0088FF]")
+                    div
+                        label(for="overtime" class="block text-[14px] font-[500] text-[#374151] mb-[6px]") Làm việc ngoài giờ (OT)
+                        input(type="text" id="overtime" name="overtime" value=(employer.overtime || "") placeholder="Không có OT / Trả lương OT theo luật" class="w-full border border-[#D1D5DB] rounded-[6px] px-[16px] py-[10px] text-[14px] focus:outline-none focus:border-[#0088FF]")
+
+                div(class="pt-[12px] flex items-center justify-end gap-[12px]")
+                    a(href="/" + adminPath + "/employers/" + employer._id class="px-[18px] py-[10px] border border-[#D1D5DB] rounded-[6px] text-[14px] font-[500] text-[#4B5563] hover:bg-gray-50") Hủy
+                    button(type="submit" class="bg-[#0088FF] hover:bg-[#0070D2] text-white px-[22px] py-[10px] rounded-[6px] font-[600] text-[14px] transition-colors cursor-pointer") Lưu thay đổi

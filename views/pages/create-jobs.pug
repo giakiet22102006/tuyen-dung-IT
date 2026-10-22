@@ -1,0 +1,77 @@
+extends ../layouts/default.pug
+
+block title 
+    title Thêm mới công việc (Nhà tuyển dụng)
+
+block main
+    //- Thêm mới công việc
+    div(class="py-[60px]")
+        .contain
+            if flash && flash.error
+                div(class="mb-[20px] p-[12px] bg-[#FFEBEE] border border-[#FFCDD2] text-[#C62828] rounded-[4px] text-[14px]") #{flash.error}
+            if flash && flash.success
+                div(class="mb-[20px] p-[12px] bg-[#E8F5E9] border border-[#A5D6A7] text-[#2E7D32] rounded-[4px] text-[14px]") #{flash.success}
+
+            div(class="border border-[#DEDEDE] rounded-[8px] p-[20px]")    
+                div(class="flex flex-col sm:flex-row justify-between mb-[20px] gap-[20px]")
+                    h1(class="font-[700] text-[20px]") Thêm mới công việc
+                    a(href="/employer/jobs" class="font-[400] text-[14px] text-[#0088FF] underline") Quay lại danh sách 
+
+                form(action="/employer/jobs/create" method="POST" enctype="multipart/form-data" class="mt-[20px]")
+                    input(type="hidden" name="_csrf" value=csrfToken)
+
+                    div(class="mb-[15px]")
+                        label(for="title" class="font-[500] text-[14px] mb-[5px]") Tên công việc *
+                        input(type="text" id="title" name="title" value=(old && old.title || "") required class="border border-[#DEDEDE] rounded-[4px] py-[11px] px-[20px] block w-full") 
+                        if errors && errors.title
+                            div(class="text-[#FF0000] text-[13px] mt-[4px]") #{errors.title}
+
+                    div(class="grid sm:grid-cols-2 grid-cols-1 sm:gap-[20px] gap-[15px] mb-[15px]")
+                        div(class="")
+                            label(for="salaryMin" class="font-[500] text-[14px] mb-[5px]") Mức lương tối thiểu ($)
+                            input(type="number" min="0" id="salaryMin" name="salaryMin" value=(old && old.salaryMin !== undefined ? old.salaryMin : "") placeholder="Ví dụ: 1000" class="border border-[#DEDEDE] rounded-[4px] py-[11px] px-[20px] block w-full")  
+                        div(class="")
+                            label(for="salaryMax" class="font-[500] text-[14px] mb-[5px]") Mức lương tối đa ($)
+                            input(type="number" min="0" id="salaryMax" name="salaryMax" value=(old && old.salaryMax !== undefined ? old.salaryMax : "") placeholder="Ví dụ: 2500" class="border border-[#DEDEDE] rounded-[4px] py-[11px] px-[20px] block w-full") 
+                            if errors && errors.salaryMax
+                                div(class="text-[#FF0000] text-[13px] mt-[4px]") #{errors.salaryMax}
+
+                    div(class="grid sm:grid-cols-2 grid-cols-1 sm:gap-[20px] gap-[15px] mb-[15px]")
+                        div(class="")
+                            label(for="position" class="font-[500] text-[14px] mb-[5px]") Cấp bậc *
+                            select(id="position" name="position" required class="border border-[#DEDEDE] rounded-[4px] py-[11px] px-[20px] block w-full cursor-pointer")
+                                if positions && positions.length > 0
+                                    each pos in positions
+                                        option(value=pos.value selected=(old && old.position === pos.value)) #{pos.label}
+                                else
+                                    option(value="intern") Intern 
+                                    option(value="middle") Middle
+                            if errors && errors.position
+                                div(class="text-[#FF0000] text-[13px] mt-[4px]") #{errors.position}
+                        div(class="")
+                            label(for="workingForm" class="font-[500] text-[14px] mb-[5px]") Hình thức làm việc *
+                            select(id="workingForm" name="workingForm" required class="border border-[#DEDEDE] rounded-[4px] py-[11px] px-[20px] block w-full cursor-pointer")
+                                if workingForms && workingForms.length > 0
+                                    each wf in workingForms
+                                        option(value=wf.value selected=(old && old.workingForm === wf.value)) #{wf.label}
+                                else
+                                    option(value="office") Tại văn phòng 
+                                    option(value="remote") Từ xa
+                            if errors && errors.workingForm
+                                div(class="text-[#FF0000] text-[13px] mt-[4px]") #{errors.workingForm}
+
+                    div(class="mb-[15px]")
+                        label(for="skills" class="font-[500] text-[14px] mb-[5px]") Các công nghệ (phân cách bởi dấu phẩy)
+                        input(type="text" id="skills" name="skills" value=(old && old.skills || "") placeholder="Ví dụ: ReactJS, NodeJS, MongoDB" class="border border-[#DEDEDE] rounded-[4px] py-[11px] px-[20px] block w-full")
+
+                    div(class="mb-[15px]")
+                        label(for="images" class="font-[500] text-[14px] mb-[5px]") Danh sách ảnh (tối đa 5 ảnh, định dạng PNG, JPG, WebP)
+                        input(type="file" id="images" name="images" multiple accept="image/*" class="border border-[#DEDEDE] rounded-[4px] py-[11px] px-[20px] block w-full")
+
+                    div(class="mb-[15px]")
+                        label(for="description" class="font-[500] text-[14px] mb-[5px]") Mô tả chi tiết
+                        textarea(id="description" name="description" placeholder="Mô tả trách nhiệm, yêu cầu công việc, quyền lợi..." class="border border-[#DEDEDE] rounded-[4px] py-[11px] px-[20px] block w-full min-h-[350px]")= (old && old.description || "")
+  
+                    div(class="")
+                        button(type="submit" class="bg-[#0088FF] rounded-[4px] py-[14px] px-[20px] font-[700] text-[16px] text-white cursor-pointer") Tạo mới
+    //- Hết Thêm mới công việc

@@ -1,0 +1,44 @@
+doctype html
+html(lang="vi")
+    head
+        meta(charset="UTF-8")
+        meta(name="viewport" content="width=device-width, initial-scale=1.0")
+        meta(name="robots" content="noindex, nofollow")
+        title #{title || "Đăng nhập Quản trị viên - VN.ITJobs"}
+        link(rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css")
+        link(rel="stylesheet" href="/assets/css/tailwind.css")
+    body(class="bg-[#F4F6F8] font-['Lexend',sans-serif] min-h-screen flex items-center justify-center p-[20px]")
+        div(class="w-full max-w-[440px] bg-white rounded-[12px] shadow-sm border border-[#E5E7EB] p-[32px]")
+            div(class="text-center mb-[28px]")
+                div(class="inline-flex items-center gap-[8px] mb-[12px]")
+                    span(class="font-[800] text-[28px] text-[#0088FF]") VN.
+                    span(class="font-[800] text-[28px] text-[#000065]") ITJobs
+                    span(class="text-[12px] bg-[#000065] text-white px-[8px] py-[2px] rounded font-[600]") ADMIN
+                p(class="text-[#6B7280] text-[14px]") Cổng quản trị hệ thống tuyển dụng
+
+            if flash && flash.error
+                div(class="mb-[20px] p-[12px] bg-[#FFEBEE] border border-[#FFCDD2] text-[#C62828] rounded-[6px] text-[14px]") #{flash.error}
+            if flash && flash.success
+                div(class="mb-[20px] p-[12px] bg-[#E8F5E9] border border-[#A5D6A7] text-[#2E7D32] rounded-[6px] text-[14px]") #{flash.success}
+            if errors && errors.general
+                div(class="mb-[20px] p-[12px] bg-[#FFEBEE] border border-[#FFCDD2] text-[#C62828] rounded-[6px] text-[14px]") #{errors.general}
+
+            form(action="/" + adminPath + "/login" method="POST" class="space-y-[18px]")
+                input(type="hidden" name="_csrf" value=csrfToken)
+
+                div
+                    label(for="email" class="block font-[500] text-[14px] text-[#374151] mb-[6px]") Email Quản trị viên
+                    input(type="email" id="email" name="email" value=(old && old.email || "") required autofocus placeholder="admin@domain.com" class="w-full border border-[#D1D5DB] rounded-[6px] px-[16px] py-[10px] text-[14px] focus:outline-none focus:border-[#0088FF]")
+
+                div
+                    label(for="password" class="block font-[500] text-[14px] text-[#374151] mb-[6px]") Mật khẩu
+                    input(type="password" id="password" name="password" required placeholder="••••••••" class="w-full border border-[#D1D5DB] rounded-[6px] px-[16px] py-[10px] text-[14px] focus:outline-none focus:border-[#0088FF]")
+
+                div(class="pt-[6px]")
+                    button(type="submit" class="w-full bg-[#0088FF] hover:bg-[#0070D2] text-white font-[600] text-[15px] py-[12px] rounded-[6px] transition-colors cursor-pointer flex items-center justify-center gap-[8px]")
+                        <i class="fa-solid fa-lock text-[14px]"></i>
+                        span Đăng nhập vào Hệ thống
+
+            div(class="mt-[24px] pt-[20px] border-t border-[#F3F4F6] text-center")
+                a(href="/" class="text-[13px] text-[#6B7280] hover:text-[#0088FF] transition-colors")
+                    <i class="fa-solid fa-arrow-left mr-[4px]"></i> Quay lại trang chủ tuyển dụng

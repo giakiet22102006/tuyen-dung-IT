@@ -1,0 +1,44 @@
+extends ../../layouts/admin.pug
+
+block title
+    title Thêm mới Ứng viên - VN.ITJobs Admin
+
+block main
+    div(class="max-w-[700px] mx-auto space-y-[24px]")
+        div(class="flex items-center gap-[10px]")
+            a(href="/" + adminPath + "/candidates" class="text-[#0088FF] hover:underline text-[14px]")
+                <i class="fa-solid fa-arrow-left mr-[4px]"></i> Danh sách Ứng viên
+            span(class="text-gray-400") /
+            span(class="font-[600] text-[#111827] text-[14px]") Thêm mới
+
+        div(class="bg-white p-[28px] rounded-[10px] border border-[#E5E7EB] shadow-xs")
+            h1(class="font-[700] text-[20px] text-[#111827] mb-[20px]") Thêm mới Ứng viên thủ công
+
+            form(action="/" + adminPath + "/candidates/create" method="POST" class="space-y-[18px]")
+                input(type="hidden" name="_csrf" value=csrfToken)
+
+                div
+                    label(for="fullName" class="block text-[14px] font-[500] text-[#374151] mb-[6px]") Họ và tên Ứng viên *
+                    input(type="text" id="fullName" name="fullName" value=(old && old.fullName || "") required class="w-full border border-[#D1D5DB] rounded-[6px] px-[16px] py-[10px] text-[14px] focus:outline-none focus:border-[#0088FF]")
+                    if errors && errors.fullName
+                        p(class="text-red-500 text-[12px] mt-[4px]") #{errors.fullName}
+
+                div
+                    label(for="email" class="block text-[14px] font-[500] text-[#374151] mb-[6px]") Email đăng nhập *
+                    input(type="email" id="email" name="email" value=(old && old.email || "") required class="w-full border border-[#D1D5DB] rounded-[6px] px-[16px] py-[10px] text-[14px] focus:outline-none focus:border-[#0088FF]")
+                    if errors && errors.email
+                        p(class="text-red-500 text-[12px] mt-[4px]") #{errors.email}
+
+                div
+                    label(for="phone" class="block text-[14px] font-[500] text-[#374151] mb-[6px]") Số điện thoại liên hệ
+                    input(type="text" id="phone" name="phone" value=(old && old.phone || "") class="w-full border border-[#D1D5DB] rounded-[6px] px-[16px] py-[10px] text-[14px] focus:outline-none focus:border-[#0088FF]")
+
+                div
+                    label(for="status" class="block text-[14px] font-[500] text-[#374151] mb-[6px]") Trạng thái tài khoản
+                    select(id="status" name="status" class="w-full border border-[#D1D5DB] rounded-[6px] px-[16px] py-[10px] text-[14px] focus:outline-none focus:border-[#0088FF] cursor-pointer")
+                        option(value="active" selected) Hoạt động
+                        option(value="banned") Đã bị khóa
+
+                div(class="pt-[12px] flex items-center justify-end gap-[12px]")
+                    a(href="/" + adminPath + "/candidates" class="px-[18px] py-[10px] border border-[#D1D5DB] rounded-[6px] text-[14px] font-[500] text-[#4B5563] hover:bg-gray-50") Hủy
+                    button(type="submit" class="bg-[#0088FF] hover:bg-[#0070D2] text-white px-[22px] py-[10px] rounded-[6px] font-[600] text-[14px] transition-colors cursor-pointer") Tạo Ứng viên
