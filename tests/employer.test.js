@@ -58,6 +58,7 @@ describe("Phase 4: Employer Portal Integration Tests", () => {
       city: overrides.city || "ha-noi",
       address: overrides.address || "Tòa nhà Keangnam, Hà Nội",
       status: overrides.status || EMPLOYER_STATUS.ACTIVE,
+      isEmailVerified: overrides.isEmailVerified !== undefined ? overrides.isEmailVerified : true,
     });
 
     const init = await getCsrfAndCookies("/employer/login");
@@ -95,6 +96,7 @@ describe("Phase 4: Employer Portal Integration Tests", () => {
         email: "cand@test.com",
         password: passwordHash,
         status: CANDIDATE_STATUS.ACTIVE,
+        isEmailVerified: true,
       });
 
       const init = await getCsrfAndCookies("/candidate/login");

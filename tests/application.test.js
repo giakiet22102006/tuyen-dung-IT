@@ -60,6 +60,7 @@ describe("Phase 5: Candidate Profile, Application & Employer CV Management Tests
       password: passwordHash,
       phone: overrides.phone || "0987654321",
       status: CANDIDATE_STATUS.ACTIVE,
+      isEmailVerified: overrides.isEmailVerified !== undefined ? overrides.isEmailVerified : true,
     });
 
     const init = await getCsrfAndCookies("/candidate/login");
@@ -87,6 +88,7 @@ describe("Phase 5: Candidate Profile, Application & Employer CV Management Tests
       city: overrides.city || "ha-noi",
       address: overrides.address || "Tòa nhà Keangnam, Hà Nội",
       status: overrides.status || EMPLOYER_STATUS.ACTIVE,
+      isEmailVerified: overrides.isEmailVerified !== undefined ? overrides.isEmailVerified : true,
     });
 
     const init = await getCsrfAndCookies("/employer/login");

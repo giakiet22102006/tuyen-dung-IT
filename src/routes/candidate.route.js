@@ -15,6 +15,11 @@ const asyncHandler = require("../utils/asyncHandler");
 router.get("/signup", requireGuest, candidateAuth.renderSignup);
 router.post("/signup", requireGuest, doubleCsrfProtection, asyncHandler(candidateAuth.postSignup));
 
+// Xác thực Email kích hoạt tài khoản
+router.get("/verify-registration", requireGuest, candidateAuth.renderVerifyRegistration);
+router.post("/verify-registration", requireGuest, doubleCsrfProtection, asyncHandler(candidateAuth.postVerifyRegistration));
+router.post("/resend-registration-otp", requireGuest, otpRateLimiter, doubleCsrfProtection, asyncHandler(candidateAuth.postResendRegistrationOtp));
+
 router.get("/login", requireGuest, candidateAuth.renderLogin);
 router.post("/login", requireGuest, loginRateLimiter, doubleCsrfProtection, asyncHandler(candidateAuth.postLogin));
 

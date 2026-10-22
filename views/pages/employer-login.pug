@@ -16,6 +16,10 @@ block main
                     div(class="mt-[15px] p-[12px] bg-[#FFEBEE] border border-[#FFCDD2] text-[#C62828] rounded-[4px] text-[14px]") #{flash.error}
                 if errors && errors.general
                     div(class="mt-[15px] p-[12px] bg-[#FFEBEE] border border-[#FFCDD2] text-[#C62828] rounded-[4px] text-[14px]") #{errors.general}
+                if unverifiedEmail
+                    div(class="mt-[15px] p-[12px] bg-[#FFFBEB] border border-[#FDE68A] text-[#B45309] rounded-[4px] text-[14px]")
+                        | Tài khoản của bạn chưa xác thực email. 
+                        a(href="/employer/verify-registration?email=" + encodeURIComponent(unverifiedEmail) class="text-[#0088FF] font-[600] underline ml-[4px]") Bấm vào đây để xác thực ngay
 
                 form(action="/employer/login" method="POST" class="mt-[20px]") 
                     input(type="hidden" name="_csrf" value=csrfToken)

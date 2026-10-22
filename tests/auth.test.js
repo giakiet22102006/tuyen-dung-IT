@@ -1,8 +1,9 @@
 const request = require("supertest");
 const { MongoMemoryServer } = require("mongodb-memory-server");
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 const app = require("../src/app");
-const { Candidate, Employer } = require("../src/models");
+const { Candidate, Employer, Otp } = require("../src/models");
 const { CANDIDATE_STATUS, EMPLOYER_STATUS } = require("../src/config/constants");
 const { hashPassword } = require("../src/services/auth.service");
 
@@ -21,6 +22,7 @@ afterAll(async () => {
 beforeEach(async () => {
   await Candidate.deleteMany({});
   await Employer.deleteMany({});
+  await Otp.deleteMany({});
 });
 
 describe("Phase 2: Auth & Role Isolation Tests", () => {
@@ -46,8 +48,8 @@ describe("Phase 2: Auth & Role Isolation Tests", () => {
     return { cookies: merged, csrfToken, res };
   }
 
-  describe("Candidate Auth", () => {
-    test("Đăng ký ứng viên thành công", async () => {
+  describe("Candidate Auth & Email Verification", () => {
+    test("Đăng ký ứng viên yêu cầu xác thực OTP qua Gmail trước khi kích hoạt", async () => {
       const { cookies, csrfToken } = await getCsrfAndCookies("/candidate/signup");
       const res = await request(app)
         .post("/candidate/signup")
@@ -59,15 +61,59 @@ describe("Phase 2: Auth & Role Isolation Tests", () => {
           password: "Password123",
         });
 
+      // 1. Phải chuyển hướng sang trang verify-registration
       expect(res.status).toBe(302);
-      expect(res.headers.location).toBe("/");
-      expect(res.headers["set-cookie"]).toBeDefined();
-      const hasToken = res.headers["set-cookie"].some((c) => c.includes("itj_token="));
-      expect(hasToken).toBe(true);
+      expect(res.headers.location).toContain("/candidate/verify-registration");
 
+      // 2. Tài khoản được tạo ở trạng thái isEmailVerified = false
       const created = await Candidate.findOne({ email: "candidate.test@gmail.com" });
       expect(created).not.toBeNull();
-      expect(created.fullName).toBe("Nguyễn Văn Test");
+      expect(created.isEmailVerified).toBe(false);
+
+      // 3. Có bản ghi OTP trong database
+      const otpRecord = await Otp.findOne({ email: "candidate.test@gmail.com", userType: "candidate", type: "register" });
+      expect(otpRecord).toBeDefined();
+
+      // 4. Nếu cố đăng nhập khi chưa xác thực -> Bị chặn 403
+      const { cookies: loginCookies, csrfToken: loginCsrf } = await getCsrfAndCookies("/candidate/login");
+      const loginBlocked = await request(app)
+        .post("/candidate/login")
+        .set("Cookie", loginCookies)
+        .send({
+          _csrf: loginCsrf,
+          email: "candidate.test@gmail.com",
+          password: "Password123",
+        });
+      expect(loginBlocked.status).toBe(403);
+      expect(loginBlocked.text).toContain("chưa xác thực email");
+
+      // 5. Xác thực bằng OTP (giả lập mã 123456)
+      const salt = await bcrypt.genSalt(10);
+      otpRecord.otpHash = await bcrypt.hash("123456", salt);
+      await otpRecord.save();
+
+      const { cookies: verifyCookies, csrfToken: verifyCsrf } = await getCsrfAndCookies(
+        "/candidate/verify-registration?email=candidate.test@gmail.com",
+        cookies
+      );
+      const verifyRes = await request(app)
+        .post("/candidate/verify-registration")
+        .set("Cookie", verifyCookies)
+        .send({
+          _csrf: verifyCsrf,
+          email: "candidate.test@gmail.com",
+          otp: "123456",
+        });
+
+      // 6. Sau khi xác thực thành công: Kích hoạt tài khoản và tự động đăng nhập
+      expect(verifyRes.status).toBe(302);
+      expect(verifyRes.headers.location).toBe("/");
+      expect(verifyRes.headers["set-cookie"]).toBeDefined();
+      const hasToken = verifyRes.headers["set-cookie"].some((c) => c.includes("itj_token="));
+      expect(hasToken).toBe(true);
+
+      const verifiedCand = await Candidate.findOne({ email: "candidate.test@gmail.com" });
+      expect(verifiedCand.isEmailVerified).toBe(true);
     });
 
     test("Đăng ký thất bại khi mật khẩu không có số", async () => {
@@ -93,6 +139,7 @@ describe("Phase 2: Auth & Role Isolation Tests", () => {
         email: "candidate.b@gmail.com",
         password: hashedPassword,
         status: CANDIDATE_STATUS.ACTIVE,
+        isEmailVerified: true,
       });
 
       const { cookies, csrfToken } = await getCsrfAndCookies("/candidate/login");
@@ -136,6 +183,7 @@ describe("Phase 2: Auth & Role Isolation Tests", () => {
         email: "doipass@gmail.com",
         password: hashedPassword,
         status: CANDIDATE_STATUS.ACTIVE,
+        isEmailVerified: true,
       });
 
       // Login
@@ -174,7 +222,7 @@ describe("Phase 2: Auth & Role Isolation Tests", () => {
   });
 
   describe("Employer Auth & Cross-role Isolation", () => {
-    test("Đăng ký nhà tuyển dụng thành công và mặc định chờ duyệt (pending)", async () => {
+    test("Đăng ký nhà tuyển dụng chuyển hướng xác thực email OTP", async () => {
       const { cookies, csrfToken } = await getCsrfAndCookies("/employer/signup");
       const res = await request(app)
         .post("/employer/signup")
@@ -187,9 +235,12 @@ describe("Phase 2: Auth & Role Isolation Tests", () => {
         });
 
       expect(res.status).toBe(302);
+      expect(res.headers.location).toContain("/employer/verify-registration");
+
       const employer = await Employer.findOne({ email: "alpha@tech.com" });
       expect(employer).not.toBeNull();
       expect(employer.status).toBe(EMPLOYER_STATUS.PENDING);
+      expect(employer.isEmailVerified).toBe(false);
     });
 
     test("Đăng xuất thành công và xóa cookie itj_token", async () => {
@@ -199,6 +250,7 @@ describe("Phase 2: Auth & Role Isolation Tests", () => {
         email: "logout@test.com",
         password: hashedPassword,
         status: CANDIDATE_STATUS.ACTIVE,
+        isEmailVerified: true,
       });
 
       const { cookies: loginCookies, csrfToken: loginCsrf } = await getCsrfAndCookies("/candidate/login");
@@ -231,6 +283,7 @@ describe("Phase 2: Auth & Role Isolation Tests", () => {
         email: "cand@test.com",
         password: hashedPassword,
         status: CANDIDATE_STATUS.ACTIVE,
+        isEmailVerified: true,
       });
 
       const { cookies, csrfToken } = await getCsrfAndCookies("/candidate/login");

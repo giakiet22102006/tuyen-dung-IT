@@ -1,7 +1,10 @@
 // src/controllers/candidate/candidateAuth.controller.js
-const { Candidate } = require("../../models");
+const crypto = require("crypto");
+const bcrypt = require("bcryptjs");
+const { Candidate, Otp } = require("../../models");
 const { CANDIDATE_STATUS } = require("../../config/constants");
 const { hashPassword, comparePassword, signUserToken } = require("../../services/auth.service");
+const { sendRegistrationOtpEmail } = require("../../services/mail.service");
 const {
   candidateSignupSchema,
   loginSchema,
@@ -32,23 +35,162 @@ const postSignup = async (req, res) => {
   }
 
   const { fullName, email, password } = result.data;
-  const existing = await Candidate.findOne({ email });
+  const cleanEmail = email.toLowerCase().trim();
+  const existing = await Candidate.findOne({ email: cleanEmail });
+
   if (existing) {
-    return res.status(400).render("pages/candidate-signup", {
-      title: "Đăng ký (Ứng viên)",
-      errors: { email: "Email này đã được sử dụng. Vui lòng chọn email khác." },
-      old: req.body,
+    // Nếu tài khoản đã tồn tại và ĐÃ xác thực email
+    if (existing.isEmailVerified !== false) {
+      return res.status(400).render("pages/candidate-signup", {
+        title: "Đăng ký (Ứng viên)",
+        errors: { email: "Email này đã được sử dụng. Vui lòng chọn email khác hoặc Đăng nhập." },
+        old: req.body,
+      });
+    }
+
+    // Nếu tài khoản đã đăng ký trước đó nhưng CHƯA xác thực email -> cập nhật thông tin và gửi lại mã OTP
+    existing.fullName = fullName;
+    existing.password = await hashPassword(password);
+    await existing.save();
+
+    const otpCode = crypto.randomInt(100000, 999999).toString();
+    const salt = await bcrypt.genSalt(10);
+    const otpHash = await bcrypt.hash(otpCode, salt);
+
+    await Otp.deleteMany({ email: cleanEmail, userType: "candidate", type: "register" });
+    await Otp.create({
+      email: cleanEmail,
+      otpHash,
+      userType: "candidate",
+      type: "register",
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
     });
+
+    try {
+      await sendRegistrationOtpEmail(cleanEmail, otpCode, "candidate");
+    } catch (err) {
+      console.error("Lỗi gửi email đăng ký:", err.message);
+    }
+
+    req.flash("success", "Tài khoản của bạn đã được cập nhật. Vui lòng nhập mã OTP gửi về Gmail để kích hoạt!");
+    return res.redirect(`/candidate/verify-registration?email=${encodeURIComponent(cleanEmail)}`);
   }
 
   const hashedPassword = await hashPassword(password);
-  const candidate = await Candidate.create({
+  await Candidate.create({
     fullName,
-    email,
+    email: cleanEmail,
     password: hashedPassword,
     status: CANDIDATE_STATUS.ACTIVE,
+    isEmailVerified: false, // Bắt buộc phải xác thực email
   });
 
+  // Tạo mã OTP xác thực
+  const otpCode = crypto.randomInt(100000, 999999).toString();
+  const salt = await bcrypt.genSalt(10);
+  const otpHash = await bcrypt.hash(otpCode, salt);
+
+  await Otp.deleteMany({ email: cleanEmail, userType: "candidate", type: "register" });
+  await Otp.create({
+    email: cleanEmail,
+    otpHash,
+    userType: "candidate",
+    type: "register",
+    expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+  });
+
+  try {
+    await sendRegistrationOtpEmail(cleanEmail, otpCode, "candidate");
+  } catch (err) {
+    console.error("Lỗi gửi email đăng ký:", err.message);
+  }
+
+  req.flash("success", "Đăng ký thành công! Vui lòng nhập mã xác thực OTP gửi về Gmail để kích hoạt tài khoản.");
+  res.redirect(`/candidate/verify-registration?email=${encodeURIComponent(cleanEmail)}`);
+};
+
+// Giao diện nhập mã OTP kích hoạt tài khoản
+const renderVerifyRegistration = (req, res) => {
+  const email = (req.query.email || "").toLowerCase().trim();
+  if (!email) {
+    return res.redirect("/candidate/signup");
+  }
+  res.render("pages/verify-registration", {
+    title: "Xác thực Email đăng ký (Ứng viên)",
+    userRole: "candidate",
+    email,
+    errors: {},
+  });
+};
+
+// Xử lý xác thực mã OTP kích hoạt
+const postVerifyRegistration = async (req, res) => {
+  const { email, otp } = req.body;
+  const cleanEmail = (email || "").toLowerCase().trim();
+  const cleanOtp = (otp || "").trim();
+
+  if (!cleanOtp || cleanOtp.length !== 6 || !/^\d{6}$/.test(cleanOtp)) {
+    return res.status(400).render("pages/verify-registration", {
+      title: "Xác thực Email đăng ký (Ứng viên)",
+      userRole: "candidate",
+      email: cleanEmail,
+      errors: { otp: "Mã OTP phải gồm đúng 6 chữ số." },
+    });
+  }
+
+  const otpRecord = await Otp.findOne({
+    email: cleanEmail,
+    userType: "candidate",
+    type: "register",
+    expiresAt: { $gt: new Date() },
+  });
+
+  if (!otpRecord) {
+    return res.status(400).render("pages/verify-registration", {
+      title: "Xác thực Email đăng ký (Ứng viên)",
+      userRole: "candidate",
+      email: cleanEmail,
+      errors: { otp: "Mã OTP đã hết hạn hoặc không tồn tại. Vui lòng bấm 'Gửi lại mã OTP'." },
+    });
+  }
+
+  if (otpRecord.attempts >= 5) {
+    await Otp.deleteOne({ _id: otpRecord._id });
+    return res.status(400).render("pages/verify-registration", {
+      title: "Xác thực Email đăng ký (Ứng viên)",
+      userRole: "candidate",
+      email: cleanEmail,
+      errors: { otp: "Bạn đã nhập sai mã quá 5 lần. Vui lòng bấm gửi lại mã mới." },
+    });
+  }
+
+  const isMatch = await bcrypt.compare(cleanOtp, otpRecord.otpHash);
+  if (!isMatch) {
+    otpRecord.attempts += 1;
+    await otpRecord.save();
+    const remaining = 5 - otpRecord.attempts;
+    return res.status(400).render("pages/verify-registration", {
+      title: "Xác thực Email đăng ký (Ứng viên)",
+      userRole: "candidate",
+      email: cleanEmail,
+      errors: { otp: `Mã OTP không chính xác. Bạn còn ${remaining} lần thử.` },
+    });
+  }
+
+  // Khớp OTP -> Kích hoạt tài khoản ứng viên
+  const candidate = await Candidate.findOne({ email: cleanEmail });
+  if (!candidate) {
+    req.flash("error", "Không tìm thấy thông tin tài khoản.");
+    return res.redirect("/candidate/signup");
+  }
+
+  candidate.isEmailVerified = true;
+  await candidate.save();
+
+  // Xóa mã OTP đã dùng
+  await Otp.deleteMany({ email: cleanEmail, userType: "candidate", type: "register" });
+
+  // Tự động đăng nhập
   const token = signUserToken(candidate, "candidate");
   res.cookie("itj_token", token, {
     httpOnly: true,
@@ -57,8 +199,42 @@ const postSignup = async (req, res) => {
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
-  req.flash("success", "Đăng ký tài khoản Ứng viên thành công!");
+  req.flash("success", "Xác thực email thành công! Chào mừng bạn gia nhập VN.ITJobs.");
   res.redirect("/");
+};
+
+// Gửi lại mã OTP đăng ký
+const postResendRegistrationOtp = async (req, res) => {
+  const { email } = req.body;
+  const cleanEmail = (email || "").toLowerCase().trim();
+
+  const candidate = await Candidate.findOne({ email: cleanEmail });
+  if (!candidate || candidate.isEmailVerified) {
+    req.flash("error", "Tài khoản không tồn tại hoặc đã được xác thực trước đó.");
+    return res.redirect("/candidate/login");
+  }
+
+  const otpCode = crypto.randomInt(100000, 999999).toString();
+  const salt = await bcrypt.genSalt(10);
+  const otpHash = await bcrypt.hash(otpCode, salt);
+
+  await Otp.deleteMany({ email: cleanEmail, userType: "candidate", type: "register" });
+  await Otp.create({
+    email: cleanEmail,
+    otpHash,
+    userType: "candidate",
+    type: "register",
+    expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+  });
+
+  try {
+    await sendRegistrationOtpEmail(cleanEmail, otpCode, "candidate");
+  } catch (err) {
+    console.error("Lỗi gửi lại mã OTP:", err.message);
+  }
+
+  req.flash("success", `Đã gửi lại mã OTP mới tới hòm thư ${cleanEmail}. Vui lòng kiểm tra email!`);
+  res.redirect(`/candidate/verify-registration?email=${encodeURIComponent(cleanEmail)}`);
 };
 
 const renderLogin = (req, res) => {
@@ -82,7 +258,8 @@ const postLogin = async (req, res) => {
   }
 
   const { email, password } = result.data;
-  const candidate = await Candidate.findOne({ email, deletedAt: null }).select("+password");
+  const cleanEmail = email.toLowerCase().trim();
+  const candidate = await Candidate.findOne({ email: cleanEmail, deletedAt: null }).select("+password");
 
   if (!candidate) {
     return res.status(400).render("pages/candidate-login", {
@@ -103,6 +280,17 @@ const postLogin = async (req, res) => {
     });
   }
 
+  // Chặn đăng nhập nếu chưa xác thực email
+  if (candidate.isEmailVerified === false) {
+    return res.status(403).render("pages/candidate-login", {
+      title: "Đăng nhập (Ứng viên)",
+      errors: { general: "Tài khoản của bạn chưa xác thực email. Vui lòng xác thực trước khi đăng nhập." },
+      unverifiedEmail: cleanEmail,
+      old: req.body,
+      next: req.body.next || "",
+    });
+  }
+
   const isMatch = await comparePassword(password, candidate.password);
   if (!isMatch) {
     return res.status(400).render("pages/candidate-login", {
@@ -113,6 +301,7 @@ const postLogin = async (req, res) => {
     });
   }
 
+  // Cập nhật lastLoginAt
   candidate.lastLoginAt = new Date();
   await candidate.save();
 
@@ -124,14 +313,14 @@ const postLogin = async (req, res) => {
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
-  req.flash("success", `Chào mừng ${candidate.fullName} đã quay trở lại!`);
+  req.flash("success", "Đăng nhập thành công!");
   const redirectUrl = req.body.next && req.body.next.startsWith("/") ? req.body.next : "/";
   res.redirect(redirectUrl);
 };
 
 const postLogout = (req, res) => {
   res.clearCookie("itj_token");
-  req.flash("success", "Đã đăng xuất thành công.");
+  req.flash("success", "Đăng xuất thành công!");
   res.redirect("/");
 };
 
@@ -192,6 +381,9 @@ const postChangePassword = async (req, res) => {
 module.exports = {
   renderSignup,
   postSignup,
+  renderVerifyRegistration,
+  postVerifyRegistration,
+  postResendRegistrationOtp,
   renderLogin,
   postLogin,
   postLogout,
