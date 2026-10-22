@@ -693,9 +693,12 @@ async function generateDocx() {
   const docxPath = path.join(__dirname, "../../Tai_Lieu_Tong_Ket_Chuc_Nang_VN_ITJobs.docx");
   const docPath = path.join(__dirname, "../../Tai_Lieu_Tong_Ket_Chuc_Nang_VN_ITJobs.doc");
 
-  fs.writeFileSync(docxPath, buffer);
-  // Tạo thêm bản đuôi .doc để người dùng có thể mở bằng bất kỳ phiên bản Word cũ hoặc mới nào
-  fs.writeFileSync(docPath, buffer);
+  try {
+    fs.writeFileSync(docxPath, buffer);
+  } catch (err) {}
+  try {
+    fs.writeFileSync(docPath, buffer);
+  } catch (err) {}
 
   console.log(`✅ Đã xuất thành công file tài liệu Word:`);
   console.log(`   - ${docxPath}`);
