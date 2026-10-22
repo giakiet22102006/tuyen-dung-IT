@@ -106,7 +106,14 @@ block main
                 //- Hết Thông tin công việc
 
     script.
-        document.addEventListener("DOMContentLoaded", () => {
-            if (window.initAiCvScreening) window.initAiCvScreening("#{application._id}");
-        });
+        (function() {
+            function runInit() {
+                if (window.initAiCvScreening) window.initAiCvScreening("#{application._id}");
+            }
+            if (document.readyState === "loading") {
+                document.addEventListener("DOMContentLoaded", runInit);
+            } else {
+                runInit();
+            }
+        })();
     //- Hết Chi tiết CV

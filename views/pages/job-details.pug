@@ -205,8 +205,15 @@ block main
                     div(id="aiInterviewQuestions" class="space-y-[16px]")
 
     script.
-        document.addEventListener("DOMContentLoaded", () => {
-            if (window.initAiCvMatch) window.initAiCvMatch("#{job._id}");
-            if (window.initAiInterviewPrep) window.initAiInterviewPrep("#{job._id}");
-        });
+        (function() {
+            function runInit() {
+                if (window.initAiCvMatch) window.initAiCvMatch("#{job._id}");
+                if (window.initAiInterviewPrep) window.initAiInterviewPrep("#{job._id}");
+            }
+            if (document.readyState === "loading") {
+                document.addEventListener("DOMContentLoaded", runInit);
+            } else {
+                runInit();
+            }
+        })();
     //- Hết Chi tiết công việc

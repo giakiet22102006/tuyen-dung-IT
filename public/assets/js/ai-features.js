@@ -25,6 +25,8 @@ window.initAiCvMatch = function (jobId) {
   const resultDiv = document.getElementById('aiCvMatchResult');
 
   if (!modal || !openBtn) return;
+  if (openBtn.dataset.boundAi === 'true') return;
+  openBtn.dataset.boundAi = 'true';
 
   openBtn.addEventListener('click', () => {
     modal.classList.remove('hidden');
@@ -151,6 +153,8 @@ window.initAiInterviewPrep = function (jobId) {
   const container = document.getElementById('aiInterviewQuestions');
 
   if (!modal || !openBtn) return;
+  if (openBtn.dataset.boundAi === 'true') return;
+  openBtn.dataset.boundAi = 'true';
 
   openBtn.addEventListener('click', async () => {
     modal.classList.remove('hidden');
@@ -266,6 +270,8 @@ window.initAiJdGenerator = function () {
   const descTextarea = document.getElementById('description');
 
   if (!triggerBtn || !descTextarea) return;
+  if (triggerBtn.dataset.boundAi === 'true') return;
+  triggerBtn.dataset.boundAi = 'true';
 
   triggerBtn.addEventListener('click', async () => {
     const title = titleInput ? titleInput.value.trim() : '';
@@ -326,6 +332,8 @@ window.initAiCvScreening = function (applicationId) {
   const loading = document.getElementById('aiScreenLoading');
 
   if (!btn || !resultCard) return;
+  if (btn.dataset.boundAi === 'true') return;
+  btn.dataset.boundAi = 'true';
 
   btn.addEventListener('click', async () => {
     btn.disabled = true;

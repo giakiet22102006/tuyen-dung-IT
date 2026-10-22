@@ -1,4 +1,11 @@
 // src/services/ai.service.js
+const dns = require("dns");
+if (dns && typeof dns.setDefaultResultOrder === "function") {
+  try {
+    dns.setDefaultResultOrder("ipv4first");
+  } catch (e) {}
+}
+
 const { GoogleGenAI } = require("@google/genai");
 const env = require("../config/env");
 
@@ -14,33 +21,35 @@ if (env.GEMINI_API_KEY && env.GEMINI_API_KEY.trim()) {
 }
 
 /**
- * Gọi Gemini API với cơ chế tự động Fallback
+ * Gọi Gemini API với cơ chế tự động Fallback đa tầng
  */
 async function callGemini(prompt, systemInstruction = "") {
   if (!aiClient) return null;
-  const modelName = env.GEMINI_MODEL || "gemini-3.8-flash";
+  const primaryModel = env.GEMINI_MODEL || "gemini-3.8-flash";
+  const candidateModels = [primaryModel, "gemini-flash-latest", "gemini-3.5-flash-lite"];
+  // Loại bỏ model trùng lặp nếu env.GEMINI_MODEL trùng với một trong các fallback
+  const modelsToTry = [...new Set(candidateModels)];
 
-  try {
-    const response = await aiClient.models.generateContent({
-      model: modelName,
-      contents: prompt,
-      config: systemInstruction ? { systemInstruction } : undefined,
-    });
-    return response.text;
-  } catch (err) {
-    console.warn(`⚠️ Gemini API (${modelName}) gặp sự cố: ${err.message}. Thử model dự phòng...`);
+  for (let i = 0; i < modelsToTry.length; i++) {
+    const modelName = modelsToTry[i];
     try {
-      const fallbackResponse = await aiClient.models.generateContent({
-        model: "gemini-2.5-flash-lite",
+      const response = await aiClient.models.generateContent({
+        model: modelName,
         contents: prompt,
         config: systemInstruction ? { systemInstruction } : undefined,
       });
-      return fallbackResponse.text;
-    } catch (fallbackErr) {
-      console.error("❌ Cả 2 model Gemini đều không phản hồi:", fallbackErr.message);
-      return null;
+      if (response && response.text) {
+        return response.text;
+      }
+    } catch (err) {
+      console.warn(`⚠️ Gemini API (${modelName}) không phản hồi: ${err.message}.`);
+      if (i === modelsToTry.length - 1) {
+        console.error("❌ Tất cả các model Gemini đều không phản hồi, chuyển sang fallback nội bộ.");
+      }
     }
   }
+
+  return null;
 }
 
 /**

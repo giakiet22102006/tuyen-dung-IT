@@ -80,7 +80,14 @@ block main
                         button(type="submit" class="bg-[#0088FF] rounded-[4px] py-[14px] px-[20px] font-[700] text-[16px] text-white cursor-pointer") Tạo mới
 
     script.
-        document.addEventListener("DOMContentLoaded", () => {
-            if (window.initAiJdGenerator) window.initAiJdGenerator();
-        });
+        (function() {
+            function runInit() {
+                if (window.initAiJdGenerator) window.initAiJdGenerator();
+            }
+            if (document.readyState === "loading") {
+                document.addEventListener("DOMContentLoaded", runInit);
+            } else {
+                runInit();
+            }
+        })();
     //- Hết Thêm mới công việc
