@@ -8,6 +8,7 @@ const { findDidYouMean, clearVocabCache } = require("./fuzzySearch.service");
 
 const statsCache = new NodeCache({ stdTTL: 300, checkperiod: 60 });
 const TOTAL_JOBS_KEY = "total_public_jobs";
+const TOP_EMPLOYERS_KEY = "top_employers_list";
 
 async function getTotalPublicJobsCount() {
   const cached = statsCache.get(TOTAL_JOBS_KEY);
@@ -23,15 +24,18 @@ async function getTotalPublicJobsCount() {
 }
 
 function clearStatsCache() {
-  statsCache.del(TOTAL_JOBS_KEY);
+  statsCache.flushAll(); // Xóa sạch cache thống kê, top employers để đồng bộ tức thì
   clearVocabCache();
 }
 
 /**
  * Lấy danh sách 9 nhà tuyển dụng hàng đầu có nhiều việc làm nhất
- * Khử hoàn toàn N+1 bằng aggregate
+ * Tối ưu hóa bằng In-Memory Caching và Aggregate (Khử triệt để N+1)
  */
 async function getTopEmployers(limit = 9) {
+  const cacheKey = `${TOP_EMPLOYERS_KEY}_${limit}`;
+  const cached = statsCache.get(cacheKey);
+  if (cached !== undefined) return cached;
   // Aggregate nhóm theo employerId và đếm số việc làm mở
   const topJobCounts = await Job.aggregate([
     {
@@ -92,6 +96,7 @@ async function getTopEmployers(limit = 9) {
     });
   }
 
+  statsCache.set(cacheKey, result);
   return result;
 }
 
@@ -150,7 +155,20 @@ async function searchJobs(query = {}) {
     filter.searchText = { $regex: normalized, $options: "i" };
   }
 
-  let total = await Job.countDocuments(filter);
+  const pageNum = parseInt(page, 10) || 1;
+  const skip = (pageNum - 1) * 9;
+
+  // Thực thi song song truy vấn đếm và lấy dữ liệu trang (giảm 50% độ trễ network)
+  let [total, jobs] = await Promise.all([
+    Job.countDocuments(filter),
+    Job.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(9)
+      .populate("employerId", "companyName slug logo")
+      .select("title slug salaryMin salaryMax position workingForm skills city createdAt employerId")
+      .lean(),
+  ]);
 
   // LOGIC FUZZY SEARCH (TÌM KIẾM MỜ) & TYPO TOLERANCE (BỎ QUA LỖI CHÍNH TẢ)
   if (originalKeyword) {
@@ -171,11 +189,21 @@ async function searchJobs(query = {}) {
           searchText: { $regex: fuzzyNormalized, $options: "i" },
         };
 
-        const fuzzyTotal = await Job.countDocuments(fuzzyFilter);
+        const [fuzzyTotal, fuzzyJobs] = await Promise.all([
+          Job.countDocuments(fuzzyFilter),
+          Job.find(fuzzyFilter)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(9)
+            .populate("employerId", "companyName slug logo")
+            .select("title slug salaryMin salaryMax position workingForm skills city createdAt employerId")
+            .lean(),
+        ]);
+
         if (fuzzyTotal > 0) {
           // Tìm thấy kết quả từ khóa gợi ý!
           total = fuzzyTotal;
-          filter.searchText = fuzzyFilter.searchText;
+          jobs = fuzzyJobs;
           isFuzzyApplied = true;
           suggestedKeyword = suggestionInfo.displayText || suggestionInfo.suggestion;
           didYouMean = suggestedKeyword;
@@ -187,15 +215,7 @@ async function searchJobs(query = {}) {
     }
   }
 
-  const pagination = paginate(total, page || 1, 9);
-
-  const jobs = await Job.find(filter)
-    .sort({ createdAt: -1 })
-    .skip(pagination.skip)
-    .limit(pagination.limit)
-    .populate("employerId", "companyName slug logo")
-    .select("title slug salaryMin salaryMax position workingForm skills city createdAt employerId")
-    .lean();
+  const pagination = paginate(total, pageNum, 9);
 
   return {
     jobs,
@@ -208,7 +228,7 @@ async function searchJobs(query = {}) {
 }
 
 /**
- * Danh sách công ty có phân trang và đếm job bằng batch aggregate
+ * Danh sách công ty có phân trang và đếm job bằng batch aggregate song song
  */
 async function getCompanyList(page = 1, limit = 9) {
   const filter = {
@@ -216,15 +236,21 @@ async function getCompanyList(page = 1, limit = 9) {
     deletedAt: null,
   };
 
-  const total = await Employer.countDocuments(filter);
-  const pagination = paginate(total, page, limit);
+  const pageNum = parseInt(page, 10) || 1;
+  const skip = (pageNum - 1) * limit;
 
-  const employers = await Employer.find(filter)
-    .sort({ createdAt: -1 })
-    .skip(pagination.skip)
-    .limit(pagination.limit)
-    .select("companyName slug logo city")
-    .lean();
+  // Truy vấn song song đếm tổng số công ty và dữ liệu phân trang
+  const [total, employers] = await Promise.all([
+    Employer.countDocuments(filter),
+    Employer.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .select("companyName slug logo city")
+      .lean(),
+  ]);
+
+  const pagination = paginate(total, pageNum, limit);
 
   if (employers.length === 0) {
     return { employers: [], pagination };

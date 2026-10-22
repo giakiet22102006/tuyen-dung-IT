@@ -104,7 +104,8 @@ jobSchema.index({
   createdAt: -1,
 });
 jobSchema.index({ employerId: 1, deletedAt: 1, createdAt: -1 });
-jobSchema.index({ "skills.slug": 1 });
+jobSchema.index({ "skills.slug": 1, employerActive: 1, moderation: 1, deletedAt: 1, createdAt: -1 });
+jobSchema.index({ employerActive: 1, moderation: 1, deletedAt: 1, employerId: 1 });
 jobSchema.index({ searchText: "text" });
 
 const Job = mongoose.model("Job", jobSchema);

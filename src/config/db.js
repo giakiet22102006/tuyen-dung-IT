@@ -12,6 +12,10 @@ const connectDB = async () => {
     const opts = {
       bufferCommands: false, // Tắt buffering trong serverless để không treo truy vấn
       serverSelectionTimeoutMS: 5000,
+      maxPoolSize: 20,       // Tối ưu hóa connection pool để tái sử dụng kết nối
+      minPoolSize: 2,        // Giữ kết nối sẵn sàng để tránh cold connect
+      maxIdleTimeMS: 30000,
+      socketTimeoutMS: 45000,
     };
 
     cachedPromise = mongoose
