@@ -76,29 +76,29 @@ header(class="bg-[#000071] py-[15px] sticky top-0 z-50 shadow-md")
                                 <i class="fa-solid fa-circle-user text-[18px]"></i>
                                 span(class="max-w-[140px] sm:max-w-[180px] truncate") #{role === 'employer' ? currentUser.companyName : currentUser.fullName}
                                 <i class="fa-solid fa-angle-down text-[12px]"></i>
-                            ul(class="right-0 left-auto w-[220px] rounded-[4px] shadow-lg z-50")
+                            ul(class="right-0 left-auto min-w-[250px] w-max rounded-[6px] shadow-xl z-50 py-[4px]")
                                 if role === 'candidate'
-                                    li: a(href="/candidate/profile" class="block w-full") Thông tin cá nhân
-                                    li: a(href="/candidate/it-profile" class="block w-full text-[#9FDB7C]") <i class="fa-solid fa-file-code mr-[4px]"></i> Hồ sơ IT Profile
-                                    li: a(href="/candidate/saved-jobs" class="block w-full") <i class="fa-solid fa-bookmark mr-[4px]"></i> Việc làm đã lưu
-                                    li: a(href="/candidate/followed-companies" class="block w-full") <i class="fa-solid fa-heart mr-[4px]"></i> Công ty theo dõi
-                                    li: a(href="/candidate/job-alerts" class="block w-full") <i class="fa-solid fa-bell mr-[4px]"></i> Thông báo việc làm
-                                    li: a(href="/candidate/applied-jobs" class="block w-full") CV đã gửi
-                                    li: a(href="/candidate/change-password" class="block w-full") Đổi mật khẩu
+                                    li: a(href="/candidate/profile" class="block w-full whitespace-nowrap") Thông tin cá nhân
+                                    li: a(href="/candidate/it-profile" class="block w-full text-[#9FDB7C] whitespace-nowrap") <i class="fa-solid fa-file-code mr-[6px]"></i> Hồ sơ IT Profile
+                                    li: a(href="/candidate/saved-jobs" class="block w-full whitespace-nowrap") <i class="fa-solid fa-bookmark mr-[6px]"></i> Việc làm đã lưu
+                                    li: a(href="/candidate/followed-companies" class="block w-full whitespace-nowrap") <i class="fa-solid fa-heart mr-[6px]"></i> Công ty theo dõi
+                                    li: a(href="/candidate/job-alerts" class="block w-full whitespace-nowrap") <i class="fa-solid fa-bell mr-[6px]"></i> Thông báo việc làm
+                                    li: a(href="/candidate/applied-jobs" class="block w-full whitespace-nowrap") CV đã gửi
+                                    li: a(href="/candidate/change-password" class="block w-full whitespace-nowrap") Đổi mật khẩu
                                     li
                                         form(action="/candidate/logout" method="POST" class="w-full")
                                             input(type="hidden" name="_csrf" value=csrfToken)
-                                            button(type="submit" class="text-left w-full text-white cursor-pointer font-[600] text-[16px]") Đăng xuất
+                                            button(type="submit" class="text-left w-full text-white cursor-pointer font-[600] text-[15px] whitespace-nowrap") Đăng xuất
                                 else if role === 'employer'
-                                    li: a(href="/employer/company-profile" class="block w-full") Thông tin công ty
-                                    li: a(href="/employer/jobs" class="block w-full") Quản lý công việc
-                                    li: a(href="/employer/pipeline" class="block w-full text-[#9FDB7C]") <i class="fa-solid fa-table-columns mr-[4px]"></i> Hiring Pipeline (Kanban)
-                                    li: a(href="/employer/cvs" class="block w-full") Quản lý CV
-                                    li: a(href="/employer/change-password" class="block w-full") Đổi mật khẩu
+                                    li: a(href="/employer/company-profile" class="block w-full whitespace-nowrap") Thông tin công ty
+                                    li: a(href="/employer/jobs" class="block w-full whitespace-nowrap") Quản lý công việc
+                                    li: a(href="/employer/pipeline" class="block w-full text-[#9FDB7C] whitespace-nowrap") <i class="fa-solid fa-table-columns mr-[6px]"></i> Hiring Pipeline (Kanban)
+                                    li: a(href="/employer/cvs" class="block w-full whitespace-nowrap") Quản lý CV
+                                    li: a(href="/employer/change-password" class="block w-full whitespace-nowrap") Đổi mật khẩu
                                     li
                                         form(action="/employer/logout" method="POST" class="w-full")
                                             input(type="hidden" name="_csrf" value=csrfToken)
-                                            button(type="submit" class="text-left w-full text-white cursor-pointer font-[600] text-[16px]") Đăng xuất
+                                            button(type="submit" class="text-left w-full text-white cursor-pointer font-[600] text-[15px] whitespace-nowrap") Đăng xuất
             else
                 div(class="font-[600] sm:text-[16px] text-[12px] text-white flex gap-[5px] items-center")
                     a(href="/candidate/login") Đăng Nhập
