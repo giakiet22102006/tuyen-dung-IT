@@ -96,6 +96,22 @@ describe("Hệ thống Trí Tuệ Nhân Tạo (VN.ITJobs AI Suite)", () => {
     expect(["hire_interview", "consider", "reject"]).toContain(screen.recommendation);
   });
 
+  test("Feature 4b: CV trái ngành (Kế toán nộp việc làm IT) được chấm điểm thấp (<= 15%) và đề xuất reject", async () => {
+    const accountingCv = `
+      Chuyên viên Kế toán - Tốt nghiệp chuyên ngành Kế toán
+      Nghiệp vụ: lập báo cáo tài chính, hạch toán hóa đơn, kê khai thuế, thu chi doanh nghiệp.
+      Kỹ năng: Tin học văn phòng, Excel, Word.
+    `;
+    const screen = await aiService.screenAndSummarizeCv(accountingCv, testJob);
+    expect(screen.matchScore).toBeLessThanOrEqual(15);
+    expect(screen.recommendation).toBe("reject");
+    expect(screen.executiveSummary).toContain("Kế toán");
+
+    const match = await aiService.matchCvWithJob(accountingCv, testJob);
+    expect(match.matchScore).toBeLessThanOrEqual(15);
+    expect(match.matchedSkills.length).toBe(0);
+  });
+
   test("Feature 5: moderateJobContent - Quét an toàn và phát hiện từ khóa lừa đảo", async () => {
     // Tin sạch
     const safeJob = {

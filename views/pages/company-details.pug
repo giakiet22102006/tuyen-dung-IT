@@ -20,18 +20,22 @@ block main
                                     span(class="text-amber-500 text-[13px]") <i class="fa-solid fa-star"></i>
                                     span(class="font-[700] text-[13px] text-amber-900") #{avgRating} / 5.0
                                     span(class="text-[12px] text-amber-700") (#{totalReviews} đánh giá)
-                        div(class="flex flex-wrap items-center gap-x-[16px] gap-y-[6px] font-[400] text-[13px] sm:text-[14px] text-[#121212]") 
-                            div
-                                <i class="fa-solid fa-location-dot text-[14px] mr-[4px] text-[#0088FF]"></i> #{company.address || labels.getCityLabel(company.city)}
+                        div(class="flex flex-wrap items-center gap-x-5 gap-y-2 font-[400] text-[13px] sm:text-[14px] text-gray-700") 
+                            div(class="inline-flex items-center gap-1.5")
+                                i(class="fa-solid fa-location-dot text-[14px] text-[#0088FF]")
+                                span #{company.address || labels.getCityLabel(company.city)}
                             if company.email
-                                a(href="mailto:" + company.email class="hover:text-[#0088FF] transition-colors")
-                                    <i class="fa-solid fa-envelope text-[14px] mr-[4px] text-[#0088FF]"></i> #{company.email}
+                                a(href="mailto:" + company.email class="inline-flex items-center gap-1.5 hover:text-[#0088FF] transition-colors")
+                                    i(class="fa-solid fa-envelope text-[14px] text-[#0088FF]")
+                                    span #{company.email}
                             if company.phone
-                                a(href="tel:" + company.phone class="hover:text-[#0088FF] transition-colors")
-                                    <i class="fa-solid fa-phone text-[14px] mr-[4px] text-[#0088FF]"></i> #{company.phone}
+                                a(href="tel:" + company.phone class="inline-flex items-center gap-1.5 hover:text-[#0088FF] transition-colors")
+                                    i(class="fa-solid fa-phone text-[14px] text-[#0088FF]")
+                                    span #{company.phone}
                             if company.website
-                                a(href=company.website target="_blank" rel="noopener noreferrer" class="hover:text-[#0088FF] transition-colors")
-                                    <i class="fa-solid fa-globe text-[14px] mr-[4px] text-[#0088FF]"></i> #{company.website}
+                                a(href=company.website target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 hover:text-[#0088FF] transition-colors")
+                                    i(class="fa-solid fa-globe text-[14px] text-[#0088FF]")
+                                    span #{company.website}
  
                 div(class="grid grid-cols-1 sm:grid-cols-2 gap-x-[20px] gap-y-[8px] border-t border-gray-100 pt-[16px]")
                     div(class="flex justify-between sm:justify-start gap-[8px]")

@@ -20,30 +20,34 @@ if (env.GEMINI_API_KEY && env.GEMINI_API_KEY.trim()) {
 }
 
 /**
- * Gọi Gemini API với cơ chế tự động Fallback đa tầng
+ * Gọi Gemini API với cơ chế timeout an toàn và Fallback đa tầng
  */
-async function callGemini(prompt, systemInstruction = "") {
+async function callGemini(prompt, systemInstruction = "", timeoutMs = 12000) {
   if (!aiClient) return null;
   const primaryModel = env.GEMINI_MODEL || "gemini-3.8-flash";
-  const candidateModels = [primaryModel, "gemini-flash-latest", "gemini-3.5-flash-lite"];
-  // Loại bỏ model trùng lặp nếu env.GEMINI_MODEL trùng với một trong các fallback
+  const candidateModels = [primaryModel, "gemini-3.5-flash-lite"];
   const modelsToTry = [...new Set(candidateModels)];
 
   for (let i = 0; i < modelsToTry.length; i++) {
     const modelName = modelsToTry[i];
     try {
-      const response = await aiClient.models.generateContent({
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Timeout vượt quá hạn phản hồi")), timeoutMs)
+      );
+      const callPromise = aiClient.models.generateContent({
         model: modelName,
         contents: prompt,
         config: systemInstruction ? { systemInstruction } : undefined,
       });
+
+      const response = await Promise.race([callPromise, timeoutPromise]);
       if (response && response.text) {
         return response.text;
       }
     } catch (err) {
       console.warn(`⚠️ Gemini API (${modelName}) không phản hồi: ${err.message}.`);
       if (i === modelsToTry.length - 1) {
-        console.error("❌ Tất cả các model Gemini đều không phản hồi, chuyển sang fallback nội bộ.");
+        console.error("❌ Tất cả các model Gemini đều không phản hồi, chuyển sang phân tích thông minh nội bộ.");
       }
     }
   }
@@ -128,9 +132,119 @@ function parseJsonFromLlm(text) {
 }
 
 // =========================================================================
+// THẨM ĐỊNH ĐỘ PHÙ HỢP CV & NHẬN DIỆN CHUYÊN NGÀNH (CHỐNG CHẤM ĐIỂM ẢO)
+// =========================================================================
+function analyzeCvSuitability(cvText, job) {
+  const text = (cvText || "").toLowerCase();
+  const jobTitle = job ? (job.title || "").toLowerCase() : "";
+  const jobSkills = job && Array.isArray(job.skills) ? job.skills : [];
+
+  // 1. Nhận diện các ngành nghề ngoài CNTT
+  const nonItDomains = [
+    {
+      name: "Kế toán / Kiểm toán / Thuế",
+      keywords: ["kế toán", "kiểm toán", "thuế", "thu chi", "hóa đơn", "sổ sách", "báo cáo tài chính", "kế toán viên", "nghiệp vụ kế toán"],
+    },
+    {
+      name: "Tài chính / Ngân hàng",
+      keywords: ["tài chính", "ngân hàng", "tín dụng", "cho vay", "thẩm định giá", "chứng khoán"],
+    },
+    {
+      name: "Hành chính / Nhân sự / Văn thư",
+      keywords: ["hành chính nhân sự", "văn thư", "c&b", "bảo hiểm xã hội", "chấm công"],
+    },
+    {
+      name: "Y tế / Dược phẩm",
+      keywords: ["bác sĩ", "dược sĩ", "điều dưỡng", "y tá", "bệnh viện", "phòng khám"],
+    },
+    {
+      name: "Xây dựng / Cơ khí chế tạo",
+      keywords: ["kỹ sư xây dựng", "thi công công trình", "kết cấu thép", "trắc địa"],
+    },
+    {
+      name: "Du lịch / Khách sạn / Nhà hàng",
+      keywords: ["pha chế", "phục vụ", "lễ tân khách sạn", "hướng dẫn viên du lịch", "đầu bếp"],
+    },
+  ];
+
+  let detectedNonItDomain = null;
+  for (const domain of nonItDomains) {
+    const hits = domain.keywords.filter((kw) => text.includes(kw));
+    if (hits.length >= 2) {
+      detectedNonItDomain = domain.name;
+      break;
+    }
+  }
+
+  // 2. Danh mục kỹ năng & từ khóa công nghệ thông tin
+  const itTechKeywords = [
+    "react", "reactjs", "javascript", "js", "typescript", "ts", "html", "css", "node", "nodejs",
+    "express", "nest", "nestjs", "python", "django", "flask", "fastapi", "java", "spring", "springboot",
+    "c#", ".net", "asp.net", "c++", "golang", "go", "php", "laravel", "sql", "mysql", "mongodb",
+    "postgresql", "redis", "docker", "kubernetes", "aws", "gcp", "azure", "git", "github", "gitlab",
+    "restful", "api", "graphql", "microservices", "frontend", "backend", "fullstack", "devops",
+    "ci/cd", "vue", "vuejs", "angular", "nextjs", "nuxt", "flutter", "react native", "swift", "kotlin",
+    "android", "ios", "qa", "qc", "tester", "automation test", "selenium"
+  ];
+
+  const matchedJobSkills = [];
+  const missingJobSkills = [];
+  jobSkills.forEach((sk) => {
+    const sName = (sk.name || "").toLowerCase();
+    const sSlug = (sk.slug || "").toLowerCase();
+    if ((sName && text.includes(sName)) || (sSlug && text.includes(sSlug))) {
+      matchedJobSkills.push(sk.name);
+    } else {
+      missingJobSkills.push(sk.name);
+    }
+  });
+
+  // Tìm các kỹ năng IT chung xuất hiện trong CV
+  const generalItSkillsInCv = itTechKeywords.filter((kw) => {
+    const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(`(^|[^a-z0-9])${escaped}([^a-z0-9]|$)`, "i");
+    return regex.test(text);
+  });
+
+  const isCompletelyUnrelated = Boolean(detectedNonItDomain && generalItSkillsInCv.length === 0 && matchedJobSkills.length === 0);
+  const hasZeroSkills = matchedJobSkills.length === 0 && generalItSkillsInCv.length === 0;
+
+  let calculatedScore = 0;
+  let recommendation = "reject";
+
+  if (isCompletelyUnrelated) {
+    calculatedScore = 5;
+    recommendation = "reject";
+  } else if (hasZeroSkills) {
+    calculatedScore = 10;
+    recommendation = "reject";
+  } else if (matchedJobSkills.length === 0) {
+    calculatedScore = Math.min(30, 15 + generalItSkillsInCv.length * 3);
+    recommendation = "reject";
+  } else {
+    const ratio = jobSkills.length > 0 ? (matchedJobSkills.length / jobSkills.length) : 0.6;
+    calculatedScore = Math.min(95, Math.max(35, Math.round(ratio * 65 + generalItSkillsInCv.length * 3 + 15)));
+    if (calculatedScore >= 75) recommendation = "hire_interview";
+    else if (calculatedScore >= 50) recommendation = "consider";
+    else recommendation = "reject";
+  }
+
+  return {
+    calculatedScore,
+    recommendation,
+    detectedNonItDomain,
+    matchedJobSkills,
+    missingJobSkills: missingJobSkills.length > 0 ? missingJobSkills : (jobSkills.length > 0 ? jobSkills.map(s => s.name) : ["Kỹ năng lập trình chuyên môn"]),
+    generalItSkillsInCv,
+    isCompletelyUnrelated,
+  };
+}
+
+// =========================================================================
 // TÍNH NĂNG 1: AI CV MATCHING & GAP ANALYSIS (DÀNH CHO ỨNG VIÊN)
 // =========================================================================
 async function matchCvWithJob(cvText, job) {
+  const suitability = analyzeCvSuitability(cvText, job);
   const jobSkills = (job.skills || []).map((s) => s.name).join(", ");
   const jobTitle = job.title;
   const jobDesc = job.description ? job.description.replace(/<[^>]*>/g, " ") : "";
@@ -148,6 +262,16 @@ THÔNG TIN VIỆC LÀM:
 NỘI DUNG CV ỨNG VIÊN:
 ${cvText.slice(0, 3000)}
 
+QUY TẮC ĐÁNH GIÁ CHUYÊN MÔN NGHIÊM NGẶT:
+1. NẾU ỨNG VIÊN TRÁI NGÀNH (Ví dụ: CV thuộc lĩnh vực Kế toán, Kiểm toán, Ngân hàng, Văn thư, Bán hàng... nộp vào việc làm Lập trình/IT mà không hề có kỹ năng lập trình):
+   - "matchScore" BẮT BUỘC dưới 15% (chỉ cho từ 0 đến 15 điểm).
+   - "matchedSkills": Phải để mảng rỗng [] nếu không có kỹ năng IT nào khớp.
+   - "missingSkills": Liệt kê toàn bộ kỹ năng công nghệ mà vị trí yêu cầu.
+   - "summary": Phải nêu rõ ứng viên thuộc ngành khác, không đáp ứng yêu cầu kỹ thuật của vị trí.
+   - TUYỆT ĐỐI KHÔNG chấm điểm cao hoặc khen ngợi không đúng thực tế.
+2. NẾU CÓ KỸ NĂNG KHỚP:
+   - Điểm "matchScore" phản ánh tỷ lệ đáp ứng kỹ năng kỹ thuật và kinh nghiệm thực tế.
+
 YÊU CẦU ĐẦU RA: Trả về duy nhất một chuỗi JSON hợp lệ theo đúng cấu trúc sau (không kèm markdown):
 {
   "matchScore": 85,
@@ -159,46 +283,61 @@ YÊU CẦU ĐẦU RA: Trả về duy nhất một chuỗi JSON hợp lệ theo �
 }
 `;
 
-  const raw = await callGemini(prompt, "Bạn là chuyên gia tuyển dụng IT. Luôn phản hồi JSON hợp lệ bằng tiếng Việt.");
+  const raw = await callGemini(prompt, "Bạn là chuyên gia tuyển dụng IT nghiêm túc và công tâm. Luôn phản hồi JSON hợp lệ bằng tiếng Việt.");
   const parsed = parseJsonFromLlm(raw);
   if (parsed && typeof parsed.matchScore === "number") {
+    // Guard-rail: Ngăn chặn LLM chấm điểm ảo khi ứng viên trái ngành hoàn toàn
+    if (suitability.isCompletelyUnrelated) {
+      parsed.matchScore = Math.min(parsed.matchScore, 10);
+      parsed.matchedSkills = suitability.matchedJobSkills;
+      parsed.missingSkills = suitability.missingJobSkills;
+      parsed.summary = `Hồ sơ của bạn thuộc chuyên môn ${suitability.detectedNonItDomain}, hoàn toàn không có kỹ năng lập trình hay kinh nghiệm CNTT đáp ứng vị trí ${jobTitle} (Độ phù hợp: ${parsed.matchScore}%).`;
+    }
     parsed.advice = parsed.advice || parsed.improvements || [];
     parsed.improvements = parsed.advice;
     return parsed;
   }
 
-  // Fallback thông minh khi chưa có API Key
-  const cvLower = (cvText || "").toLowerCase();
-  const matched = [];
-  const missing = [];
-  (job.skills || []).forEach((sk) => {
-    if (cvLower.includes(sk.name.toLowerCase()) || (sk.slug && cvLower.includes(sk.slug.toLowerCase()))) {
-      matched.push(sk.name);
-    } else {
-      missing.push(sk.name);
-    }
-  });
+  // Fallback thông minh dựa trên phân tích chuyên môn thực tế
+  if (suitability.isCompletelyUnrelated) {
+    const adviceList = [
+      `Vị trí ${jobTitle} đòi hỏi kiến thức chuyên môn về lập trình phần mềm (${suitability.missingJobSkills.join(", ")}).`,
+      "Nếu bạn có định hướng chuyển ngành sang CNTT, cần tham gia các khóa đào tạo bài bản và xây dựng dự án mẫu (portfolio) trước khi nộp đơn.",
+      "Cân nhắc tìm kiếm các vị trí đúng chuyên môn " + suitability.detectedNonItDomain + " để có cơ hội việc làm tốt nhất."
+    ];
+    return {
+      matchScore: suitability.calculatedScore, // 5%
+      matchedSkills: [],
+      missingSkills: suitability.missingJobSkills,
+      strengths: [
+        `Kinh nghiệm làm việc và nền tảng trong lĩnh vực chuyên môn cũ (${suitability.detectedNonItDomain})`,
+        "Có các kỹ năng mềm cơ bản như làm việc nhóm và giao tiếp"
+      ],
+      advice: adviceList,
+      improvements: adviceList,
+      summary: `Hồ sơ của bạn thuộc lĩnh vực ${suitability.detectedNonItDomain}, hoàn toàn không có kỹ năng lập trình hay kinh nghiệm CNTT phù hợp với vị trí ${jobTitle} (Độ phù hợp: ${suitability.calculatedScore}%).`
+    };
+  }
 
-  const baseRatio = (job.skills && job.skills.length > 0) ? matched.length / job.skills.length : 0.7;
-  const score = Math.min(95, Math.max(50, Math.round(baseRatio * 40 + 50)));
-
+  // Fallback cho trường hợp CV thông thường
   const adviceList = [
-    missing.length > 0 ? `Bổ sung thêm các dự án hoặc chứng chỉ liên quan đến ${missing.slice(0, 2).join(", ")}` : "Định dạng lại CV làm nổi bật các thành tích cụ thể (KPIs)",
+    suitability.missingJobSkills.length > 0
+      ? `Bổ sung thêm các dự án hoặc chứng chỉ liên quan đến: ${suitability.missingJobSkills.slice(0, 2).join(", ")}`
+      : "Định dạng lại CV làm nổi bật các thành tích cụ thể (KPIs)",
     "Chuẩn bị kỹ câu trả lời về các thử thách kỹ thuật từng giải quyết"
   ];
 
   return {
-    matchScore: score,
-    matchedSkills: matched.length > 0 ? matched : ["Kỹ năng nền tảng cơ bản"],
-    missingSkills: missing.length > 0 ? missing : ["Cần tìm hiểu thêm về kiến trúc dự án thực tế"],
+    matchScore: suitability.calculatedScore,
+    matchedSkills: suitability.matchedJobSkills.length > 0 ? suitability.matchedJobSkills : [],
+    missingSkills: suitability.missingJobSkills,
     strengths: [
-      `Có kỹ năng và định hướng phù hợp với vị trí ${jobTitle}`,
-      matched.length > 0 ? `Nắm vững công nghệ trọng tâm: ${matched.join(", ")}` : "Hồ sơ thể hiện tinh thần cầu tiến",
-      "Kinh nghiệm làm việc thực tế thể hiện trong CV"
+      suitability.matchedJobSkills.length > 0 ? `Nắm vững công nghệ trọng tâm: ${suitability.matchedJobSkills.join(", ")}` : "Hồ sơ thể hiện kỹ năng làm việc nghiêm túc",
+      "Kinh nghiệm làm việc được trình bày rõ ràng"
     ],
     advice: adviceList,
     improvements: adviceList,
-    summary: `Hồ sơ của bạn đạt mức độ tương thích ${score}% so với yêu cầu của vị trí ${jobTitle}. Bạn có nền tảng tốt để tự tin ứng tuyển.`
+    summary: `Hồ sơ của bạn đạt mức độ tương thích ${suitability.calculatedScore}% so với yêu cầu của vị trí ${jobTitle}.`
   };
 }
 
@@ -348,6 +487,7 @@ YÊU CẦU:
 // TÍNH NĂNG 4: AI CV SCREENING & EXECUTIVE SUMMARY (DÀNH CHO NHÀ TUYỂN DỤNG)
 // =========================================================================
 async function screenAndSummarizeCv(cvText, job) {
+  const suitability = analyzeCvSuitability(cvText, job);
   const jobTitle = job ? job.title : "Vị trí tuyển dụng";
   const jobSkills = job && Array.isArray(job.skills) ? job.skills.map((s) => s.name).join(", ") : "";
 
@@ -357,6 +497,15 @@ Hãy đọc nội dung CV dưới đây và đưa ra bản tóm tắt nhanh cùn
 
 NỘI DUNG CV:
 ${cvText.slice(0, 3500)}
+
+QUY TẮC THẨM ĐỊNH NGHIÊM NGẶT:
+1. NẾU ỨNG VIÊN TRÁI NGÀNH HOÀN TOÀN (Ví dụ: CV thuộc ngành Kế toán, Kiểm toán, Ngân hàng, Y tế, Lễ tân... nộp vào vị trí Lập trình viên IT mà không có kỹ năng lập trình):
+   - Điểm "matchScore" BẮT BUỘC dưới 15% (từ 0 đến 15 điểm).
+   - "recommendation" BẮT BUỘC là "reject" (Từ chối).
+   - "concerns": Chỉ ra rõ ứng viên không có kỹ năng công nghệ và trái ngành.
+   - TUYỆT ĐỐI KHÔNG đánh giá "hire_interview" hoặc khen ngợi không đúng thực tế.
+2. NẾU ĐÁP ỨNG KỸ NĂNG:
+   - "matchScore" và "recommendation" tỷ lệ thuận với mức độ đáp ứng kỹ năng kỹ thuật và số năm kinh nghiệm.
 
 YÊU CẦU ĐẦU RA: Trả về duy nhất JSON hợp lệ (không kèm markdown):
 {
@@ -370,41 +519,77 @@ YÊU CẦU ĐẦU RA: Trả về duy nhất JSON hợp lệ (không kèm markdow
 (Trong đó recommendation chỉ nhận 1 trong 3 giá trị: "hire_interview", "consider", "reject")
 `;
 
-  const raw = await callGemini(prompt, "Bạn là chuyên gia thẩm định CV. Luôn phản hồi JSON hợp lệ bằng tiếng Việt.");
+  const raw = await callGemini(prompt, "Bạn là chuyên gia thẩm định CV nghiêm túc, công tâm. Luôn phản hồi JSON hợp lệ bằng tiếng Việt.");
   const parsed = parseJsonFromLlm(raw);
   if (parsed && typeof parsed.matchScore === "number") {
+    // Guard-rail: Ngăn chặn LLM chấm điểm ảo khi ứng viên trái ngành hoàn toàn
+    if (suitability.isCompletelyUnrelated) {
+      parsed.matchScore = Math.min(parsed.matchScore, 10);
+      parsed.recommendation = "reject";
+      parsed.executiveSummary = `Ứng viên có chuyên môn thuộc lĩnh vực ${suitability.detectedNonItDomain}, hoàn toàn không có kỹ năng lập trình hay kinh nghiệm công nghệ thông tin liên quan đến vị trí ${jobTitle}.`;
+      parsed.candidateSummary = parsed.executiveSummary;
+      parsed.concerns = [
+        "Hồ sơ trái ngành hoàn toàn, không có bất kỳ kỹ năng lập trình nào theo yêu cầu",
+        "Không có chứng chỉ, portfolio hoặc dự án kỹ thuật liên quan đến " + jobTitle,
+        "Khuyến nghị từ chối hồ sơ vì không đáp ứng tiêu chuẩn chuyên môn"
+      ];
+    }
+
     parsed.candidateSummary = parsed.executiveSummary || parsed.candidateSummary;
     parsed.executiveSummary = parsed.candidateSummary;
     parsed.pros = parsed.strengths || parsed.pros || [];
     parsed.strengths = parsed.pros;
     parsed.cons = parsed.concerns || parsed.cons || [];
     parsed.concerns = parsed.cons;
-    parsed.recommendation = parsed.recommendation || (parsed.matchScore >= 75 ? "hire_interview" : parsed.matchScore >= 55 ? "consider" : "reject");
+    parsed.recommendation = parsed.recommendation || (parsed.matchScore >= 75 ? "hire_interview" : parsed.matchScore >= 50 ? "consider" : "reject");
+    parsed.hiringRecommendation = parsed.recommendation === "hire_interview"
+      ? "Khuyến nghị: Phù hợp để liên hệ phỏng vấn vòng chuyên môn"
+      : (parsed.recommendation === "consider" ? "Khuyến nghị: Xem xét cân nhắc phỏng vấn sơ bộ" : "Khuyến nghị: Từ chối hồ sơ (Không phù hợp chuyên môn)");
     return parsed;
   }
 
-  // Fallback thông minh
-  const strengths = [
-    "Kinh nghiệm làm việc sát với định hướng công nghệ của công ty",
-    "Kỹ năng xử lý dự án và tư duy cấu trúc rõ ràng"
-  ];
-  const concerns = [
-    "Cần kiểm tra thêm về độ sâu kiến trúc và khả năng xử lý bài toán tải cao trong vòng phỏng vấn"
-  ];
-  const summary = "Ứng viên có nền tảng công nghệ tốt, kinh nghiệm thực chiến phù hợp với vị trí tuyển dụng.";
+  // Fallback thông minh dựa trên thẩm định thực tế
+  if (suitability.isCompletelyUnrelated) {
+    const summary = `Ứng viên có chuyên môn thuộc lĩnh vực ${suitability.detectedNonItDomain}, hoàn toàn không có kỹ năng lập trình hay kinh nghiệm công nghệ thông tin liên quan đến vị trí ${jobTitle}.`;
+    return {
+      candidateSummary: summary,
+      executiveSummary: summary,
+      estimatedExperience: "0 năm kinh nghiệm IT",
+      matchScore: suitability.calculatedScore, // 5%
+      topSkills: ["Kỹ năng văn phòng"],
+      pros: [`Có kinh nghiệm làm việc trong lĩnh vực cũ (${suitability.detectedNonItDomain})`],
+      strengths: [`Có kinh nghiệm làm việc trong lĩnh vực cũ (${suitability.detectedNonItDomain})`],
+      cons: [
+        "Hồ sơ trái ngành hoàn toàn, không có bất kỳ kỹ năng lập trình nào theo yêu cầu",
+        "Không có chứng chỉ, portfolio hoặc dự án kỹ thuật liên quan đến " + jobTitle,
+        "Khuyến nghị từ chối hồ sơ vì không đáp ứng tiêu chuẩn chuyên môn"
+      ],
+      concerns: [
+        "Hồ sơ trái ngành hoàn toàn, không có bất kỳ kỹ năng lập trình nào theo yêu cầu",
+        "Không có chứng chỉ, portfolio hoặc dự án kỹ thuật liên quan đến " + jobTitle,
+        "Khuyến nghị từ chối hồ sơ vì không đáp ứng tiêu chuẩn chuyên môn"
+      ],
+      recommendation: "reject",
+      hiringRecommendation: "Khuyến nghị: Từ chối hồ sơ (Trái ngành / Không đáp ứng chuyên môn kỹ thuật)"
+    };
+  }
 
+  // Fallback cho CV thông thường
+  const summary = `Ứng viên có mức độ đáp ứng ${suitability.calculatedScore}% so với yêu cầu của vị trí ${jobTitle}.`;
   return {
     candidateSummary: summary,
     executiveSummary: summary,
-    estimatedExperience: "2 - 4 năm",
-    matchScore: 80,
-    topSkills: (job && job.skills && job.skills.map(s => s.name).slice(0, 3)) || ["Lập trình ứng dụng", "REST API", "Database"],
-    pros: strengths,
-    strengths,
-    cons: concerns,
-    concerns,
-    recommendation: "hire_interview",
-    hiringRecommendation: "Khuyến nghị: Phù hợp để liên hệ phỏng vấn vòng chuyên môn"
+    estimatedExperience: "1 - 3 năm",
+    matchScore: suitability.calculatedScore,
+    topSkills: suitability.matchedJobSkills.length > 0 ? suitability.matchedJobSkills : ["Kỹ năng cơ bản"],
+    pros: suitability.matchedJobSkills.length > 0 ? [`Nắm vững công nghệ: ${suitability.matchedJobSkills.join(", ")}`] : ["Tinh thần học hỏi"],
+    strengths: suitability.matchedJobSkills.length > 0 ? [`Nắm vững công nghệ: ${suitability.matchedJobSkills.join(", ")}`] : ["Tinh thần học hỏi"],
+    cons: suitability.missingJobSkills.length > 0 ? [`Cần kiểm tra kỹ năng về: ${suitability.missingJobSkills.join(", ")}`] : ["Cần kiểm tra kinh nghiệm thực tế"],
+    concerns: suitability.missingJobSkills.length > 0 ? [`Cần kiểm tra kỹ năng về: ${suitability.missingJobSkills.join(", ")}`] : ["Cần kiểm tra kinh nghiệm thực tế"],
+    recommendation: suitability.recommendation,
+    hiringRecommendation: suitability.recommendation === "hire_interview"
+      ? "Khuyến nghị: Phù hợp để liên hệ phỏng vấn vòng chuyên môn"
+      : (suitability.recommendation === "consider" ? "Khuyến nghị: Xem xét cân nhắc phỏng vấn sơ bộ" : "Khuyến nghị: Từ chối hồ sơ (Không phù hợp chuyên môn)")
   };
 }
 

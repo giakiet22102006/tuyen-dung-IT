@@ -1,6 +1,6 @@
 //- views/partials/feedback-widget.pug
 //- Floating Button
-div(class="fixed bottom-[20px] right-[20px] sm:bottom-[24px] sm:right-[24px] z-40")
+div(class="fixed bottom-[20px] right-[20px] sm:bottom-[24px] sm:right-[24px] z-50" style="position: fixed; bottom: 24px; right: 24px; z-index: 999999;")
     button(type="button" id="btnOpenFeedbackWidget" class="group flex items-center gap-[8px] bg-gradient-to-r from-[#000071] to-[#0088FF] hover:from-[#000055] hover:to-[#0070D2] text-white py-[10px] px-[16px] rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all cursor-pointer font-[600] text-[13px] border border-white/20" title="Báo cáo sự cố hoặc đánh giá chất lượng web")
         span(class="w-[20px] h-[20px] rounded-full bg-white/20 flex items-center justify-center text-[12px] group-hover:rotate-12 transition-transform")
             <i class="fa-solid fa-headset"></i>
@@ -8,7 +8,7 @@ div(class="fixed bottom-[20px] right-[20px] sm:bottom-[24px] sm:right-[24px] z-4
         span(class="sm:hidden") Hỗ trợ
 
 //- Floating Feedback Dialog
-div(id="modalFeedbackWidget" class="fixed inset-0 z-50 hidden items-center justify-center sm:items-end sm:justify-end sm:p-[24px] bg-black/50 sm:bg-transparent backdrop-blur-xs sm:backdrop-blur-none")
+div(id="modalFeedbackWidget" class="fixed inset-0 z-50 hidden items-center justify-center sm:items-end sm:justify-end sm:p-[24px] bg-black/50 sm:bg-transparent backdrop-blur-xs sm:backdrop-blur-none" style="z-index: 1000000;")
     div(class="bg-white rounded-[14px] shadow-2xl border border-gray-200 w-[92vw] max-w-[420px] overflow-hidden animate-fadeIn sm:mb-[60px]")
         //- Header
         div(class="p-[16px] bg-gradient-to-r from-[#000071] to-[#0088FF] text-white flex items-center justify-between")
