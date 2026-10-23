@@ -1,12 +1,12 @@
-header(class="bg-[#000071] py-[15px] sticky top-0 z-50 shadow-md")
-    .contain 
-        div(class="flex justify-between items-center")
-            a(href="/" class="font-[800] sm:text-[28px] text-[20px] text-white lg:flex-none flex-1") VN.ITJobs
+header(class="bg-[#000071] py-[14px] sticky top-0 z-50 shadow-md")
+    div(class="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8")
+        div(class="flex justify-between items-center gap-4 xl:gap-8")
+            a(href="/" class="font-[800] sm:text-[26px] text-[20px] text-white tracking-tight shrink-0 hover:opacity-95 transition-opacity") VN.ITJobs
             nav(class="menu lg:block hidden")
-                ul 
+                ul(class="flex items-center gap-[20px] xl:gap-[30px]")
                     li
-                        a(href="/search") Việc Làm IT 
-                        <i class="fa-solid fa-angle-down"></i>
+                        a(href="/search" class="hover:text-[#9FDB7C] transition-colors") Việc Làm IT 
+                        <i class="fa-solid fa-angle-down text-[12px] opacity-80"></i>
                         ul 
                             li 
                                 a(href="/search") Việc làm IT theo kỹ năng
@@ -38,8 +38,8 @@ header(class="bg-[#000071] py-[15px] sticky top-0 z-50 shadow-md")
                                             li: a(href="/search?city=" + c.value) #{c.label}
 
                     li
-                        a(href="/companies") Top Công Ty IT 
-                        <i class="fa-solid fa-angle-down"></i>
+                        a(href="/companies" class="hover:text-[#9FDB7C] transition-colors") Top Công Ty IT 
+                        <i class="fa-solid fa-angle-down text-[12px] opacity-80"></i>
                         ul 
                             if menuData && menuData.topEmployers && menuData.topEmployers.length > 0
                                 each emp in menuData.topEmployers
@@ -51,59 +51,60 @@ header(class="bg-[#000071] py-[15px] sticky top-0 z-50 shadow-md")
                                 li: a(href="/companies") MoMo
 
                     li
-                        a(href="/salary" class="flex items-center gap-[4px] text-[#9FDB7C] hover:text-white font-[600]")
+                        a(href="/salary" class="flex items-center gap-[6px] text-[#9FDB7C] hover:text-white transition-colors")
                             i(class="fa-solid fa-calculator text-[14px]")
                             span Tra Cứu Lương
                             span(class="bg-[#EA1E30] text-white text-[10px] font-bold px-[5px] py-[1px] rounded-full") HOT
 
                     li
-                        a(href="/blog" class="hover:text-[#9FDB7C]") Cẩm Nang IT
+                        a(href="/blog" class="hover:text-[#9FDB7C] transition-colors") Cẩm Nang IT
 
-                    li
-                        a(href="/employer/login") Nhà Tuyển Dụng 
-                        <i class="fa-solid fa-angle-down"></i>
-                        ul 
-                            li 
-                                a(href="/employer/login") Đăng Nhập
-                            li 
-                                a(href="/employer/signup") Đăng Ký
+                    if !currentUser || role !== 'employer'
+                        li
+                            a(href="/employer/login" class="hover:text-[#9FDB7C] transition-colors") Nhà Tuyển Dụng 
+                            <i class="fa-solid fa-angle-down text-[12px] opacity-80"></i>
+                            ul 
+                                li 
+                                    a(href="/employer/login") Đăng Nhập
+                                li 
+                                    a(href="/employer/signup") Đăng Ký
 
             if currentUser
-                div(class="menu")
+                div(class="menu shrink-0")
                     ul
                         li(class="relative py-[5px]")
-                            div(class="flex items-center gap-[6px] text-white font-[600] sm:text-[16px] text-[12px] cursor-pointer")
-                                <i class="fa-solid fa-circle-user text-[18px]"></i>
-                                span(class="max-w-[140px] sm:max-w-[180px] truncate") #{role === 'employer' ? currentUser.companyName : currentUser.fullName}
-                                <i class="fa-solid fa-angle-down text-[12px]"></i>
-                            ul(class="right-0 left-auto min-w-[250px] w-max rounded-[6px] shadow-xl z-50 py-[4px]")
+                            div(class="flex items-center gap-[8px] bg-white/10 hover:bg-white/15 px-[10px] py-[6px] rounded-[6px] text-white font-[600] sm:text-[15px] text-[12px] cursor-pointer transition")
+                                <i class="fa-solid fa-circle-user text-[18px] text-[#9FDB7C]"></i>
+                                span(class="max-w-[130px] sm:max-w-[180px] truncate") #{role === 'employer' ? currentUser.companyName : currentUser.fullName}
+                                <i class="fa-solid fa-angle-down text-[11px] opacity-80"></i>
+                            ul(class="user-dropdown-menu")
                                 if role === 'candidate'
-                                    li: a(href="/candidate/profile" class="block w-full whitespace-nowrap") Thông tin cá nhân
+                                    li: a(href="/candidate/profile" class="block w-full whitespace-nowrap") <i class="fa-solid fa-user mr-[6px]"></i> Thông tin cá nhân
                                     li: a(href="/candidate/it-profile" class="block w-full text-[#9FDB7C] whitespace-nowrap") <i class="fa-solid fa-file-code mr-[6px]"></i> Hồ sơ IT Profile
                                     li: a(href="/candidate/saved-jobs" class="block w-full whitespace-nowrap") <i class="fa-solid fa-bookmark mr-[6px]"></i> Việc làm đã lưu
                                     li: a(href="/candidate/followed-companies" class="block w-full whitespace-nowrap") <i class="fa-solid fa-heart mr-[6px]"></i> Công ty theo dõi
                                     li: a(href="/candidate/job-alerts" class="block w-full whitespace-nowrap") <i class="fa-solid fa-bell mr-[6px]"></i> Thông báo việc làm
-                                    li: a(href="/candidate/applied-jobs" class="block w-full whitespace-nowrap") CV đã gửi
-                                    li: a(href="/candidate/change-password" class="block w-full whitespace-nowrap") Đổi mật khẩu
+                                    li: a(href="/candidate/applied-jobs" class="block w-full whitespace-nowrap") <i class="fa-solid fa-file-lines mr-[6px]"></i> CV đã gửi
+                                    li: a(href="/candidate/change-password" class="block w-full whitespace-nowrap") <i class="fa-solid fa-key mr-[6px]"></i> Đổi mật khẩu
                                     li
-                                        form(action="/candidate/logout" method="POST" class="w-full")
+                                        form(action="/candidate/logout" method="POST" class="w-full m-0")
                                             input(type="hidden" name="_csrf" value=csrfToken)
-                                            button(type="submit" class="text-left w-full text-white cursor-pointer font-[600] text-[15px] whitespace-nowrap") Đăng xuất
+                                            button(type="submit" class="text-left w-full text-white cursor-pointer font-[500] text-[14.5px] whitespace-nowrap flex items-center gap-[6px]") <i class="fa-solid fa-right-from-bracket mr-[6px]"></i> Đăng xuất
                                 else if role === 'employer'
-                                    li: a(href="/employer/company-profile" class="block w-full whitespace-nowrap") Thông tin công ty
-                                    li: a(href="/employer/jobs" class="block w-full whitespace-nowrap") Quản lý công việc
+                                    li: a(href="/employer/company-profile" class="block w-full whitespace-nowrap") <i class="fa-solid fa-building mr-[6px]"></i> Thông tin công ty
+                                    li: a(href="/employer/jobs" class="block w-full whitespace-nowrap") <i class="fa-solid fa-briefcase mr-[6px]"></i> Quản lý công việc
                                     li: a(href="/employer/pipeline" class="block w-full text-[#9FDB7C] whitespace-nowrap") <i class="fa-solid fa-table-columns mr-[6px]"></i> Hiring Pipeline (Kanban)
-                                    li: a(href="/employer/cvs" class="block w-full whitespace-nowrap") Quản lý CV
-                                    li: a(href="/employer/change-password" class="block w-full whitespace-nowrap") Đổi mật khẩu
+                                    li: a(href="/employer/cvs" class="block w-full whitespace-nowrap") <i class="fa-solid fa-id-card mr-[6px]"></i> Quản lý CV
+                                    li: a(href="/employer/change-password" class="block w-full whitespace-nowrap") <i class="fa-solid fa-key mr-[6px]"></i> Đổi mật khẩu
                                     li
-                                        form(action="/employer/logout" method="POST" class="w-full")
+                                        form(action="/employer/logout" method="POST" class="w-full m-0")
                                             input(type="hidden" name="_csrf" value=csrfToken)
-                                            button(type="submit" class="text-left w-full text-white cursor-pointer font-[600] text-[15px] whitespace-nowrap") Đăng xuất
+                                            button(type="submit" class="text-left w-full text-white cursor-pointer font-[500] text-[14.5px] whitespace-nowrap flex items-center gap-[6px]") <i class="fa-solid fa-right-from-bracket mr-[6px]"></i> Đăng xuất
             else
-                div(class="font-[600] sm:text-[16px] text-[12px] text-white flex gap-[5px] items-center")
-                    a(href="/candidate/login") Đăng Nhập
-                    span /
-                    a(href="/candidate/signup") Đăng Ký
+                div(class="font-[600] sm:text-[15px] text-[12px] text-white flex gap-[8px] items-center shrink-0")
+                    a(href="/candidate/login" class="hover:text-[#9FDB7C] px-[10px] py-[6px] rounded hover:bg-white/10 transition") Đăng Nhập
+                    span(class="opacity-40") |
+                    a(href="/candidate/signup" class="bg-[#0088FF] hover:bg-[#0077E6] text-white px-[12px] py-[6px] rounded-[6px] font-[600] transition shadow-sm") Đăng Ký
             
             button(id="mobileMenuBtn" class="lg:hidden text-white text-[24px] ml-[10px] p-[6px] rounded hover:bg-white/10 cursor-pointer focus:outline-none transition-colors" aria-label="Toggle mobile menu")
                 <i class="fa-solid fa-bars"></i>
