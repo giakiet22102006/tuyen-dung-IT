@@ -5,6 +5,7 @@ const candidateAuth = require("../controllers/candidate/candidateAuth.controller
 const passwordReset = require("../controllers/auth/passwordReset.controller");
 const candidateProfile = require("../controllers/candidate/candidateProfile.controller");
 const candidateApplication = require("../controllers/candidate/candidateApplication.controller");
+const candidateSavedJob = require("../controllers/candidate/candidateSavedJob.controller");
 const { requireCandidate, requireGuest } = require("../middlewares/auth.middleware");
 const { doubleCsrfProtection } = require("../middlewares/csrf.middleware");
 const { loginRateLimiter, otpRateLimiter } = require("../middlewares/rateLimit.middleware");
@@ -47,9 +48,18 @@ router.post("/change-password", requireCandidate, doubleCsrfProtection, asyncHan
 router.get("/profile", requireCandidate, asyncHandler(candidateProfile.renderProfile));
 router.post("/profile", requireCandidate, uploadAvatarMiddleware, doubleCsrfProtection, asyncHandler(candidateProfile.postProfile));
 
+// Hồ sơ IT Profile trực tuyến (Chuẩn ITviec Profile Builder)
+router.get("/it-profile", requireCandidate, asyncHandler(candidateProfile.renderItProfile));
+router.post("/it-profile", requireCandidate, doubleCsrfProtection, asyncHandler(candidateProfile.postItProfile));
+
 // Quản lý CV đã nộp (Ứng tuyển)
 router.get("/applied-jobs", requireCandidate, asyncHandler(candidateApplication.renderAppliedJobs));
 router.post("/applied-jobs/:id/delete", requireCandidate, doubleCsrfProtection, asyncHandler(candidateApplication.postWithdrawApplication));
 router.get("/applied-jobs/:id/pdf", requireCandidate, asyncHandler(candidateApplication.streamCandidateCv));
+
+// Quản lý Việc làm đã lưu (Saved Jobs)
+router.get("/saved-jobs", requireCandidate, asyncHandler(candidateSavedJob.renderSavedJobs));
+router.post("/saved-jobs/:jobId/toggle", requireCandidate, doubleCsrfProtection, asyncHandler(candidateSavedJob.toggleSaveJob));
+router.post("/saved-jobs/:id/remove", requireCandidate, doubleCsrfProtection, asyncHandler(candidateSavedJob.postRemoveSavedJob));
 
 module.exports = router;

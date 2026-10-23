@@ -64,6 +64,17 @@ block main
                         label(for="skills" class="font-[500] text-[14px] mb-[5px]") Các công nghệ (phân cách bởi dấu phẩy)
                         input(type="text" id="skills" name="skills" value=(old && old.skills || "") placeholder="Ví dụ: ReactJS, NodeJS, MongoDB" class="border border-[#DEDEDE] rounded-[4px] py-[11px] px-[20px] block w-full")
 
+                    div(class="mb-[18px]")
+                        label(class="font-[600] text-[14px] text-gray-800 mb-[8px] block") <i class="fa-solid fa-gift text-emerald-600 mr-[4px]"></i> Đãi ngộ & Phúc lợi nổi bật (Chuẩn ITviec)
+                        div(class="grid sm:grid-cols-2 grid-cols-1 gap-[10px] p-[14px] bg-emerald-50/50 border border-emerald-200 rounded-[8px]")
+                            if benefitsList && benefitsList.length > 0
+                                each ben in benefitsList
+                                    label(class="flex items-center gap-[8px] text-[13px] text-gray-700 cursor-pointer select-none hover:text-emerald-800")
+                                        input(type="checkbox" name="benefits" value=ben.value checked=(old && old.benefits && (Array.isArray(old.benefits) ? old.benefits.includes(ben.value) : old.benefits === ben.value)) class="w-[16px] h-[16px] text-[#0088FF] rounded border-gray-300 cursor-pointer")
+                                        span(class="inline-flex items-center gap-[6px]")
+                                            <i class="#{ben.icon} text-emerald-600 text-[13px]"></i>
+                                            span #{ben.label}
+
                     div(class="mb-[15px]")
                         label(for="images" class="font-[500] text-[14px] mb-[5px]") Danh sách ảnh (tối đa 5 ảnh, định dạng PNG, JPG, WebP)
                         input(type="file" id="images" name="images" multiple accept="image/*" class="border border-[#DEDEDE] rounded-[4px] py-[11px] px-[20px] block w-full")

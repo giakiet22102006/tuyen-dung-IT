@@ -1,6 +1,6 @@
 // src/controllers/employer/employerJob.controller.js
 const { Employer, Job, Skill } = require("../../models");
-const { CITIES, POSITIONS, WORKING_FORMS, EMPLOYER_STATUS, JOB_MODERATION } = require("../../config/constants");
+const { CITIES, POSITIONS, WORKING_FORMS, BENEFITS, EMPLOYER_STATUS, JOB_MODERATION } = require("../../config/constants");
 const { uploadLogo, uploadJobImage, deleteFile } = require("../../services/storage.service");
 const { clearStatsCache } = require("../../services/job.service");
 const { clearMenuCache } = require("../../services/menu.service");
@@ -124,6 +124,7 @@ const renderCreateJob = (req, res) => {
     title: "Thêm mới công việc",
     positions: POSITIONS,
     workingForms: WORKING_FORMS,
+    benefitsList: BENEFITS,
     errors: {},
     old: {},
   });
@@ -143,6 +144,7 @@ const postCreateJob = async (req, res) => {
     workingForm,
     skills,
     description,
+    benefits,
   } = req.body;
 
   const errors = {};
@@ -167,9 +169,18 @@ const postCreateJob = async (req, res) => {
       title: "Thêm mới công việc",
       positions: POSITIONS,
       workingForms: WORKING_FORMS,
+      benefitsList: BENEFITS,
       errors,
       old: req.body,
     });
+  }
+
+  // Xử lý đãi ngộ IT (benefits)
+  let benefitList = [];
+  if (Array.isArray(benefits)) {
+    benefitList = benefits.filter(Boolean);
+  } else if (typeof benefits === "string") {
+    benefitList = [benefits].filter(Boolean);
   }
 
   // Xử lý skills (chuỗi phân tách bởi dấu phẩy)
@@ -222,6 +233,7 @@ const postCreateJob = async (req, res) => {
     position,
     workingForm,
     skills: skillList,
+    benefits: benefitList,
     images,
     description: sanitizedDesc,
     city: req.user.city || "ha-noi",
@@ -257,6 +269,7 @@ const renderEditJob = async (req, res) => {
     skillString,
     positions: POSITIONS,
     workingForms: WORKING_FORMS,
+    benefitsList: BENEFITS,
     errors: {},
   });
 };
@@ -281,6 +294,7 @@ const postEditJob = async (req, res) => {
     workingForm,
     skills,
     description,
+    benefits,
   } = req.body;
 
   const errors = {};
@@ -307,8 +321,17 @@ const postEditJob = async (req, res) => {
       skillString: skills || "",
       positions: POSITIONS,
       workingForms: WORKING_FORMS,
+      benefitsList: BENEFITS,
       errors,
     });
+  }
+
+  // Xử lý đãi ngộ IT (benefits)
+  let benefitList = [];
+  if (Array.isArray(benefits)) {
+    benefitList = benefits.filter(Boolean);
+  } else if (typeof benefits === "string") {
+    benefitList = [benefits].filter(Boolean);
   }
 
   // Xử lý skills
@@ -346,6 +369,7 @@ const postEditJob = async (req, res) => {
   job.position = position;
   job.workingForm = workingForm;
   job.skills = skillList;
+  job.benefits = benefitList;
   job.description = sanitizeHtml(description);
 
   await job.save();

@@ -42,6 +42,50 @@ const candidateSchema = new mongoose.Schema(
       url: { type: String, default: "" },
       key: { type: String, default: "" },
     },
+    itProfile: {
+      title: { type: String, default: "", trim: true },
+      level: { type: String, default: "junior" },
+      yearsOfExperience: { type: Number, default: 0 },
+      bio: { type: String, default: "", trim: true },
+      githubUrl: { type: String, default: "", trim: true },
+      linkedinUrl: { type: String, default: "", trim: true },
+      portfolioUrl: { type: String, default: "", trim: true },
+      skills: [{ type: String, trim: true }],
+      workExperience: [
+        {
+          company: { type: String, default: "", trim: true },
+          position: { type: String, default: "", trim: true },
+          startDate: { type: String, default: "" },
+          endDate: { type: String, default: "" },
+          isCurrent: { type: Boolean, default: false },
+          description: { type: String, default: "", trim: true },
+        },
+      ],
+      education: [
+        {
+          school: { type: String, default: "", trim: true },
+          major: { type: String, default: "", trim: true },
+          gradYear: { type: String, default: "" },
+        },
+      ],
+      projects: [
+        {
+          name: { type: String, default: "", trim: true },
+          role: { type: String, default: "", trim: true },
+          techStack: { type: String, default: "", trim: true },
+          description: { type: String, default: "", trim: true },
+          link: { type: String, default: "", trim: true },
+        },
+      ],
+      certificates: [
+        {
+          name: { type: String, default: "", trim: true },
+          organization: { type: String, default: "", trim: true },
+          year: { type: String, default: "" },
+        },
+      ],
+      updatedAt: { type: Date, default: null },
+    },
     status: {
       type: String,
       enum: Object.values(CANDIDATE_STATUS),

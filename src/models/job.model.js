@@ -45,6 +45,12 @@ const jobSchema = new mongoose.Schema(
         slug: { type: String, required: true, lowercase: true },
       },
     ],
+    benefits: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
     images: [
       {
         url: { type: String, required: true },

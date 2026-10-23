@@ -70,6 +70,8 @@ header(class="bg-[#000071] py-[15px] sticky top-0 z-50 shadow-md")
                             ul(class="right-0 left-auto w-[220px] rounded-[4px] shadow-lg z-50")
                                 if role === 'candidate'
                                     li: a(href="/candidate/profile" class="block w-full") Thông tin cá nhân
+                                    li: a(href="/candidate/it-profile" class="block w-full text-[#9FDB7C]") <i class="fa-solid fa-file-code mr-[4px]"></i> Hồ sơ IT Profile
+                                    li: a(href="/candidate/saved-jobs" class="block w-full") <i class="fa-solid fa-bookmark mr-[4px]"></i> Việc làm đã lưu
                                     li: a(href="/candidate/applied-jobs" class="block w-full") CV đã gửi
                                     li: a(href="/candidate/change-password" class="block w-full") Đổi mật khẩu
                                     li
@@ -114,6 +116,8 @@ header(class="bg-[#000071] py-[15px] sticky top-0 z-50 shadow-md")
                         div(class="font-[600] text-[#0088FF] text-[14px] mb-[6px] px-[10px]") <i class="fa-solid fa-circle-user mr-[6px]"></i> #{role === 'employer' ? currentUser.companyName : currentUser.fullName}
                     if role === 'candidate'
                         li: a(href="/candidate/profile" class="block py-[6px] px-[10px] rounded hover:bg-white/10") <i class="fa-solid fa-user mr-[8px] text-[14px]"></i> Thông tin cá nhân
+                        li: a(href="/candidate/it-profile" class="block py-[6px] px-[10px] rounded hover:bg-white/10 text-[#9FDB7C]") <i class="fa-solid fa-file-code mr-[8px] text-[14px]"></i> Hồ sơ IT Profile
+                        li: a(href="/candidate/saved-jobs" class="block py-[6px] px-[10px] rounded hover:bg-white/10") <i class="fa-solid fa-bookmark mr-[8px] text-[14px]"></i> Việc làm đã lưu
                         li: a(href="/candidate/applied-jobs" class="block py-[6px] px-[10px] rounded hover:bg-white/10") <i class="fa-solid fa-file-lines mr-[8px] text-[14px]"></i> CV đã gửi
                         li: a(href="/candidate/change-password" class="block py-[6px] px-[10px] rounded hover:bg-white/10") <i class="fa-solid fa-key mr-[8px] text-[14px]"></i> Đổi mật khẩu
                         li

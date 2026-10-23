@@ -60,6 +60,21 @@ block main
                         option(value="remote") Từ xa
                         option(value="flexible") Linh hoạt
 
+                select(id="filterBenefit" class="filter-select w-full sm:w-auto border border-[#DEDEDE] rounded-[20px] py-[8px] px-[16px] font-[400] text-[14px] sm:text-[16px] text-[#414042] cursor-pointer bg-white")
+                    option(value="") 🎁 Đãi ngộ IT
+                    if benefits && benefits.length > 0
+                        each b in benefits
+                            option(value=b.value selected=(selectedBenefit === b.value)) #{b.label}
+
+            //- Quick IT Perks Filter Pills
+            div(class="mt-[12px] flex items-center gap-[6px] flex-wrap")
+                span(class="text-[12px] font-[600] text-gray-500 mr-[4px]") Đãi ngộ hot:
+                each b in (benefits || [])
+                    - var isBenActive = (selectedBenefit === b.value)
+                    a(href=`/search?keyword=${encodeURIComponent(keyword || '')}&city=${selectedCity || ''}&position=${selectedPosition || ''}&workingForm=${selectedWorkingForm || ''}&benefit=${isBenActive ? '' : b.value}` class=`inline-flex items-center gap-[4px] px-[10px] py-[4px] rounded-full text-[12px] font-[500] transition-colors border ${isBenActive ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs' : 'bg-white text-gray-700 border-gray-200 hover:border-emerald-400 hover:text-emerald-700'}`)
+                        <i class="#{b.icon} text-[11px]"></i>
+                        span #{b.shortLabel || b.label}
+
             div(class="my-[30px] grid lg:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-[20px]") 
                 if jobs && jobs.length > 0
                     each job in jobs

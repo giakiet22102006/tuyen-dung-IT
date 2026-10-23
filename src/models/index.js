@@ -9,6 +9,7 @@ const AuditLog = require("./auditLog.model");
 const Otp = require("./otp.model");
 const Review = require("./review.model");
 const Feedback = require("./feedback.model");
+const SavedJob = require("./savedJob.model");
 
 module.exports = {
   Candidate,
@@ -21,4 +22,5 @@ module.exports = {
   Otp,
   Review,
   Feedback,
+  SavedJob,
 };

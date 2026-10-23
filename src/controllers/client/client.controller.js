@@ -8,9 +8,10 @@ const {
   getJobDetails,
 } = require("../../services/job.service");
 const { getAutocompleteSuggestions } = require("../../services/fuzzySearch.service");
-const { CITIES, POSITIONS, WORKING_FORMS, JOB_MODERATION, EMPLOYER_STATUS } = require("../../config/constants");
-const { Skill, Job, Application, Review, Employer, Feedback } = require("../../models");
-const { uploadCV } = require("../../services/storage.service");
+const { CITIES, POSITIONS, WORKING_FORMS, BENEFITS, JOB_MODERATION, EMPLOYER_STATUS } = require("../../config/constants");
+const { Skill, Job, Application, Review, Employer, Feedback, Candidate } = require("../../models");
+const { uploadCV, saveCvBuffer } = require("../../services/storage.service");
+const { generateItProfilePdf } = require("../../services/pdfGenerator.service");
 
 const renderIndex = async (req, res) => {
   const [totalPublicJobs, topEmployers] = await Promise.all([
@@ -32,7 +33,7 @@ const renderIndex = async (req, res) => {
 };
 
 const renderSearch = async (req, res) => {
-  const { city, keyword, skill, position, workingForm, company, page, exact } = req.query;
+  const { city, keyword, skill, position, workingForm, benefit, company, page, exact } = req.query;
 
   const [searchResult, totalPublicJobs] = await Promise.all([
     searchJobs(req.query),
@@ -54,6 +55,9 @@ const renderSearch = async (req, res) => {
   let searchTitle = `${pagination.totalItems} việc làm IT`;
   if (isFuzzyApplied) {
     searchTitle = `${pagination.totalItems} việc làm cho từ khóa gợi ý <span class="text-[#0088FF]">"${suggestedKeyword}"</span>`;
+  } else if (benefit) {
+    const foundBenefit = BENEFITS.find((b) => b.value === benefit);
+    searchTitle = `${pagination.totalItems} việc làm có đãi ngộ <span class="text-[#0088FF]">"${foundBenefit ? foundBenefit.label : benefit}"</span>`;
   } else if (skill) {
     searchTitle = `${pagination.totalItems} việc làm <span class="text-[#0088FF]">${skill}</span>`;
   } else if (keyword) {
@@ -73,9 +77,11 @@ const renderSearch = async (req, res) => {
     cities: CITIES,
     positions: POSITIONS,
     workingForms: WORKING_FORMS,
+    benefits: BENEFITS,
     selectedCity: city || "",
     selectedPosition: position || "",
     selectedWorkingForm: workingForm || "",
+    selectedBenefit: benefit || "",
     keyword: keyword || "",
     selectedSkill: skill || "",
     isFuzzyApplied: !!isFuzzyApplied,
@@ -284,23 +290,46 @@ const postApplyJob = async (req, res) => {
     return res.redirect(`/jobs/${slug}`);
   }
 
-  const { fullName, email, phone } = req.body;
+  const { fullName, email, phone, applyType } = req.body;
   if (!fullName || !fullName.trim() || !email || !email.trim() || !phone || !phone.trim()) {
     req.flash("error", "Vui lòng điền đầy đủ họ tên, email và số điện thoại.");
     return res.redirect(`/jobs/${slug}`);
   }
 
-  if (!req.file) {
-    req.flash("error", "Vui lòng tải lên file CV định dạng PDF.");
-    return res.redirect(`/jobs/${slug}`);
-  }
-
   let cvData;
-  try {
-    cvData = await uploadCV(req.file);
-  } catch (err) {
-    req.flash("error", err.message || "File CV không đúng định dạng PDF hợp lệ.");
-    return res.redirect(`/jobs/${slug}`);
+
+  if (applyType === "it_profile") {
+    // Ứng tuyển nhanh bằng hồ sơ IT Profile trực tuyến
+    const candidate = await Candidate.findById(req.user._id);
+    const profile = candidate ? candidate.itProfile : null;
+    const hasProfile = profile && (profile.title || (profile.skills && profile.skills.length > 0));
+
+    if (!hasProfile) {
+      req.flash("error", "Hồ sơ IT Profile của bạn chưa có thông tin. Vui lòng cập nhật IT Profile hoặc tải lên file PDF.");
+      return res.redirect(`/candidate/it-profile`);
+    }
+
+    try {
+      const pdfBuffer = await generateItProfilePdf(candidate, job.title);
+      const safeName = `IT_Profile_${(candidate.fullName || "Candidate").replace(/[^a-zA-Z0-9]/g, "_")}.pdf`;
+      cvData = await saveCvBuffer(pdfBuffer, safeName);
+    } catch (err) {
+      req.flash("error", "Không thể tạo file CV từ hồ sơ IT Profile: " + err.message);
+      return res.redirect(`/jobs/${slug}`);
+    }
+  } else {
+    // Ứng tuyển bằng file CV tải lên từ máy tính
+    if (!req.file) {
+      req.flash("error", "Vui lòng tải lên file CV định dạng PDF hoặc chọn ứng tuyển bằng IT Profile.");
+      return res.redirect(`/jobs/${slug}`);
+    }
+
+    try {
+      cvData = await uploadCV(req.file);
+    } catch (err) {
+      req.flash("error", err.message || "File CV không đúng định dạng PDF hợp lệ.");
+      return res.redirect(`/jobs/${slug}`);
+    }
   }
 
   try {
@@ -313,8 +342,8 @@ const postApplyJob = async (req, res) => {
       phone: phone.trim(),
       cv: {
         key: cvData.key,
-        originalName: req.file.originalname || "CV.pdf",
-        size: req.file.size,
+        originalName: cvData.originalName || (req.file ? req.file.originalname : "CV.pdf"),
+        size: cvData.size || (req.file ? req.file.size : 0),
       },
       viewed: false,
       status: "pending",

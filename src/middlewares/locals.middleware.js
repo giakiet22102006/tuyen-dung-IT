@@ -4,6 +4,7 @@ const { getMenuData } = require("../services/menu.service");
 const formatSalary = require("../utils/formatSalary");
 const labels = require("../utils/labels");
 const env = require("../config/env");
+const { SavedJob } = require("../models");
 
 async function localsMiddleware(req, res, next) {
   res.locals.currentUser = req.user || null;
@@ -11,6 +12,17 @@ async function localsMiddleware(req, res, next) {
   res.locals.currentAdmin = req.admin || null;
   res.locals.adminPath = env.ADMIN_PATH || "admin";
   res.locals.currentPath = req.path;
+
+  // Lấy danh sách ID các việc làm đã lưu nếu là Candidate
+  res.locals.savedJobIds = new Set();
+  if (req.role === "candidate" && req.user && req.user._id) {
+    try {
+      const savedDocs = await SavedJob.find({ candidateId: req.user._id }).select("jobId").lean();
+      res.locals.savedJobIds = new Set(savedDocs.map((s) => s.jobId.toString()));
+    } catch (_) {
+      res.locals.savedJobIds = new Set();
+    }
+  }
 
   // Helpers
   res.locals.formatSalary = formatSalary;

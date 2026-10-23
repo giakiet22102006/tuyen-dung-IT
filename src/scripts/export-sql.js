@@ -11,6 +11,7 @@ const {
   Application,
   Otp,
   AuditLog,
+  SavedJob,
 } = require("../models");
 
 function escapeSql(val) {
@@ -278,6 +279,30 @@ async function exportToSql() {
       return `(${escapeSql(a._id.toString())}, ${escapeSql(a.jobId.toString())}, ${escapeSql(a.employerId.toString())}, ${escapeSql(a.candidateId.toString())}, ${escapeSql(a.fullName)}, ${escapeSql(a.email)}, ${escapeSql(a.phone)}, ${escapeSql(fileKey)}, ${escapeSql(originalName)}, ${escapeSql(a.status)}, ${escapeSql(a.rejectionReason || null)}, ${escapeSql(a.rejectionNote || null)}, ${escapeSql(a.viewed)}, ${escapeSql(a.hiddenByCandidate)}, ${escapeSql(a.hiddenByEmployer)}, ${escapeSql(a.reviewedAt)}, ${escapeSql(a.createdAt)}, ${escapeSql(a.updatedAt)})`;
     });
     sql += appValues.join(",\n") + ";\n\n";
+  }
+
+  // 7b. Table Saved_Jobs (Việc làm đã lưu của ứng viên)
+  console.log("👉 Đang xuất bảng 'saved_jobs'...");
+  sql += `-- ------------------------------------------------------------------\n`;
+  sql += `-- Table: saved_jobs (Việc làm đã lưu của ứng viên)\n`;
+  sql += `-- ------------------------------------------------------------------\n`;
+  sql += `DROP TABLE IF EXISTS \`saved_jobs\`;\n`;
+  sql += `CREATE TABLE \`saved_jobs\` (\n`;
+  sql += `  \`id\` VARCHAR(50) NOT NULL PRIMARY KEY,\n`;
+  sql += `  \`candidate_id\` VARCHAR(50) NOT NULL,\n`;
+  sql += `  \`job_id\` VARCHAR(50) NOT NULL,\n`;
+  sql += `  \`created_at\` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n`;
+  sql += `  \`updated_at\` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n`;
+  sql += `  UNIQUE KEY \`uniq_saved_candidate_job\` (\`candidate_id\`, \`job_id\`),\n`;
+  sql += `  FOREIGN KEY (\`candidate_id\`) REFERENCES \`candidates\` (\`id\`) ON DELETE CASCADE,\n`;
+  sql += `  FOREIGN KEY (\`job_id\`) REFERENCES \`jobs\` (\`id\`) ON DELETE CASCADE\n`;
+  sql += `) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;\n\n`;
+
+  const savedJobs = await SavedJob.find({}).lean();
+  if (savedJobs.length > 0) {
+    sql += `INSERT INTO \`saved_jobs\` (\`id\`, \`candidate_id\`, \`job_id\`, \`created_at\`, \`updated_at\`) VALUES\n`;
+    const savedValues = savedJobs.map((s) => `(${escapeSql(s._id.toString())}, ${escapeSql(s.candidateId.toString())}, ${escapeSql(s.jobId.toString())}, ${escapeSql(s.createdAt)}, ${escapeSql(s.updatedAt)})`);
+    sql += savedValues.join(",\n") + ";\n\n";
   }
 
   // 8. Table Audit Logs

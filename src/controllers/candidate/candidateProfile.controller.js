@@ -1,6 +1,7 @@
 // src/controllers/candidate/candidateProfile.controller.js
 const { Candidate } = require("../../models");
 const { uploadAvatar, deleteFile } = require("../../services/storage.service");
+const { POSITIONS } = require("../../config/constants");
 
 const renderProfile = async (req, res) => {
   const candidate = await Candidate.findById(req.user._id).lean();
@@ -59,7 +60,89 @@ const postProfile = async (req, res) => {
   res.redirect("/candidate/profile");
 };
 
+const renderItProfile = async (req, res) => {
+  const candidate = await Candidate.findById(req.user._id).lean();
+  if (!candidate) {
+    return res.redirect("/candidate/login");
+  }
+
+  res.render("pages/candidate-it-profile", {
+    title: "Hồ sơ IT Profile Trực Tuyến - VN.ITJobs",
+    candidate,
+    profile: candidate.itProfile || {},
+    positions: POSITIONS,
+  });
+};
+
+const postItProfile = async (req, res) => {
+  const candidate = await Candidate.findById(req.user._id);
+  if (!candidate) {
+    return res.redirect("/candidate/login");
+  }
+
+  const {
+    title,
+    level,
+    yearsOfExperience,
+    bio,
+    githubUrl,
+    linkedinUrl,
+    portfolioUrl,
+    skills,
+    workExperience,
+    projects,
+    education,
+    certificates,
+  } = req.body;
+
+  // Parse skills
+  let skillList = [];
+  if (typeof skills === "string") {
+    skillList = skills.split(",").map((s) => s.trim()).filter(Boolean);
+  } else if (Array.isArray(skills)) {
+    skillList = skills.map((s) => String(s).trim()).filter(Boolean);
+  }
+
+  function safeParseArray(data) {
+    if (Array.isArray(data)) return data;
+    if (typeof data === "string") {
+      try {
+        const parsed = JSON.parse(data);
+        if (Array.isArray(parsed)) return parsed;
+      } catch (_) {}
+    }
+    return [];
+  }
+
+  const workList = safeParseArray(workExperience);
+  const projectList = safeParseArray(projects);
+  const eduList = safeParseArray(education);
+  const certList = safeParseArray(certificates);
+
+  candidate.itProfile = {
+    title: (title || "").trim(),
+    level: level || "junior",
+    yearsOfExperience: Number(yearsOfExperience) || 0,
+    bio: (bio || "").trim(),
+    githubUrl: (githubUrl || "").trim(),
+    linkedinUrl: (linkedinUrl || "").trim(),
+    portfolioUrl: (portfolioUrl || "").trim(),
+    skills: skillList,
+    workExperience: workList,
+    projects: projectList,
+    education: eduList,
+    certificates: certList,
+    updatedAt: new Date(),
+  };
+
+  await candidate.save();
+  req.flash("success", "Cập nhật hồ sơ IT Profile thành công!");
+  res.redirect("/candidate/it-profile");
+};
+
 module.exports = {
   renderProfile,
   postProfile,
+  renderItProfile,
+  postItProfile,
 };

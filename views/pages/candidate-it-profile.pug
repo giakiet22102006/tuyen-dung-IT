@@ -1,0 +1,381 @@
+extends ../layouts/default.pug
+
+block title 
+    title #{title || "Hồ sơ IT Profile Trực Tuyến - VN.ITJobs"}
+
+block main
+    div(class="py-[35px] sm:py-[60px]")
+        .contain 
+            div(class="max-w-[900px] mx-auto")
+                div(class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-[24px] gap-[12px]")
+                    div
+                        h1(class="font-[700] text-[22px] sm:text-[28px] text-[#121212] flex items-center gap-[10px]")
+                            <i class="fa-solid fa-file-code text-[#0088FF]"></i>
+                            span Hồ sơ IT Profile Trực Tuyến
+                        p(class="text-[13px] sm:text-[14px] text-gray-500 mt-[2px]") Xây dựng hồ sơ công nghệ chuẩn ITviec - Ứng tuyển nhanh 1-Click không cần upload lại PDF
+
+                    div(class="flex items-center gap-[10px]")
+                        a(href="/candidate/profile" class="text-[13px] font-[600] text-[#0088FF] hover:underline") <i class="fa-solid fa-user mr-[4px]"></i> Thông tin tài khoản
+
+                if flash && flash.success
+                    div(class="mb-[20px] p-[14px] bg-[#E8F5E9] border border-[#A5D6A7] text-[#2E7D32] rounded-[8px] text-[14px] flex items-center gap-[8px]")
+                        <i class="fa-solid fa-circle-check text-[16px]"></i>
+                        span #{flash.success}
+                if flash && flash.error
+                    div(class="mb-[20px] p-[14px] bg-[#FFEBEE] border border-[#FFCDD2] text-[#C62828] rounded-[8px] text-[14px] flex items-center gap-[8px]")
+                        <i class="fa-solid fa-circle-exmark text-[16px]"></i>
+                        span #{flash.error}
+
+                form(action="/candidate/it-profile" method="POST" id="formItProfile" class="space-y-[24px]")
+                    input(type="hidden" name="_csrf" value=csrfToken)
+                    
+                    //- Hidden JSON fields for dynamic items
+                    input(type="hidden" id="workExperienceJson" name="workExperience" value=JSON.stringify(profile.workExperience || []))
+                    input(type="hidden" id="projectsJson" name="projects" value=JSON.stringify(profile.projects || []))
+                    input(type="hidden" id="educationJson" name="education" value=JSON.stringify(profile.education || []))
+                    input(type="hidden" id="certificatesJson" name="certificates" value=JSON.stringify(profile.certificates || []))
+
+                    //- 1. Thông tin chuyên môn cốt lõi
+                    div(class="bg-white rounded-[10px] border border-gray-200 p-[20px] sm:p-[24px] shadow-2xs")
+                        h2(class="font-[700] text-[16px] sm:text-[18px] text-gray-900 pb-[12px] mb-[18px] border-b border-gray-100 flex items-center gap-[8px]")
+                            <i class="fa-solid fa-briefcase text-[#0088FF]"></i>
+                            span 1. Định hướng & Chức danh IT
+                        
+                        div(class="grid sm:grid-cols-2 grid-cols-1 gap-[16px] mb-[16px]")
+                            div
+                                label(class="block text-[13px] font-[600] text-gray-700 mb-[6px]") Chức danh chuyên môn (VD: Fullstack React / Node Developer) *
+                                input(type="text" name="title" required value=(profile.title || "") placeholder="Senior Frontend Developer" class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[10px] text-[14px] focus:border-[#0088FF] focus:outline-none")
+                            
+                            div(class="grid grid-cols-2 gap-[10px]")
+                                div
+                                    label(class="block text-[13px] font-[600] text-gray-700 mb-[6px]") Cấp bậc
+                                    select(name="level" class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[10px] text-[14px] bg-white")
+                                        if positions && positions.length > 0
+                                            each p in positions
+                                                option(value=p.value selected=(profile.level === p.value)) #{p.label}
+                                        else
+                                            option(value="junior") Junior
+                                            option(value="middle") Middle
+                                            option(value="senior") Senior
+                                div
+                                    label(class="block text-[13px] font-[600] text-gray-700 mb-[6px]") Số năm kinh nghiệm
+                                    input(type="number" name="yearsOfExperience" min="0" max="40" value=(profile.yearsOfExperience || 0) class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[10px] text-[14px]")
+
+                        div(class="mb-[16px]")
+                            label(class="block text-[13px] font-[600] text-gray-700 mb-[6px]") Kỹ năng công nghệ cốt lõi (phân cách bằng dấu phẩy) *
+                            input(type="text" name="skills" required value=(profile.skills ? profile.skills.join(', ') : "") placeholder="ReactJS, NodeJS, TypeScript, MongoDB, Docker, AWS..." class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[10px] text-[14px] focus:border-[#0088FF] focus:outline-none")
+                            p(class="text-[12px] text-gray-400 mt-[4px]") Kỹ năng này sẽ được AI sử dụng để so khớp độ phù hợp khi bạn ứng tuyển việc làm.
+
+                        div
+                            label(class="block text-[13px] font-[600] text-gray-700 mb-[6px]") Tóm tắt bản thân & Mục tiêu nghề nghiệp (Bio)
+                            textarea(name="bio" rows="4" placeholder="Giới thiệu ngắn gọn về kinh nghiệm, thế mạnh kỹ thuật và định hướng phát triển của bạn..." class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[10px] text-[14px] focus:border-[#0088FF] focus:outline-none leading-relaxed")= (profile.bio || "")
+
+                    //- 2. Kênh chuyên môn (GitHub, LinkedIn, Portfolio)
+                    div(class="bg-white rounded-[10px] border border-gray-200 p-[20px] sm:p-[24px] shadow-2xs")
+                        h2(class="font-[700] text-[16px] sm:text-[18px] text-gray-900 pb-[12px] mb-[18px] border-b border-gray-100 flex items-center gap-[8px]")
+                            <i class="fa-solid fa-link text-[#0088FF]"></i>
+                            span 2. Liên kết Portfolio & Mã nguồn (Dân IT nên có)
+                        
+                        div(class="grid sm:grid-cols-3 grid-cols-1 gap-[16px]")
+                            div
+                                label(class="block text-[13px] font-[600] text-gray-700 mb-[6px]") <i class="fa-brands fa-github text-[15px] mr-[4px]"></i> GitHub URL
+                                input(type="url" name="githubUrl" value=(profile.githubUrl || "") placeholder="https://github.com/username" class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[9px] text-[13px]")
+                            div
+                                label(class="block text-[13px] font-[600] text-gray-700 mb-[6px]") <i class="fa-brands fa-linkedin text-[15px] text-[#0077B5] mr-[4px]"></i> LinkedIn URL
+                                input(type="url" name="linkedinUrl" value=(profile.linkedinUrl || "") placeholder="https://linkedin.com/in/username" class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[9px] text-[13px]")
+                            div
+                                label(class="block text-[13px] font-[600] text-gray-700 mb-[6px]") <i class="fa-solid fa-globe text-[15px] text-emerald-600 mr-[4px]"></i> Portfolio / Blog cá nhân
+                                input(type="url" name="portfolioUrl" value=(profile.portfolioUrl || "") placeholder="https://myportfolio.dev" class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[9px] text-[13px]")
+
+                    //- 3. Kinh nghiệm làm việc
+                    div(class="bg-white rounded-[10px] border border-gray-200 p-[20px] sm:p-[24px] shadow-2xs")
+                        div(class="flex items-center justify-between pb-[12px] mb-[18px] border-b border-gray-100")
+                            h2(class="font-[700] text-[16px] sm:text-[18px] text-gray-900 flex items-center gap-[8px]")
+                                <i class="fa-solid fa-building text-[#0088FF]"></i>
+                                span 3. Kinh nghiệm làm việc (Work Experience)
+                            button(type="button" id="btnAddWork" class="inline-flex items-center gap-[6px] px-[12px] py-[6px] bg-blue-50 text-[#0088FF] hover:bg-blue-100 text-[12px] font-[700] rounded-[6px] cursor-pointer transition-colors")
+                                <i class="fa-solid fa-plus"></i> Thêm kinh nghiệm
+
+                        div(id="workListContainer" class="space-y-[16px]")
+                            //- Dynamically populated by JS
+
+                    //- 4. Dự án tiêu biểu
+                    div(class="bg-white rounded-[10px] border border-gray-200 p-[20px] sm:p-[24px] shadow-2xs")
+                        div(class="flex items-center justify-between pb-[12px] mb-[18px] border-b border-gray-100")
+                            h2(class="font-[700] text-[16px] sm:text-[18px] text-gray-900 flex items-center gap-[8px]")
+                                <i class="fa-solid fa-laptop-code text-[#0088FF]"></i>
+                                span 4. Dự án thực chiến (Projects)
+                            button(type="button" id="btnAddProject" class="inline-flex items-center gap-[6px] px-[12px] py-[6px] bg-blue-50 text-[#0088FF] hover:bg-blue-100 text-[12px] font-[700] rounded-[6px] cursor-pointer transition-colors")
+                                <i class="fa-solid fa-plus"></i> Thêm dự án
+
+                        div(id="projectListContainer" class="space-y-[16px]")
+                            //- Dynamically populated by JS
+
+                    //- 5. Học vấn & Chứng chỉ
+                    div(class="bg-white rounded-[10px] border border-gray-200 p-[20px] sm:p-[24px] shadow-2xs")
+                        div(class="flex items-center justify-between pb-[12px] mb-[18px] border-b border-gray-100")
+                            h2(class="font-[700] text-[16px] sm:text-[18px] text-gray-900 flex items-center gap-[8px]")
+                                <i class="fa-solid fa-graduation-cap text-[#0088FF]"></i>
+                                span 5. Học vấn & Chứng chỉ IT
+                            button(type="button" id="btnAddEdu" class="inline-flex items-center gap-[6px] px-[12px] py-[6px] bg-blue-50 text-[#0088FF] hover:bg-blue-100 text-[12px] font-[700] rounded-[6px] cursor-pointer transition-colors")
+                                <i class="fa-solid fa-plus"></i> Thêm học vấn
+
+                        div(id="eduListContainer" class="space-y-[12px]")
+                            //- Dynamically populated by JS
+
+                    //- Nút Lưu
+                    div(class="flex items-center justify-end gap-[12px] pt-[10px]")
+                        a(href="/candidate/profile" class="px-[20px] py-[12px] border border-gray-300 text-gray-700 font-[600] rounded-[6px] hover:bg-gray-50 text-[14px]") Hủy bỏ
+                        button(type="submit" class="bg-[#0088FF] hover:bg-[#0070d6] text-white px-[28px] py-[12px] font-[700] rounded-[6px] text-[15px] shadow-sm cursor-pointer inline-flex items-center gap-[8px]")
+                            <i class="fa-solid fa-floppy-disk"></i>
+                            span Lưu Hồ Sơ IT Profile
+
+    script.
+        (function() {
+            var workData = [];
+            var projectData = [];
+            var eduData = [];
+
+            try {
+                workData = JSON.parse(document.getElementById("workExperienceJson").value || "[]");
+            } catch(e) {}
+            try {
+                projectData = JSON.parse(document.getElementById("projectsJson").value || "[]");
+            } catch(e) {}
+            try {
+                eduData = JSON.parse(document.getElementById("educationJson").value || "[]");
+            } catch(e) {}
+
+            var workContainer = document.getElementById("workListContainer");
+            var projectContainer = document.getElementById("projectListContainer");
+            var eduContainer = document.getElementById("eduListContainer");
+
+            function renderWorks() {
+                if (!workContainer) return;
+                workContainer.innerHTML = "";
+                if (workData.length === 0) {
+                    workContainer.innerHTML = "<div class='text-[13px] text-gray-400 italic py-[10px]'>Chưa có thông tin kinh nghiệm làm việc. Bấm '+ Thêm kinh nghiệm' để bổ sung.</div>";
+                    return;
+                }
+                workData.forEach(function(w, idx) {
+                    var card = document.createElement("div");
+                    card.className = "p-[14px] bg-gray-50 border border-gray-200 rounded-[8px] space-y-[10px] relative";
+                    card.innerHTML = `
+                        <button type="button" class="btn-del-work absolute top-[10px] right-[10px] text-red-500 hover:text-red-700 text-[14px] cursor-pointer p-[4px]" data-idx="${idx}" title="Xóa">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                        <div class="grid sm:grid-cols-2 grid-cols-1 gap-[10px]">
+                            <div>
+                                <label class="block text-[12px] font-[600] text-gray-600 mb-[2px]">Tên Công ty</label>
+                                <input type="text" class="w-full border border-gray-300 rounded-[4px] px-[10px] py-[6px] text-[13px] bg-white inp-work-company" value="${w.company || ''}" placeholder="FPT Software, VNG, VNPT...">
+                            </div>
+                            <div>
+                                <label class="block text-[12px] font-[600] text-gray-600 mb-[2px]">Vị trí / Chức danh</label>
+                                <input type="text" class="w-full border border-gray-300 rounded-[4px] px-[10px] py-[6px] text-[13px] bg-white inp-work-pos" value="${w.position || ''}" placeholder="Frontend Developer, QA...">
+                            </div>
+                        </div>
+                        <div class="grid sm:grid-cols-3 grid-cols-1 gap-[10px]">
+                            <div>
+                                <label class="block text-[12px] font-[600] text-gray-600 mb-[2px]">Bắt đầu</label>
+                                <input type="text" class="w-full border border-gray-300 rounded-[4px] px-[10px] py-[6px] text-[13px] bg-white inp-work-start" value="${w.startDate || ''}" placeholder="06/2023">
+                            </div>
+                            <div>
+                                <label class="block text-[12px] font-[600] text-gray-600 mb-[2px]">Kết thúc</label>
+                                <input type="text" class="w-full border border-gray-300 rounded-[4px] px-[10px] py-[6px] text-[13px] bg-white inp-work-end" value="${w.endDate || ''}" placeholder="Hien tai hoặc 08/2025">
+                            </div>
+                            <div class="flex items-center pt-[18px]">
+                                <label class="flex items-center gap-[6px] text-[12px] text-gray-700 cursor-pointer select-none">
+                                    <input type="checkbox" class="inp-work-curr cursor-pointer" ${w.isCurrent ? 'checked' : ''}> Đang làm việc tại đây
+                                </label>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[12px] font-[600] text-gray-600 mb-[2px]">Mô tả công việc & Thành tích</label>
+                            <textarea class="w-full border border-gray-300 rounded-[4px] px-[10px] py-[6px] text-[13px] bg-white inp-work-desc" rows="2" placeholder="Xây dựng giao diện Web App, tối ưu hiệu năng Lighthouse, tham gia sprint Scrum...">${w.description || ''}</textarea>
+                        </div>
+                    `;
+                    workContainer.appendChild(card);
+                });
+
+                bindWorkEvents();
+            }
+
+            function bindWorkEvents() {
+                workContainer.querySelectorAll(".btn-del-work").forEach(function(btn) {
+                    btn.addEventListener("click", function() {
+                        var idx = parseInt(btn.getAttribute("data-idx"), 10);
+                        syncWorksFromDOM();
+                        workData.splice(idx, 1);
+                        renderWorks();
+                    });
+                });
+            }
+
+            function syncWorksFromDOM() {
+                var cards = workContainer.querySelectorAll(".p-\\[14px\\]");
+                workData = [];
+                cards.forEach(function(card) {
+                    workData.push({
+                        company: card.querySelector(".inp-work-company").value.trim(),
+                        position: card.querySelector(".inp-work-pos").value.trim(),
+                        startDate: card.querySelector(".inp-work-start").value.trim(),
+                        endDate: card.querySelector(".inp-work-end").value.trim(),
+                        isCurrent: card.querySelector(".inp-work-curr").checked,
+                        description: card.querySelector(".inp-work-desc").value.trim()
+                    });
+                });
+                document.getElementById("workExperienceJson").value = JSON.stringify(workData);
+            }
+
+            function renderProjects() {
+                if (!projectContainer) return;
+                projectContainer.innerHTML = "";
+                if (projectData.length === 0) {
+                    projectContainer.innerHTML = "<div class='text-[13px] text-gray-400 italic py-[10px]'>Chưa có dự án nào. Bấm '+ Thêm dự án' để khoe các sản phẩm bạn đã làm.</div>";
+                    return;
+                }
+                projectData.forEach(function(p, idx) {
+                    var card = document.createElement("div");
+                    card.className = "p-[14px] bg-gray-50 border border-gray-200 rounded-[8px] space-y-[10px] relative";
+                    card.innerHTML = `
+                        <button type="button" class="btn-del-project absolute top-[10px] right-[10px] text-red-500 hover:text-red-700 text-[14px] cursor-pointer p-[4px]" data-idx="${idx}" title="Xóa">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                        <div class="grid sm:grid-cols-2 grid-cols-1 gap-[10px]">
+                            <div>
+                                <label class="block text-[12px] font-[600] text-gray-600 mb-[2px]">Tên Dự án</label>
+                                <input type="text" class="w-full border border-gray-300 rounded-[4px] px-[10px] py-[6px] text-[13px] bg-white inp-proj-name" value="${p.name || ''}" placeholder="E-commerce Web App, Chatbot AI...">
+                            </div>
+                            <div>
+                                <label class="block text-[12px] font-[600] text-gray-600 mb-[2px]">Vai trò của bạn</label>
+                                <input type="text" class="w-full border border-gray-300 rounded-[4px] px-[10px] py-[6px] text-[13px] bg-white inp-proj-role" value="${p.role || ''}" placeholder="Team Leader, Frontend Developer...">
+                            </div>
+                        </div>
+                        <div class="grid sm:grid-cols-2 grid-cols-1 gap-[10px]">
+                            <div>
+                                <label class="block text-[12px] font-[600] text-gray-600 mb-[2px]">Tech Stack sử dụng</label>
+                                <input type="text" class="w-full border border-gray-300 rounded-[4px] px-[10px] py-[6px] text-[13px] bg-white inp-proj-stack" value="${p.techStack || ''}" placeholder="React, Node.js, Tailwind, MongoDB...">
+                            </div>
+                            <div>
+                                <label class="block text-[12px] font-[600] text-gray-600 mb-[2px]">Link Demo / GitHub</label>
+                                <input type="text" class="w-full border border-gray-300 rounded-[4px] px-[10px] py-[6px] text-[13px] bg-white inp-proj-link" value="${p.link || ''}" placeholder="https://github.com/my-repo">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[12px] font-[600] text-gray-600 mb-[2px]">Mô tả tóm tắt tính năng</label>
+                            <textarea class="w-full border border-gray-300 rounded-[4px] px-[10px] py-[6px] text-[13px] bg-white inp-proj-desc" rows="2" placeholder="Hệ thống phục vụ 5.000 người dùng hàng ngày, tích hợp thanh toán VnPay...">${p.description || ''}</textarea>
+                        </div>
+                    `;
+                    projectContainer.appendChild(card);
+                });
+
+                bindProjectEvents();
+            }
+
+            function bindProjectEvents() {
+                projectContainer.querySelectorAll(".btn-del-project").forEach(function(btn) {
+                    btn.addEventListener("click", function() {
+                        var idx = parseInt(btn.getAttribute("data-idx"), 10);
+                        syncProjectsFromDOM();
+                        projectData.splice(idx, 1);
+                        renderProjects();
+                    });
+                });
+            }
+
+            function syncProjectsFromDOM() {
+                var cards = projectContainer.querySelectorAll(".p-\\[14px\\]");
+                projectData = [];
+                cards.forEach(function(card) {
+                    projectData.push({
+                        name: card.querySelector(".inp-proj-name").value.trim(),
+                        role: card.querySelector(".inp-proj-role").value.trim(),
+                        techStack: card.querySelector(".inp-proj-stack").value.trim(),
+                        link: card.querySelector(".inp-proj-link").value.trim(),
+                        description: card.querySelector(".inp-proj-desc").value.trim()
+                    });
+                });
+                document.getElementById("projectsJson").value = JSON.stringify(projectData);
+            }
+
+            function renderEdu() {
+                if (!eduContainer) return;
+                eduContainer.innerHTML = "";
+                if (eduData.length === 0) {
+                    eduContainer.innerHTML = "<div class='text-[13px] text-gray-400 italic py-[10px]'>Chưa có thông tin học vấn. Bấm '+ Thêm học vấn' để bổ sung.</div>";
+                    return;
+                }
+                eduData.forEach(function(e, idx) {
+                    var card = document.createElement("div");
+                    card.className = "p-[12px] bg-gray-50 border border-gray-200 rounded-[8px] flex items-center justify-between gap-[10px]";
+                    card.innerHTML = `
+                        <div class="grid sm:grid-cols-3 grid-cols-1 gap-[8px] flex-1">
+                            <input type="text" class="border border-gray-300 rounded-[4px] px-[8px] py-[5px] text-[13px] bg-white inp-edu-school" value="${e.school || ''}" placeholder="Trường ĐH / Học viện">
+                            <input type="text" class="border border-gray-300 rounded-[4px] px-[8px] py-[5px] text-[13px] bg-white inp-edu-major" value="${e.major || ''}" placeholder="Chuyên ngành (CNTT, HTTT...)">
+                            <input type="text" class="border border-gray-300 rounded-[4px] px-[8px] py-[5px] text-[13px] bg-white inp-edu-year" value="${e.gradYear || ''}" placeholder="Năm tốt nghiệp (VD: 2024)">
+                        </div>
+                        <button type="button" class="btn-del-edu text-red-500 hover:text-red-700 text-[14px] p-[4px] cursor-pointer" data-idx="${idx}" title="Xóa">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    `;
+                    eduContainer.appendChild(card);
+                });
+
+                bindEduEvents();
+            }
+
+            function bindEduEvents() {
+                eduContainer.querySelectorAll(".btn-del-edu").forEach(function(btn) {
+                    btn.addEventListener("click", function() {
+                        var idx = parseInt(btn.getAttribute("data-idx"), 10);
+                        syncEduFromDOM();
+                        eduData.splice(idx, 1);
+                        renderEdu();
+                    });
+                });
+            }
+
+            function syncEduFromDOM() {
+                var cards = eduContainer.querySelectorAll(".p-\\[12px\\]");
+                eduData = [];
+                cards.forEach(function(card) {
+                    eduData.push({
+                        school: card.querySelector(".inp-edu-school").value.trim(),
+                        major: card.querySelector(".inp-edu-major").value.trim(),
+                        gradYear: card.querySelector(".inp-edu-year").value.trim()
+                    });
+                });
+                document.getElementById("educationJson").value = JSON.stringify(eduData);
+            }
+
+            // Sự kiện Add
+            document.getElementById("btnAddWork").addEventListener("click", function() {
+                syncWorksFromDOM();
+                workData.push({ company: "", position: "", startDate: "", endDate: "", isCurrent: false, description: "" });
+                renderWorks();
+            });
+
+            document.getElementById("btnAddProject").addEventListener("click", function() {
+                syncProjectsFromDOM();
+                projectData.push({ name: "", role: "", techStack: "", link: "", description: "" });
+                renderProjects();
+            });
+
+            document.getElementById("btnAddEdu").addEventListener("click", function() {
+                syncEduFromDOM();
+                eduData.push({ school: "", major: "", gradYear: "" });
+                renderEdu();
+            });
+
+            // Khi submit form, đồng bộ dữ liệu vào hidden inputs
+            document.getElementById("formItProfile").addEventListener("submit", function() {
+                syncWorksFromDOM();
+                syncProjectsFromDOM();
+                syncEduFromDOM();
+            });
+
+            // Khởi tạo hiển thị ban đầu
+            renderWorks();
+            renderProjects();
+            renderEdu();
+        })();

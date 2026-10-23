@@ -1,6 +1,13 @@
 mixin jobCard(job)
-    div(class="card-item hover:shadow-md transition-shadow")
+    div(class="card-item hover:shadow-md transition-shadow relative")
         img(src="/assets/images/bg-card.png" class="inner-bg")
+        
+        button(type="button" class="btn-bookmark-job absolute top-[12px] right-[12px] z-10 w-[32px] h-[32px] rounded-full flex items-center justify-center bg-white/90 hover:bg-white text-gray-400 hover:text-red-500 shadow-2xs cursor-pointer transition-colors" data-job-id=job._id title="Lưu việc làm")
+            if savedJobIds && savedJobIds.has(job._id.toString())
+                <i class="fa-solid fa-bookmark text-red-500 text-[14px]"></i>
+            else
+                <i class="fa-regular fa-bookmark text-[14px]"></i>
+
         a(href="/jobs/" + job.slug class="inner-box block") 
             div(class="py-[20px] px-[14px] sm:px-[16px]")
                 div(class="inner-img w-[88px] sm:w-[116px]")
@@ -8,10 +15,20 @@ mixin jobCard(job)
                 h3(class="font-[700] text-[16px] sm:text-[18px] text-[#121212] text-center line-clamp-[2] mb-[6px]") #{job.title}
                 div(class="font-[400] text-[13px] sm:text-[14px] text-[#414042] text-center mb-[10px] truncate") #{job.employerId ? job.employerId.companyName : ""}
                 div(class="font-[600] text-[15px] sm:text-[16px] text-[#0088FF] text-center mb-[6px]") #{formatSalary(job.salaryMin, job.salaryMax)}
+                
                 div(class="flex flex-wrap justify-center gap-x-[10px] gap-y-[4px] text-[12px] sm:text-[14px] text-[#555]") 
                     span: <i class="fa-solid fa-user-tie text-[13px] mr-[4px]"></i> #{labels.getPositionLabel(job.position)}
                     span: <i class="fa-solid fa-briefcase text-[13px] mr-[4px]"></i> #{labels.getWorkingFormLabel(job.workingForm)}
                     span: <i class="fa-solid fa-location-dot text-[13px] mr-[4px]"></i> #{labels.getCityLabel(job.city)}
+
+                if job.benefits && job.benefits.length > 0
+                    div(class="mt-[8px] flex justify-center items-center flex-wrap gap-[4px]")
+                        each b in job.benefits.slice(0, 2)
+                            span(class="inline-flex items-center gap-[3px] text-[11px] font-[600] text-emerald-700 bg-emerald-50 border border-emerald-200 px-[8px] py-[2px] rounded-full")
+                                <i class="#{labels.getBenefitIcon(b)} text-[10px]"></i> #{labels.getBenefitShortLabel(b)}
+                        if job.benefits.length > 2
+                            span(class="text-[10px] text-gray-500 font-[500]") +#{job.benefits.length - 2} đãi ngộ
+
                 if job.skills && job.skills.length > 0
                     div(class="mt-[12px] flex justify-center items-center flex-wrap gap-[6px] sm:gap-[8px]") 
                         each sk in job.skills

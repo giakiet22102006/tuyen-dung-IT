@@ -104,7 +104,7 @@ async function getTopEmployers(limit = 9) {
  * Tìm kiếm việc làm công khai với bộ lọc, phân trang, Fuzzy Search và Typo Tolerance
  */
 async function searchJobs(query = {}) {
-  const { city, keyword, skill, position, workingForm, company, page, exact } = query;
+  const { city, keyword, skill, position, workingForm, benefit, company, page, exact } = query;
 
   const baseFilter = {
     employerActive: true,
@@ -122,6 +122,10 @@ async function searchJobs(query = {}) {
 
   if (workingForm && workingForm.trim()) {
     baseFilter.workingForm = workingForm.trim();
+  }
+
+  if (benefit && benefit.trim()) {
+    baseFilter.benefits = benefit.trim();
   }
 
   if (skill && skill.trim()) {
@@ -166,7 +170,7 @@ async function searchJobs(query = {}) {
       .skip(skip)
       .limit(9)
       .populate("employerId", "companyName slug logo")
-      .select("title slug salaryMin salaryMax position workingForm skills city createdAt employerId")
+      .select("title slug salaryMin salaryMax position workingForm skills benefits city createdAt employerId")
       .lean(),
   ]);
 

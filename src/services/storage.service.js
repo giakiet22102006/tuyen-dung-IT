@@ -168,6 +168,24 @@ async function uploadCV(file) {
 }
 
 /**
+ * Lưu trực tiếp buffer PDF (sinh từ IT Profile trực tuyến)
+ */
+async function saveCvBuffer(buffer, originalName = "IT_Profile_CV.pdf") {
+  if (!buffer) return null;
+
+  const filename = `cv-${crypto.randomBytes(16).toString("hex")}.pdf`;
+  const absolutePath = path.join(CV_STORAGE_DIR, filename);
+
+  await fs.promises.writeFile(absolutePath, buffer);
+
+  return {
+    key: filename,
+    originalName,
+    size: buffer.length,
+  };
+}
+
+/**
  * Lấy đường dẫn tuyệt đối an toàn của file CV
  */
 function getCVPath(key) {
@@ -218,6 +236,7 @@ module.exports = {
   uploadAvatar,
   uploadJobImage,
   uploadCV,
+  saveCvBuffer,
   getCVPath,
   deleteCV,
   deleteFile,

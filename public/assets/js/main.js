@@ -12,9 +12,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // 2. Bộ lọc tìm kiếm nhanh Cấp bậc & Hình thức làm việc
+  // 2. Bộ lọc tìm kiếm nhanh Cấp bậc, Hình thức làm việc & Đãi ngộ IT
   const filterPosition = document.getElementById("filterPosition");
   const filterWorkingForm = document.getElementById("filterWorkingForm");
+  const filterBenefit = document.getElementById("filterBenefit");
 
   if (filterPosition) {
     filterPosition.addEventListener("change", (e) => {
@@ -43,6 +44,82 @@ document.addEventListener("DOMContentLoaded", () => {
       window.location.href = url.toString();
     });
   }
+
+  if (filterBenefit) {
+    filterBenefit.addEventListener("change", (e) => {
+      const val = e.target.value;
+      const url = new URL(window.location.href);
+      if (val) {
+        url.searchParams.set("benefit", val);
+      } else {
+        url.searchParams.delete("benefit");
+      }
+      url.searchParams.delete("page"); // reset về trang 1
+      window.location.href = url.toString();
+    });
+  }
+
+  // 2.1 Xử lý Bookmark / Lưu việc làm yêu thích (AJAX Toggle)
+  document.querySelectorAll(".btn-bookmark-job").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const jobId = btn.getAttribute("data-job-id");
+      if (!jobId) return;
+
+      const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+      const csrfToken = csrfMeta ? csrfMeta.getAttribute("content") : "";
+
+      try {
+        btn.disabled = true;
+        const res = await fetch(`/candidate/saved-jobs/${jobId}/toggle`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-csrf-token": csrfToken,
+          },
+        });
+
+        if (res.status === 401 || res.status === 403) {
+          if (confirm("Bạn cần đăng nhập tài khoản Ứng viên để lưu việc làm. Chuyển đến trang Đăng nhập ngay?")) {
+            window.location.href = `/candidate/login?next=${encodeURIComponent(window.location.pathname)}`;
+          }
+          return;
+        }
+
+        const data = await res.json();
+        if (data.success) {
+          const icon = btn.querySelector("i");
+          const textSpan = btn.querySelector("span");
+
+          if (data.saved) {
+            if (icon) {
+              icon.className = "fa-solid fa-bookmark text-red-500 text-[14px]";
+            }
+            if (textSpan) {
+              textSpan.textContent = "Đã lưu";
+              textSpan.className = "hidden sm:inline text-red-600";
+            }
+          } else {
+            if (icon) {
+              icon.className = "fa-regular fa-bookmark text-[14px]";
+            }
+            if (textSpan) {
+              textSpan.textContent = "Lưu tin";
+              textSpan.className = "hidden sm:inline";
+            }
+          }
+        } else {
+          alert(data.message || "Không thể thực hiện thao tác lúc này.");
+        }
+      } catch (err) {
+        console.error("Lỗi khi lưu việc làm:", err);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  });
 
   // 3. Mobile navigation menu toggle
   const mobileMenuBtn = document.querySelector("#mobileMenuBtn");
