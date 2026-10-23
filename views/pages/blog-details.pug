@@ -1,0 +1,105 @@
+extends ../layouts/default.pug
+
+block title
+    title #{title || article.title}
+
+block main
+    div(class="py-[25px] sm:py-[40px] bg-[#F4F5F7]")
+        .contain
+            //- Breadcrumb
+            nav(class="flex items-center gap-[8px] text-[13px] text-gray-500 mb-[20px] flex-wrap")
+                a(href="/" class="hover:text-[#0088FF]") Trang chủ
+                span /
+                a(href="/blog" class="hover:text-[#0088FF]") Cẩm Nang IT
+                span /
+                a(href=`/blog?category=${article.category}` class="hover:text-[#0088FF]") #{categoryLabel}
+                span /
+                span(class="text-gray-800 font-[500] truncate max-w-[300px]") #{article.title}
+
+            div(class="grid grid-cols-1 lg:grid-cols-3 gap-[30px]")
+                //- Cột trái: Nội dung bài viết (2 Cột rộng)
+                article(class="lg:col-span-2 bg-white rounded-[12px] p-[24px] sm:p-[35px] shadow-xs border border-gray-200/80")
+                    //- Header Bài Viết
+                    div(class="mb-[20px] pb-[20px] border-b border-gray-100")
+                        span(class="inline-block bg-blue-50 text-[#0088FF] text-[12px] font-[700] px-[12px] py-[4px] rounded-full uppercase tracking-wider mb-[12px]")
+                            | #{categoryLabel}
+
+                        h1(class="font-[800] text-[24px] sm:text-[34px] text-gray-900 leading-tight mb-[16px]")
+                            | #{article.title}
+
+                        //- Tác giả & Ngày đăng
+                        div(class="flex flex-wrap items-center justify-between gap-[14px] text-[13px] text-gray-500")
+                            div(class="flex items-center gap-[10px]")
+                                img(src=article.author.avatar alt=article.author.name class="w-[40px] h-[40px] rounded-full object-cover border border-gray-200")
+                                div
+                                    div(class="font-[700] text-gray-800") #{article.author.name}
+                                    div(class="text-[12px] text-gray-400") #{article.author.role}
+                            div(class="flex items-center gap-[12px] text-[12px]")
+                                span
+                                    i(class="fa-regular fa-calendar mr-[4px]")
+                                    | #{formatDate(article.publishedAt)}
+                                span •
+                                span
+                                    i(class="fa-regular fa-clock mr-[4px]")
+                                    | #{article.readingTime || 5} phút đọc
+                                span •
+                                span
+                                    i(class="fa-regular fa-eye mr-[4px]")
+                                    | #{article.views || 0} lượt xem
+
+                    //- Tóm tắt (Lead summary)
+                    div(class="bg-blue-50/60 border-l-4 border-[#0088FF] p-[16px] rounded-r-[8px] mb-[25px] text-[15px] text-gray-700 italic leading-relaxed")
+                        | #{article.summary}
+
+                    //- Nội dung chính
+                    div(class="article-body prose max-w-none text-gray-800 text-[15px] sm:text-[16px] leading-relaxed space-y-[18px]")
+                        | !{article.content}
+
+                    //- Tags
+                    if article.tags && article.tags.length > 0
+                        div(class="mt-[30px] pt-[20px] border-t border-gray-100 flex items-center gap-[8px] flex-wrap")
+                            span(class="text-[13px] font-[600] text-gray-500") Chủ đề:
+                            each tag in article.tags
+                                a(href=`/blog?search=${encodeURIComponent(tag)}` class="text-[12px] bg-gray-100 hover:bg-blue-50 hover:text-[#0088FF] text-gray-700 px-[10px] py-[4px] rounded-full transition") ##{tag}
+
+                    //- Banner CTA trong bài viết
+                    div(class="mt-[35px] bg-gradient-to-r from-[#000071] to-[#0055CC] rounded-[10px] p-[24px] text-white flex flex-col sm:flex-row items-center justify-between gap-[16px]")
+                        div
+                            h3(class="font-[700] text-[17px] mb-[4px]") Sẵn sàng bứt phá sự nghiệp IT?
+                            p(class="text-white/80 text-[13px]") Tạo hồ sơ IT Profile chuẩn chuyên gia hoặc tra cứu mức lương thị trường ngay.
+                        div(class="flex items-center gap-[10px] shrink-0")
+                            a(href="/candidate/it-profile" class="bg-[#9FDB7C] hover:bg-[#8ece6b] text-gray-900 font-[700] text-[13px] px-[16px] py-[8px] rounded-[6px] transition") Tạo Profile
+                            a(href="/salary" class="bg-white/20 hover:bg-white/30 text-white font-[600] text-[13px] px-[16px] py-[8px] rounded-[6px] transition") Tra Cứu Lương
+
+                //- Cột phải: Sidebar bài viết liên quan & Việc làm gợi ý
+                div(class="space-y-[24px]")
+                    //- Bài viết cùng chuyên mục
+                    if relatedArticles && relatedArticles.length > 0
+                        div(class="bg-white rounded-[12px] p-[20px] shadow-xs border border-gray-200/80")
+                            h3(class="font-[700] text-[16px] text-gray-900 pb-[12px] mb-[16px] border-b border-gray-100 flex items-center gap-[6px]")
+                                i(class="fa-solid fa-bookmark text-[#0088FF]")
+                                | Bài Viết Cùng Chuyên Mục
+                            div(class="space-y-[14px]")
+                                each rel in relatedArticles
+                                    div(class="flex gap-[12px] group")
+                                        img(src=rel.thumbnail alt=rel.title class="w-[70px] h-[55px] object-cover rounded-[6px] bg-gray-100 shrink-0 group-hover:opacity-90")
+                                        div(class="min-w-0 flex-1")
+                                            h4(class="text-[13px] font-[600] text-gray-800 group-hover:text-[#0088FF] line-clamp-2 leading-snug transition")
+                                                a(href=`/blog/${rel.slug}`) #{rel.title}
+                                            div(class="text-[11px] text-gray-400 mt-[4px]") #{formatDate(rel.publishedAt)}
+
+                    //- Gợi ý việc làm IT nổi bật
+                    if featuredJobs && featuredJobs.length > 0
+                        div(class="bg-white rounded-[12px] p-[20px] shadow-xs border border-gray-200/80")
+                            div(class="flex items-center justify-between pb-[12px] mb-[16px] border-b border-gray-100")
+                                h3(class="font-[700] text-[16px] text-gray-900 flex items-center gap-[6px]")
+                                    i(class="fa-solid fa-briefcase text-[#0088FF]")
+                                    | Việc Làm IT Đang Tuyển
+                                a(href="/search" class="text-[12px] text-[#0088FF] hover:underline font-[500]") Xem tất cả
+                            div(class="space-y-[14px]")
+                                each fj in featuredJobs
+                                    div(class="p-[10px] rounded-[8px] bg-gray-50 hover:bg-blue-50/50 transition border border-gray-100")
+                                        h4(class="text-[13px] font-[700] text-gray-900 truncate hover:text-[#0088FF]")
+                                            a(href=`/jobs/${fj.slug}`) #{fj.title}
+                                        div(class="text-[12px] text-gray-500 truncate mt-[2px]") #{fj.employerId ? fj.employerId.companyName : ''}
+                                        div(class="text-[12px] font-[600] text-[#0088FF] mt-[4px]") #{formatSalary(fj.salaryMin, fj.salaryMax)}

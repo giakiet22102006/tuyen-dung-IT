@@ -8,7 +8,15 @@ block main
     div(class="py-[35px] sm:py-[60px]") 
         .contain 
             div(class="")
-                h1(class="font-[700] text-[20px] sm:text-[28px] text-[#121212] mb-[20px]") Quản lý CV
+                div(class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-[16px] mb-[20px]")
+                    h1(class="font-[700] text-[20px] sm:text-[28px] text-[#121212]") Quản lý CV
+                    div(class="flex items-center gap-[8px] bg-white p-[4px] rounded-[8px] border border-gray-200 shadow-2xs")
+                        a(href="/employer/pipeline" class="inline-flex items-center gap-[6px] px-[14px] py-[7px] rounded-[6px] text-[13px] font-[500] text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition")
+                            i(class="fa-solid fa-table-columns")
+                            | Bảng Kanban
+                        a(href="/employer/cvs" class="inline-flex items-center gap-[6px] px-[14px] py-[7px] rounded-[6px] text-[13px] font-[600] bg-[#0088FF] text-white shadow-xs")
+                            i(class="fa-solid fa-list")
+                            | Dạng danh sách
 
                 if flash && flash.success
                     div(class="mb-[20px] p-[12px] bg-[#E8F5E9] border border-[#A5D6A7] text-[#2E7D32] rounded-[4px] text-[14px]") #{flash.success}

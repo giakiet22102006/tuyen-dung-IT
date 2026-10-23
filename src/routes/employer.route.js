@@ -55,8 +55,9 @@ router.get("/jobs/:id/edit", requireEmployer, asyncHandler(employerJob.renderEdi
 router.post("/jobs/:id/edit", requireEmployer, uploadJobImagesMiddleware, doubleCsrfProtection, asyncHandler(employerJob.postEditJob));
 router.post("/jobs/:id/delete", requireEmployer, doubleCsrfProtection, asyncHandler(employerJob.postDeleteJob));
 
-// Quản lý CV ứng tuyển
+// Quản lý CV ứng tuyển & Hiring Pipeline
 router.get("/cvs", requireEmployer, asyncHandler(employerCv.renderManageCv));
+router.get("/pipeline", requireEmployer, asyncHandler(employerCv.renderHiringPipeline));
 router.get("/cvs/:id", requireEmployer, asyncHandler(employerCv.renderCvDetails));
 router.post("/cvs/:id/status", requireEmployer, doubleCsrfProtection, asyncHandler(employerCv.postCvStatus));
 router.post("/cvs/:id/invite", requireEmployer, doubleCsrfProtection, asyncHandler(employerCv.postSendInterviewInvite));

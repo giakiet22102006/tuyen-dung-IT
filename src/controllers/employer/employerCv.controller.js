@@ -90,7 +90,10 @@ const renderCvDetails = async (req, res) => {
 
 const postCvStatus = async (req, res) => {
   const { status, rejectionReason, rejectionNote, sendEmail } = req.body;
-  if (![APPLICATION_STATUS.APPROVED, APPLICATION_STATUS.REJECTED].includes(status)) {
+  if (!Object.values(APPLICATION_STATUS).includes(status)) {
+    if (req.xhr || req.headers.accept?.includes("application/json")) {
+      return res.status(400).json({ success: false, message: "Trạng thái tuyển dụng không hợp lệ." });
+    }
     req.flash("error", "Trạng thái duyệt không hợp lệ.");
     return res.redirect(req.headers.referer || "/employer/cvs");
   }
@@ -102,6 +105,9 @@ const postCvStatus = async (req, res) => {
   }).populate("jobId", "title slug");
 
   if (!application) {
+    if (req.xhr || req.headers.accept?.includes("application/json")) {
+      return res.status(404).json({ success: false, message: "Không tìm thấy hồ sơ CV yêu cầu." });
+    }
     req.flash("error", "Không tìm thấy hồ sơ CV yêu cầu.");
     return res.redirect("/employer/cvs");
   }
@@ -130,7 +136,7 @@ const postCvStatus = async (req, res) => {
         console.error("Lỗi khi gửi email từ chối:", err.message);
       }
     }
-  } else if (status === APPLICATION_STATUS.APPROVED) {
+  } else {
     application.rejectionReason = "";
     application.rejectionNote = "";
     application.rejectedAt = null;
@@ -138,9 +144,98 @@ const postCvStatus = async (req, res) => {
 
   await application.save();
 
-  const statusLabel = status === APPLICATION_STATUS.APPROVED ? "Đã duyệt phù hợp" : "Đã từ chối";
+  const { APPLICATION_STATUS_LABELS } = require("../../config/constants");
+  const statusLabel = APPLICATION_STATUS_LABELS[status] || status;
+
+  if (req.xhr || req.headers.accept?.includes("application/json")) {
+    return res.json({
+      success: true,
+      status: application.status,
+      statusLabel,
+      message: `Đã chuyển ứng viên sang vòng: ${statusLabel}.`,
+    });
+  }
+
   req.flash("success", `Cập nhật trạng thái hồ sơ thành công: ${statusLabel}.`);
   res.redirect(req.headers.referer || `/employer/cvs/${application._id}`);
+};
+
+/**
+ * Hiển thị Bảng Kanban Quản lý Ứng viên nhiều vòng (Hiring Pipeline ATS)
+ */
+const renderHiringPipeline = async (req, res) => {
+  const filter = {
+    employerId: req.user._id,
+    hiddenByEmployer: false,
+  };
+
+  if (req.query.jobId) {
+    filter.jobId = req.query.jobId;
+  }
+
+  if (req.query.keyword) {
+    const kw = req.query.keyword.trim();
+    filter.$or = [
+      { fullName: { $regex: kw, $options: "i" } },
+      { email: { $regex: kw, $options: "i" } },
+      { phone: { $regex: kw, $options: "i" } },
+    ];
+  }
+
+  const [applications, jobs] = await Promise.all([
+    Application.find(filter)
+      .sort({ updatedAt: -1 })
+      .populate({
+        path: "jobId",
+        select: "title slug salaryMin salaryMax position workingForm skills",
+      })
+      .populate({
+        path: "candidateId",
+        select: "fullName email phone avatar itProfile",
+      })
+      .lean(),
+    Job.find({ employerId: req.user._id, deletedAt: null })
+      .select("title _id")
+      .lean(),
+  ]);
+
+  // Phân chia hồ sơ thành 6 giai đoạn Kanban
+  const pipeline = {
+    pending: [],
+    approved: [],
+    interviewing: [],
+    offered: [],
+    hired: [],
+    rejected: [],
+  };
+
+  applications.forEach((app) => {
+    const st = app.status || "pending";
+    if (pipeline[st]) {
+      pipeline[st].push(app);
+    } else {
+      pipeline.pending.push(app);
+    }
+  });
+
+  const counts = {
+    total: applications.length,
+    pending: pipeline.pending.length,
+    approved: pipeline.approved.length,
+    interviewing: pipeline.interviewing.length,
+    offered: pipeline.offered.length,
+    hired: pipeline.hired.length,
+    rejected: pipeline.rejected.length,
+  };
+
+  res.render("pages/employer-pipeline", {
+    title: "Hiring Pipeline - Quản lý Ứng viên Theo Vòng Tuyển Dụng | VN.ITJobs",
+    pipeline,
+    counts,
+    jobs,
+    filterJobId: req.query.jobId || "",
+    filterKeyword: req.query.keyword || "",
+  });
 };
 
 const postDeleteCv = async (req, res) => {
@@ -312,6 +407,7 @@ const streamEmployerCvPdf = async (req, res) => {
 
 module.exports = {
   renderManageCv,
+  renderHiringPipeline,
   renderCvDetails,
   postCvStatus,
   postDeleteCv,

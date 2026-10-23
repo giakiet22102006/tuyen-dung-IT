@@ -1,0 +1,259 @@
+extends ../layouts/default.pug
+
+//- Mixin thẻ ứng viên Kanban (định nghĩa trước khi dùng trong template)
+mixin kanbanCard(app, currentStatus)
+    div(class="kanban-card bg-white rounded-[8px] p-[12px] shadow-xs border border-gray-200 hover:shadow-md transition cursor-grab active:cursor-grabbing" draggable="true" data-id=app._id id=`card-${app._id}`)
+        div(class="flex items-start justify-between gap-[8px] mb-[8px]")
+            div(class="min-w-0 flex-1")
+                h4(class="font-[700] text-[14px] text-gray-900 leading-tight truncate")
+                    a(href=`/employer/cvs/${app._id}` class="hover:text-[#0088FF]" target="_blank") #{app.fullName}
+                div(class="text-[12px] text-gray-500 truncate mt-[2px]")
+                    | #{app.jobId ? app.jobId.title : 'Vị trí tuyển dụng'}
+            span(class="w-[6px] h-[6px] rounded-full bg-gray-300 shrink-0 mt-[4px]")
+
+        //- Thông tin liên hệ nhanh
+        div(class="text-[11px] text-gray-500 space-y-[2px] mb-[10px]")
+            div(class="truncate")
+                i(class="fa-solid fa-envelope mr-[4px] text-gray-400")
+                | #{app.email}
+            div
+                i(class="fa-solid fa-phone mr-[4px] text-gray-400")
+                | #{app.phone}
+
+        //- Footer card: Nút xem CV & Menu đổi trạng thái
+        div(class="pt-[8px] border-t border-gray-100 flex items-center justify-between text-[11px]")
+            a(href=`/employer/cvs/${app._id}/pdf` target="_blank" class="text-[#0088FF] hover:underline font-[600] flex items-center gap-[3px]")
+                i(class="fa-solid fa-file-pdf text-red-500")
+                | Xem CV
+
+            select(class="status-quick-select border border-gray-200 rounded py-[2px] px-[4px] text-[11px] bg-gray-50 text-gray-700 cursor-pointer focus:outline-none" data-id=app._id)
+                option(value="pending" selected=(currentStatus === 'pending')) Chờ duyệt
+                option(value="approved" selected=(currentStatus === 'approved')) Phù hợp
+                option(value="interviewing" selected=(currentStatus === 'interviewing')) Phỏng vấn
+                option(value="offered" selected=(currentStatus === 'offered')) Offer
+                option(value="hired" selected=(currentStatus === 'hired')) Đã tuyển
+                option(value="rejected" selected=(currentStatus === 'rejected')) Từ chối
+
+block title
+    title #{title || "Hiring Pipeline - Quản lý Ứng viên Theo Vòng Tuyển Dụng | VN.ITJobs"}
+
+block main
+    div(class="py-[30px] sm:py-[45px] bg-[#F4F5F7] min-h-[750px]")
+        .contain
+            //- Header & Chuyển đổi giao diện
+            div(class="flex flex-col md:flex-row items-start md:items-center justify-between gap-[16px] mb-[20px]")
+                div
+                    h1(class="font-[800] text-[24px] sm:text-[30px] text-[#121212] flex items-center gap-[10px]")
+                        i(class="fa-solid fa-table-columns text-[#0088FF]")
+                        | Hiring Pipeline (Kanban ATS)
+                    p(class="text-[14px] text-gray-500 mt-[4px]")
+                        | Kéo thả ứng viên trực tiếp giữa các vòng tuyển dụng hoặc chọn nhanh từ menu.
+
+                //- Toggle Chế độ xem: Bảng Kanban vs Danh sách
+                div(class="flex items-center gap-[8px] bg-white p-[4px] rounded-[8px] border border-gray-200 shadow-2xs")
+                    a(href="/employer/pipeline" class="inline-flex items-center gap-[6px] px-[14px] py-[7px] rounded-[6px] text-[13px] font-[600] bg-[#0088FF] text-white shadow-xs")
+                        i(class="fa-solid fa-table-columns")
+                        | Bảng Kanban
+                    a(href="/employer/cvs" class="inline-flex items-center gap-[6px] px-[14px] py-[7px] rounded-[6px] text-[13px] font-[500] text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition")
+                        i(class="fa-solid fa-list")
+                        | Dạng danh sách
+
+            //- Thanh bộ lọc theo Job & Tìm kiếm
+            div(class="bg-white rounded-[10px] p-[16px] mb-[24px] border border-gray-200 shadow-2xs")
+                form(action="/employer/pipeline" method="GET" class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-[12px] items-center")
+                    div(class="sm:col-span-2 lg:col-span-2")
+                        select(name="jobId" onchange="this.form.submit()" class="w-full border border-gray-300 rounded-[8px] py-[9px] px-[12px] text-[13px] focus:border-[#0088FF] focus:outline-none bg-white")
+                            option(value="") Tất cả vị trí tuyển dụng (#{counts.total} ứng viên)
+                            if jobs && jobs.length > 0
+                                each j in jobs
+                                    option(value=j._id selected=(filterJobId === j._id.toString())) #{j.title}
+
+                    div
+                        input(type="text" name="keyword" value=filterKeyword placeholder="Tìm theo tên, email, SĐT..." class="w-full border border-gray-300 rounded-[8px] py-[9px] px-[12px] text-[13px] focus:border-[#0088FF] focus:outline-none")
+
+                    div(class="flex items-center gap-[8px]")
+                        button(type="submit" class="bg-[#0088FF] hover:bg-[#0070D2] text-white font-[600] text-[13px] px-[16px] py-[9px] rounded-[8px] transition cursor-pointer flex-1 flex items-center justify-center gap-[6px]")
+                            i(class="fa-solid fa-magnifying-glass")
+                            | Lọc
+                        if filterJobId || filterKeyword
+                            a(href="/employer/pipeline" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-[500] text-[13px] px-[12px] py-[9px] rounded-[8px] transition") Xóa lọc
+
+            //- Bảng Kanban 6 cột
+            div(class="overflow-x-auto pb-[20px]")
+                div(class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-[14px] min-w-[1200px]")
+                    //- Cột 1: Chờ Duyệt (Pending)
+                    - var colPending = pipeline.pending || []
+                    div(class="kanban-col bg-gray-100/90 rounded-[10px] p-[12px] flex flex-col min-h-[550px] border border-gray-200/80" data-status="pending")
+                        div(class="flex items-center justify-between pb-[10px] mb-[12px] border-b border-gray-300")
+                            div(class="flex items-center gap-[6px]")
+                                span(class="w-[8px] h-[8px] rounded-full bg-slate-500")
+                                h3(class="font-[700] text-[13px] text-gray-800 uppercase tracking-wide") Chờ Duyệt
+                            span(id="count-pending" class="bg-gray-200 text-gray-700 font-bold text-[11px] px-[8px] py-[2px] rounded-full") #{colPending.length}
+                        div(class="cards-container space-y-[10px] flex-1")
+                            each app in colPending
+                                +kanbanCard(app, "pending")
+
+                    //- Cột 2: Phù Hợp (Approved)
+                    - var colApproved = pipeline.approved || []
+                    div(class="kanban-col bg-blue-50/70 rounded-[10px] p-[12px] flex flex-col min-h-[550px] border border-blue-200" data-status="approved")
+                        div(class="flex items-center justify-between pb-[10px] mb-[12px] border-b border-blue-200")
+                            div(class="flex items-center gap-[6px]")
+                                span(class="w-[8px] h-[8px] rounded-full bg-[#0088FF]")
+                                h3(class="font-[700] text-[13px] text-blue-900 uppercase tracking-wide") Phù Hợp
+                            span(id="count-approved" class="bg-blue-100 text-[#0088FF] font-bold text-[11px] px-[8px] py-[2px] rounded-full") #{colApproved.length}
+                        div(class="cards-container space-y-[10px] flex-1")
+                            each app in colApproved
+                                +kanbanCard(app, "approved")
+
+                    //- Cột 3: Phỏng Vấn (Interviewing)
+                    - var colInterviewing = pipeline.interviewing || []
+                    div(class="kanban-col bg-amber-50/70 rounded-[10px] p-[12px] flex flex-col min-h-[550px] border border-amber-200" data-status="interviewing")
+                        div(class="flex items-center justify-between pb-[10px] mb-[12px] border-b border-amber-200")
+                            div(class="flex items-center gap-[6px]")
+                                span(class="w-[8px] h-[8px] rounded-full bg-amber-500")
+                                h3(class="font-[700] text-[13px] text-amber-900 uppercase tracking-wide") Phỏng Vấn
+                            span(id="count-interviewing" class="bg-amber-100 text-amber-800 font-bold text-[11px] px-[8px] py-[2px] rounded-full") #{colInterviewing.length}
+                        div(class="cards-container space-y-[10px] flex-1")
+                            each app in colInterviewing
+                                +kanbanCard(app, "interviewing")
+
+                    //- Cột 4: Đề Nghị Nhận Việc (Offered)
+                    - var colOffered = pipeline.offered || []
+                    div(class="kanban-col bg-purple-50/70 rounded-[10px] p-[12px] flex flex-col min-h-[550px] border border-purple-200" data-status="offered")
+                        div(class="flex items-center justify-between pb-[10px] mb-[12px] border-b border-purple-200")
+                            div(class="flex items-center gap-[6px]")
+                                span(class="w-[8px] h-[8px] rounded-full bg-purple-600")
+                                h3(class="font-[700] text-[13px] text-purple-900 uppercase tracking-wide") Offer
+                            span(id="count-offered" class="bg-purple-100 text-purple-800 font-bold text-[11px] px-[8px] py-[2px] rounded-full") #{colOffered.length}
+                        div(class="cards-container space-y-[10px] flex-1")
+                            each app in colOffered
+                                +kanbanCard(app, "offered")
+
+                    //- Cột 5: Đã Tuyển Dụng (Hired)
+                    - var colHired = pipeline.hired || []
+                    div(class="kanban-col bg-emerald-50/70 rounded-[10px] p-[12px] flex flex-col min-h-[550px] border border-emerald-200" data-status="hired")
+                        div(class="flex items-center justify-between pb-[10px] mb-[12px] border-b border-emerald-200")
+                            div(class="flex items-center gap-[6px]")
+                                span(class="w-[8px] h-[8px] rounded-full bg-emerald-600")
+                                h3(class="font-[700] text-[13px] text-emerald-900 uppercase tracking-wide") Đã Tuyển
+                            span(id="count-hired" class="bg-emerald-100 text-emerald-800 font-bold text-[11px] px-[8px] py-[2px] rounded-full") #{colHired.length}
+                        div(class="cards-container space-y-[10px] flex-1")
+                            each app in colHired
+                                +kanbanCard(app, "hired")
+
+                    //- Cột 6: Từ Chối (Rejected)
+                    - var colRejected = pipeline.rejected || []
+                    div(class="kanban-col bg-rose-50/70 rounded-[10px] p-[12px] flex flex-col min-h-[550px] border border-rose-200" data-status="rejected")
+                        div(class="flex items-center justify-between pb-[10px] mb-[12px] border-b border-rose-200")
+                            div(class="flex items-center gap-[6px]")
+                                span(class="w-[8px] h-[8px] rounded-full bg-rose-500")
+                                h3(class="font-[700] text-[13px] text-rose-900 uppercase tracking-wide") Từ Chối
+                            span(id="count-rejected" class="bg-rose-100 text-rose-800 font-bold text-[11px] px-[8px] py-[2px] rounded-full") #{colRejected.length}
+                        div(class="cards-container space-y-[10px] flex-1")
+                            each app in colRejected
+                                +kanbanCard(app, "rejected")
+
+    //- Script xử lý kéo thả Drag & Drop & Quick Select
+    script.
+        document.addEventListener('DOMContentLoaded', () => {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            let draggedCard = null;
+
+            // 1. Gán sự kiện cho các Card
+            function attachCardEvents(card) {
+                card.addEventListener('dragstart', (e) => {
+                    draggedCard = card;
+                    card.classList.add('opacity-50');
+                    e.dataTransfer.setData('text/plain', card.getAttribute('data-id'));
+                });
+
+                card.addEventListener('dragend', () => {
+                    card.classList.remove('opacity-50');
+                    draggedCard = null;
+                });
+            }
+
+            document.querySelectorAll('.kanban-card').forEach(attachCardEvents);
+
+            // 2. Gán sự kiện Drop cho các Cột Kanban
+            document.querySelectorAll('.kanban-col').forEach(col => {
+                const container = col.querySelector('.cards-container');
+
+                col.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    col.classList.add('ring-2', 'ring-[#0088FF]', 'bg-blue-50/50');
+                });
+
+                col.addEventListener('dragleave', () => {
+                    col.classList.remove('ring-2', 'ring-[#0088FF]', 'bg-blue-50/50');
+                });
+
+                col.addEventListener('drop', async (e) => {
+                    e.preventDefault();
+                    col.classList.remove('ring-2', 'ring-[#0088FF]', 'bg-blue-50/50');
+                    if (!draggedCard) return;
+
+                    const appId = draggedCard.getAttribute('data-id');
+                    const targetStatus = col.getAttribute('data-status');
+
+                    // Di chuyển DOM
+                    container.prepend(draggedCard);
+
+                    // Cập nhật giá trị select bên trong card
+                    const sel = draggedCard.querySelector('.status-quick-select');
+                    if (sel) sel.value = targetStatus;
+
+                    updateCounters();
+
+                    // Gửi request API
+                    await sendStatusUpdate(appId, targetStatus);
+                });
+            });
+
+            // 3. Xử lý Quick Select đổi vòng tuyển dụng
+            document.querySelectorAll('.status-quick-select').forEach(sel => {
+                sel.addEventListener('change', async (e) => {
+                    const appId = sel.getAttribute('data-id');
+                    const targetStatus = e.target.value;
+                    const card = document.getElementById(`card-${appId}`);
+                    const targetCol = document.querySelector(`.kanban-col[data-status="${targetStatus}"] .cards-container`);
+
+                    if (card && targetCol) {
+                        targetCol.prepend(card);
+                        updateCounters();
+                    }
+
+                    await sendStatusUpdate(appId, targetStatus);
+                });
+            });
+
+            // Hàm gửi AJAX cập nhật trạng thái
+            async function sendStatusUpdate(appId, status) {
+                try {
+                    const res = await fetch(`/employer/cvs/${appId}/status`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'x-csrf-token': csrfToken
+                        },
+                        body: JSON.stringify({ status })
+                    });
+                    const data = await res.json();
+                    if (!data.success) {
+                        alert(data.message || 'Lỗi cập nhật trạng thái');
+                    }
+                } catch (err) {
+                    console.error('Lỗi kết nối máy chủ:', err);
+                }
+            }
+
+            // Hàm cập nhật số đếm ở header mỗi cột
+            function updateCounters() {
+                ['pending', 'approved', 'interviewing', 'offered', 'hired', 'rejected'].forEach(st => {
+                    const countEl = document.getElementById(`count-${st}`);
+                    const cards = document.querySelectorAll(`.kanban-col[data-status="${st}"] .kanban-card`);
+                    if (countEl) countEl.textContent = cards.length;
+                });
+            }
+        });

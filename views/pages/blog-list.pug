@@ -1,0 +1,106 @@
+extends ../layouts/default.pug
+
+block title
+    title #{title || "Cẩm Nang IT & Kinh Nghiệm Phỏng Vấn | VN.ITJobs"}
+
+block main
+    //- Hero Banner
+    div(class="bg-gradient-to-r from-[#000071] via-[#003399] to-[#0055CC] py-[40px] sm:py-[55px] text-white")
+        .contain
+            div(class="max-w-[760px] mx-auto text-center")
+                span(class="inline-block bg-white/20 backdrop-blur-sm text-emerald-300 font-[600] text-[13px] px-[12px] py-[4px] rounded-full mb-[12px]")
+                    i(class="fa-solid fa-book-open mr-[6px]")
+                    | IT Career Hub & Tech Insights
+                h1(class="font-[800] text-[26px] sm:text-[38px] leading-tight mb-[12px]")
+                    | Cẩm Nang IT & Kinh Nghiệm Nghề Nghiệp
+                p(class="text-white/80 text-[14px] sm:text-[17px] max-w-[620px] mx-auto mb-[20px]")
+                    | Tổng hợp lộ trình sự nghiệp, bí quyết phỏng vấn Big Tech, đàm phán lương và cập nhật xu hướng công nghệ mới nhất.
+
+                //- Ô tìm kiếm bài viết
+                form(action="/blog" method="GET" class="max-w-[500px] mx-auto flex items-center bg-white rounded-[30px] p-[4px] shadow-lg")
+                    if selectedCategory
+                        input(type="hidden" name="category" value=selectedCategory)
+                    input(type="text" name="search" value=searchKeyword placeholder="Tìm kiếm bài viết, công nghệ, tips..." class="w-full text-gray-800 text-[14px] py-[8px] px-[16px] rounded-l-[30px] focus:outline-none")
+                    button(type="submit" class="bg-[#0088FF] hover:bg-[#0070D2] text-white font-[600] text-[13px] px-[20px] py-[9px] rounded-[24px] transition cursor-pointer shrink-0")
+                        i(class="fa-solid fa-magnifying-glass mr-[4px]")
+                        | Tìm
+
+    //- Danh sách bài viết & Danh mục
+    div(class="py-[35px] sm:py-[50px] bg-[#F4F5F7] min-h-[600px]")
+        .contain
+            //- Tabs phân loại danh mục
+            div(class="flex items-center gap-[8px] overflow-x-auto pb-[10px] mb-[25px] border-b border-gray-200")
+                a(href="/blog" class=`inline-flex items-center gap-[6px] px-[16px] py-[8px] rounded-full text-[13px] font-[600] whitespace-nowrap transition ${!selectedCategory ? 'bg-[#000071] text-white shadow-xs' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}`)
+                    i(class="fa-solid fa-layer-group text-[12px]")
+                    | Tất cả bài viết
+                each catKey in Object.keys(categories)
+                    - var catVal = categories[catKey]
+                    - var isCatActive = (selectedCategory === catVal)
+                    a(href=`/blog?category=${catVal}${searchKeyword ? '&search=' + encodeURIComponent(searchKeyword) : ''}` class=`inline-flex items-center gap-[6px] px-[16px] py-[8px] rounded-full text-[13px] font-[600] whitespace-nowrap transition ${isCatActive ? 'bg-[#000071] text-white shadow-xs' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}`)
+                        | #{categoryLabels[catVal]}
+
+            if articles && articles.length > 0
+                div(class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[24px] mb-[35px]")
+                    each art in articles
+                        article(class="bg-white rounded-[12px] overflow-hidden shadow-xs border border-gray-200/80 hover:shadow-md transition flex flex-col justify-between group")
+                            div
+                                //- Thumbnail
+                                a(href=`/blog/${art.slug}` class="block aspect-[16/9] overflow-hidden relative bg-gray-100")
+                                    img(src=art.thumbnail alt=art.title class="w-full h-full object-cover group-hover:scale-105 transition duration-300")
+                                    span(class="absolute top-[10px] left-[10px] bg-[#000071]/85 backdrop-blur-xs text-white text-[11px] font-[600] px-[10px] py-[3px] rounded-full uppercase tracking-wider")
+                                        | #{categoryLabels[art.category] || "Cẩm Nang"}
+
+                                div(class="p-[18px]")
+                                    //- Meta (Reading time & Views)
+                                    div(class="flex items-center gap-[12px] text-[12px] text-gray-500 mb-[8px]")
+                                        span
+                                            i(class="fa-regular fa-clock mr-[4px]")
+                                            | #{art.readingTime || 5} phút đọc
+                                        span •
+                                        span
+                                            i(class="fa-regular fa-eye mr-[4px]")
+                                            | #{art.views || 0} lượt xem
+
+                                    //- Tiêu đề
+                                    h2(class="font-[700] text-[17px] text-gray-900 group-hover:text-[#0088FF] transition leading-snug line-clamp-2 mb-[8px]")
+                                        a(href=`/blog/${art.slug}`) #{art.title}
+
+                                    //- Tóm tắt
+                                    p(class="text-[13px] text-gray-600 line-clamp-3 leading-relaxed mb-[14px]") #{art.summary}
+
+                                    //- Tags
+                                    if art.tags && art.tags.length > 0
+                                        div(class="flex flex-wrap gap-[6px]")
+                                            each tag in art.tags.slice(0, 3)
+                                                span(class="text-[11px] bg-gray-100 text-gray-600 px-[8px] py-[2px] rounded") ##{tag}
+
+                            //- Footer Card
+                            div(class="px-[18px] py-[12px] bg-gray-50/70 border-t border-gray-100 flex items-center justify-between text-[12px]")
+                                span(class="text-gray-500") #{formatDate(art.publishedAt)}
+                                a(href=`/blog/${art.slug}` class="text-[#0088FF] font-[600] hover:underline flex items-center gap-[4px]")
+                                    | Đọc tiếp
+                                    i(class="fa-solid fa-arrow-right text-[10px]")
+
+                //- Phân trang
+                if pagination && pagination.totalPages > 1
+                    div(class="flex justify-center items-center gap-[6px]")
+                        if pagination.hasPrev
+                            a(href=`/blog?page=${pagination.prevPage}${selectedCategory ? '&category=' + selectedCategory : ''}${searchKeyword ? '&search=' + encodeURIComponent(searchKeyword) : ''}` class="w-[36px] h-[36px] rounded-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 flex items-center justify-center text-[13px] transition")
+                                i(class="fa-solid fa-chevron-left")
+
+                        each pageNum in Array.from({length: pagination.totalPages}, (_, i) => i + 1)
+                            if pageNum === pagination.currentPage
+                                span(class="w-[36px] h-[36px] rounded-full bg-[#0088FF] text-white font-[700] flex items-center justify-center text-[13px] shadow-xs") #{pageNum}
+                            else if pageNum === 1 || pageNum === pagination.totalPages || Math.abs(pageNum - pagination.currentPage) <= 1
+                                a(href=`/blog?page=${pageNum}${selectedCategory ? '&category=' + selectedCategory : ''}${searchKeyword ? '&search=' + encodeURIComponent(searchKeyword) : ''}` class="w-[36px] h-[36px] rounded-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 flex items-center justify-center text-[13px] transition") #{pageNum}
+
+                        if pagination.hasNext
+                            a(href=`/blog?page=${pagination.nextPage}${selectedCategory ? '&category=' + selectedCategory : ''}${searchKeyword ? '&search=' + encodeURIComponent(searchKeyword) : ''}` class="w-[36px] h-[36px] rounded-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 flex items-center justify-center text-[13px] transition")
+                                i(class="fa-solid fa-chevron-right")
+            else
+                div(class="bg-white rounded-[12px] p-[50px] text-center shadow-xs border border-gray-200")
+                    div(class="w-[60px] h-[60px] rounded-full bg-blue-50 text-[#0088FF] flex items-center justify-center mx-auto mb-[16px] text-[26px]")
+                        i(class="fa-solid fa-magnifying-glass")
+                    h3(class="font-[700] text-[18px] text-gray-800 mb-[6px]") Không tìm thấy bài viết phù hợp
+                    p(class="text-[14px] text-gray-500 mb-[18px]") Thử tìm kiếm với từ khóa khác hoặc xem các danh mục cẩm nang phổ biến.
+                    a(href="/blog" class="inline-block bg-[#0088FF] text-white text-[13px] font-[600] px-[18px] py-[8px] rounded-[6px]") Xem tất cả bài viết

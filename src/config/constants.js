@@ -73,12 +73,18 @@ const JOB_MODERATION_LABELS = {
 const APPLICATION_STATUS = {
   PENDING: "pending",
   APPROVED: "approved",
+  INTERVIEWING: "interviewing",
+  OFFERED: "offered",
+  HIRED: "hired",
   REJECTED: "rejected",
 };
 
 const APPLICATION_STATUS_LABELS = {
-  pending: "Chưa duyệt",
-  approved: "Đã duyệt",
+  pending: "Chờ duyệt",
+  approved: "Phù hợp",
+  interviewing: "Phỏng vấn",
+  offered: "Đề nghị (Offer)",
+  hired: "Đã tuyển",
   rejected: "Từ chối",
 };
 
