@@ -39,6 +39,14 @@ block main
                                         span(class="text-[#2E7D32]") <i class="fa-solid fa-circle-check mr-[4px]"></i> Phù hợp
                                     else if app.status === 'rejected'
                                         span(class="text-[#C62828]") <i class="fa-solid fa-circle-xmark mr-[4px]"></i> Từ chối
+
+                                if app.interviewInvitation && app.interviewInvitation.sentAt
+                                    div(class="mt-[10px] p-[8px] bg-emerald-50 border border-emerald-200 rounded-[6px] text-center")
+                                        div(class="text-[12px] font-[700] text-emerald-800 flex items-center justify-center gap-[4px]")
+                                            <i class="fa-solid fa-envelope-circle-check"></i> Đã nhận thư mời phỏng vấn!
+                                        button(type="button" onclick=`var m=document.getElementById('modalInvite_${app._id}'); if(m){m.classList.remove('hidden');m.classList.add('flex');}` class="mt-[4px] text-[12px] text-[#0088FF] hover:underline font-[600] cursor-pointer inline-flex items-center gap-[4px]")
+                                            span Xem thư mời & Trả lời
+                                            <i class="fa-solid fa-arrow-right text-[10px]"></i>
             
                                 div(class="flex justify-center gap-[10px] mt-[14px]")
                                     a(href="/candidate/applied-jobs/" + app._id + "/pdf" target="_blank" class="bg-[#0088FF] hover:bg-[#0070d6] rounded-[6px] py-[8px] px-[20px] cursor-pointer font-[500] text-[13px] text-white flex items-center shadow-xs") Xem CV
@@ -48,6 +56,50 @@ block main
                                             button(type="submit" class="bg-[#FF0000] hover:bg-[#d60000] rounded-[6px] py-[8px] px-[16px] cursor-pointer font-[500] text-[13px] text-white shadow-xs") Rút hồ sơ
                                     else
                                         button(disabled title="Hồ sơ đã được nhà tuyển dụng xem xét, không thể rút" class="bg-[#E0E0E0] rounded-[6px] py-[8px] px-[16px] cursor-not-allowed font-[500] text-[13px] text-[#888888]") Rút hồ sơ
+
+                                if app.interviewInvitation && app.interviewInvitation.sentAt
+                                    //- MODAL XEM THƯ MỜI PHỎNG VẤN DÀNH CHO ỨNG VIÊN
+                                    div(id=`modalInvite_${app._id}` class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-xs p-[16px] text-left")
+                                        div(class="bg-white rounded-[12px] shadow-2xl max-w-[600px] w-full max-h-[90vh] flex flex-col overflow-hidden animate-fadeIn")
+                                            div(class="p-[18px] border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-emerald-50 to-teal-50")
+                                                div(class="flex items-center gap-[10px]")
+                                                    div(class="w-[36px] h-[36px] rounded-full bg-emerald-600 text-white flex items-center justify-center text-[16px]")
+                                                        <i class="fa-solid fa-envelope-open-text"></i>
+                                                    div
+                                                        h3(class="font-[700] text-[16px] text-gray-900") Thư Mời Phỏng Vấn
+                                                        p(class="text-[12px] text-gray-500") Từ: #{app.employerId ? app.employerId.companyName : "Nhà tuyển dụng"}
+                                                button(type="button" onclick=`var m=document.getElementById('modalInvite_${app._id}'); if(m){m.classList.add('hidden');m.classList.remove('flex');}` class="text-gray-400 hover:text-gray-600 text-[20px] p-[4px] cursor-pointer")
+                                                    <i class="fa-solid fa-xmark"></i>
+
+                                            div(class="p-[20px] overflow-y-auto flex-1 space-y-[14px]")
+                                                div(class="bg-emerald-50/70 border border-emerald-200 rounded-[8px] p-[14px]")
+                                                    div(class="text-[14px] font-[700] text-emerald-900 mb-[4px]") #{app.interviewInvitation.subject || "Thư mời tham gia phỏng vấn"}
+                                                    div(class="text-[12px] text-emerald-700") Vị trí: <span class="font-[600]">#{app.jobId ? app.jobId.title : ""}</span>
+
+                                                div(class="grid sm:grid-cols-2 grid-cols-1 gap-[10px] text-[13px]")
+                                                    div(class="p-[10px] bg-gray-50 rounded-[6px] border border-gray-200")
+                                                        span(class="font-[600] text-gray-600 block") ⏱️ Thời gian dự kiến:
+                                                        span(class="font-[700] text-gray-900") #{app.interviewInvitation.interviewDate || "Trao đổi linh hoạt"}
+                                                    div(class="p-[10px] bg-gray-50 rounded-[6px] border border-gray-200")
+                                                        span(class="font-[600] text-gray-600 block") 📍 Hình thức / Địa điểm:
+                                                        span(class="font-[700] text-gray-900") #{app.interviewInvitation.location || "Trao đổi trực tiếp"}
+
+                                                div(class="border border-gray-200 rounded-[8px] p-[14px] bg-white")
+                                                    h4(class="text-[12px] font-[700] text-gray-500 uppercase tracking-wide mb-[8px]") Lời nhắn từ Nhà tuyển dụng:
+                                                    div(class="text-[14px] text-gray-800 whitespace-pre-line leading-relaxed") !{app.interviewInvitation.content}
+
+                                                div(class="p-[12px] bg-blue-50/60 border border-blue-200 rounded-[8px] text-[13px] space-y-[4px]")
+                                                    div(class="font-[700] text-blue-900") 📞 Kênh liên hệ trực tiếp:
+                                                    if app.interviewInvitation.employerEmail || (app.employerId && app.employerId.email)
+                                                        div(class="text-blue-800") Email: <a href="mailto:" + (app.interviewInvitation.employerEmail || app.employerId.email) class="font-[600] underline">#{app.interviewInvitation.employerEmail || app.employerId.email}</a>
+                                                    if app.interviewInvitation.employerPhone || (app.employerId && app.employerId.phone)
+                                                        div(class="text-blue-800") Điện thoại / Zalo: <a href="tel:" + (app.interviewInvitation.employerPhone || app.employerId.phone) class="font-[600] underline">#{app.interviewInvitation.employerPhone || app.employerId.phone}</a>
+
+                                            div(class="p-[14px] border-t border-gray-200 flex flex-wrap justify-end gap-[10px] bg-gray-50")
+                                                button(type="button" onclick=`var m=document.getElementById('modalInvite_${app._id}'); if(m){m.classList.add('hidden');m.classList.remove('flex');}` class="px-[16px] py-[8px] border border-gray-300 rounded-[6px] text-[13px] font-[600] text-gray-700 hover:bg-gray-100 cursor-pointer") Đóng
+                                                if app.interviewInvitation.employerEmail || (app.employerId && app.employerId.email)
+                                                    a(href="mailto:" + (app.interviewInvitation.employerEmail || app.employerId.email) + "?subject=Re: " + encodeURIComponent(app.interviewInvitation.subject || "Phản hồi thư mời phỏng vấn") class="px-[18px] py-[8px] bg-[#0088FF] hover:bg-[#0070D2] rounded-[6px] text-[13px] font-[700] text-white inline-flex items-center gap-[6px] shadow-xs")
+                                                        <i class="fa-solid fa-reply"></i> Trả Lời Qua Email
                     else
                         div(class="col-span-full py-[40px] text-center text-[#717171] text-[16px]") Bạn chưa gửi hồ sơ ứng tuyển nào. Hãy tìm kiếm việc làm phù hợp và ứng tuyển ngay nhé!
 

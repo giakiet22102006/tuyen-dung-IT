@@ -61,6 +61,15 @@ const applicationSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    interviewInvitation: {
+      sentAt: { type: Date, default: null },
+      subject: { type: String, default: "" },
+      content: { type: String, default: "" },
+      employerEmail: { type: String, default: "" },
+      employerPhone: { type: String, default: "" },
+      interviewDate: { type: String, default: "" },
+      location: { type: String, default: "" },
+    },
   },
   { timestamps: true }
 );

@@ -432,6 +432,56 @@ describe("Phase 5: Candidate Profile, Application & Employer CV Management Tests
       expect(check.reviewedAt).not.toBeNull();
     });
 
+    test("POST /employer/cvs/:id/invite gửi thư mời phỏng vấn và cập nhật trạng thái approved", async () => {
+      const { employer, cookies } = await createAndLoginEmployer();
+      const job = await Job.create({
+        employerId: employer._id,
+        title: "Frontend Lead",
+        slug: "frontend-lead-job",
+        position: "senior",
+        workingForm: "office",
+        city: "ha-noi",
+        employerActive: true,
+        moderation: JOB_MODERATION.VISIBLE,
+      });
+
+      const { candidate } = await createAndLoginCandidate();
+
+      const appDoc = await Application.create({
+        jobId: job._id,
+        employerId: employer._id,
+        candidateId: candidate._id,
+        fullName: candidate.fullName,
+        email: candidate.email,
+        phone: candidate.phone,
+        cv: { key: "cv-test.pdf", originalName: "cv.pdf" },
+        status: APPLICATION_STATUS.PENDING,
+      });
+
+      const page = await getCsrfAndCookies("/employer/cvs", cookies);
+
+      const inviteRes = await request(app)
+        .post(`/employer/cvs/${appDoc._id}/invite`)
+        .set("Cookie", page.cookies)
+        .type("form")
+        .send({
+          _csrf: page.csrfToken,
+          subject: "Thư mời phỏng vấn Frontend Lead",
+          content: "Trân trọng mời bạn tham dự phỏng vấn lúc 9h sáng thứ Hai.",
+          interviewDate: "09:00 Thứ Hai",
+          location: "Google Meet",
+        });
+
+      expect(inviteRes.status).toBe(302);
+
+      const check = await Application.findById(appDoc._id);
+      expect(check.status).toBe(APPLICATION_STATUS.APPROVED);
+      expect(check.interviewInvitation).toBeDefined();
+      expect(check.interviewInvitation.sentAt).not.toBeNull();
+      expect(check.interviewInvitation.subject).toBe("Thư mời phỏng vấn Frontend Lead");
+      expect(check.interviewInvitation.interviewDate).toBe("09:00 Thứ Hai");
+    });
+
     test("Cách ly bảo mật: Employer B không thể xem hoặc cập nhật CV nộp vào Employer A", async () => {
       const { employer: empA } = await createAndLoginEmployer({ companyName: "Công ty A", email: "a@cv.com", slug: "cong-ty-a" });
       const { cookies: cookiesB } = await createAndLoginEmployer({ companyName: "Công ty B", email: "b@cv.com", slug: "cong-ty-b" });

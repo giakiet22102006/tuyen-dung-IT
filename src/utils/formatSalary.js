@@ -13,7 +13,7 @@ function formatSalary(min, max) {
     return `${Number(min).toLocaleString("vi-VN")}$ - ${Number(max).toLocaleString("vi-VN")}$`;
   }
   if (hasMin && !hasMax) {
-    return `Từ ${Number(min).toLocaleString("vi-VN")}$`;
+    return `Từ ${Number(min).toLocaleString("vi-VN")}$ (Thỏa thuận theo năng lực)`;
   }
   if (!hasMin && hasMax) {
     return `Tới ${Number(max).toLocaleString("vi-VN")}$`;

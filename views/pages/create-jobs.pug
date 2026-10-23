@@ -31,8 +31,8 @@ block main
                             label(for="salaryMin" class="font-[500] text-[14px] mb-[5px]") Mức lương tối thiểu ($)
                             input(type="number" min="0" id="salaryMin" name="salaryMin" value=(old && old.salaryMin !== undefined ? old.salaryMin : "") placeholder="Ví dụ: 1000" class="border border-[#DEDEDE] rounded-[4px] py-[11px] px-[20px] block w-full")  
                         div(class="")
-                            label(for="salaryMax" class="font-[500] text-[14px] mb-[5px]") Mức lương tối đa ($)
-                            input(type="number" min="0" id="salaryMax" name="salaryMax" value=(old && old.salaryMax !== undefined ? old.salaryMax : "") placeholder="Ví dụ: 2500" class="border border-[#DEDEDE] rounded-[4px] py-[11px] px-[20px] block w-full") 
+                            label(for="salaryMax" class="font-[500] text-[14px] mb-[5px]") Mức lương tối đa ($) <span class="text-gray-500 font-normal text-[12px]">(Để trống nếu thỏa thuận theo năng lực)</span>
+                            input(type="number" min="0" id="salaryMax" name="salaryMax" value=(old && old.salaryMax !== undefined ? old.salaryMax : "") placeholder="Để trống nếu thỏa thuận theo năng lực" class="border border-[#DEDEDE] rounded-[4px] py-[11px] px-[20px] block w-full") 
                             if errors && errors.salaryMax
                                 div(class="text-[#FF0000] text-[13px] mt-[4px]") #{errors.salaryMax}
 

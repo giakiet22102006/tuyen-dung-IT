@@ -510,6 +510,68 @@ YÊU CẦU ĐẦU RA: Trả về JSON hợp lệ:
   };
 }
 
+// =========================================================================
+// TÍNH NĂNG 7: AI DRAFT INTERVIEW INVITATION (THƯ MỜI PHỎNG VẤN)
+// =========================================================================
+async function draftInterviewInvitation({
+  candidateName = "Ứng viên",
+  jobTitle = "Lập trình viên IT",
+  companyName = "Công ty",
+  interviewType = "Trực tiếp tại văn phòng",
+  interviewDate = "",
+  location = "",
+  notes = "",
+}) {
+  const prompt = `
+Bạn là Trợ lý Tuyển dụng Chuyên nghiệp (HR Tech Specialist) tại Việt Nam.
+Hãy soạn một email Thư mời phỏng vấn (Interview Invitation) thật lịch sự, chuyên nghiệp, truyền cảm hứng và đầy đủ thông tin:
+- Tên ứng viên: ${candidateName}
+- Vị trí tuyển dụng: ${jobTitle}
+- Tên công ty: ${companyName}
+- Hình thức phỏng vấn: ${interviewType}
+- Thời gian dự kiến: ${interviewDate || "[Thời gian do hai bên thống nhất]"}
+- Địa điểm / Đường link họp: ${location || "[Sẽ cung cấp sau khi ứng viên xác nhận]"}
+${notes ? `- Lưu ý thêm từ NTD: ${notes}` : ""}
+
+YÊU CẦU:
+1. Giọng văn: Trân trọng, thân thiện, khuyến khích ứng viên, chuyên nghiệp chuẩn doanh nghiệp IT.
+2. Trả về định dạng JSON hợp lệ:
+{
+  "subject": "Tiêu đề thư (ví dụ: [Công ty ABC] Thư Mời Tham Dự Phỏng Vấn Vị Trí XYZ)",
+  "content": "Nội dung toàn bộ bức thư bằng tiếng Việt (xuống dòng bằng \\n)"
+}
+`;
+
+  const raw = await callGemini(prompt, "Bạn là chuyên gia tuyển dụng IT. Luôn trả về JSON hợp lệ.");
+  const parsed = parseJsonFromLlm(raw);
+  if (parsed && parsed.subject && parsed.content) {
+    return parsed;
+  }
+
+  // Fallback chất lượng cao
+  return {
+    subject: `[${companyName}] Thư Mời Tham Gia Phỏng Vấn - Vị Trí ${jobTitle}`,
+    content: `Kính gửi bạn ${candidateName},
+
+Lời đầu tiên, Ban Tuyển dụng công ty ${companyName} xin gửi lời chào trân trọng và lời chúc sức khỏe đến bạn.
+
+Sau khi xem xét hồ sơ năng lực và kinh nghiệm của bạn trên hệ thống tuyển dụng VN.ITJobs, chúng tôi rất ấn tượng với chuyên môn của bạn đối với vị trí ${jobTitle}. Vì vậy, chúng tôi trân trọng mời bạn tham dự buổi phỏng vấn trao đổi chi tiết hơn về định hướng công việc và các chế độ đãi ngộ tại công ty.
+
+Thông tin chi tiết buổi phỏng vấn:
+- Vị trí ứng tuyển: ${jobTitle}
+- Hình thức: ${interviewType}
+- Thời gian: ${interviewDate || "Thứ Hai tuần tới (hoặc thời gian thuận tiện cho bạn)"}
+- Địa điểm / Meeting Link: ${location || "Văn phòng công ty hoặc Google Meet"}
+
+Nếu thời gian trên chưa thuận tiện, bạn hoàn toàn có thể phản hồi lại email này để chúng ta cùng sắp xếp một khung giờ phù hợp nhất.
+
+Rất mong sớm nhận được phản hồi xác nhận từ bạn!
+
+Trân trọng,
+Bộ phận Tuyển dụng Nhân tài - ${companyName}`
+  };
+}
+
 module.exports = {
   callGemini,
   extractTextFromPdf,
@@ -519,4 +581,5 @@ module.exports = {
   screenAndSummarizeCv,
   moderateJobContent,
   generateMarketInsights,
+  draftInterviewInvitation,
 };

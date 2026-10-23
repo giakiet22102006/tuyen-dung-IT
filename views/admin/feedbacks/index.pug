@@ -1,0 +1,125 @@
+extends ../../layouts/admin.pug
+
+block title
+    title Quản lý Báo cáo sự cố & Đánh giá web - VN.ITJobs Admin
+
+block main
+    div(class="space-y-[24px]")
+        div(class="flex flex-col sm:flex-row sm:items-center justify-between gap-[16px]")
+            div
+                h1(class="font-[700] text-[24px] text-[#111827]") Báo Cáo Sự Cố & Đánh Giá Website
+                p(class="text-[14px] text-[#6B7280] mt-[4px]") Tiếp nhận các báo cáo lỗi, góp ý và đánh giá trải nghiệm từ người dùng hệ thống
+
+        //- Thẻ thống kê
+        div(class="grid grid-cols-2 sm:grid-cols-4 gap-[16px]")
+            div(class="bg-white p-[18px] rounded-[10px] border border-[#E5E7EB] shadow-xs")
+                div(class="text-[13px] font-[500] text-gray-500") Tổng phản hồi
+                div(class="text-[26px] font-[700] text-gray-900 mt-[4px]") #{counts.total || 0}
+            div(class="bg-white p-[18px] rounded-[10px] border border-amber-200 bg-amber-50/30 shadow-xs")
+                div(class="text-[13px] font-[600] text-amber-700") Mới tiếp nhận (Chưa xử lý)
+                div(class="text-[26px] font-[700] text-amber-600 mt-[4px]") #{counts.countNew || 0}
+            div(class="bg-white p-[18px] rounded-[10px] border border-blue-200 bg-blue-50/30 shadow-xs")
+                div(class="text-[13px] font-[600] text-blue-700") Đang xử lý
+                div(class="text-[26px] font-[700] text-[#0088FF] mt-[4px]") #{counts.countInProgress || 0}
+            div(class="bg-white p-[18px] rounded-[10px] border border-emerald-200 bg-emerald-50/30 shadow-xs")
+                div(class="text-[13px] font-[600] text-emerald-700") Đã khắc phục / Giải quyết
+                div(class="text-[26px] font-[700] text-emerald-600 mt-[4px]") #{counts.countResolved || 0}
+
+        //- Bộ lọc
+        div(class="bg-white p-[20px] rounded-[10px] border border-[#E5E7EB] shadow-xs")
+            form(action="/" + adminPath + "/feedbacks" method="GET" class="grid grid-cols-1 sm:grid-cols-3 gap-[16px]")
+                div
+                    label(for="filterType" class="block text-[13px] font-[500] text-[#374151] mb-[6px]") Phân loại
+                    select(id="filterType" name="type" class="w-full border border-[#D1D5DB] rounded-[6px] px-[14px] py-[9px] text-[14px] focus:outline-none focus:border-[#0088FF] cursor-pointer")
+                        option(value="") -- Tất cả các loại --
+                        option(value="bug" selected=(filter.type === "bug")) 🐞 Báo cáo sự cố kỹ thuật
+                        option(value="rating" selected=(filter.type === "rating")) ⭐ Đánh giá chất lượng web
+                        option(value="suggestion" selected=(filter.type === "suggestion")) 💡 Đề xuất tính năng mới
+
+                div
+                    label(for="filterStatus" class="block text-[13px] font-[500] text-[#374151] mb-[6px]") Trạng thái xử lý
+                    select(id="filterStatus" name="status" class="w-full border border-[#D1D5DB] rounded-[6px] px-[14px] py-[9px] text-[14px] focus:outline-none focus:border-[#0088FF] cursor-pointer")
+                        option(value="") -- Tất cả trạng thái --
+                        option(value="new" selected=(filter.status === "new")) Mới tiếp nhận
+                        option(value="in_progress" selected=(filter.status === "in_progress")) Đang xử lý
+                        option(value="resolved" selected=(filter.status === "resolved")) Đã giải quyết
+                        option(value="closed" selected=(filter.status === "closed")) Đã đóng
+
+                div(class="flex items-end gap-[10px]")
+                    button(type="submit" class="flex-1 bg-[#000065] hover:bg-[#000050] text-white py-[9px] px-[16px] rounded-[6px] font-[600] text-[14px] transition-colors cursor-pointer flex items-center justify-center gap-[6px]")
+                        <i class="fa-solid fa-filter"></i>
+                        span Lọc danh sách
+                    a(href="/" + adminPath + "/feedbacks" class="bg-gray-100 hover:bg-gray-200 text-[#4B5563] py-[9px] px-[16px] rounded-[6px] font-[500] text-[14px] transition-colors") Đặt lại
+
+        //- Bảng danh sách phản hồi
+        div(class="bg-white rounded-[10px] border border-[#E5E7EB] shadow-xs overflow-hidden")
+            div(class="overflow-x-auto")
+                table(class="w-full text-left border-collapse text-[13px]")
+                    thead(class="bg-[#F9FAFB] text-[#4B5563] text-[12px] uppercase font-[600] border-b border-[#E5E7EB]")
+                        tr
+                            th(class="py-[12px] px-[16px]") Thời gian
+                            th(class="py-[12px] px-[16px]") Phân loại
+                            th(class="py-[12px] px-[16px]") Người gửi
+                            th(class="py-[12px] px-[16px]") Nội dung chi tiết
+                            th(class="py-[12px] px-[16px]") Trạng thái
+                            th(class="py-[12px] px-[16px] text-right") Thao tác
+                    tbody(class="divide-y divide-[#E5E7EB]")
+                        if feedbacks && feedbacks.length > 0
+                            each fb in feedbacks
+                                tr(class="hover:bg-gray-50 transition-colors")
+                                    td(class="py-[12px] px-[16px] text-[#6B7280] whitespace-nowrap")
+                                        | #{labels.formatDate ? labels.formatDate(fb.createdAt) : new Date(fb.createdAt).toLocaleDateString('vi-VN')}
+                                    td(class="py-[12px] px-[16px]")
+                                        if fb.type === 'bug'
+                                            span(class="px-[8px] py-[3px] rounded text-[11px] font-[600] bg-rose-50 text-rose-700 border border-rose-200 inline-flex items-center gap-[4px]")
+                                                <i class="fa-solid fa-bug"></i> Báo lỗi web
+                                        else if fb.type === 'rating'
+                                            div(class="space-y-[2px]")
+                                                span(class="px-[8px] py-[3px] rounded text-[11px] font-[600] bg-amber-50 text-amber-700 border border-amber-200 inline-flex items-center gap-[4px]")
+                                                    <i class="fa-solid fa-star text-amber-500"></i> Đánh giá web
+                                                if fb.rating
+                                                    div(class="text-[12px] font-[700] text-amber-600") #{fb.rating} / 5 ⭐
+                                        else
+                                            span(class="px-[8px] py-[3px] rounded text-[11px] font-[600] bg-blue-50 text-blue-700 border border-blue-200 inline-flex items-center gap-[4px]")
+                                                <i class="fa-solid fa-lightbulb"></i> Đề xuất
+                                    td(class="py-[12px] px-[16px]")
+                                        div(class="font-[600] text-gray-900") #{fb.contactName || "Người dùng ẩn danh"}
+                                        if fb.contactEmail
+                                            a(href="mailto:" + fb.contactEmail class="text-[12px] text-[#0088FF] hover:underline block") #{fb.contactEmail}
+                                        div(class="text-[11px] text-gray-400 capitalize") Vai trò: #{fb.userRole || "Khách"}
+                                    td(class="py-[12px] px-[16px] max-w-[340px]")
+                                        if fb.title
+                                            div(class="font-[700] text-gray-900 mb-[2px]") #{fb.title}
+                                        p(class="text-gray-700 whitespace-pre-line text-[13px] leading-relaxed line-clamp-3") #{fb.content}
+                                        if fb.url
+                                            div(class="text-[11px] text-gray-400 mt-[4px] truncate")
+                                                span URL lỗi: <a href=fb.url target="_blank" class="text-blue-600 hover:underline">#{fb.url}</a>
+                                        if fb.adminNote
+                                            div(class="mt-[6px] p-[6px] bg-yellow-50 text-yellow-800 text-[11px] rounded border border-yellow-200")
+                                                span <strong>Ghi chú Admin:</strong> #{fb.adminNote}
+                                    td(class="py-[12px] px-[16px]")
+                                        form(action="/" + adminPath + "/feedbacks/" + fb._id + "/status" method="POST" class="inline")
+                                            input(type="hidden" name="_csrf" value=csrfToken)
+                                            select(name="status" onchange="this.form.submit()" class="text-[12px] font-[600] rounded-[6px] px-[8px] py-[4px] border cursor-pointer " + (fb.status === 'new' ? 'bg-amber-50 text-amber-800 border-amber-300' : (fb.status === 'in_progress' ? 'bg-blue-50 text-blue-800 border-blue-300' : 'bg-emerald-50 text-emerald-800 border-emerald-300')))
+                                                option(value="new" selected=(fb.status === "new")) Mới nhận
+                                                option(value="in_progress" selected=(fb.status === "in_progress")) Đang xử lý
+                                                option(value="resolved" selected=(fb.status === "resolved")) Đã giải quyết
+                                                option(value="closed" selected=(fb.status === "closed")) Đóng
+                                    td(class="py-[12px] px-[16px] text-right whitespace-nowrap")
+                                        form(action="/" + adminPath + "/feedbacks/" + fb._id + "/delete" method="POST" onsubmit="return confirm('Bạn có chắc muốn xóa phản hồi này?');" class="inline")
+                                            input(type="hidden" name="_csrf" value=csrfToken)
+                                            button(type="submit" class="text-rose-600 hover:text-rose-800 p-[6px] cursor-pointer" title="Xóa phản hồi")
+                                                <i class="fa-solid fa-trash-can"></i>
+                        else
+                            tr
+                                td(colspan="6" class="py-[36px] text-center text-[#6B7280]") Chưa có phản hồi hoặc báo cáo sự cố nào được ghi nhận.
+
+        //- Phân trang
+        if pagination && pagination.totalPages > 1
+            div(class="flex justify-center mt-[24px]")
+                div(class="flex items-center gap-[6px]")
+                    if pagination.hasPrev
+                        a(href="/" + adminPath + "/feedbacks?page=" + pagination.prevPage + (filter.type ? "&type=" + filter.type : "") + (filter.status ? "&status=" + filter.status : "") class="px-[12px] py-[6px] bg-white border border-[#D1D5DB] rounded-[6px] text-[13px] font-[500] text-[#374151] hover:bg-gray-50") Trang trước
+                    span(class="px-[12px] py-[6px] text-[13px] font-[600] text-[#0088FF]") Trang #{pagination.currentPage} / #{pagination.totalPages}
+                    if pagination.hasNext
+                        a(href="/" + adminPath + "/feedbacks?page=" + pagination.nextPage + (filter.type ? "&type=" + filter.type : "") + (filter.status ? "&status=" + filter.status : "") class="px-[12px] py-[6px] bg-white border border-[#D1D5DB] rounded-[6px] text-[13px] font-[500] text-[#374151] hover:bg-gray-50") Trang sau

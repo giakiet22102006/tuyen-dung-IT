@@ -1,0 +1,190 @@
+//- views/partials/feedback-widget.pug
+//- Floating Button
+div(class="fixed bottom-[20px] right-[20px] sm:bottom-[24px] sm:right-[24px] z-40")
+    button(type="button" id="btnOpenFeedbackWidget" class="group flex items-center gap-[8px] bg-gradient-to-r from-[#000071] to-[#0088FF] hover:from-[#000055] hover:to-[#0070D2] text-white py-[10px] px-[16px] rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all cursor-pointer font-[600] text-[13px] border border-white/20" title="Báo cáo sự cố hoặc đánh giá chất lượng web")
+        span(class="w-[20px] h-[20px] rounded-full bg-white/20 flex items-center justify-center text-[12px] group-hover:rotate-12 transition-transform")
+            <i class="fa-solid fa-headset"></i>
+        span(class="hidden sm:inline") Báo Lỗi & Đánh Giá
+        span(class="sm:hidden") Hỗ trợ
+
+//- Floating Feedback Dialog
+div(id="modalFeedbackWidget" class="fixed inset-0 z-50 hidden items-center justify-center sm:items-end sm:justify-end sm:p-[24px] bg-black/50 sm:bg-transparent backdrop-blur-xs sm:backdrop-blur-none")
+    div(class="bg-white rounded-[14px] shadow-2xl border border-gray-200 w-[92vw] max-w-[420px] overflow-hidden animate-fadeIn sm:mb-[60px]")
+        //- Header
+        div(class="p-[16px] bg-gradient-to-r from-[#000071] to-[#0088FF] text-white flex items-center justify-between")
+            div(class="flex items-center gap-[8px]")
+                div(class="w-[32px] h-[32px] rounded-full bg-white/20 flex items-center justify-center text-[14px]")
+                    <i class="fa-solid fa-comment-dots"></i>
+                div
+                    h3(class="font-[700] text-[15px] leading-tight") Hỗ Trợ & Góp Ý Website
+                    p(class="text-[11px] text-white/80") Gửi trực tiếp đến Ban Quản trị VN.ITJobs
+            button(type="button" id="btnCloseFeedbackWidget" class="text-white/80 hover:text-white text-[18px] p-[4px] cursor-pointer")
+                <i class="fa-solid fa-xmark"></i>
+
+        //- Tabs
+        div(class="flex border-b border-gray-200 bg-gray-50 text-[13px] font-[600]")
+            button(type="button" id="tabFeedbackBug" class="flex-1 py-[10px] text-center border-b-2 border-[#0088FF] text-[#0088FF] bg-white cursor-pointer transition-all")
+                <i class="fa-solid fa-bug mr-[4px]"></i> Báo cáo lỗi
+            button(type="button" id="tabFeedbackRating" class="flex-1 py-[10px] text-center border-b-2 border-transparent text-gray-500 hover:text-gray-800 cursor-pointer transition-all")
+                <i class="fa-solid fa-star text-amber-500 mr-[4px]"></i> Đánh giá web
+
+        //- Body / Forms
+        div(class="p-[16px]")
+            //- Thông báo thành công
+            div(id="feedbackSuccessMsg" class="hidden p-[16px] bg-emerald-50 border border-emerald-200 rounded-[8px] text-center text-emerald-900")
+                div(class="text-emerald-600 text-[28px] mb-[6px]")
+                    <i class="fa-solid fa-circle-check"></i>
+                h4(class="font-[700] text-[15px]") Gửi thành công!
+                p(class="text-[12px] text-emerald-700 mt-[4px]") Cảm ơn bạn đã đóng góp giúp VN.ITJobs ngày càng hoàn thiện hơn.
+
+            form(id="formFeedbackWidget" class="space-y-[12px]")
+                input(type="hidden" id="fbType" name="type" value="bug")
+                
+                //- Khối dành riêng cho Đánh giá (Rating)
+                div(id="ratingBlock" class="hidden p-[10px] bg-amber-50/70 border border-amber-200 rounded-[8px] text-center")
+                    label(class="block text-[12px] font-[600] text-amber-900 mb-[4px]") Bạn đánh giá trải nghiệm web thế nào?
+                    div(class="flex items-center justify-center gap-[8px] text-[20px] text-gray-300 cursor-pointer" id="starPickerContainer")
+                        each star in [1, 2, 3, 4, 5]
+                            button(type="button" data-val=star class="star-btn hover:scale-110 transition-transform cursor-pointer text-amber-400")
+                                <i class="fa-solid fa-star"></i>
+                    input(type="hidden" id="fbRatingVal" name="rating" value="5")
+
+                div
+                    label(for="fbTitle" class="block text-[12px] font-[600] text-gray-700 mb-[3px]") Tiêu đề
+                    input(type="text" id="fbTitle" name="title" placeholder="VD: Lỗi tải file CV, gợi ý thêm bộ lọc..." class="w-full border border-gray-300 rounded-[6px] px-[10px] py-[7px] text-[13px] bg-white")
+
+                div
+                    label(for="fbContent" class="block text-[12px] font-[600] text-gray-700 mb-[3px]") Nội dung chi tiết *
+                    textarea(id="fbContent" name="content" required rows="3" placeholder="Mô tả sự cố bạn gặp phải hoặc ý kiến đóng góp của bạn..." class="w-full border border-gray-300 rounded-[6px] p-[10px] text-[13px] bg-white")
+
+                div(class="grid grid-cols-2 gap-[10px]")
+                    div
+                        label(for="fbContactName" class="block text-[11px] font-[500] text-gray-600 mb-[2px]") Tên của bạn
+                        input(type="text" id="fbContactName" name="contactName" value=(currentUser ? (currentUser.fullName || currentUser.companyName) : "") placeholder="Tên hoặc ẩn danh" class="w-full border border-gray-300 rounded-[6px] px-[8px] py-[6px] text-[12px] bg-white")
+                    div
+                        label(for="fbContactEmail" class="block text-[11px] font-[500] text-gray-600 mb-[2px]") Email liên hệ
+                        input(type="email" id="fbContactEmail" name="contactEmail" value=(currentUser ? currentUser.email : "") placeholder="Email phản hồi" class="w-full border border-gray-300 rounded-[6px] px-[8px] py-[6px] text-[12px] bg-white")
+
+                button(type="submit" id="btnSubmitFeedback" class="w-full bg-[#0088FF] hover:bg-[#0070D2] text-white font-[700] py-[9px] rounded-[6px] text-[13px] transition-colors cursor-pointer shadow-xs flex items-center justify-center gap-[6px]")
+                    span(id="fbSpin" class="hidden") <i class="fa-solid fa-circle-notch animate-spin"></i>
+                    span(id="fbSubmitText") Gửi Báo Cáo Sự Cố
+
+script.
+    (function() {
+        var btnOpen = document.getElementById("btnOpenFeedbackWidget");
+        var modal = document.getElementById("modalFeedbackWidget");
+        var btnClose = document.getElementById("btnCloseFeedbackWidget");
+        var tabBug = document.getElementById("tabFeedbackBug");
+        var tabRating = document.getElementById("tabFeedbackRating");
+        var inputType = document.getElementById("fbType");
+        var ratingBlock = document.getElementById("ratingBlock");
+        var submitText = document.getElementById("fbSubmitText");
+        var form = document.getElementById("formFeedbackWidget");
+        var successMsg = document.getElementById("feedbackSuccessMsg");
+        var spin = document.getElementById("fbSpin");
+        var btnSubmit = document.getElementById("btnSubmitFeedback");
+        var starPicker = document.getElementById("starPickerContainer");
+        var inputRating = document.getElementById("fbRatingVal");
+
+        if (!btnOpen || !modal) return;
+
+        btnOpen.addEventListener("click", function() {
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+        });
+
+        function hideModal() {
+            modal.classList.add("hidden");
+            modal.classList.remove("flex");
+        }
+
+        if (btnClose) btnClose.addEventListener("click", hideModal);
+
+        if (tabBug && tabRating) {
+            tabBug.addEventListener("click", function() {
+                inputType.value = "bug";
+                tabBug.className = "flex-1 py-[10px] text-center border-b-2 border-[#0088FF] text-[#0088FF] bg-white cursor-pointer transition-all";
+                tabRating.className = "flex-1 py-[10px] text-center border-b-2 border-transparent text-gray-500 hover:text-gray-800 cursor-pointer transition-all";
+                ratingBlock.classList.add("hidden");
+                submitText.textContent = "Gửi Báo Cáo Sự Cố";
+            });
+
+            tabRating.addEventListener("click", function() {
+                inputType.value = "rating";
+                tabRating.className = "flex-1 py-[10px] text-center border-b-2 border-amber-500 text-amber-700 bg-white cursor-pointer transition-all";
+                tabBug.className = "flex-1 py-[10px] text-center border-b-2 border-transparent text-gray-500 hover:text-gray-800 cursor-pointer transition-all";
+                ratingBlock.classList.remove("hidden");
+                submitText.textContent = "Gửi Đánh Giá Website";
+            });
+        }
+
+        // Xử lý chọn sao rating
+        if (starPicker) {
+            var stars = starPicker.querySelectorAll(".star-btn");
+            stars.forEach(function(starBtn) {
+                starBtn.addEventListener("click", function() {
+                    var val = parseInt(starBtn.getAttribute("data-val"), 10);
+                    inputRating.value = val;
+                    stars.forEach(function(s, idx) {
+                        if (idx < val) {
+                            s.className = "star-btn hover:scale-110 transition-transform cursor-pointer text-amber-400";
+                        } else {
+                            s.className = "star-btn hover:scale-110 transition-transform cursor-pointer text-gray-300";
+                        }
+                    });
+                });
+            });
+        }
+
+        // Xử lý Submit AJAX
+        if (form) {
+            form.addEventListener("submit", async function(e) {
+                e.preventDefault();
+                btnSubmit.disabled = true;
+                if (spin) spin.classList.remove("hidden");
+
+                var csrfMeta = document.querySelector('meta[name="csrf-token"]');
+                var csrfToken = csrfMeta ? csrfMeta.getAttribute("content") : "";
+
+                var payload = {
+                    type: inputType.value,
+                    rating: inputType.value === "rating" ? Number(inputRating.value) : null,
+                    title: document.getElementById("fbTitle").value,
+                    content: document.getElementById("fbContent").value,
+                    contactName: document.getElementById("fbContactName").value,
+                    contactEmail: document.getElementById("fbContactEmail").value,
+                    url: window.location.href
+                };
+
+                try {
+                    var res = await fetch("/api/feedback", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "x-csrf-token": csrfToken
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                    var data = await res.json();
+                    if (data.success) {
+                        form.classList.add("hidden");
+                        successMsg.classList.remove("hidden");
+                        setTimeout(function() {
+                            hideModal();
+                            form.reset();
+                            form.classList.remove("hidden");
+                            successMsg.classList.add("hidden");
+                        }, 2200);
+                    } else {
+                        alert(data.message || "Không thể gửi phản hồi.");
+                    }
+                } catch(err) {
+                    console.error(err);
+                    alert("Có lỗi kết nối khi gửi phản hồi.");
+                } finally {
+                    btnSubmit.disabled = false;
+                    if (spin) spin.classList.add("hidden");
+                }
+            });
+        }
+    })();

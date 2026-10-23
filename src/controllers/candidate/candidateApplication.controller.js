@@ -24,7 +24,7 @@ const renderAppliedJobs = async (req, res) => {
     })
     .populate({
       path: "employerId",
-      select: "companyName slug logo",
+      select: "companyName slug logo email phone",
     })
     .lean();
 

@@ -31,7 +31,7 @@ block main
                         else if application.status === 'rejected'
                             span(class="font-[600] text-[#C62828] ml-[6px]") <i class="fa-solid fa-circle-xmark mr-[2px]"></i> Đã từ chối
 
-                    div(class="flex flex-wrap gap-[10px] mt-[16px]")
+                    div(class="flex flex-wrap items-center gap-[10px] mt-[16px]")
                         form(action="/employer/cvs/" + application._id + "/status" method="POST" class="inline")
                             input(type="hidden" name="_csrf" value=csrfToken)
                             input(type="hidden" name="status" value="approved")
@@ -41,6 +41,23 @@ block main
                             input(type="hidden" name="_csrf" value=csrfToken)
                             input(type="hidden" name="status" value="rejected")
                             button(type="submit" class="bg-[#FF5100] hover:bg-[#e64900] rounded-[6px] py-[8px] px-[20px] cursor-pointer font-[600] text-[13px] text-white shadow-xs") Từ chối hồ sơ
+
+                        button(type="button" id="btnOpenInviteModal" class="inline-flex items-center gap-[6px] bg-[#000071] hover:bg-[#000055] text-white rounded-[6px] py-[8px] px-[18px] cursor-pointer font-[600] text-[13px] shadow-xs transition-colors")
+                            <i class="fa-solid fa-envelope-open-text text-[13px]"></i>
+                            span Gửi Thư Mời Phỏng Vấn (Email)
+
+                    if application.interviewInvitation && application.interviewInvitation.sentAt
+                        div(class="mt-[14px] p-[14px] bg-emerald-50 border border-emerald-200 rounded-[8px] flex items-start gap-[12px]")
+                            div(class="text-emerald-600 text-[18px] mt-[2px]")
+                                <i class="fa-solid fa-circle-check"></i>
+                            div(class="flex-1 text-[13px] text-emerald-900")
+                                div(class="font-[700]") Đã gửi thư mời phỏng vấn đến ứng viên (#{application.email})
+                                div(class="mt-[2px] text-emerald-700") Tiêu đề: <span class="font-[600]">#{application.interviewInvitation.subject}</span>
+                                if application.interviewInvitation.interviewDate
+                                    div(class="text-emerald-700") Thời gian hẹn: <span class="font-[600]">#{application.interviewInvitation.interviewDate}</span>
+                                if application.interviewInvitation.location
+                                    div(class="text-emerald-700") Hình thức / Địa điểm: <span class="font-[600]">#{application.interviewInvitation.location}</span>
+                                button(type="button" id="btnOpenInviteModalAgain" class="mt-[6px] text-[#0088FF] hover:underline font-[600] inline-block cursor-pointer") Gửi lại / Cập nhật thư mời khác →
 
                     //- Trợ lý AI Tuyển Dụng (CV Screening & Executive Summary)
                     div(class="mt-[24px] p-[20px] bg-gradient-to-r from-blue-50/70 via-indigo-50/50 to-white rounded-[10px] border border-blue-200")
@@ -105,10 +122,130 @@ block main
                         a(href="/jobs/" + application.jobId.slug target="_blank" class="font-[400] text-[14px] text-[#0088FF] underline") Xem chi tiết công việc 
                 //- Hết Thông tin công việc
 
+        //- ==========================================
+        //- MODAL SOẠN THƯ MỜI PHỎNG VẤN
+        //- ==========================================
+        div(id="modalInterviewInvite" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-xs p-[16px]")
+            div(class="bg-white rounded-[12px] shadow-2xl max-w-[650px] w-full max-h-[92vh] flex flex-col overflow-hidden animate-fadeIn")
+                div(class="p-[18px] border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-blue-50 to-indigo-50")
+                    div(class="flex items-center gap-[10px]")
+                        div(class="w-[36px] h-[36px] rounded-full bg-[#000071] text-white flex items-center justify-center text-[16px]")
+                            <i class="fa-solid fa-envelope-open-text"></i>
+                        div
+                            h3(class="font-[700] text-[16px] text-gray-900") Soạn Thư Mời Phỏng Vấn (Gửi Gmail)
+                            p(class="text-[12px] text-gray-500") Gửi trực tiếp đến hòm thư #{application.email}
+                    button(type="button" id="btnCloseInviteModal" class="text-gray-400 hover:text-gray-600 text-[20px] p-[4px] cursor-pointer")
+                        <i class="fa-solid fa-xmark"></i>
+
+                form(action="/employer/cvs/" + application._id + "/invite" method="POST" id="formSendInterviewInvite" class="p-[20px] overflow-y-auto flex-1 space-y-[14px]")
+                    input(type="hidden" name="_csrf" value=csrfToken)
+                    
+                    div
+                        label(class="block text-[13px] font-[600] text-gray-700 mb-[4px]") Tiêu đề Email *
+                        input(type="text" id="inviteSubject" name="subject" required value=(application.interviewInvitation && application.interviewInvitation.subject || `[VN.ITJobs] Thư Mời Phỏng Vấn Vị Trí ${application.jobId ? application.jobId.title : ""} - ${currentUser ? currentUser.companyName : ""}`) class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[8px] text-[14px]")
+
+                    div(class="grid sm:grid-cols-2 grid-cols-1 gap-[12px]")
+                        div
+                            label(class="block text-[13px] font-[600] text-gray-700 mb-[4px]") Thời gian dự kiến
+                            input(type="text" id="inviteDate" name="interviewDate" placeholder="VD: 09:30 Thứ Tư, 28/10/2026" value=(application.interviewInvitation && application.interviewInvitation.interviewDate || "") class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[8px] text-[14px]")
+                        div
+                            label(class="block text-[13px] font-[600] text-gray-700 mb-[4px]") Hình thức / Địa điểm
+                            input(type="text" id="inviteLocation" name="location" placeholder="VD: Online qua Google Meet / Trực tiếp" value=(application.interviewInvitation && application.interviewInvitation.location || "") class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[8px] text-[14px]")
+
+                    //- AI Quick Draft Bar
+                    div(class="p-[12px] bg-purple-50 border border-purple-200 rounded-[8px] flex flex-col sm:flex-row sm:items-center justify-between gap-[10px]")
+                        div(class="flex items-center gap-[8px]")
+                            <i class="fa-solid fa-wand-magic-sparkles text-purple-600 text-[16px]"></i>
+                            div
+                                div(class="text-[13px] font-[700] text-purple-950") AI Hỗ Trợ Soạn Thảo Thư Mời
+                                div(class="text-[11px] text-purple-700") Tự động sinh nội dung thư mời trang trọng, chuyên nghiệp
+                        button(type="button" id="btnAiDraftInvite" class="inline-flex items-center justify-center gap-[6px] bg-purple-600 hover:bg-purple-700 text-white text-[12px] font-[700] px-[12px] py-[7px] rounded-[6px] cursor-pointer shrink-0 transition-colors shadow-xs")
+                            span(id="aiDraftSpin" class="hidden") <i class="fa-solid fa-circle-notch animate-spin"></i>
+                            span ✨ AI Soạn Thảo Nhanh
+
+                    div
+                        label(class="block text-[13px] font-[600] text-gray-700 mb-[4px]") Nội dung thư mời *
+                        textarea(id="inviteContent" name="content" rows="7" required placeholder="Nhập nội dung thư mời hoặc bấm nút 'AI Soạn Thảo Nhanh' ở trên..." class="w-full border border-gray-300 rounded-[6px] p-[12px] text-[13px] leading-relaxed")= (application.interviewInvitation && application.interviewInvitation.content || "")
+
+                    div(class="text-[12px] text-gray-500 bg-gray-50 p-[10px] rounded-[6px] border border-gray-200")
+                        div <strong>Lưu ý:</strong> Khi gửi, hệ thống sẽ gửi email trực tiếp tới <strong>#{application.email}</strong> với thông tin liên hệ và email phản hồi là tài khoản của bạn (<strong>#{currentUser ? currentUser.email : ""}</strong>).
+
+                    div(class="pt-[10px] border-t border-gray-200 flex justify-end gap-[10px]")
+                        button(type="button" id="btnCancelInviteModal" class="px-[16px] py-[8px] border border-gray-300 rounded-[6px] text-[13px] font-[600] text-gray-700 hover:bg-gray-100 cursor-pointer") Hủy
+                        button(type="submit" class="px-[20px] py-[8px] bg-[#0088FF] hover:bg-[#0070D2] rounded-[6px] text-[13px] font-[700] text-white cursor-pointer shadow-xs") <i class="fa-solid fa-paper-plane mr-[6px]"></i> Gửi Email Đến Ứng Viên
+
     script.
         (function() {
             function runInit() {
                 if (window.initAiCvScreening) window.initAiCvScreening("#{application._id}");
+                
+                // Quản lý Modal Thư Mời Phỏng Vấn
+                var modal = document.getElementById("modalInterviewInvite");
+                var btnOpen = document.getElementById("btnOpenInviteModal");
+                var btnOpenAgain = document.getElementById("btnOpenInviteModalAgain");
+                var btnClose = document.getElementById("btnCloseInviteModal");
+                var btnCancel = document.getElementById("btnCancelInviteModal");
+                var btnAiDraft = document.getElementById("btnAiDraftInvite");
+                var aiSpin = document.getElementById("aiDraftSpin");
+                var textareaContent = document.getElementById("inviteContent");
+                var inputSubject = document.getElementById("inviteSubject");
+                var inputDate = document.getElementById("inviteDate");
+                var inputLocation = document.getElementById("inviteLocation");
+
+                function openModal() {
+                    if (modal) {
+                        modal.classList.remove("hidden");
+                        modal.classList.add("flex");
+                    }
+                }
+
+                function closeModal() {
+                    if (modal) {
+                        modal.classList.add("hidden");
+                        modal.classList.remove("flex");
+                    }
+                }
+
+                if (btnOpen) btnOpen.addEventListener("click", openModal);
+                if (btnOpenAgain) btnOpenAgain.addEventListener("click", openModal);
+                if (btnClose) btnClose.addEventListener("click", closeModal);
+                if (btnCancel) btnCancel.addEventListener("click", closeModal);
+
+                if (btnAiDraft) {
+                    btnAiDraft.addEventListener("click", async function() {
+                        btnAiDraft.disabled = true;
+                        if (aiSpin) aiSpin.classList.remove("hidden");
+
+                        try {
+                            var csrfMeta = document.querySelector('meta[name="csrf-token"]');
+                            var csrfToken = csrfMeta ? csrfMeta.getAttribute("content") : "";
+                            var res = await fetch("/employer/cvs/#{application._id}/ai-draft-invite", {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    "x-csrf-token": csrfToken
+                                },
+                                body: JSON.stringify({
+                                    interviewDate: inputDate ? inputDate.value : "",
+                                    location: inputLocation ? inputLocation.value : ""
+                                })
+                            });
+                            var data = await res.json();
+                            if (data.success) {
+                                if (data.subject && inputSubject) inputSubject.value = data.subject;
+                                if (data.content && textareaContent) textareaContent.value = data.content;
+                            } else {
+                                alert(data.message || "Không thể tạo thư mời bằng AI");
+                            }
+                        } catch(e) {
+                            console.error(e);
+                            alert("Có lỗi xảy ra khi tạo thư mời bằng AI");
+                        } finally {
+                            btnAiDraft.disabled = false;
+                            if (aiSpin) aiSpin.classList.add("hidden");
+                        }
+                    });
+                }
             }
             if (document.readyState === "loading") {
                 document.addEventListener("DOMContentLoaded", runInit);

@@ -59,6 +59,8 @@ router.post("/jobs/:id/delete", requireEmployer, doubleCsrfProtection, asyncHand
 router.get("/cvs", requireEmployer, asyncHandler(employerCv.renderManageCv));
 router.get("/cvs/:id", requireEmployer, asyncHandler(employerCv.renderCvDetails));
 router.post("/cvs/:id/status", requireEmployer, doubleCsrfProtection, asyncHandler(employerCv.postCvStatus));
+router.post("/cvs/:id/invite", requireEmployer, doubleCsrfProtection, asyncHandler(employerCv.postSendInterviewInvite));
+router.post("/cvs/:id/ai-draft-invite", requireEmployer, asyncHandler(employerCv.postAiDraftInterviewInvite));
 router.post("/cvs/:id/delete", requireEmployer, doubleCsrfProtection, asyncHandler(employerCv.postDeleteCv));
 router.get("/cvs/:id/pdf", requireEmployer, asyncHandler(employerCv.streamEmployerCvPdf));
 

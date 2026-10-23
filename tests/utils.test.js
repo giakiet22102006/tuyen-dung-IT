@@ -18,7 +18,7 @@ describe("Kiểm tra bộ tiện ích (Utils)", () => {
 
   test("formatSalary: hiển thị lương đúng chuẩn", () => {
     expect(formatSalary(1000, 1500)).toBe("1.000$ - 1.500$");
-    expect(formatSalary(1000, null)).toBe("Từ 1.000$");
+    expect(formatSalary(1000, null)).toBe("Từ 1.000$ (Thỏa thuận theo năng lực)");
     expect(formatSalary(null, 2000)).toBe("Tới 2.000$");
     expect(formatSalary(null, null)).toBe("Thương lượng");
     expect(formatSalary("", "")).toBe("Thương lượng");

@@ -93,6 +93,18 @@ block main
                                     a(href="/companies/" + company.slug class="font-[400] text-[16px] text-[#0088FF]") Xem công ty <i class="fa-solid fa-arrow-right-long ml-[4px]"></i>
 
                             div(class="")
+                                if company.email
+                                    div(class="flex justify-between mb-[10px]")
+                                        div(class="font-[400] text-[16px] text-[#A6A6A6]") Email liên hệ
+                                        a(href="mailto:" + company.email class="font-[400] text-[16px] text-[#0088FF] hover:underline") #{company.email}
+                                if company.phone
+                                    div(class="flex justify-between mb-[10px]")
+                                        div(class="font-[400] text-[16px] text-[#A6A6A6]") Số điện thoại
+                                        a(href="tel:" + company.phone class="font-[400] text-[16px] text-[#121212] hover:text-[#0088FF]") #{company.phone}
+                                if company.website
+                                    div(class="flex justify-between mb-[10px]")
+                                        div(class="font-[400] text-[16px] text-[#A6A6A6]") Website
+                                        a(href=company.website target="_blank" rel="noopener noreferrer" class="font-[400] text-[16px] text-[#0088FF] hover:underline") #{company.website}
                                 div(class="flex justify-between mb-[10px]")
                                     div(class="font-[400] text-[16px] text-[#A6A6A6]") Mô hình công ty
                                     div(class="font-[400] text-[16px] text-[#121212]") #{company.companyModel || "Sản phẩm & Dịch vụ"}

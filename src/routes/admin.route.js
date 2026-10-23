@@ -7,6 +7,7 @@ const adminDashboard = require("../controllers/admin/adminDashboard.controller")
 const adminEmployer = require("../controllers/admin/adminEmployer.controller");
 const adminCandidate = require("../controllers/admin/adminCandidate.controller");
 const adminLog = require("../controllers/admin/adminLog.controller");
+const adminFeedback = require("../controllers/admin/adminFeedback.controller");
 
 const { requireAdmin, requireSuperAdmin, adminSecurityHeaders } = require("../middlewares/auth.middleware");
 const { doubleCsrfProtection } = require("../middlewares/csrf.middleware");
@@ -58,5 +59,10 @@ router.post("/candidates/:id/hard-delete", requireAdmin, requireSuperAdmin, doub
 
 // Nhật ký hệ thống (Audit Logs)
 router.get("/logs", requireAdmin, asyncHandler(adminLog.renderLogs));
+
+// Quản lý Báo cáo sự cố & Đánh giá web
+router.get("/feedbacks", requireAdmin, asyncHandler(adminFeedback.renderFeedbacks));
+router.post("/feedbacks/:id/status", requireAdmin, doubleCsrfProtection, asyncHandler(adminFeedback.postUpdateStatus));
+router.post("/feedbacks/:id/delete", requireAdmin, doubleCsrfProtection, asyncHandler(adminFeedback.postDeleteFeedback));
 
 module.exports = router;

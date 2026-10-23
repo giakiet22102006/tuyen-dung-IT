@@ -3,7 +3,7 @@ const { MongoMemoryServer } = require("mongodb-memory-server");
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const app = require("../src/app");
-const { Admin, Employer, Candidate, Job, Application, AuditLog } = require("../src/models");
+const { Admin, Employer, Candidate, Job, Application, AuditLog, Feedback } = require("../src/models");
 const { ADMIN_ROLES, ADMIN_STATUS, EMPLOYER_STATUS, CANDIDATE_STATUS, JOB_MODERATION } = require("../src/config/constants");
 const env = require("../src/config/env");
 
@@ -27,6 +27,7 @@ beforeEach(async () => {
   await Job.deleteMany({});
   await Application.deleteMany({});
   await AuditLog.deleteMany({});
+  await Feedback.deleteMany({});
 });
 
 describe("Phase 6: Admin Portal Integration Tests", () => {
@@ -421,6 +422,55 @@ describe("Phase 6: Admin Portal Integration Tests", () => {
       expect(res.status).toBe(200);
       expect(res.text).toContain("employer.approve");
       expect(res.text).toContain("Công ty Test Log");
+    });
+  });
+
+  describe("6. Quản lý Báo cáo sự cố & Đánh giá web (Feedbacks)", () => {
+    test("GET /admin/feedbacks hiển thị danh sách phản hồi", async () => {
+      const { cookies } = await createAndLoginAdmin();
+
+      await Feedback.create({
+        type: "bug",
+        title: "Lỗi tìm kiếm không nảy từ khóa",
+        content: "Bấm nút tìm kiếm nhưng bị chậm trên mobile",
+        contactEmail: "bugreport@test.com",
+        contactName: "Báo lỗi",
+        status: "new",
+      });
+
+      const res = await request(app).get(`/${adminPath}/feedbacks`).set("Cookie", cookies);
+      expect(res.status).toBe(200);
+      expect(res.text).toContain("Lỗi tìm kiếm không nảy từ khóa");
+      expect(res.text).toContain("bugreport@test.com");
+    });
+
+    test("POST /admin/feedbacks/:id/status cập nhật trạng thái xử lý", async () => {
+      const { cookies } = await createAndLoginAdmin();
+
+      const fb = await Feedback.create({
+        type: "rating",
+        rating: 5,
+        title: "Giao diện rất mượt",
+        content: "Trang web rất dễ dùng và nhanh chóng",
+        status: "new",
+      });
+
+      const page = await getCsrfAndCookies(`/${adminPath}/feedbacks`, cookies);
+      const updateRes = await request(app)
+        .post(`/${adminPath}/feedbacks/${fb._id}/status`)
+        .set("Cookie", page.cookies)
+        .type("form")
+        .send({
+          _csrf: page.csrfToken,
+          status: "resolved",
+          adminNote: "Đã cảm ơn người dùng",
+        });
+
+      expect(updateRes.status).toBe(302);
+
+      const check = await Feedback.findById(fb._id);
+      expect(check.status).toBe("resolved");
+      expect(check.adminNote).toBe("Đã cảm ơn người dùng");
     });
   });
 });

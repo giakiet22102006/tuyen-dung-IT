@@ -15,6 +15,15 @@ router.get("/search", asyncHandler(clientController.renderSearch));
 router.get("/api/search/suggestions", asyncHandler(clientController.getSearchSuggestions));
 router.get("/companies", asyncHandler(clientController.renderCompanyList));
 router.get("/companies/:slug", asyncHandler(clientController.renderCompanyDetails));
+router.post(
+  "/companies/:slug/reviews",
+  doubleCsrfProtection,
+  asyncHandler(clientController.postCompanyReview)
+);
+router.post(
+  "/api/feedback",
+  asyncHandler(clientController.postSubmitFeedback)
+);
 router.get("/jobs/:slug", asyncHandler(clientController.renderJobDetails));
 router.post(
   "/jobs/:slug/apply",

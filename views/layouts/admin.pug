@@ -44,6 +44,10 @@ html(lang="vi")
                         <i class="fa-solid fa-clock-rotate-left w-[20px]"></i>
                         span Nhật ký hệ thống
 
+                    a(href="/" + adminPath + "/feedbacks" class="flex items-center gap-[12px] px-[16px] py-[12px] rounded-[6px] text-[15px] font-[500] hover:bg-white/10 transition-colors " + (currentPath.startsWith("/" + adminPath + "/feedbacks") ? "bg-[#0088FF] text-white font-[600]" : "text-white/80"))
+                        <i class="fa-solid fa-headset w-[20px]"></i>
+                        span Sự cố & Đánh giá web
+
                     div(class="pt-[16px] mt-[16px] border-t border-white/10")
                         a(href="/" target="_blank" class="flex items-center gap-[12px] px-[16px] py-[12px] rounded-[6px] text-[14px] text-white/70 hover:bg-white/10 transition-colors")
                             <i class="fa-solid fa-arrow-up-right-from-square w-[20px]"></i>

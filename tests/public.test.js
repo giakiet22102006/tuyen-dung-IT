@@ -80,8 +80,38 @@ describe("Phase 3: Public Pages Integration Tests", () => {
     const res = await request(app).get("/companies/cong-ty-test-public");
     expect(res.status).toBe(200);
     expect(res.text).toContain("Công ty Test Public");
+    expect(res.text).toContain("test.public@gmail.com");
+    expect(res.text).toContain("Đánh giá về Công ty Test Public");
     expect(res.text).toContain("Công ty có 1 việc làm");
     expect(res.text).toContain("Senior ReactJS Developer");
+  });
+
+  describe("Feedback & Bug Reporting API", () => {
+    test("POST /api/feedback - gửi báo cáo lỗi thành công", async () => {
+      const res = await request(app)
+        .post("/api/feedback")
+        .send({
+          type: "bug",
+          title: "Lỗi hiển thị font",
+          content: "Font chữ trên trang tìm kiếm bị lỗi ở màn hình nhỏ",
+          contactEmail: "tester@gmail.com",
+          contactName: "Tester",
+        });
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.message).toContain("tiếp nhận");
+    });
+
+    test("POST /api/feedback - từ chối nếu thiếu content", async () => {
+      const res = await request(app)
+        .post("/api/feedback")
+        .send({
+          type: "bug",
+          content: "",
+        });
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+    });
   });
 
   test("GET /companies/:slug - Trả về 404 nếu slug không tồn tại", async () => {
