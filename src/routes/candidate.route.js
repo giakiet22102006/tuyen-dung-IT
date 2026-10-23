@@ -6,6 +6,8 @@ const passwordReset = require("../controllers/auth/passwordReset.controller");
 const candidateProfile = require("../controllers/candidate/candidateProfile.controller");
 const candidateApplication = require("../controllers/candidate/candidateApplication.controller");
 const candidateSavedJob = require("../controllers/candidate/candidateSavedJob.controller");
+const candidateJobAlert = require("../controllers/candidate/candidateJobAlert.controller");
+const candidateCompanyFollow = require("../controllers/candidate/candidateCompanyFollow.controller");
 const { requireCandidate, requireGuest } = require("../middlewares/auth.middleware");
 const { doubleCsrfProtection } = require("../middlewares/csrf.middleware");
 const { loginRateLimiter, otpRateLimiter } = require("../middlewares/rateLimit.middleware");
@@ -61,5 +63,13 @@ router.get("/applied-jobs/:id/pdf", requireCandidate, asyncHandler(candidateAppl
 router.get("/saved-jobs", requireCandidate, asyncHandler(candidateSavedJob.renderSavedJobs));
 router.post("/saved-jobs/:jobId/toggle", requireCandidate, doubleCsrfProtection, asyncHandler(candidateSavedJob.toggleSaveJob));
 router.post("/saved-jobs/:id/remove", requireCandidate, doubleCsrfProtection, asyncHandler(candidateSavedJob.postRemoveSavedJob));
+
+// Quản lý Thông báo việc làm (Job Alerts)
+router.get("/job-alerts", requireCandidate, asyncHandler(candidateJobAlert.renderCandidateJobAlerts));
+router.post("/job-alerts/:id/toggle", requireCandidate, doubleCsrfProtection, asyncHandler(candidateJobAlert.postToggleJobAlert));
+router.post("/job-alerts/:id/delete", requireCandidate, doubleCsrfProtection, asyncHandler(candidateJobAlert.postDeleteJobAlert));
+
+// Quản lý Công ty đang theo dõi (Followed Companies)
+router.get("/followed-companies", requireCandidate, asyncHandler(candidateCompanyFollow.renderFollowedCompanies));
 
 module.exports = router;

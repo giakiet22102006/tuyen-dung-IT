@@ -353,9 +353,97 @@ async function sendRejectionEmail({
   }
 }
 
+/**
+ * Gửi email thông báo việc làm mới phù hợp (Job Alert)
+ */
+async function sendJobAlertEmail({ toEmail, alert, job, companyName }) {
+  const mailTransporter = getTransporter();
+  const safeTitle = job.title || "Việc làm IT mới";
+  const salaryDisplay =
+    job.salaryMin && job.salaryMax
+      ? `${(job.salaryMin / 1000000).toFixed(0)} - ${(job.salaryMax / 1000000).toFixed(0)} Triệu VNĐ`
+      : job.salaryMin
+      ? `Từ ${(job.salaryMin / 1000000).toFixed(0)} Triệu VNĐ`
+      : "Thương lượng";
+
+  const appUrl = env.APP_URL || "https://tuyen-dung-it.vercel.app";
+  const jobUrl = `${appUrl}/jobs/${job.slug}`;
+  const unsubUrl = `${appUrl}/job-alerts/unsubscribe/${alert.unsubscribeToken}`;
+
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #E2E8F0; border-radius: 8px; overflow: hidden;">
+      <div style="background-color: #000071; padding: 24px; text-align: center;">
+        <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: bold;">VN.ITJobs</h1>
+        <p style="color: #9FDB7C; margin: 6px 0 0; font-size: 13px; font-weight: 600;">Thông Báo Việc Làm Mới Dành Cho Bạn 🔔</p>
+      </div>
+
+      <div style="padding: 24px; background-color: #ffffff;">
+        <p style="color: #334155; font-size: 14px; margin-top: 0;">
+          Xin chào! Chúng tôi vừa tìm thấy một vị trí công việc mới phù hợp với cài đặt thông báo của bạn:
+        </p>
+
+        <div style="background-color: #F8FAFC; border: 1px solid #CBD5E1; border-left: 4px solid #0088FF; border-radius: 6px; padding: 18px; margin: 20px 0;">
+          <h2 style="font-size: 17px; font-weight: bold; margin: 0 0 8px; color: #000071;">
+            <a href="${jobUrl}" style="color: #000071; text-decoration: none;">${safeTitle}</a>
+          </h2>
+          <div style="font-size: 14px; color: #475569; font-weight: 600; margin-bottom: 6px;">
+            🏢 ${companyName || "Công ty công nghệ hàng đầu"}
+          </div>
+          <div style="font-size: 14px; color: #EA1E30; font-weight: bold; margin-bottom: 8px;">
+            💰 Mức lương: ${salaryDisplay}
+          </div>
+          <div style="font-size: 13px; color: #64748B;">
+            📍 Khu vực: ${job.city || "Toàn quốc"} • Cấp bậc: ${job.position || "Tất cả cấp bậc"}
+          </div>
+        </div>
+
+        <div style="text-align: center; margin: 24px 0 16px;">
+          <a href="${jobUrl}" style="display: inline-block; background-color: #0088FF; color: #ffffff; font-weight: bold; text-decoration: none; padding: 12px 28px; border-radius: 6px; font-size: 14px;">
+            👉 Xem Chi Tiết & Ứng Tuyển Ngay
+          </a>
+        </div>
+
+        <p style="color: #94A3B8; font-size: 12px; margin-top: 24px; border-top: 1px solid #E2E8F0; padding-top: 14px; text-align: center;">
+          Bạn nhận được email này vì đã đăng ký thông báo việc làm trên VN.ITJobs.<br/>
+          Nếu không muốn nhận thông báo này nữa, bạn có thể <a href="${unsubUrl}" style="color: #0088FF; text-decoration: underline;">hủy đăng ký tại đây</a> bất kỳ lúc nào.
+        </p>
+      </div>
+
+      <div style="background-color: #F1F5F9; padding: 14px; text-align: center; color: #64748B; font-size: 11px;">
+        © 2026 VN.ITJobs. Nền tảng tuyển dụng IT hàng đầu Việt Nam.
+      </div>
+    </div>
+  `;
+
+  if (mailTransporter) {
+    try {
+      const info = await mailTransporter.sendMail({
+        from: env.SMTP_FROM,
+        to: toEmail,
+        subject: `[VN.ITJobs] Việc làm IT mới: ${safeTitle} - ${companyName || ""}`,
+        html: htmlContent,
+      });
+      console.log(`📧 Đã gửi Job Alert tới ${toEmail}: ${info.messageId}`);
+      return { success: true, messageId: info.messageId };
+    } catch (err) {
+      console.error(`❌ Lỗi gửi Job Alert: ${err.message}`);
+      return { success: false, error: err.message };
+    }
+  } else {
+    console.log("=================================================");
+    console.log(`📧 [MÔ PHỎNG JOB ALERT EMAIL] Tới: ${toEmail}`);
+    console.log(`💼 Job: ${safeTitle} | Công ty: ${companyName}`);
+    console.log(`💰 Lương: ${salaryDisplay}`);
+    console.log(`🔗 Link: ${jobUrl}`);
+    console.log("=================================================");
+    return { success: true, simulated: true };
+  }
+}
+
 module.exports = {
   sendOtpEmail,
   sendRegistrationOtpEmail,
   sendInterviewInvitationEmail,
   sendRejectionEmail,
+  sendJobAlertEmail,
 };

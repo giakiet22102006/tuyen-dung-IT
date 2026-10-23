@@ -1,0 +1,27 @@
+extends ../layouts/default.pug
+
+block title
+    title #{title || "Hủy Nhận Thông Báo Việc Làm | VN.ITJobs"}
+
+block main
+    div(class="py-[60px] bg-gray-50 min-h-[500px] flex items-center")
+        .contain
+            div(class="max-w-[550px] mx-auto bg-white rounded-[12px] p-[32px] text-center shadow-sm border border-gray-100")
+                if status === 'success'
+                    div(class="w-[64px] h-[64px] rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-[18px] text-[28px]")
+                        i(class="fa-solid fa-check")
+                    h1(class="font-[800] text-[22px] text-gray-800 mb-[10px]") Hủy Nhận Thông Báo Thành Công
+                    p(class="text-[14px] text-gray-600 leading-relaxed mb-[24px]") #{message}
+                else
+                    div(class="w-[64px] h-[64px] rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto mb-[18px] text-[28px]")
+                        i(class="fa-solid fa-circle-exclamation")
+                    h1(class="font-[800] text-[22px] text-gray-800 mb-[10px]") Thông Báo
+                    p(class="text-[14px] text-gray-600 leading-relaxed mb-[24px]") #{message}
+
+                div(class="flex flex-col sm:flex-row gap-[12px] justify-center")
+                    a(href="/search" class="bg-[#0088FF] hover:bg-[#0070D2] text-white font-[600] text-[14px] py-[10px] px-[20px] rounded-[8px] transition")
+                        i(class="fa-solid fa-briefcase mr-[6px]")
+                        | Tìm Việc Làm IT
+                    a(href="/salary" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-[600] text-[14px] py-[10px] px-[20px] rounded-[8px] transition")
+                        i(class="fa-solid fa-calculator mr-[6px]")
+                        | Tra Cứu Lương IT

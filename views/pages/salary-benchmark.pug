@@ -1,0 +1,226 @@
+extends ../layouts/default.pug
+include ../mixins/job-card.pug
+
+block title
+    title #{title || "Tra Cứu & So Sánh Mức Lương IT 2026 | VN.ITJobs"}
+
+block main
+    //- Header Banner
+    div(class="bg-gradient-to-r from-[#000071] via-[#003399] to-[#0055CC] py-[40px] sm:py-[60px] text-white")
+        .contain
+            div(class="max-w-[800px] mx-auto text-center")
+                span(class="inline-block bg-white/20 backdrop-blur-sm text-emerald-300 font-[600] text-[13px] px-[12px] py-[4px] rounded-full mb-[12px]")
+                    i(class="fa-solid fa-chart-line mr-[6px]")
+                    | Báo Cáo Thị Trường IT Việt Nam 2026
+                h1(class="font-[800] text-[26px] sm:text-[40px] leading-tight mb-[14px]")
+                    | Tra Cứu & So Sánh Mức Lương IT
+                p(class="text-white/80 text-[15px] sm:text-[18px] max-w-[650px] mx-auto")
+                    | Dữ liệu khảo sát độc quyền từ hàng ngàn vị trí tuyển dụng thực tế và tiêu chuẩn thị trường công nghệ Việt Nam.
+
+    //- Main Content
+    div(class="py-[30px] sm:py-[50px] bg-[#F4F5F7] min-h-[600px]")
+        .contain
+            //- Form tra cứu
+            div(class="bg-white rounded-[12px] p-[20px] sm:p-[28px] shadow-sm border border-gray-100 mb-[30px] -mt-[35px] relative z-10")
+                form(action="/salary" method="GET" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[16px] items-end")
+                    //- Cấp bậc
+                    div
+                        label(class="block text-[13px] font-[600] text-[#414042] mb-[6px]")
+                            i(class="fa-solid fa-layer-group text-[#0088FF] mr-[6px]")
+                            | Cấp bậc kinh nghiệm
+                        select(name="position" class="w-full border border-gray-300 rounded-[8px] py-[10px] px-[12px] text-[14px] font-[500] focus:border-[#0088FF] focus:outline-none bg-white")
+                            option(value="intern" selected=(query.position === 'intern')) Intern (Thực tập)
+                            option(value="fresher" selected=(query.position === 'fresher')) Fresher (Mới tốt nghiệp)
+                            option(value="junior" selected=(query.position === 'junior')) Junior (1 - 2 năm)
+                            option(value="middle" selected=(query.position === 'middle')) Middle (3 - 4 năm)
+                            option(value="senior" selected=(query.position === 'senior')) Senior (5+ năm)
+                            option(value="manager" selected=(query.position === 'manager')) Lead / Manager
+
+                    //- Kỹ năng
+                    div
+                        label(class="block text-[13px] font-[600] text-[#414042] mb-[6px]")
+                            i(class="fa-solid fa-code text-[#0088FF] mr-[6px]")
+                            | Kỹ năng / Công nghệ
+                        input(type="text" name="skill" value=(query.skill || "") placeholder="VD: ReactJS, Golang, Python..." class="w-full border border-gray-300 rounded-[8px] py-[10px] px-[12px] text-[14px] focus:border-[#0088FF] focus:outline-none")
+
+                    //- Khu vực
+                    div
+                        label(class="block text-[13px] font-[600] text-[#414042] mb-[6px]")
+                            i(class="fa-solid fa-location-dot text-[#0088FF] mr-[6px]")
+                            | Địa điểm làm việc
+                        select(name="city" class="w-full border border-gray-300 rounded-[8px] py-[10px] px-[12px] text-[14px] font-[500] focus:border-[#0088FF] focus:outline-none bg-white")
+                            option(value="") Toàn quốc
+                            option(value="ho-chi-minh" selected=(query.city === 'ho-chi-minh')) TP. Hồ Chí Minh
+                            option(value="ha-noi" selected=(query.city === 'ha-noi')) Hà Nội
+                            option(value="da-nang" selected=(query.city === 'da-nang')) Đà Nẵng
+                            option(value="khac" selected=(query.city === 'khac')) Khu vực khác
+
+                    //- Lương của bạn
+                    div
+                        label(class="block text-[13px] font-[600] text-[#414042] mb-[6px]")
+                            i(class="fa-solid fa-coins text-[#EA1E30] mr-[6px]")
+                            | Lương hiện tại (VNĐ/tháng)
+                        div(class="flex gap-[8px]")
+                            input(type="number" step="1000000" name="salary" value=(query.salary || "") placeholder="VD: 25000000" class="w-full border border-gray-300 rounded-[8px] py-[10px] px-[12px] text-[14px] focus:border-[#0088FF] focus:outline-none")
+                            button(type="submit" class="bg-[#0088FF] hover:bg-[#0070D2] text-white font-[600] text-[14px] px-[18px] py-[10px] rounded-[8px] transition cursor-pointer flex items-center justify-center whitespace-nowrap")
+                                i(class="fa-solid fa-magnifying-glass mr-[6px]")
+                                | Tra cứu
+
+                //- Quick Skills Tag
+                div(class="mt-[14px] pt-[12px] border-t border-gray-100 flex items-center gap-[8px] flex-wrap")
+                    span(class="text-[12px] text-gray-500 font-[500]") Gợi ý tìm nhanh:
+                    each sk in ['Golang', 'Rust', 'Python', 'ReactJS', 'NodeJS', 'DevOps', 'Flutter', 'Java']
+                        a(href=`/salary?position=${query.position || 'junior'}&skill=${sk.toLowerCase()}&city=${query.city || ''}` class="text-[12px] bg-gray-100 hover:bg-blue-50 hover:text-[#0088FF] text-gray-700 px-[10px] py-[3px] rounded-full transition") #{sk}
+
+            //- Kết quả Tra cứu Lương
+            div(class="grid grid-cols-1 lg:grid-cols-3 gap-[24px] mb-[30px]")
+                //- Cột trái: Thang lương chuẩn (2 Cột rộng)
+                div(class="lg:col-span-2 bg-white rounded-[12px] p-[24px] shadow-sm border border-gray-100")
+                    div(class="flex items-center justify-between pb-[16px] border-b border-gray-100 mb-[20px]")
+                        div
+                            h2(class="font-[700] text-[20px] text-[#121212]")
+                                | Thang Lương Vị Trí #{stats.position}
+                            p(class="text-[13px] text-gray-500 mt-[2px]")
+                                | Công nghệ: <span class="font-[600] text-[#0088FF]">#{stats.skill}</span> • Khu vực: <span class="font-[600] text-[#0088FF]">#{stats.city}</span>
+                        span(class="bg-blue-50 text-[#0088FF] font-[600] text-[12px] px-[10px] py-[4px] rounded-[6px]") Thị Trường 2026
+
+                    //- 3 Thẻ số liệu
+                    div(class="grid grid-cols-3 gap-[12px] text-center mb-[24px]")
+                        div(class="bg-gray-50 rounded-[10px] p-[16px] border border-gray-100")
+                            div(class="text-[12px] text-gray-500 font-[500] mb-[4px]") Mức khởi điểm (Min)
+                            div(class="font-[800] text-[18px] sm:text-[22px] text-gray-800")
+                                | #{((stats.salaryMin || 0) / 1000000).toFixed(1)} Tr
+                            div(class="text-[11px] text-gray-400 mt-[2px]") VNĐ / tháng
+
+                        div(class="bg-emerald-50 rounded-[10px] p-[16px] border border-emerald-100")
+                            div(class="text-[12px] text-emerald-700 font-[600] mb-[4px]") Mức trung vị (Median)
+                            div(class="font-[800] text-[20px] sm:text-[26px] text-emerald-600")
+                                | #{((stats.salaryMedian || 0) / 1000000).toFixed(1)} Tr
+                            div(class="text-[11px] text-emerald-600 mt-[2px]") Phổ biến nhất
+
+                        div(class="bg-purple-50 rounded-[10px] p-[16px] border border-purple-100")
+                            div(class="text-[12px] text-purple-700 font-[500] mb-[4px]") Mức cao nhất (Max)
+                            div(class="font-[800] text-[18px] sm:text-[22px] text-purple-700")
+                                | #{((stats.salaryMax || 0) / 1000000).toFixed(1)} Tr
+                            div(class="text-[11px] text-purple-400 mt-[2px]") Nhân sự xuất sắc
+
+                    //- Đánh giá phân vị nếu có nhập mức lương
+                    if evaluation
+                        div(class=`rounded-[10px] p-[18px] mb-[20px] border ${evaluation.bg} border-blue-200`)
+                            div(class="flex items-center justify-between mb-[8px]")
+                                div(class="flex items-center gap-[8px]")
+                                    i(class="fa-solid fa-trophy text-amber-500 text-[18px]")
+                                    span(class="font-[700] text-[15px] text-gray-800")
+                                        | Phân vị lương của bạn: 
+                                        span(class=`${evaluation.color}`) #{evaluation.percentile}%
+                                span(class="text-[13px] font-[600] text-gray-700") #{evaluation.amount.toLocaleString('vi-VN')} VNĐ
+
+                            //- Thanh phân vị trực quan
+                            div(class="w-full bg-gray-200 rounded-full h-[12px] overflow-hidden mb-[10px]")
+                                div(class="bg-gradient-to-r from-blue-500 to-emerald-500 h-full rounded-full transition-all duration-500" style=`width: ${evaluation.percentile}%`)
+
+                            p(class="text-[13px] text-gray-700 font-[500]")
+                                | 💡 <strong>Nhận xét:</strong> Mức lương của bạn đang cao hơn <strong>#{evaluation.percentile}%</strong> kỹ sư công nghệ cùng cấp bậc #{stats.position} trên thị trường. #{evaluation.rankLabel}.
+                    else
+                        div(class="bg-blue-50/60 rounded-[10px] p-[16px] text-center border border-blue-100")
+                            p(class="text-[13px] text-gray-600")
+                                i(class="fa-regular fa-lightbulb text-amber-500 mr-[6px]")
+                                | Nhập mức lương hiện tại của bạn vào ô tra cứu để xem phân vị so với thị trường và nhận lời khuyên nâng cao thu nhập!
+
+                    //- Bảng so sánh lương theo mọi cấp bậc
+                    div(class="mt-[24px]")
+                        h3(class="font-[700] text-[15px] text-[#121212] mb-[12px] flex items-center gap-[6px]")
+                            i(class="fa-solid fa-stairs text-[#0088FF]")
+                            | Lộ trình mức lương IT theo các cấp bậc
+                        div(class="overflow-x-auto")
+                            table(class="w-full text-left text-[13px]")
+                                thead(class="bg-gray-50 text-gray-600 font-[600] border-b border-gray-200")
+                                    tr
+                                        th(class="py-[10px] px-[12px]") Cấp bậc
+                                        th(class="py-[10px] px-[12px]") Khởi điểm
+                                        th(class="py-[10px] px-[12px]") Trung vị (Phổ biến)
+                                        th(class="py-[10px] px-[12px]") Cao nhất
+                                tbody(class="divide-y divide-gray-100")
+                                    tr(class=(query.position === 'intern' ? "bg-blue-50/70 font-[600]" : ""))
+                                        td(class="py-[10px] px-[12px]") Intern (Thực tập)
+                                        td(class="py-[10px] px-[12px] text-gray-600") 4 - 6 Tr
+                                        td(class="py-[10px] px-[12px] text-emerald-600 font-[600]") 7 Tr
+                                        td(class="py-[10px] px-[12px] text-gray-600") 10 Tr
+                                    tr(class=(query.position === 'fresher' ? "bg-blue-50/70 font-[600]" : ""))
+                                        td(class="py-[10px] px-[12px]") Fresher (&lt; 1 năm)
+                                        td(class="py-[10px] px-[12px] text-gray-600") 8 - 10 Tr
+                                        td(class="py-[10px] px-[12px] text-emerald-600 font-[600]") 13 Tr
+                                        td(class="py-[10px] px-[12px] text-gray-600") 18 Tr
+                                    tr(class=(query.position === 'junior' ? "bg-blue-50/70 font-[600]" : ""))
+                                        td(class="py-[10px] px-[12px]") Junior (1 - 2 năm)
+                                        td(class="py-[10px] px-[12px] text-gray-600") 14 - 17 Tr
+                                        td(class="py-[10px] px-[12px] text-emerald-600 font-[600]") 20 Tr
+                                        td(class="py-[10px] px-[12px] text-gray-600") 28 Tr
+                                    tr(class=(query.position === 'middle' ? "bg-blue-50/70 font-[600]" : ""))
+                                        td(class="py-[10px] px-[12px]") Middle (3 - 4 năm)
+                                        td(class="py-[10px] px-[12px] text-gray-600") 22 - 28 Tr
+                                        td(class="py-[10px] px-[12px] text-emerald-600 font-[600]") 35 Tr
+                                        td(class="py-[10px] px-[12px] text-gray-600") 48 Tr
+                                    tr(class=(query.position === 'senior' ? "bg-blue-50/70 font-[600]" : ""))
+                                        td(class="py-[10px] px-[12px]") Senior (5+ năm)
+                                        td(class="py-[10px] px-[12px] text-gray-600") 38 - 45 Tr
+                                        td(class="py-[10px] px-[12px] text-emerald-600 font-[600]") 55 Tr
+                                        td(class="py-[10px] px-[12px] text-gray-600") 80 Tr
+                                    tr(class=(query.position === 'manager' ? "bg-blue-50/70 font-[600]" : ""))
+                                        td(class="py-[10px] px-[12px]") Lead / Architect / Manager
+                                        td(class="py-[10px] px-[12px] text-gray-600") 55 - 70 Tr
+                                        td(class="py-[10px] px-[12px] text-emerald-600 font-[600]") 80 Tr
+                                        td(class="py-[10px] px-[12px] text-gray-600") 130+ Tr
+
+                //- Cột phải: Nhận thông báo việc làm + Lời khuyên
+                div(class="space-y-[20px]")
+                    //- Hộp đăng ký nhận việc làm tương ứng mức lương
+                    div(class="bg-gradient-to-br from-[#000071] to-[#0055CC] rounded-[12px] p-[24px] text-white shadow-md")
+                        div(class="flex items-center gap-[8px] mb-[12px]")
+                            i(class="fa-solid fa-bell text-[#9FDB7C] text-[20px]")
+                            h3(class="font-[700] text-[17px]") Nhận Việc Làm Mới Qua Email
+                        p(class="text-white/80 text-[13px] mb-[16px] leading-relaxed")
+                            | Nhận ngay thông báo khi có vị trí <strong class="text-white">#{stats.position}</strong> với mức lương tương đương hoặc cao hơn xuất hiện.
+
+                        form(id="salaryJobAlertForm" action="/job-alerts" method="POST" class="space-y-[10px]")
+                            input(type="hidden" name="_csrf" value=csrfToken)
+                            input(type="hidden" name="position" value=(query.position || 'junior'))
+                            input(type="hidden" name="keyword" value=(query.skill || ''))
+                            input(type="hidden" name="city" value=(query.city || ''))
+                            input(type="email" name="email" value=(currentUser ? currentUser.email : '') required placeholder="Nhập email của bạn..." class="w-full bg-white text-gray-800 rounded-[8px] py-[10px] px-[12px] text-[13px] focus:outline-none")
+                            button(type="submit" class="w-full bg-[#EA1E30] hover:bg-[#c41424] text-white font-[700] text-[13px] py-[10px] px-[14px] rounded-[8px] transition cursor-pointer flex items-center justify-center gap-[6px]")
+                                i(class="fa-solid fa-paper-plane")
+                                | Đăng Ký Thông Báo Ngay
+
+                    //- Lời khuyên tối ưu thu nhập
+                    div(class="bg-white rounded-[12px] p-[20px] shadow-sm border border-gray-100")
+                        h3(class="font-[700] text-[15px] text-[#121212] mb-[12px] flex items-center gap-[6px]")
+                            i(class="fa-solid fa-lightbulb text-amber-500")
+                            | Bí Quyết Đạt Mức Lương Đỉnh
+                        ul(class="space-y-[10px] text-[13px] text-gray-600")
+                            li(class="flex items-start gap-[8px]")
+                                i(class="fa-solid fa-check text-emerald-500 mt-[3px] text-[11px]")
+                                span Thành thạo tiếng Anh giao tiếp giúp tăng <strong>30% - 50%</strong> mức lương tại các công ty Product/Outsource toàn cầu.
+                            li(class="flex items-start gap-[8px]")
+                                i(class="fa-solid fa-check text-emerald-500 mt-[3px] text-[11px]")
+                                span Kỹ năng <strong>Cloud & DevOps (AWS/GCP/Docker/K8s)</strong> luôn được nhà tuyển dụng trả premium rate.
+                            li(class="flex items-start gap-[8px]")
+                                i(class="fa-solid fa-check text-emerald-500 mt-[3px] text-[11px]")
+                                span Tạo <a href="/candidate/it-profile" class="text-[#0088FF] font-[600] hover:underline">Hồ sơ IT Profile</a> trực tuyến chuẩn chuyên gia để gây ấn tượng mạnh mẽ với NTD.
+
+            //- Danh sách việc làm phù hợp với tiêu chí tra cứu
+            if stats.sampleJobs && stats.sampleJobs.length > 0
+                div(class="mt-[35px]")
+                    div(class="flex items-center justify-between mb-[20px]")
+                        h2(class="font-[700] text-[20px] sm:text-[24px] text-[#121212] flex items-center gap-[8px]")
+                            i(class="fa-solid fa-briefcase text-[#0088FF]")
+                            | Việc Làm #{stats.position} Mức Lương Hấp Dẫn Đang Tuyển
+                        a(href=`/search?position=${query.position || 'junior'}&keyword=${encodeURIComponent(query.skill || '')}` class="text-[#0088FF] hover:underline text-[14px] font-[600]") Xem tất cả &rarr;
+
+                    div(class="grid grid-cols-1 md:grid-cols-2 gap-[16px]")
+                        each job in stats.sampleJobs
+                            +job-card(job)
+            else
+                div(class="bg-white rounded-[12px] p-[30px] text-center shadow-sm border border-gray-100")
+                    p(class="text-gray-500 text-[14px]") Chưa có công việc đang mở trực tiếp cho bộ lọc này.
+                    a(href="/search" class="mt-[10px] inline-block bg-[#0088FF] text-white text-[13px] font-[600] py-[8px] px-[16px] rounded-[6px]") Khám phá tất cả việc làm IT

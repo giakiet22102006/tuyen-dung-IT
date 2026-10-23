@@ -2,6 +2,9 @@
 const express = require("express");
 const router = express.Router();
 const clientController = require("../controllers/client/client.controller");
+const salaryController = require("../controllers/client/salary.controller");
+const jobAlertController = require("../controllers/client/jobAlert.controller");
+const candidateCompanyFollow = require("../controllers/candidate/candidateCompanyFollow.controller");
 const asyncHandler = require("../utils/asyncHandler");
 const { Candidate, Employer, Admin } = require("../models");
 const { signUserToken, signAdminToken } = require("../services/auth.service");
@@ -16,10 +19,24 @@ router.get("/api/search/suggestions", asyncHandler(clientController.getSearchSug
 router.get("/companies", asyncHandler(clientController.renderCompanyList));
 router.get("/companies/:slug", asyncHandler(clientController.renderCompanyDetails));
 router.post(
+  "/companies/:id/follow",
+  requireCandidate,
+  doubleCsrfProtection,
+  asyncHandler(candidateCompanyFollow.postToggleFollowCompany)
+);
+router.post(
   "/companies/:slug/reviews",
   doubleCsrfProtection,
   asyncHandler(clientController.postCompanyReview)
 );
+
+// Tra cứu lương IT (Salary Benchmark & Calculator)
+router.get("/salary", asyncHandler(salaryController.renderSalaryBenchmark));
+router.get("/api/salary/calculate", asyncHandler(salaryController.getSalaryApi));
+
+// Đăng ký nhận thông báo việc làm mới (Job Alert)
+router.post("/job-alerts", doubleCsrfProtection, asyncHandler(jobAlertController.postSubscribeJobAlert));
+router.get("/job-alerts/unsubscribe/:token", asyncHandler(jobAlertController.getUnsubscribeJobAlert));
 router.post(
   "/api/feedback",
   asyncHandler(clientController.postSubmitFeedback)

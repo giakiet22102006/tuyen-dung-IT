@@ -10,6 +10,8 @@ const Otp = require("./otp.model");
 const Review = require("./review.model");
 const Feedback = require("./feedback.model");
 const SavedJob = require("./savedJob.model");
+const JobAlert = require("./jobAlert.model");
+const CompanyFollow = require("./companyFollow.model");
 
 module.exports = {
   Candidate,
@@ -23,4 +25,6 @@ module.exports = {
   Review,
   Feedback,
   SavedJob,
+  JobAlert,
+  CompanyFollow,
 };

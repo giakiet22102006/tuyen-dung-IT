@@ -4,6 +4,7 @@ const { CITIES, POSITIONS, WORKING_FORMS, BENEFITS, EMPLOYER_STATUS, JOB_MODERAT
 const { uploadLogo, uploadJobImage, deleteFile } = require("../../services/storage.service");
 const { clearStatsCache } = require("../../services/job.service");
 const { clearMenuCache } = require("../../services/menu.service");
+const { notifyMatchingSubscribers } = require("../../services/jobAlert.service");
 const sanitizeHtml = require("../../utils/sanitizeHtml");
 const slugify = require("../../utils/slugify");
 const paginate = require("../../utils/pagination");
@@ -224,7 +225,7 @@ const postCreateJob = async (req, res) => {
   const slug = slugify(title, true);
   const sanitizedDesc = sanitizeHtml(description);
 
-  await Job.create({
+  const newJob = await Job.create({
     employerId: req.user._id,
     title: title.trim(),
     slug,
@@ -241,6 +242,13 @@ const postCreateJob = async (req, res) => {
     employerActive: req.user.status === EMPLOYER_STATUS.ACTIVE,
     moderation: JOB_MODERATION.VISIBLE,
   });
+
+  // Gửi thông báo Job Alert cho các ứng viên đã đăng ký tiêu chí phù hợp
+  if (req.user.status === EMPLOYER_STATUS.ACTIVE) {
+    notifyMatchingSubscribers(newJob, req.user).catch((err) =>
+      console.error("Lỗi gửi Job Alert:", err.message)
+    );
+  }
 
   clearStatsCache();
   clearMenuCache();

@@ -20,6 +20,12 @@ block main
                                     span(class="text-amber-500 text-[13px]") <i class="fa-solid fa-star"></i>
                                     span(class="font-[700] text-[13px] text-amber-900") #{avgRating} / 5.0
                                     span(class="text-[12px] text-amber-700") (#{totalReviews} đánh giá)
+
+                            //- Nút Theo Dõi Công Ty
+                            button(id="followCompanyBtn" type="button" class=`sm:ml-auto inline-flex items-center gap-[8px] px-[16px] py-[8px] rounded-[20px] font-[600] text-[13px] sm:text-[14px] transition cursor-pointer border shadow-xs ${isFollowed ? 'bg-red-50 border-red-300 text-red-600' : 'bg-white border-gray-300 text-gray-700 hover:border-red-400 hover:text-red-500'}` data-id=company._id data-is-followed=(isFollowed ? 'true' : 'false') data-logged-in=(currentUser && role === 'candidate' ? 'true' : 'false'))
+                                i(id="followIcon" class=`fa-solid fa-heart ${isFollowed ? 'text-red-500' : 'text-gray-400'}`)
+                                span(id="followBtnText") #{isFollowed ? 'Đang theo dõi' : 'Theo dõi'}
+                                span(class="bg-gray-100 text-gray-600 text-[12px] font-bold px-[7px] py-[1px] rounded-full ml-[2px]" id="followersCountBadge") #{followersCount || 0}
                         div(class="flex flex-wrap items-center gap-x-5 gap-y-2 font-[400] text-[13px] sm:text-[14px] text-gray-700") 
                             div(class="inline-flex items-center gap-1.5")
                                 i(class="fa-solid fa-location-dot text-[14px] text-[#0088FF]")
@@ -206,5 +212,65 @@ block main
                             div(class="flex justify-center gap-[12px]")
                                 a(href="/auth/candidate/login?redirect=/companies/" + company.slug class="bg-[#0088FF] text-white px-[16px] py-[8px] rounded-[6px] text-[13px] font-[600]") Đăng nhập Ứng viên
                                 a(href="/auth/employer/login?redirect=/companies/" + company.slug class="bg-[#000071] text-white px-[16px] py-[8px] rounded-[6px] text-[13px] font-[600]") Đăng nhập Doanh nghiệp
+
+    //- Script xử lý Theo Dõi Công Ty
+    script.
+        document.addEventListener('DOMContentLoaded', () => {
+            const followBtn = document.getElementById('followCompanyBtn');
+            if (!followBtn) return;
+
+            followBtn.addEventListener('click', async () => {
+                const isLoggedIn = followBtn.getAttribute('data-logged-in') === 'true';
+                if (!isLoggedIn) {
+                    if (confirm('Vui lòng đăng nhập với tài khoản Ứng viên để theo dõi công ty này. Chuyển đến trang đăng nhập?')) {
+                        window.location.href = '/candidate/login?redirect=' + encodeURIComponent(window.location.pathname);
+                    }
+                    return;
+                }
+
+                const companyId = followBtn.getAttribute('data-id');
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+                try {
+                    followBtn.disabled = true;
+                    const res = await fetch(`/companies/${companyId}/follow`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'x-csrf-token': csrfToken
+                        }
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        const icon = document.getElementById('followIcon');
+                        const text = document.getElementById('followBtnText');
+                        const badge = document.getElementById('followersCountBadge');
+
+                        if (data.followed) {
+                            followBtn.classList.remove('bg-white', 'border-gray-300', 'text-gray-700');
+                            followBtn.classList.add('bg-red-50', 'border-red-300', 'text-red-600');
+                            icon.classList.remove('text-gray-400');
+                            icon.classList.add('text-red-500');
+                            text.textContent = 'Đang theo dõi';
+                        } else {
+                            followBtn.classList.add('bg-white', 'border-gray-300', 'text-gray-700');
+                            followBtn.classList.remove('bg-red-50', 'border-red-300', 'text-red-600');
+                            icon.classList.add('text-gray-400');
+                            icon.classList.remove('text-red-500');
+                            text.textContent = 'Theo dõi';
+                        }
+                        if (badge && data.followersCount !== undefined) {
+                            badge.textContent = data.followersCount;
+                        }
+                    } else {
+                        alert(data.message || 'Lỗi thao tác');
+                    }
+                } catch (err) {
+                    alert('Lỗi kết nối máy chủ');
+                } finally {
+                    followBtn.disabled = false;
+                }
+            });
+        });
 
     //- Hết Chi tiết công ty

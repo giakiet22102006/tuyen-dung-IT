@@ -9,7 +9,7 @@ const {
 } = require("../../services/job.service");
 const { getAutocompleteSuggestions } = require("../../services/fuzzySearch.service");
 const { CITIES, POSITIONS, WORKING_FORMS, BENEFITS, JOB_MODERATION, EMPLOYER_STATUS } = require("../../config/constants");
-const { Skill, Job, Application, Review, Employer, Feedback, Candidate } = require("../../models");
+const { Skill, Job, Application, Review, Employer, Feedback, Candidate, CompanyFollow } = require("../../models");
 const { uploadCV, saveCvBuffer } = require("../../services/storage.service");
 const { generateItProfilePdf } = require("../../services/pdfGenerator.service");
 
@@ -131,6 +131,13 @@ const renderCompanyDetails = async (req, res) => {
     if (ratingCounts[r.rating] !== undefined) ratingCounts[r.rating]++;
   });
 
+  // Số lượng ứng viên theo dõi công ty và trạng thái của ứng viên hiện tại
+  const followersCount = await CompanyFollow.countDocuments({ employerId: data.company._id });
+  let isFollowed = false;
+  if (req.user && req.role === "candidate") {
+    isFollowed = !!(await CompanyFollow.exists({ candidateId: req.user._id, employerId: data.company._id }));
+  }
+
   res.render("pages/company-details", {
     title: `${data.company.companyName} - VN.ITJobs`,
     company: data.company,
@@ -139,6 +146,8 @@ const renderCompanyDetails = async (req, res) => {
     totalReviews,
     avgRating,
     ratingCounts,
+    followersCount,
+    isFollowed,
   });
 };
 

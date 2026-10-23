@@ -1,0 +1,97 @@
+extends ../layouts/default.pug
+
+block title
+    title #{title || "Công Ty Đang Theo Dõi | VN.ITJobs"}
+
+block main
+    div(class="py-[35px] sm:py-[50px] bg-[#F4F5F7] min-h-[600px]")
+        .contain
+            div(class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-[16px] mb-[25px]")
+                div
+                    h1(class="font-[800] text-[24px] sm:text-[30px] text-[#121212] flex items-center gap-[10px]")
+                        i(class="fa-solid fa-heart text-red-500")
+                        | Công Ty Đang Theo Dõi
+                    p(class="text-[14px] text-gray-500 mt-[4px]")
+                        | Cập nhật nhanh chóng tin tuyển dụng và thông tin mới nhất từ các nhà tuyển dụng hàng đầu.
+                a(href="/companies" class="bg-[#0088FF] hover:bg-[#0070D2] text-white font-[600] text-[13px] sm:text-[14px] py-[9px] px-[18px] rounded-[8px] transition flex items-center gap-[6px]")
+                    i(class="fa-solid fa-magnifying-glass")
+                    | Khám phá thêm công ty
+
+            if companies && companies.length > 0
+                div(class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[20px]")
+                    each company in companies
+                        div(class="bg-white rounded-[12px] p-[20px] shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition" id=`company-card-${company._id}`)
+                            div
+                                div(class="flex items-center gap-[14px] mb-[14px]")
+                                    img(src=(company.logo && company.logo.url) ? company.logo.url : "/assets/images/demo/demo4.png" alt=company.companyName class="w-[60px] h-[60px] object-contain rounded-[8px] border border-gray-200 p-[4px] bg-white")
+                                    div(class="min-w-0 flex-1")
+                                        h2(class="font-[700] text-[16px] text-gray-900 leading-snug truncate hover:text-[#0088FF]")
+                                            a(href=`/companies/${company.slug}`) #{company.companyName}
+                                        div(class="text-[12px] text-gray-500 mt-[2px] flex items-center gap-[4px]")
+                                            i(class="fa-solid fa-location-dot text-gray-400 text-[11px]")
+                                            span #{company.address || labels.getCityLabel(company.city)}
+
+                                div(class="space-y-[6px] text-[13px] text-gray-600 mb-[16px]")
+                                    div(class="flex items-center justify-between")
+                                        span(class="text-gray-400") Mô hình:
+                                        span(class="font-[500] text-gray-800") #{company.companyModel || "Sản phẩm / Dịch vụ"}
+                                    div(class="flex items-center justify-between")
+                                        span(class="text-gray-400") Quy mô:
+                                        span(class="font-[500] text-gray-800") #{company.companySize || "100 - 500"}
+                                    div(class="flex items-center justify-between")
+                                        span(class="text-gray-400") Đang tuyển:
+                                        span(class="font-[700] text-[#0088FF] bg-blue-50 px-[8px] py-[1px] rounded-full") #{company.activeJobsCount} việc làm
+
+                            div(class="pt-[14px] border-t border-gray-100 flex items-center justify-between gap-[8px]")
+                                a(href=`/companies/${company.slug}` class="text-[13px] font-[600] text-[#0088FF] hover:underline flex items-center gap-[4px]")
+                                    | Xem chi tiết
+                                    i(class="fa-solid fa-arrow-right text-[11px]")
+
+                                button(type="button" class="unfollow-btn text-[12px] text-gray-500 hover:text-red-500 font-[500] flex items-center gap-[4px] py-[4px] px-[8px] rounded hover:bg-red-50 transition cursor-pointer" data-id=company._id data-name=company.companyName)
+                                    i(class="fa-solid fa-user-minus text-[11px]")
+                                    | Bỏ theo dõi
+            else
+                div(class="bg-white rounded-[12px] p-[50px] text-center shadow-sm border border-gray-100")
+                    div(class="w-[70px] h-[70px] rounded-full bg-red-50 text-red-400 flex items-center justify-center mx-auto mb-[18px] text-[32px]")
+                        i(class="fa-regular fa-heart")
+                    h2(class="font-[700] text-[20px] text-gray-800 mb-[8px]") Bạn chưa theo dõi công ty nào
+                    p(class="text-[14px] text-gray-500 max-w-[480px] mx-auto mb-[22px]")
+                        | Nhấn "Theo dõi" tại trang thông tin của các công ty bạn yêu thích để luôn cập nhật sớm nhất các việc làm IT mới đăng tuyển.
+                    a(href="/companies" class="bg-[#0088FF] hover:bg-[#0070D2] text-white font-[600] text-[14px] py-[10px] px-[22px] rounded-[8px] transition inline-block")
+                        i(class="fa-solid fa-building mr-[6px]")
+                        | Khám phá danh sách công ty IT
+
+    //- Script xử lý bỏ theo dõi AJAX
+    script.
+        document.addEventListener('DOMContentLoaded', () => {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            document.querySelectorAll('.unfollow-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const companyId = btn.getAttribute('data-id');
+                    const companyName = btn.getAttribute('data-name');
+                    if (!confirm(`Bạn có chắc muốn bỏ theo dõi ${companyName}?`)) return;
+
+                    try {
+                        const res = await fetch(`/companies/${companyId}/follow`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'x-csrf-token': csrfToken
+                            }
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            const card = document.getElementById(`company-card-${companyId}`);
+                            if (card) {
+                                card.style.opacity = '0';
+                                setTimeout(() => card.remove(), 300);
+                            }
+                        } else {
+                            alert(data.message || 'Lỗi xử lý');
+                        }
+                    } catch (err) {
+                        alert('Không thể kết nối đến máy chủ.');
+                    }
+                });
+            });
+        });
