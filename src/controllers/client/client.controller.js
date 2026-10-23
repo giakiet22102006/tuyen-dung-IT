@@ -14,9 +14,10 @@ const { uploadCV, saveCvBuffer } = require("../../services/storage.service");
 const { generateItProfilePdf } = require("../../services/pdfGenerator.service");
 
 const renderIndex = async (req, res) => {
-  const [totalPublicJobs, topEmployers] = await Promise.all([
+  const [totalPublicJobs, topEmployers, marqueeEmployers] = await Promise.all([
     getTotalPublicJobsCount(),
     getTopEmployers(9),
+    getTopEmployers(16),
   ]);
 
   const topSkills = (res.locals.menuData && res.locals.menuData.skills) || [];
@@ -25,6 +26,7 @@ const renderIndex = async (req, res) => {
     title: "Trang chủ - VN.ITJobs",
     totalPublicJobs,
     topEmployers,
+    marqueeEmployers,
     topSkills,
     cities: CITIES,
     selectedCity: "",

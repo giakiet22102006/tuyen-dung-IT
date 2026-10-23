@@ -127,26 +127,39 @@ div(class="py-[20px] sm:py-[30px] bg-[#000055]")
                     div(class="lg:col-span-5")
                         div(class="relative max-w-[340px] mx-auto")
                             div(class="bg-white/10 backdrop-blur-md border border-white/20 p-[20px] rounded-[16px] shadow-2xl animate-float space-y-[10px]")
-                                div(class="flex items-center gap-[12px] bg-white/10 p-[10px] rounded-[10px]")
-                                    div(class="w-[40px] h-[40px] rounded-[8px] bg-[#F26F21] text-white flex items-center justify-center font-[800] text-[16px] shrink-0") FPT
-                                    div(class="flex-1 min-w-0")
-                                        div(class="font-[700] text-[13px] text-white truncate") FPT Software
-                                        div(class="text-[11px] text-white/70") 50+ vị trí đang tuyển
-                                    span(class="text-[11px] bg-emerald-500/30 text-emerald-300 font-[600] px-[6px] py-[1px] rounded") Hot
-                                
-                                div(class="flex items-center gap-[12px] bg-white/10 p-[10px] rounded-[10px]")
-                                    div(class="w-[40px] h-[40px] rounded-[8px] bg-[#A50064] text-white flex items-center justify-center font-[800] text-[16px] shrink-0") MoMo
-                                    div(class="flex-1 min-w-0")
-                                        div(class="font-[700] text-[13px] text-white truncate") MoMo Fintech
-                                        div(class="text-[11px] text-white/70") 30+ vị trí đang tuyển
-                                    span(class="text-[11px] bg-emerald-500/30 text-emerald-300 font-[600] px-[6px] py-[1px] rounded") Hot
+                                if topEmployers && topEmployers.length >= 3
+                                    each emp in topEmployers.slice(0, 3)
+                                        a(href=`/companies/${emp.slug}` class="flex items-center gap-[12px] bg-white/10 hover:bg-white/20 p-[10px] rounded-[10px] transition-colors block text-white")
+                                            div(class="w-[40px] h-[40px] rounded-[8px] bg-white p-[3px] flex items-center justify-center shrink-0 overflow-hidden shadow-sm")
+                                                if emp.logo && emp.logo.url
+                                                    img(src=emp.logo.url alt=emp.companyName class="w-full h-full object-contain" onerror="this.onerror=null; this.src='/assets/images/demo/image1.png';")
+                                                else
+                                                    div(class="w-full h-full rounded-[6px] bg-gradient-to-br from-[#0088FF] to-[#0055B3] text-white flex items-center justify-center font-[800] text-[14px]") #{emp.companyName ? emp.companyName.charAt(0).toUpperCase() : 'IT'}
+                                            div(class="flex-1 min-w-0")
+                                                div(class="font-[700] text-[13px] text-white truncate") #{emp.companyName}
+                                                div(class="text-[11px] text-white/70 truncate") #{emp.jobCount > 0 ? (emp.jobCount + ' vị trí đang tuyển') : (emp.companyModel || (labels ? labels.getCityLabel(emp.city) : emp.city) || 'Đang mở tuyển')}
+                                            span(class="text-[11px] bg-emerald-500/30 text-emerald-300 font-[600] px-[6px] py-[1px] rounded") Hot
+                                else
+                                    div(class="flex items-center gap-[12px] bg-white/10 p-[10px] rounded-[10px]")
+                                        div(class="w-[40px] h-[40px] rounded-[8px] bg-[#F26F21] text-white flex items-center justify-center font-[800] text-[16px] shrink-0") FPT
+                                        div(class="flex-1 min-w-0")
+                                            div(class="font-[700] text-[13px] text-white truncate") FPT Software
+                                            div(class="text-[11px] text-white/70") 50+ vị trí đang tuyển
+                                        span(class="text-[11px] bg-emerald-500/30 text-emerald-300 font-[600] px-[6px] py-[1px] rounded") Hot
+                                    
+                                    div(class="flex items-center gap-[12px] bg-white/10 p-[10px] rounded-[10px]")
+                                        div(class="w-[40px] h-[40px] rounded-[8px] bg-[#A50064] text-white flex items-center justify-center font-[800] text-[16px] shrink-0") MoMo
+                                        div(class="flex-1 min-w-0")
+                                            div(class="font-[700] text-[13px] text-white truncate") MoMo Fintech
+                                            div(class="text-[11px] text-white/70") 30+ vị trí đang tuyển
+                                        span(class="text-[11px] bg-emerald-500/30 text-emerald-300 font-[600] px-[6px] py-[1px] rounded") Hot
 
-                                div(class="flex items-center gap-[12px] bg-white/10 p-[10px] rounded-[10px]")
-                                    div(class="w-[40px] h-[40px] rounded-[8px] bg-[#ED1C24] text-white flex items-center justify-center font-[800] text-[16px] shrink-0") TCB
-                                    div(class="flex-1 min-w-0")
-                                        div(class="font-[700] text-[13px] text-white truncate") Techcombank
-                                        div(class="text-[11px] text-white/70") 40+ vị trí Cloud / AI
-                                    span(class="text-[11px] bg-emerald-500/30 text-emerald-300 font-[600] px-[6px] py-[1px] rounded") Hot
+                                    div(class="flex items-center gap-[12px] bg-white/10 p-[10px] rounded-[10px]")
+                                        div(class="w-[40px] h-[40px] rounded-[8px] bg-[#ED1C24] text-white flex items-center justify-center font-[800] text-[16px] shrink-0") TCB
+                                        div(class="flex-1 min-w-0")
+                                            div(class="font-[700] text-[13px] text-white truncate") Techcombank
+                                            div(class="text-[11px] text-white/70") 40+ vị trí Cloud / AI
+                                        span(class="text-[11px] bg-emerald-500/30 text-emerald-300 font-[600] px-[6px] py-[1px] rounded") Hot
 
             //- Nút chuyển Slide Trước / Sau
             button(type="button" id="carouselPrevBtn" class="absolute left-[12px] top-1/2 -translate-y-1/2 w-[36px] sm:w-[42px] h-[36px] sm:h-[42px] rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-md text-white flex items-center justify-center border border-white/20 transition-all cursor-pointer opacity-80 hover:opacity-100 z-20 shadow-md" aria-label="Slide trước")

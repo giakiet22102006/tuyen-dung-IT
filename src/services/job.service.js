@@ -65,7 +65,7 @@ async function getTopEmployers(limit = 9) {
     status: EMPLOYER_STATUS.ACTIVE,
     deletedAt: null,
   })
-    .select("companyName slug logo city")
+    .select("companyName slug logo city companyModel companySize")
     .lean();
 
   // Sắp xếp lại theo thứ tự số lượng job giảm dần
@@ -85,7 +85,7 @@ async function getTopEmployers(limit = 9) {
       deletedAt: null,
     })
       .limit(limit - result.length)
-      .select("companyName slug logo city")
+      .select("companyName slug logo city companyModel companySize")
       .lean();
 
     fillerEmployers.forEach((emp) => {
