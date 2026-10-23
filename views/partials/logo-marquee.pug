@@ -1,0 +1,36 @@
+//- views/partials/logo-marquee.pug
+div(class="bg-[#F8FAFC] py-[24px] sm:py-[32px] border-y border-[#E2E8F0] overflow-hidden")
+    div(class="contain mb-[14px] text-center")
+        div(class="inline-flex items-center gap-[8px] text-[12px] sm:text-[13px] font-[700] uppercase tracking-wider text-[#64748B]")
+            <i class="fa-solid fa-handshake text-[#0088FF]"></i>
+            span Đối tác Công nghệ & Nhà tuyển dụng hàng đầu
+    
+    //- Marquee Slider Wrapper
+    div(class="marquee-container relative w-full overflow-hidden")
+        //- Left & Right Gradient Shadows for seamless fade effect
+        div(class="pointer-events-none absolute left-0 top-0 bottom-0 w-[40px] sm:w-[100px] bg-gradient-to-r from-[#F8FAFC] to-transparent z-10")
+        div(class="pointer-events-none absolute right-0 top-0 bottom-0 w-[40px] sm:w-[100px] bg-gradient-to-l from-[#F8FAFC] to-transparent z-10")
+
+        //- Continuous Marquee Track (Double tracks for infinite loop)
+        div(class="animate-marquee flex gap-[16px] sm:gap-[24px] items-center w-max py-[6px]")
+            //- Track 1
+            each partner in [ {name: 'FPT Software', domain: 'Cloud & AI', color: '#F26F21', tag: 'Outsourcing', icon: 'fa-microchip'}, {name: 'Techcombank', domain: 'Digital Banking', color: '#ED1C24', tag: 'FinTech', icon: 'fa-building-columns'}, {name: 'MoMo', domain: 'Fintech Unicorn', color: '#A50064', tag: 'FinTech', icon: 'fa-wallet'}, {name: 'VNG Corporation', domain: 'Gaming & Cloud', color: '#FF6600', tag: 'Unicorn', icon: 'fa-gamepad'}, {name: 'Viettel Telecom', domain: 'Cybersecurity & 5G', color: '#EE0033', tag: 'Telecom', icon: 'fa-shield-halved'}, {name: 'Shopee Sea', domain: 'High Scale & Ecom', color: '#EE4D2D', tag: 'E-Commerce', icon: 'fa-cart-shopping'}, {name: 'VinAI / VinGroup', domain: 'Generative AI', color: '#105652', tag: 'AI & Data', icon: 'fa-brain'}, {name: 'MB Bank', domain: 'Fintech Platform', color: '#002B7F', tag: 'Digital Bank', icon: 'fa-landmark'}, {name: 'ZaloPay', domain: 'Payment Gateway', color: '#0068FF', tag: 'FinTech', icon: 'fa-credit-card'}, {name: 'One Mount', domain: 'Retail & PropTech', color: '#0A4D68', tag: 'Ecosystem', icon: 'fa-network-wired'} ]
+                a(href="/companies" class="partner-marquee-item group inline-flex items-center gap-[12px] bg-white border border-[#E2E8F0] hover:border-[#0088FF] hover:shadow-md px-[16px] sm:px-[20px] py-[10px] rounded-[12px] transition-all cursor-pointer shrink-0")
+                    div(class="w-[36px] h-[36px] rounded-[8px] flex items-center justify-center text-white text-[14px] font-[800] shadow-sm shrink-0" style=`background-color: ${partner.color};`)
+                        <i class=`fa-solid ${partner.icon}`></i>
+                    div(class="text-left")
+                        div(class="font-[700] text-[13.5px] sm:text-[14.5px] text-[#1E293B] group-hover:text-[#0088FF] transition-colors leading-tight") #{partner.name}
+                        div(class="flex items-center gap-[6px] mt-[2px]")
+                            span(class="text-[11px] text-[#64748B]") #{partner.domain}
+                            span(class="text-[9px] font-[700] uppercase tracking-wider bg-[#F1F5F9] text-[#475569] px-[5px] py-[1px] rounded") #{partner.tag}
+
+            //- Track 2 (Clone for seamless endless scroll)
+            each partner in [ {name: 'FPT Software', domain: 'Cloud & AI', color: '#F26F21', tag: 'Outsourcing', icon: 'fa-microchip'}, {name: 'Techcombank', domain: 'Digital Banking', color: '#ED1C24', tag: 'FinTech', icon: 'fa-building-columns'}, {name: 'MoMo', domain: 'Fintech Unicorn', color: '#A50064', tag: 'FinTech', icon: 'fa-wallet'}, {name: 'VNG Corporation', domain: 'Gaming & Cloud', color: '#FF6600', tag: 'Unicorn', icon: 'fa-gamepad'}, {name: 'Viettel Telecom', domain: 'Cybersecurity & 5G', color: '#EE0033', tag: 'Telecom', icon: 'fa-shield-halved'}, {name: 'Shopee Sea', domain: 'High Scale & Ecom', color: '#EE4D2D', tag: 'E-Commerce', icon: 'fa-cart-shopping'}, {name: 'VinAI / VinGroup', domain: 'Generative AI', color: '#105652', tag: 'AI & Data', icon: 'fa-brain'}, {name: 'MB Bank', domain: 'Fintech Platform', color: '#002B7F', tag: 'Digital Bank', icon: 'fa-landmark'}, {name: 'ZaloPay', domain: 'Payment Gateway', color: '#0068FF', tag: 'FinTech', icon: 'fa-credit-card'}, {name: 'One Mount', domain: 'Retail & PropTech', color: '#0A4D68', tag: 'Ecosystem', icon: 'fa-network-wired'} ]
+                a(href="/companies" class="partner-marquee-item group inline-flex items-center gap-[12px] bg-white border border-[#E2E8F0] hover:border-[#0088FF] hover:shadow-md px-[16px] sm:px-[20px] py-[10px] rounded-[12px] transition-all cursor-pointer shrink-0")
+                    div(class="w-[36px] h-[36px] rounded-[8px] flex items-center justify-center text-white text-[14px] font-[800] shadow-sm shrink-0" style=`background-color: ${partner.color};`)
+                        <i class=`fa-solid ${partner.icon}`></i>
+                    div(class="text-left")
+                        div(class="font-[700] text-[13.5px] sm:text-[14.5px] text-[#1E293B] group-hover:text-[#0088FF] transition-colors leading-tight") #{partner.name}
+                        div(class="flex items-center gap-[6px] mt-[2px]")
+                            span(class="text-[11px] text-[#64748B]") #{partner.domain}
+                            span(class="text-[9px] font-[700] uppercase tracking-wider bg-[#F1F5F9] text-[#475569] px-[5px] py-[1px] rounded") #{partner.tag}

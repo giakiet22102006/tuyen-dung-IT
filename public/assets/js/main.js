@@ -237,4 +237,129 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
+
+  // 6. Interactive Hero Feature Carousel (Phương án A)
+  const heroCarousel = document.getElementById("heroCarousel");
+  if (heroCarousel) {
+    const slides = heroCarousel.querySelectorAll(".hero-carousel-slide");
+    const dots = heroCarousel.querySelectorAll(".carousel-dot");
+    const prevBtn = document.getElementById("carouselPrevBtn");
+    const nextBtn = document.getElementById("carouselNextBtn");
+    let currentIndex = 0;
+    let autoPlayTimer = null;
+    const totalSlides = slides.length;
+
+    const showSlide = (index) => {
+      if (index < 0) {
+        currentIndex = totalSlides - 1;
+      } else if (index >= totalSlides) {
+        currentIndex = 0;
+      } else {
+        currentIndex = index;
+      }
+
+      slides.forEach((slide, idx) => {
+        if (idx === currentIndex) {
+          slide.classList.add("active");
+        } else {
+          slide.classList.remove("active");
+        }
+      });
+
+      dots.forEach((dot, idx) => {
+        if (idx === currentIndex) {
+          dot.classList.add("active");
+          dot.classList.remove("bg-white/40");
+          dot.setAttribute("aria-current", "true");
+        } else {
+          dot.classList.remove("active");
+          dot.classList.add("bg-white/40");
+          dot.removeAttribute("aria-current");
+        }
+      });
+    };
+
+    const nextSlide = () => {
+      showSlide(currentIndex + 1);
+    };
+
+    const prevSlide = () => {
+      showSlide(currentIndex - 1);
+    };
+
+    const startAutoPlay = () => {
+      stopAutoPlay();
+      autoPlayTimer = setInterval(nextSlide, 5500);
+    };
+
+    const stopAutoPlay = () => {
+      if (autoPlayTimer) {
+        clearInterval(autoPlayTimer);
+        autoPlayTimer = null;
+      }
+    };
+
+    // Navigation Buttons
+    if (nextBtn) {
+      nextBtn.addEventListener("click", () => {
+        nextSlide();
+        startAutoPlay();
+      });
+    }
+
+    if (prevBtn) {
+      prevBtn.addEventListener("click", () => {
+        prevSlide();
+        startAutoPlay();
+      });
+    }
+
+    // Dot indicators click
+    dots.forEach((dot) => {
+      dot.addEventListener("click", (e) => {
+        const targetIndex = parseInt(e.currentTarget.getAttribute("data-index"), 10);
+        if (!isNaN(targetIndex)) {
+          showSlide(targetIndex);
+          startAutoPlay();
+        }
+      });
+    });
+
+    // Pause auto-play on hover / focus
+    heroCarousel.addEventListener("mouseenter", stopAutoPlay);
+    heroCarousel.addEventListener("mouseleave", startAutoPlay);
+    heroCarousel.addEventListener("focusin", stopAutoPlay);
+    heroCarousel.addEventListener("focusout", startAutoPlay);
+
+    // Touch Swipe Support for Mobile/Tablet
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    heroCarousel.addEventListener(
+      "touchstart",
+      (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+        stopAutoPlay();
+      },
+      { passive: true }
+    );
+
+    heroCarousel.addEventListener(
+      "touchend",
+      (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        const diffX = touchEndX - touchStartX;
+        if (diffX > 45) {
+          prevSlide(); // Vuốt sang phải -> Slide trước
+        } else if (diffX < -45) {
+          nextSlide(); // Vuốt sang trái -> Slide kế
+        }
+        startAutoPlay();
+      },
+      { passive: true }
+    );
+
+    // Khởi động chạy tự động
+    startAutoPlay();
+  }
 });

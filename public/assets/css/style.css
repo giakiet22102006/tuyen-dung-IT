@@ -239,3 +239,88 @@ footer.site-footer {
 #mobileNav {
   transition: max-height 0.3s ease, opacity 0.25s ease;
 }
+
+/* ==========================================================================
+   Motion & Animation System: Hero Carousel & Infinite Logo Marquee
+   ========================================================================== */
+
+/* Hero Carousel Slide Transitions */
+.hero-carousel-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.985);
+  transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity, transform;
+}
+
+.hero-carousel-slide.active {
+  position: relative;
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1);
+}
+
+.carousel-dot {
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.carousel-dot.active {
+  width: 28px !important;
+  background-color: #FFFFFF !important;
+}
+
+/* Floating Card Animation */
+@keyframes floatGentle {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.animate-float {
+  animation: floatGentle 4.5s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* Infinite Seamless Partner Marquee */
+@keyframes marqueeScroll {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marqueeScroll 32s linear infinite;
+  will-change: transform;
+}
+
+.marquee-container:hover .animate-marquee {
+  animation-play-state: paused;
+}
+
+.partner-marquee-item {
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.partner-marquee-item:hover {
+  transform: translateY(-3px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee {
+    animation-duration: 90s;
+  }
+  .animate-float {
+    animation: none;
+  }
+}
+
