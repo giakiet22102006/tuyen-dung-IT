@@ -41,25 +41,28 @@ block main
                             <i class="fa-solid fa-briefcase text-[#0088FF]"></i>
                             span 1. Định hướng & Chức danh IT
                         
-                        div(class="grid sm:grid-cols-2 grid-cols-1 gap-[16px] mb-[16px]")
-                            div
-                                label(class="block text-[13px] font-[600] text-gray-700 mb-[6px]") Chức danh chuyên môn (VD: Fullstack React / Node Developer) *
-                                input(type="text" name="title" required value=(profile.title || "") placeholder="Senior Frontend Developer" class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[10px] text-[14px] focus:border-[#0088FF] focus:outline-none")
+                        div(class="grid grid-cols-1 md:grid-cols-12 gap-[16px] mb-[18px]")
+                            div(class="md:col-span-6 flex flex-col justify-end")
+                                label(class="block text-[13px] font-[600] text-gray-700 mb-[6px] truncate")
+                                    | Chức danh chuyên môn 
+                                    span(class="text-red-500 font-bold") *
+                                    span(class="text-[12px] font-normal text-gray-400 ml-[4px]") (VD: Fullstack Developer)
+                                input(type="text" name="title" required value=(profile.title || "") placeholder="VD: Senior Frontend Developer" class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[10px] text-[14px] focus:border-[#0088FF] focus:outline-none transition")
                             
-                            div(class="grid grid-cols-2 gap-[10px]")
-                                div
-                                    label(class="block text-[13px] font-[600] text-gray-700 mb-[6px]") Cấp bậc
-                                    select(name="level" class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[10px] text-[14px] bg-white")
-                                        if positions && positions.length > 0
-                                            each p in positions
-                                                option(value=p.value selected=(profile.level === p.value)) #{p.label}
-                                        else
-                                            option(value="junior") Junior
-                                            option(value="middle") Middle
-                                            option(value="senior") Senior
-                                div
-                                    label(class="block text-[13px] font-[600] text-gray-700 mb-[6px]") Số năm kinh nghiệm
-                                    input(type="number" name="yearsOfExperience" min="0" max="40" value=(profile.yearsOfExperience || 0) class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[10px] text-[14px]")
+                            div(class="md:col-span-3 flex flex-col justify-end")
+                                label(class="block text-[13px] font-[600] text-gray-700 mb-[6px]") Cấp bậc
+                                select(name="level" class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[10px] text-[14px] bg-white cursor-pointer focus:border-[#0088FF] focus:outline-none transition")
+                                    if positions && positions.length > 0
+                                        each p in positions
+                                            option(value=p.value selected=(profile.level === p.value)) #{p.label}
+                                    else
+                                        option(value="junior") Junior
+                                        option(value="middle") Middle
+                                        option(value="senior") Senior
+                            
+                            div(class="md:col-span-3 flex flex-col justify-end")
+                                label(class="block text-[13px] font-[600] text-gray-700 mb-[6px]") Số năm kinh nghiệm
+                                input(type="number" name="yearsOfExperience" min="0" max="40" value=(profile.yearsOfExperience || 0) class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[10px] text-[14px] focus:border-[#0088FF] focus:outline-none transition")
 
                         div(class="mb-[16px]")
                             label(class="block text-[13px] font-[600] text-gray-700 mb-[6px]") Kỹ năng công nghệ cốt lõi (phân cách bằng dấu phẩy) *
