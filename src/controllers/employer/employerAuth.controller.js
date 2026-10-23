@@ -4,7 +4,7 @@ const bcrypt = require("bcryptjs");
 const { Employer, Otp } = require("../../models");
 const { EMPLOYER_STATUS } = require("../../config/constants");
 const { hashPassword, comparePassword, signUserToken } = require("../../services/auth.service");
-const { sendRegistrationOtpEmail } = require("../../services/mail.service");
+const { sendRegistrationOtpEmail, sendSecurityAlertEmail } = require("../../services/mail.service");
 const {
   employerSignupSchema,
   loginSchema,
@@ -190,6 +190,7 @@ const postVerifyRegistration = async (req, res) => {
   }
 
   employer.isEmailVerified = true;
+  employer.tokenVersion = (employer.tokenVersion || 0) + 1;
   await employer.save();
 
   // Xóa mã OTP đã dùng
@@ -243,6 +244,13 @@ const postResendRegistrationOtp = async (req, res) => {
 };
 
 const renderLogin = (req, res) => {
+  if (req.cookies?.itj_session_conflict) {
+    res.clearCookie("itj_session_conflict");
+    if (req.flash) {
+      req.flash("error", "⚠️ Phiên làm việc đã kết thúc do tài khoản vừa đăng nhập trên một thiết bị/trình duyệt khác. Nếu không phải bạn, hãy đổi mật khẩu ngay!");
+    }
+  }
+
   res.render("pages/employer-login", {
     title: "Đăng nhập (Nhà tuyển dụng)",
     next: req.query.next || "",
@@ -306,7 +314,8 @@ const postLogin = async (req, res) => {
     });
   }
 
-  // Cập nhật lastLoginAt
+  // Tăng tokenVersion để hủy phiên trên các thiết bị cũ (Single Active Session)
+  employer.tokenVersion = (employer.tokenVersion || 0) + 1;
   employer.lastLoginAt = new Date();
   await employer.save();
 
@@ -317,6 +326,16 @@ const postLogin = async (req, res) => {
     sameSite: "lax",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
+
+  // Gửi email cảnh báo bảo mật tới nhà tuyển dụng (chạy nền)
+  sendSecurityAlertEmail({
+    toEmail: employer.email,
+    fullName: employer.companyName,
+    userType: "employer",
+    ip: req.ip || req.headers["x-forwarded-for"] || "127.0.0.1",
+    userAgent: req.headers["user-agent"] || "Trình duyệt web",
+    loginTime: employer.lastLoginAt,
+  }).catch((err) => console.error("Lỗi gửi email cảnh báo bảo mật NTD:", err.message));
 
   req.flash("success", "Đăng nhập thành công!");
   const redirectUrl = req.body.next && req.body.next.startsWith("/") ? req.body.next : "/employer/company-profile";
@@ -446,6 +465,7 @@ const handleGoogleCallback = async (req, res) => {
       if (!employer.logo || !employer.logo.url) {
         employer.logo = { url: profile.picture || "", key: "" };
       }
+      employer.tokenVersion = (employer.tokenVersion || 0) + 1;
       employer.lastLoginAt = new Date();
       await employer.save();
     } else {
@@ -478,6 +498,15 @@ const handleGoogleCallback = async (req, res) => {
       sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
+
+    sendSecurityAlertEmail({
+      toEmail: employer.email,
+      fullName: employer.companyName,
+      userType: "employer",
+      ip: req.ip || req.headers["x-forwarded-for"] || "127.0.0.1",
+      userAgent: req.headers["user-agent"] || "Trình duyệt web",
+      loginTime: employer.lastLoginAt,
+    }).catch((err) => console.error("Lỗi gửi email cảnh báo bảo mật Google NTD:", err.message));
 
     req.flash("success", "Đăng nhập tài khoản Nhà tuyển dụng bằng Google thành công!");
     res.redirect(nextUrl);

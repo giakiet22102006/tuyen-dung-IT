@@ -28,9 +28,16 @@ async function authenticateUser(req, res, next) {
         .select("-password")
         .lean();
 
-      // Kiểm tra trạng thái bị ban hoặc tokenVersion bị tăng sau đổi mật khẩu
-      if (!user || user.status === CANDIDATE_STATUS.BANNED || user.tokenVersion !== payload.tv) {
+      if (!user || user.status === CANDIDATE_STATUS.BANNED) {
         res.clearCookie("itj_token");
+        return next();
+      }
+
+      // Phát hiện xung đột phiên: tokenVersion không khớp do vừa đăng nhập ở máy khác
+      if (user.tokenVersion !== payload.tv) {
+        res.clearCookie("itj_token");
+        req.sessionTerminatedByNewLogin = true;
+        res.cookie("itj_session_conflict", "1", { httpOnly: true, maxAge: 60 * 1000 });
         return next();
       }
     } else if (payload.role === "employer") {
@@ -38,9 +45,16 @@ async function authenticateUser(req, res, next) {
         .select("-password")
         .lean();
 
-      // Employer bị ban hoặc tokenVersion không khớp
-      if (!user || user.status === EMPLOYER_STATUS.BANNED || user.tokenVersion !== payload.tv) {
+      if (!user || user.status === EMPLOYER_STATUS.BANNED) {
         res.clearCookie("itj_token");
+        return next();
+      }
+
+      // Phát hiện xung đột phiên: tokenVersion không khớp do vừa đăng nhập ở máy khác
+      if (user.tokenVersion !== payload.tv) {
+        res.clearCookie("itj_token");
+        req.sessionTerminatedByNewLogin = true;
+        res.cookie("itj_session_conflict", "1", { httpOnly: true, maxAge: 60 * 1000 });
         return next();
       }
     }
@@ -80,8 +94,16 @@ async function authenticateAdmin(req, res, next) {
       .select("-password")
       .lean();
 
-    if (!admin || admin.tokenVersion !== payload.tv) {
+    if (!admin) {
       res.clearCookie("itj_admin_token");
+      return next();
+    }
+
+    // Phát hiện xung đột phiên Admin: tokenVersion không khớp do đăng nhập máy khác
+    if (admin.tokenVersion !== payload.tv) {
+      res.clearCookie("itj_admin_token");
+      req.adminSessionTerminatedByNewLogin = true;
+      res.cookie("itj_admin_session_conflict", "1", { httpOnly: true, maxAge: 60 * 1000 });
       return next();
     }
 
@@ -101,9 +123,14 @@ function requireCandidate(req, res, next) {
   if (!req.user || req.role !== "candidate") {
     const isApi = req.originalUrl?.startsWith("/api") || req.baseUrl?.startsWith("/api") || req.path?.startsWith("/api") || req.xhr || req.headers.accept?.includes("json");
     if (isApi) {
-      return res.status(401).json({ success: false, message: "Vui lòng đăng nhập với tư cách Ứng viên." });
+      return res.status(401).json({ success: false, message: "Phiên làm việc đã kết thúc do tài khoản vừa được đăng nhập trên thiết bị khác." });
     }
-    if (req.flash) {
+    if (req.sessionTerminatedByNewLogin || req.cookies?.itj_session_conflict) {
+      res.clearCookie("itj_session_conflict");
+      if (req.flash) {
+        req.flash("error", "⚠️ Phiên làm việc đã kết thúc do tài khoản của bạn vừa đăng nhập trên một thiết bị/trình duyệt khác. Nếu không phải bạn, hãy đổi mật khẩu ngay!");
+      }
+    } else if (req.flash) {
       req.flash("error", "Vui lòng đăng nhập với tư cách Ứng viên để tiếp tục.");
     }
     const returnUrl = encodeURIComponent(req.originalUrl);
@@ -119,9 +146,14 @@ function requireEmployer(req, res, next) {
   if (!req.user || req.role !== "employer") {
     const isApi = req.originalUrl?.startsWith("/api") || req.baseUrl?.startsWith("/api") || req.path?.startsWith("/api") || req.xhr || req.headers.accept?.includes("json");
     if (isApi) {
-      return res.status(401).json({ success: false, message: "Vui lòng đăng nhập với tư cách Nhà tuyển dụng." });
+      return res.status(401).json({ success: false, message: "Phiên làm việc đã kết thúc do tài khoản vừa được đăng nhập trên thiết bị khác." });
     }
-    if (req.flash) {
+    if (req.sessionTerminatedByNewLogin || req.cookies?.itj_session_conflict) {
+      res.clearCookie("itj_session_conflict");
+      if (req.flash) {
+        req.flash("error", "⚠️ Phiên làm việc đã kết thúc do tài khoản của bạn vừa đăng nhập trên một thiết bị/trình duyệt khác. Nếu không phải bạn, hãy đổi mật khẩu ngay!");
+      }
+    } else if (req.flash) {
       req.flash("error", "Vui lòng đăng nhập với tư cách Nhà tuyển dụng để tiếp tục.");
     }
     const returnUrl = encodeURIComponent(req.originalUrl);
@@ -137,12 +169,17 @@ function requireAdmin(req, res, next) {
   if (!req.admin) {
     const isApi = req.originalUrl?.startsWith("/api") || req.baseUrl?.startsWith("/api") || req.path?.startsWith("/api") || req.xhr || req.headers.accept?.includes("json");
     if (isApi) {
-      return res.status(401).json({ success: false, message: "Vui lòng đăng nhập vào trang Quản trị viên." });
-    }
-    if (req.flash) {
-      req.flash("error", "Vui lòng đăng nhập vào trang Quản trị.");
+      return res.status(401).json({ success: false, message: "Phiên quản trị viên đã bị hủy do tài khoản Admin vừa được đăng nhập trên thiết bị khác." });
     }
     const adminPath = env.ADMIN_PATH || "admin";
+    if (req.adminSessionTerminatedByNewLogin || req.cookies?.itj_admin_session_conflict) {
+      res.clearCookie("itj_admin_session_conflict");
+      if (req.flash) {
+        req.flash("error", "⚠️ Phiên quản trị viên đã bị hủy do tài khoản Admin vừa được đăng nhập trên một thiết bị khác.");
+      }
+    } else if (req.flash) {
+      req.flash("error", "Vui lòng đăng nhập vào trang Quản trị.");
+    }
     const returnUrl = encodeURIComponent(req.originalUrl);
     return res.redirect(`/${adminPath}/login?next=${returnUrl}`);
   }

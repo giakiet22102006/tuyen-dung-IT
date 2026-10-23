@@ -16,12 +16,12 @@ const otpSchema = new mongoose.Schema(
     },
     userType: {
       type: String,
-      enum: ["candidate", "employer"],
+      enum: ["candidate", "employer", "admin"],
       required: true,
     },
     type: {
       type: String,
-      enum: ["register", "forgot_password"],
+      enum: ["register", "forgot_password", "admin_login_2fa"],
       default: "forgot_password",
     },
     attempts: {

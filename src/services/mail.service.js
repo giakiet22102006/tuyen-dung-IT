@@ -440,10 +440,132 @@ async function sendJobAlertEmail({ toEmail, alert, job, companyName }) {
   }
 }
 
+/**
+ * Gửi email cảnh báo bảo mật khi tài khoản đăng nhập trên thiết bị mới
+ */
+async function sendSecurityAlertEmail({ toEmail, fullName, userType, ip, userAgent, loginTime }) {
+  const mailTransporter = getTransporter();
+  const title = userType === "employer" ? "Nhà tuyển dụng" : "Ứng viên";
+  const formattedTime = loginTime ? new Date(loginTime).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }) : new Date().toLocaleString("vi-VN");
+
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #E5E7EB; border-radius: 8px; background-color: #ffffff;">
+      <div style="text-align: center; margin-bottom: 24px;">
+        <h2 style="color: #000065; margin: 0; font-size: 24px;">VN.<span style="color: #0088FF;">ITJobs</span></h2>
+        <p style="color: #6B7280; font-size: 14px; margin-top: 4px;">Nền tảng tuyển dụng IT hàng đầu Việt Nam</p>
+      </div>
+      <div style="background-color: #FEF3C7; border-left: 4px solid #F59E0B; padding: 14px 18px; border-radius: 4px; margin-bottom: 20px;">
+        <h3 style="color: #92400E; margin: 0 0 6px 0; font-size: 16px;">⚠️ Cảnh báo bảo mật: Phát hiện đăng nhập từ thiết bị mới</h3>
+        <p style="color: #78350F; margin: 0; font-size: 13px;">Phiên làm việc trên các thiết bị cũ đã tự động bị vô hiệu hóa để bảo vệ an toàn cho tài khoản của bạn.</p>
+      </div>
+      <p style="color: #374151; font-size: 14px; line-height: 1.6;">
+        Xin chào <strong>${fullName || toEmail}</strong>,
+      </p>
+      <p style="color: #374151; font-size: 14px; line-height: 1.6;">
+        Tài khoản ${title} của bạn trên hệ thống <strong>VN.ITJobs</strong> vừa được đăng nhập thành công với thông tin sau:
+      </p>
+      <div style="background-color: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 6px; padding: 16px; margin: 18px 0; font-size: 13.5px; line-height: 1.8;">
+        <div>⏰ <strong>Thời gian:</strong> ${formattedTime} (Giờ Việt Nam)</div>
+        <div>🌐 <strong>Địa chỉ IP:</strong> <code style="background-color: #E5E7EB; padding: 2px 6px; border-radius: 4px;">${ip || "Không xác định"}</code></div>
+        <div>💻 <strong>Thiết bị / Trình duyệt:</strong> ${userAgent || "Không xác định"}</div>
+      </div>
+      <p style="color: #EF4444; font-size: 13.5px; font-weight: bold; line-height: 1.6;">
+        Nếu đây KHÔNG PHẢI là bạn, rất có thể mật khẩu tài khoản của bạn đã bị lộ. Vui lòng đăng nhập lại và thực hiện ĐỔI MẬT KHẨU ngay lập tức để bảo vệ tài khoản!
+      </p>
+      <hr style="border: none; border-top: 1px solid #E5E7EB; margin: 24px 0;" />
+      <p style="color: #9CA3AF; font-size: 12px; text-align: center; margin: 0;">
+        Email này được gửi tự động từ hệ thống bảo mật VN.ITJobs. Vui lòng không trả lời email này.
+      </p>
+    </div>
+  `;
+
+  if (mailTransporter) {
+    try {
+      const info = await mailTransporter.sendMail({
+        from: env.SMTP_FROM,
+        to: toEmail,
+        subject: `[Cảnh báo bảo mật VN.ITJobs] Phát hiện đăng nhập mới cho tài khoản ${fullName || toEmail}`,
+        html: htmlContent,
+      });
+      console.log(`📧 Đã gửi cảnh báo đăng nhập tới ${toEmail}: ${info.messageId}`);
+      return { success: true, messageId: info.messageId };
+    } catch (err) {
+      console.error(`❌ Lỗi gửi email cảnh báo bảo mật: ${err.message}`);
+      return { success: false, error: err.message };
+    }
+  } else {
+    console.log("=================================================");
+    console.log(`📧 [MÔ PHỎNG EMAIL CẢNH BÁO BẢO MẬT] Tới: ${toEmail}`);
+    console.log(`👤 Người dùng: ${fullName} (${title}) | IP: ${ip}`);
+    console.log(`💻 Thiết bị: ${userAgent}`);
+    console.log(`⏰ Thời gian: ${formattedTime}`);
+    console.log("=================================================");
+    return { success: true, simulated: true };
+  }
+}
+
+/**
+ * Gửi mã OTP xác thực 2 bước (2FA) khi Admin đăng nhập
+ */
+async function sendAdmin2faOtpEmail(toEmail, otpCode, adminName) {
+  const mailTransporter = getTransporter();
+
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #E5E7EB; border-radius: 8px; background-color: #ffffff;">
+      <div style="text-align: center; margin-bottom: 24px;">
+        <h2 style="color: #000065; margin: 0; font-size: 24px;">VN.<span style="color: #0088FF;">ITJobs</span> <span style="font-size: 13px; background-color: #0088FF; color: white; padding: 2px 8px; border-radius: 4px;">ADMIN</span></h2>
+        <p style="color: #6B7280; font-size: 14px; margin-top: 4px;">Hệ thống Quản trị viên An toàn Cấp cao</p>
+      </div>
+      <p style="color: #374151; font-size: 15px; line-height: 1.6;">
+        Xin chào Quản trị viên <strong>${adminName || toEmail}</strong>,
+      </p>
+      <p style="color: #374151; font-size: 14px; line-height: 1.6;">
+        Bạn vừa yêu cầu đăng nhập vào Bảng điều khiển Quản trị viên <strong>VN.ITJobs</strong>. Dưới đây là mã xác thực 2 bước (2FA) của bạn:
+      </p>
+      <div style="text-align: center; margin: 28px 0;">
+        <span style="display: inline-block; font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #000065; background-color: #EEF2FF; border: 2px dashed #6366F1; padding: 12px 28px; border-radius: 8px;">
+          ${otpCode}
+        </span>
+      </div>
+      <div style="background-color: #FEF2F2; border-left: 4px solid #EF4444; padding: 12px 16px; border-radius: 4px; font-size: 13px; color: #991B1B; margin-bottom: 18px;">
+        ⚠️ <strong>Lưu ý bảo mật tối cao:</strong> Mã xác thực có hiệu lực trong vòng <strong>5 phút</strong>. Tuyệt đối không chia sẻ mã này cho bất kỳ ai. Nếu bạn không yêu cầu đăng nhập, vui lòng đổi mật khẩu ngay lập tức.
+      </div>
+      <hr style="border: none; border-top: 1px solid #E5E7EB; margin: 24px 0;" />
+      <p style="color: #9CA3AF; font-size: 12px; text-align: center; margin: 0;">
+        Email này được gửi tự động từ hệ thống bảo mật Admin VN.ITJobs.
+      </p>
+    </div>
+  `;
+
+  if (mailTransporter) {
+    try {
+      const info = await mailTransporter.sendMail({
+        from: env.SMTP_FROM,
+        to: toEmail,
+        subject: `[VN.ITJobs Admin] Mã xác thực 2 bước (2FA): ${otpCode}`,
+        html: htmlContent,
+      });
+      console.log(`📧 Đã gửi mã 2FA tới Admin ${toEmail}: ${info.messageId}`);
+      return { success: true, messageId: info.messageId };
+    } catch (err) {
+      console.error(`❌ Lỗi gửi mã 2FA Admin: ${err.message}`);
+      return { success: false, error: err.message };
+    }
+  } else {
+    console.log("=================================================");
+    console.log(`🔐 [MÔ PHỎNG 2FA ADMIN OTP] Đã gửi tới: ${toEmail}`);
+    console.log(`🔑 MÃ 2FA QUẢN TRỊ VIÊN: ${otpCode} (Hết hạn sau 5 phút)`);
+    console.log("=================================================");
+    return { success: true, simulated: true };
+  }
+}
+
 module.exports = {
   sendOtpEmail,
   sendRegistrationOtpEmail,
   sendInterviewInvitationEmail,
   sendRejectionEmail,
   sendJobAlertEmail,
+  sendSecurityAlertEmail,
+  sendAdmin2faOtpEmail,
 };

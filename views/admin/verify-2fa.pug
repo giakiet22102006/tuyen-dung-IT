@@ -1,0 +1,51 @@
+doctype html
+html(lang="vi")
+    head
+        meta(charset="UTF-8")
+        meta(name="viewport" content="width=device-width, initial-scale=1.0")
+        meta(name="robots" content="noindex, nofollow")
+        title #{title || "Xác thực 2 bước (2FA) - VN.ITJobs Admin"}
+        link(rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg")
+        link(rel="alternate icon" href="/favicon.ico")
+        link(rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css")
+        link(rel="stylesheet" href="/assets/css/tailwind.css?v=2.3")
+    body(class="bg-[#F4F6F8] font-['Lexend',sans-serif] min-h-screen flex items-center justify-center p-[20px]")
+        div(class="w-full max-w-[440px] bg-white rounded-[12px] shadow-sm border border-[#E5E7EB] p-[32px]")
+            div(class="text-center mb-[24px]")
+                div(class="w-[56px] h-[56px] bg-[#EEF2FF] text-[#4F46E5] rounded-full flex items-center justify-center text-[24px] mx-auto mb-[16px] border border-[#C7D2FE]")
+                    <i class="fa-solid fa-shield-halved"></i>
+                h1(class="font-[700] text-[20px] text-[#111827]") Xác thực 2 bước (2FA)
+                p(class="text-[#6B7280] text-[13.5px] mt-[6px]")
+                    | Mã xác thực 6 số đã được gửi đến email quản trị:
+                    br
+                    strong(class="text-[#111827]") #{maskedEmail || email}
+
+            if flash && flash.error
+                div(class="mb-[20px] p-[12px] bg-[#FFEBEE] border border-[#FFCDD2] text-[#C62828] rounded-[6px] text-[14px]") #{flash.error}
+            if flash && flash.success
+                div(class="mb-[20px] p-[12px] bg-[#E8F5E9] border border-[#A5D6A7] text-[#2E7D32] rounded-[6px] text-[14px]") #{flash.success}
+            if errors && errors.otp
+                div(class="mb-[20px] p-[12px] bg-[#FFEBEE] border border-[#FFCDD2] text-[#C62828] rounded-[6px] text-[14px]") #{errors.otp}
+
+            form(action="/" + adminPath + "/verify-2fa" method="POST" class="space-y-[18px]")
+                input(type="hidden" name="_csrf" value=csrfToken)
+                input(type="hidden" name="email" value=email)
+
+                div
+                    label(for="otp" class="block font-[500] text-[14px] text-[#374151] mb-[6px] text-center") Nhập mã 6 chữ số
+                    input(type="text" id="otp" name="otp" required autofocus maxlength="6" pattern="[0-9]{6}" inputmode="numeric" placeholder="••••••" class="w-full border border-[#D1D5DB] rounded-[8px] px-[16px] py-[12px] text-center text-[24px] font-[700] tracking-[10px] text-[#000065] focus:outline-none focus:border-[#0088FF] focus:ring-2 focus:ring-[#0088FF]/20")
+
+                div(class="pt-[6px]")
+                    button(type="submit" class="w-full bg-[#000065] hover:bg-[#000050] text-white font-[600] text-[15px] py-[12px] rounded-[6px] transition-colors cursor-pointer flex items-center justify-center gap-[8px]")
+                        <i class="fa-solid fa-key text-[14px]"></i>
+                        span Xác nhận Đăng nhập Admin
+
+            form(action="/" + adminPath + "/resend-2fa" method="POST" class="mt-[16px] text-center")
+                input(type="hidden" name="_csrf" value=csrfToken)
+                input(type="hidden" name="email" value=email)
+                button(type="submit" class="text-[13px] text-[#0088FF] hover:underline font-[500] cursor-pointer bg-transparent border-0")
+                    <i class="fa-solid fa-rotate-right mr-[4px]"></i> Chưa nhận được mã? Gửi lại mã mới
+
+            div(class="mt-[24px] pt-[20px] border-t border-[#F3F4F6] text-center")
+                a(href="/" + adminPath + "/login" class="text-[13px] text-[#6B7280] hover:text-[#0088FF] transition-colors")
+                    <i class="fa-solid fa-arrow-left mr-[4px]"></i> Đăng nhập bằng tài khoản khác

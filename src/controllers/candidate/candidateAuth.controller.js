@@ -4,7 +4,7 @@ const bcrypt = require("bcryptjs");
 const { Candidate, Otp } = require("../../models");
 const { CANDIDATE_STATUS } = require("../../config/constants");
 const { hashPassword, comparePassword, signUserToken } = require("../../services/auth.service");
-const { sendRegistrationOtpEmail } = require("../../services/mail.service");
+const { sendRegistrationOtpEmail, sendSecurityAlertEmail } = require("../../services/mail.service");
 const {
   candidateSignupSchema,
   loginSchema,
@@ -185,6 +185,7 @@ const postVerifyRegistration = async (req, res) => {
   }
 
   candidate.isEmailVerified = true;
+  candidate.tokenVersion = (candidate.tokenVersion || 0) + 1;
   await candidate.save();
 
   // Xóa mã OTP đã dùng
@@ -238,6 +239,13 @@ const postResendRegistrationOtp = async (req, res) => {
 };
 
 const renderLogin = (req, res) => {
+  if (req.cookies?.itj_session_conflict) {
+    res.clearCookie("itj_session_conflict");
+    if (req.flash) {
+      req.flash("error", "⚠️ Phiên làm việc đã kết thúc do tài khoản vừa đăng nhập trên một thiết bị/trình duyệt khác. Nếu không phải bạn, hãy đổi mật khẩu ngay!");
+    }
+  }
+
   res.render("pages/candidate-login", {
     title: "Đăng nhập (Ứng viên)",
     next: req.query.next || "",
@@ -301,7 +309,8 @@ const postLogin = async (req, res) => {
     });
   }
 
-  // Cập nhật lastLoginAt
+  // Tăng tokenVersion để hủy phiên trên các thiết bị cũ (Single Active Session)
+  candidate.tokenVersion = (candidate.tokenVersion || 0) + 1;
   candidate.lastLoginAt = new Date();
   await candidate.save();
 
@@ -312,6 +321,16 @@ const postLogin = async (req, res) => {
     sameSite: "lax",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
+
+  // Gửi email cảnh báo bảo mật tới ứng viên (chạy nền)
+  sendSecurityAlertEmail({
+    toEmail: candidate.email,
+    fullName: candidate.fullName,
+    userType: "candidate",
+    ip: req.ip || req.headers["x-forwarded-for"] || "127.0.0.1",
+    userAgent: req.headers["user-agent"] || "Trình duyệt web",
+    loginTime: candidate.lastLoginAt,
+  }).catch((err) => console.error("Lỗi gửi email cảnh báo bảo mật ứng viên:", err.message));
 
   req.flash("success", "Đăng nhập thành công!");
   const redirectUrl = req.body.next && req.body.next.startsWith("/") ? req.body.next : "/";
@@ -441,6 +460,7 @@ const handleGoogleCallback = async (req, res) => {
       if (!candidate.avatar || !candidate.avatar.url) {
         candidate.avatar = { url: profile.picture || "", key: "" };
       }
+      candidate.tokenVersion = (candidate.tokenVersion || 0) + 1;
       candidate.lastLoginAt = new Date();
       await candidate.save();
     } else {
@@ -468,6 +488,15 @@ const handleGoogleCallback = async (req, res) => {
       sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
+
+    sendSecurityAlertEmail({
+      toEmail: candidate.email,
+      fullName: candidate.fullName,
+      userType: "candidate",
+      ip: req.ip || req.headers["x-forwarded-for"] || "127.0.0.1",
+      userAgent: req.headers["user-agent"] || "Trình duyệt web",
+      loginTime: candidate.lastLoginAt,
+    }).catch((err) => console.error("Lỗi gửi email cảnh báo bảo mật Google candidate:", err.message));
 
     req.flash("success", "Đăng nhập tài khoản Google thành công!");
     res.redirect(nextUrl);

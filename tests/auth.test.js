@@ -217,7 +217,7 @@ describe("Phase 2: Auth & Role Isolation Tests", () => {
       expect(cpRes.headers.location).toBe("/candidate/profile");
 
       const updated = await Candidate.findById(candidate._id);
-      expect(updated.tokenVersion).toBe(1);
+      expect(updated.tokenVersion).toBe(2);
     });
   });
 

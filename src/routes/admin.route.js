@@ -20,6 +20,9 @@ router.use(adminSecurityHeaders);
 // Auth routes
 router.get("/login", adminAuth.renderLogin);
 router.post("/login", adminLoginRateLimiter, doubleCsrfProtection, asyncHandler(adminAuth.postLogin));
+router.get("/verify-2fa", adminAuth.renderVerify2Fa);
+router.post("/verify-2fa", adminLoginRateLimiter, doubleCsrfProtection, asyncHandler(adminAuth.postVerify2Fa));
+router.post("/resend-2fa", adminLoginRateLimiter, doubleCsrfProtection, asyncHandler(adminAuth.postResend2Fa));
 router.post("/logout", doubleCsrfProtection, adminAuth.postLogout);
 
 // Dashboard
