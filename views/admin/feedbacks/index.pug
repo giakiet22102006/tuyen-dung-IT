@@ -11,19 +11,38 @@ block main
                 p(class="text-[14px] text-[#6B7280] mt-[4px]") Tiếp nhận các báo cáo lỗi, góp ý và đánh giá trải nghiệm từ người dùng hệ thống
 
         //- Thẻ thống kê
-        div(class="grid grid-cols-2 sm:grid-cols-4 gap-[16px]")
-            div(class="bg-white p-[18px] rounded-[10px] border border-[#E5E7EB] shadow-xs")
-                div(class="text-[13px] font-[500] text-gray-500") Tổng phản hồi
-                div(class="text-[26px] font-[700] text-gray-900 mt-[4px]") #{counts.total || 0}
-            div(class="bg-white p-[18px] rounded-[10px] border border-amber-200 bg-amber-50/30 shadow-xs")
-                div(class="text-[13px] font-[600] text-amber-700") Mới tiếp nhận (Chưa xử lý)
-                div(class="text-[26px] font-[700] text-amber-600 mt-[4px]") #{counts.countNew || 0}
-            div(class="bg-white p-[18px] rounded-[10px] border border-blue-200 bg-blue-50/30 shadow-xs")
-                div(class="text-[13px] font-[600] text-blue-700") Đang xử lý
-                div(class="text-[26px] font-[700] text-[#0088FF] mt-[4px]") #{counts.countInProgress || 0}
-            div(class="bg-white p-[18px] rounded-[10px] border border-emerald-200 bg-emerald-50/30 shadow-xs")
-                div(class="text-[13px] font-[600] text-emerald-700") Đã khắc phục / Giải quyết
-                div(class="text-[26px] font-[700] text-emerald-600 mt-[4px]") #{counts.countResolved || 0}
+        div(class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[16px] sm:gap-[20px]")
+            //- Tổng phản hồi
+            div(class="admin-stat-card bg-white p-[22px] rounded-[12px] border border-[#E5E7EB] shadow-xs flex items-center justify-between")
+                div
+                    p(class="text-[13px] font-[500] text-[#6B7280]") Tổng phản hồi
+                    p(class="text-[28px] font-[700] text-[#111827] mt-[4px]") #{counts.total || 0}
+                div(class="w-[48px] h-[48px] rounded-full bg-gray-100 text-[#4B5563] flex items-center justify-center text-[20px] shrink-0")
+                    <i class="fa-solid fa-comments"></i>
+
+            //- Mới tiếp nhận (Chưa xử lý)
+            div(class="admin-stat-card bg-white p-[22px] rounded-[12px] border border-amber-200 bg-amber-50/20 shadow-xs flex items-center justify-between")
+                div
+                    p(class="text-[13px] font-[600] text-amber-700") Mới tiếp nhận (Chưa xử lý)
+                    p(class="text-[28px] font-[700] text-amber-600 mt-[4px]") #{counts.countNew || 0}
+                div(class="w-[48px] h-[48px] rounded-full bg-amber-100/80 text-amber-600 flex items-center justify-center text-[20px] shrink-0")
+                    <i class="fa-solid fa-bell"></i>
+
+            //- Đang xử lý
+            div(class="admin-stat-card bg-white p-[22px] rounded-[12px] border border-blue-200 bg-blue-50/20 shadow-xs flex items-center justify-between")
+                div
+                    p(class="text-[13px] font-[600] text-blue-700") Đang xử lý
+                    p(class="text-[28px] font-[700] text-[#0088FF] mt-[4px]") #{counts.countInProgress || 0}
+                div(class="w-[48px] h-[48px] rounded-full bg-blue-100/80 text-[#0088FF] flex items-center justify-center text-[20px] shrink-0")
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+
+            //- Đã khắc phục / Giải quyết
+            div(class="admin-stat-card bg-white p-[22px] rounded-[12px] border border-emerald-200 bg-emerald-50/20 shadow-xs flex items-center justify-between")
+                div
+                    p(class="text-[13px] font-[600] text-emerald-700") Đã khắc phục / Giải quyết
+                    p(class="text-[28px] font-[700] text-emerald-600 mt-[4px]") #{counts.countResolved || 0}
+                div(class="w-[48px] h-[48px] rounded-full bg-emerald-100/80 text-emerald-600 flex items-center justify-center text-[20px] shrink-0")
+                    <i class="fa-solid fa-circle-check"></i>
 
         //- Bộ lọc
         div(class="bg-white p-[20px] rounded-[10px] border border-[#E5E7EB] shadow-xs")
