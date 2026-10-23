@@ -272,7 +272,20 @@ const postLogin = async (req, res) => {
 
   const { email, password } = result.data;
   const cleanEmail = email.toLowerCase().trim();
-  const employer = await Employer.findOne({ email: cleanEmail, deletedAt: null }).select("+password");
+  let employer = await Employer.findOne({ email: cleanEmail, deletedAt: null }).select("+password");
+  let loggedInMember = null;
+
+  if (!employer) {
+    // Tìm kiếm trong danh sách Chuyên viên tuyển dụng (Team members)
+    employer = await Employer.findOne({
+      "teamMembers.email": cleanEmail,
+      deletedAt: null,
+    });
+
+    if (employer) {
+      loggedInMember = (employer.teamMembers || []).find((m) => m.email === cleanEmail);
+    }
+  }
 
   if (!employer) {
     return res.status(400).render("pages/employer-login", {
@@ -298,10 +311,56 @@ const postLogin = async (req, res) => {
     return res.status(403).render("pages/employer-login", {
       title: "Đăng nhập (Nhà tuyển dụng)",
       errors: { general: "Tài khoản công ty chưa xác thực email. Vui lòng xác thực trước khi đăng nhập." },
-      unverifiedEmail: cleanEmail,
+      unverifiedEmail: employer.email,
       old: req.body,
       next: req.body.next || "",
     });
+  }
+
+  if (loggedInMember) {
+    // Đăng nhập với tư cách Chuyên viên tuyển dụng
+    const isMemberMatch = await comparePassword(password, loggedInMember.password || "");
+    if (!isMemberMatch) {
+      return res.status(400).render("pages/employer-login", {
+        title: "Đăng nhập (Nhà tuyển dụng)",
+        errors: { general: "Email hoặc mật khẩu không đúng" },
+        old: req.body,
+        next: req.body.next || "",
+      });
+    }
+
+    // Tăng tokenVersion riêng của chuyên viên để quản lý phiên độc lập
+    loggedInMember.tokenVersion = (loggedInMember.tokenVersion || 0) + 1;
+    loggedInMember.lastLoginAt = new Date();
+    await employer.save();
+
+    const token = signUserToken(employer, "employer", {
+      memberId: loggedInMember._id.toString(),
+      memberName: loggedInMember.fullName,
+      memberEmail: loggedInMember.email,
+      memberRole: loggedInMember.role,
+      tv: loggedInMember.tokenVersion,
+    });
+
+    res.cookie("itj_token", token, {
+      httpOnly: true,
+      secure: env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    sendSecurityAlertEmail({
+      toEmail: loggedInMember.email,
+      fullName: loggedInMember.fullName,
+      userType: "employer",
+      ip: req.ip || req.headers["x-forwarded-for"] || "127.0.0.1",
+      userAgent: req.headers["user-agent"] || "Trình duyệt web",
+      loginTime: loggedInMember.lastLoginAt,
+    }).catch((err) => console.error("Lỗi gửi email cảnh báo bảo mật Chuyên viên:", err.message));
+
+    req.flash("success", `Chào mừng chuyên viên ${loggedInMember.fullName} đăng nhập thành công!`);
+    const redirectUrl = req.body.next && req.body.next.startsWith("/") ? req.body.next : "/employer/company-profile";
+    return res.redirect(redirectUrl);
   }
 
   const isMatch = await comparePassword(password, employer.password);

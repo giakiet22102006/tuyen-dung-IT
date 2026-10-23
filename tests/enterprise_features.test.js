@@ -146,4 +146,53 @@ describe("Enterprise Feature Expansion Tests", () => {
     const found = candidatesFound.some((c) => c._id.toString() === candidate._id.toString());
     expect(found).toBe(true);
   });
+
+  test("5. Recruiter Team Member: Thêm chuyên viên với mật khẩu, xác thực đăng nhập và phiên làm việc riêng", async () => {
+    const bcrypt = require("bcryptjs");
+    const { signUserToken, verifyUserToken } = require("../src/services/auth.service");
+
+    const memberEmail = `recruiter_${Date.now()}@test.com`;
+    const memberPassword = "Password123456";
+    const hashedPassword = await bcrypt.hash(memberPassword, 10);
+
+    employer.teamMembers.push({
+      fullName: "Nguyễn Thị HR Lead",
+      email: memberEmail,
+      password: hashedPassword,
+      role: "recruiter",
+      tokenVersion: 1,
+    });
+    await employer.save();
+
+    // Tìm employer bằng email của chuyên viên
+    const empWithMember = await Employer.findOne({
+      "teamMembers.email": memberEmail,
+      deletedAt: null,
+    });
+    expect(empWithMember).toBeDefined();
+
+    const member = empWithMember.teamMembers.find((m) => m.email === memberEmail);
+    expect(member).toBeDefined();
+    expect(member.fullName).toBe("Nguyễn Thị HR Lead");
+
+    // So khớp mật khẩu
+    const isMatch = await bcrypt.compare(memberPassword, member.password);
+    expect(isMatch).toBe(true);
+
+    // Tạo token cho chuyên viên
+    const token = signUserToken(empWithMember, "employer", {
+      memberId: member._id.toString(),
+      memberName: member.fullName,
+      memberEmail: member.email,
+      memberRole: member.role,
+      tv: member.tokenVersion,
+    });
+
+    const payload = verifyUserToken(token);
+    expect(payload.id).toBe(empWithMember._id.toString());
+    expect(payload.role).toBe("employer");
+    expect(payload.memberId).toBe(member._id.toString());
+    expect(payload.memberName).toBe("Nguyễn Thị HR Lead");
+    expect(payload.tv).toBe(1);
+  });
 });

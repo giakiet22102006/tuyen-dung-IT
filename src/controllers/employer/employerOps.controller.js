@@ -1,4 +1,5 @@
 // src/controllers/employer/employerOps.controller.js
+const bcrypt = require("bcryptjs");
 const { Job, Application, Employer } = require("../../models");
 const { APPLICATION_STATUS } = require("../../config/constants");
 
@@ -93,26 +94,35 @@ const renderTeam = async (req, res) => {
  * Thêm chuyên viên tuyển dụng mới vào nhóm công ty
  */
 const postAddTeamMember = async (req, res) => {
-  const { fullName, email, role } = req.body;
-  if (!fullName || !fullName.trim() || !email || !email.trim()) {
-    req.flash("error", "Họ tên và email chuyên viên tuyển dụng không được để trống.");
+  const { fullName, email, password, role } = req.body;
+  if (!fullName || !fullName.trim() || !email || !email.trim() || !password) {
+    req.flash("error", "Vui lòng nhập đầy đủ họ tên, email và mật khẩu khởi tạo cho chuyên viên.");
+    return res.redirect("/employer/team");
+  }
+
+  if (password.length < 8) {
+    req.flash("error", "Mật khẩu khởi tạo phải có độ dài tối thiểu 8 ký tự.");
     return res.redirect("/employer/team");
   }
 
   const cleanEmail = email.trim().toLowerCase();
   const employer = await Employer.findById(req.user._id);
 
-  // Kiểm tra trùng email trong nhóm
+  // Kiểm tra trùng email trong nhóm hoặc với email công ty
   const isExist = (employer.teamMembers || []).some((m) => m.email === cleanEmail);
   if (isExist || employer.email === cleanEmail) {
     req.flash("error", "Email này đã tồn tại trong danh sách nhóm tuyển dụng.");
     return res.redirect("/employer/team");
   }
 
+  const hashedPassword = await bcrypt.hash(password, 12);
+
   employer.teamMembers.push({
     fullName: fullName.trim(),
     email: cleanEmail,
+    password: hashedPassword,
     role: role === "admin" ? "admin" : "recruiter",
+    tokenVersion: 0,
     createdAt: new Date(),
   });
 

@@ -7,16 +7,14 @@ const env = require("../config/env");
  * Tạo JWT token cho Candidate hoặc Employer
  * Payload gồm: id, role ('candidate' | 'employer'), tv (tokenVersion)
  */
-function signUserToken(user, role) {
-  return jwt.sign(
-    {
-      id: user._id.toString(),
-      role,
-      tv: user.tokenVersion || 0,
-    },
-    env.JWT_SECRET,
-    { expiresIn: "7d" }
-  );
+function signUserToken(user, role, extra = {}) {
+  const payload = {
+    id: user._id.toString(),
+    role,
+    tv: extra.tv !== undefined ? extra.tv : (user.tokenVersion || 0),
+    ...extra,
+  };
+  return jwt.sign(payload, env.JWT_SECRET, { expiresIn: "7d" });
 }
 
 /**

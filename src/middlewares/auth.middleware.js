@@ -50,12 +50,26 @@ async function authenticateUser(req, res, next) {
         return next();
       }
 
-      // Phát hiện xung đột phiên: tokenVersion không khớp do vừa đăng nhập ở máy khác
-      if (user.tokenVersion !== payload.tv) {
-        res.clearCookie("itj_token");
-        req.sessionTerminatedByNewLogin = true;
-        res.cookie("itj_session_conflict", "1", { httpOnly: true, maxAge: 60 * 1000 });
-        return next();
+      if (payload.memberId) {
+        // Phiên đăng nhập riêng của Chuyên viên tuyển dụng
+        const member = (user.teamMembers || []).find(
+          (m) => m._id && m._id.toString() === payload.memberId
+        );
+        if (!member || (member.tokenVersion || 0) !== payload.tv) {
+          res.clearCookie("itj_token");
+          req.sessionTerminatedByNewLogin = true;
+          res.cookie("itj_session_conflict", "1", { httpOnly: true, maxAge: 60 * 1000 });
+          return next();
+        }
+        user.currentMember = member;
+      } else {
+        // Phát hiện xung đột phiên: tokenVersion không khớp do vừa đăng nhập ở máy khác
+        if (user.tokenVersion !== payload.tv) {
+          res.clearCookie("itj_token");
+          req.sessionTerminatedByNewLogin = true;
+          res.cookie("itj_session_conflict", "1", { httpOnly: true, maxAge: 60 * 1000 });
+          return next();
+        }
       }
     }
 

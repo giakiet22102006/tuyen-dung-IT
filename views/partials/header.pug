@@ -95,7 +95,7 @@ header(class="bg-[#000071] py-[14px] sticky top-0 z-50 shadow-md")
                             li(class="relative py-[5px]")
                                 div(class="flex items-center gap-[8px] bg-white/10 hover:bg-white/15 px-[10px] py-[6px] rounded-[6px] text-white font-[600] sm:text-[15px] text-[12px] cursor-pointer transition")
                                     <i class="fa-solid fa-circle-user text-[18px] text-[#9FDB7C]"></i>
-                                    span(class="max-w-[110px] sm:max-w-[180px] truncate") #{role === 'employer' ? currentUser.companyName : currentUser.fullName}
+                                    span(class="max-w-[140px] sm:max-w-[220px] truncate") #{role === 'employer' ? (currentUser.currentMember ? `${currentUser.companyName} (${currentUser.currentMember.fullName})` : currentUser.companyName) : currentUser.fullName}
                                     <i class="fa-solid fa-angle-down text-[11px] opacity-80"></i>
                                 ul(class="user-dropdown-menu")
                                     if role === 'candidate'
@@ -153,7 +153,7 @@ header(class="bg-[#000071] py-[14px] sticky top-0 z-50 shadow-md")
 
                 if currentUser
                     li(class="border-t border-[#1E1E8E] pt-[12px] mt-[4px]")
-                        div(class="font-[600] text-[#0088FF] text-[14px] mb-[6px] px-[10px]") <i class="fa-solid fa-circle-user mr-[6px]"></i> #{role === 'employer' ? currentUser.companyName : currentUser.fullName}
+                        div(class="font-[600] text-[#0088FF] text-[14px] mb-[6px] px-[10px]") <i class="fa-solid fa-circle-user mr-[6px]"></i> #{role === 'employer' ? (currentUser.currentMember ? `${currentUser.companyName} (${currentUser.currentMember.fullName})` : currentUser.companyName) : currentUser.fullName}
                     if role === 'candidate'
                         li: a(href="/candidate/profile" class="block py-[6px] px-[10px] rounded hover:bg-white/10") <i class="fa-solid fa-user mr-[8px] text-[14px]"></i> Thông tin cá nhân
                         li: a(href="/candidate/it-profile" class="block py-[6px] px-[10px] rounded hover:bg-white/10 text-[#9FDB7C]") <i class="fa-solid fa-file-code mr-[8px] text-[14px]"></i> Hồ sơ IT Profile
