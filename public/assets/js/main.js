@@ -362,4 +362,157 @@ document.addEventListener("DOMContentLoaded", () => {
     // Khởi động chạy tự động
     startAutoPlay();
   }
+
+  // 7. In-App Notification Bell System
+  const notifBellBtn = document.getElementById("notifBellBtn");
+  const notifDropdownMenu = document.getElementById("notifDropdownMenu");
+  const notifBadge = document.getElementById("notifBadge");
+  const notifListContainer = document.getElementById("notifListContainer");
+  const notifMarkAllReadBtn = document.getElementById("notifMarkAllReadBtn");
+
+  if (notifBellBtn && notifDropdownMenu) {
+    const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+    const csrfToken = csrfMeta ? csrfMeta.getAttribute("content") : "";
+
+    const formatRelativeTime = (dateStr) => {
+      const now = new Date();
+      const date = new Date(dateStr);
+      const diffMs = now - date;
+      const diffSec = Math.floor(diffMs / 1000);
+      const diffMin = Math.floor(diffSec / 60);
+      const diffHours = Math.floor(diffMin / 60);
+      const diffDays = Math.floor(diffHours / 24);
+
+      if (diffSec < 60) return "Vừa xong";
+      if (diffMin < 60) return `${diffMin} phút trước`;
+      if (diffHours < 24) return `${diffHours} giờ trước`;
+      if (diffDays < 7) return `${diffDays} ngày trước`;
+      return date.toLocaleDateString("vi-VN");
+    };
+
+    const getIconForType = (type) => {
+      switch (type) {
+        case "application_new":
+          return `<div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-file-circle-check text-xs"></i></div>`;
+        case "interview_invite":
+        case "interview_schedule":
+          return `<div class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-calendar-check text-xs"></i></div>`;
+        case "status_change":
+          return `<div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-bell text-xs"></i></div>`;
+        case "talent_invite":
+          return `<div class="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-handshake-angle text-xs"></i></div>`;
+        default:
+          return `<div class="w-8 h-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-circle-info text-xs"></i></div>`;
+      }
+    };
+
+    const loadNotifications = async () => {
+      try {
+        const res = await fetch("/api/notifications");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data.success) return;
+
+        // Cập nhật badge
+        if (data.unreadCount > 0) {
+          notifBadge.textContent = data.unreadCount > 99 ? "99+" : data.unreadCount;
+          notifBadge.classList.remove("hidden");
+        } else {
+          notifBadge.classList.add("hidden");
+        }
+
+        if (!data.notifications || data.notifications.length === 0) {
+          notifListContainer.innerHTML = `
+            <div class="py-8 text-center text-gray-400 text-sm">
+              <i class="fa-regular fa-bell-slash text-2xl mb-2 text-gray-300 block"></i>
+              Bạn chưa có thông báo nào
+            </div>
+          `;
+          return;
+        }
+
+        notifListContainer.innerHTML = data.notifications
+          .map((n) => `
+            <a href="${n.link || '#'}" class="notif-item flex items-start gap-3 p-3.5 hover:bg-gray-50 transition-colors ${!n.isRead ? 'bg-blue-50/50' : ''}" data-id="${n._id}">
+              ${getIconForType(n.type)}
+              <div class="flex-1 min-w-0">
+                <div class="text-[13px] font-[600] text-gray-900 leading-snug flex items-center justify-between">
+                  <span class="truncate">${n.title}</span>
+                  ${!n.isRead ? '<span class="w-2 h-2 rounded-full bg-blue-600 shrink-0 ml-1"></span>' : ''}
+                </div>
+                <div class="text-[12px] text-gray-600 mt-0.5 line-clamp-2 leading-relaxed">${n.message}</div>
+                <div class="text-[10.5px] text-gray-400 mt-1">${formatRelativeTime(n.createdAt)}</div>
+              </div>
+            </a>
+          `)
+          .join("");
+
+        // Bắt sự kiện click vào từng thông báo để đánh dấu đã đọc
+        notifListContainer.querySelectorAll(".notif-item").forEach((item) => {
+          item.addEventListener("click", async (e) => {
+            const notifId = item.getAttribute("data-id");
+            if (notifId) {
+              fetch(`/api/notifications/${notifId}/read`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "x-csrf-token": csrfToken },
+              }).catch(() => {});
+            }
+          });
+        });
+      } catch (err) {
+        // im lặng nếu có lỗi mạng
+      }
+    };
+
+    // Toggle dropdown
+    notifBellBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const isHidden = notifDropdownMenu.classList.contains("hidden");
+      if (isHidden) {
+        notifDropdownMenu.classList.remove("hidden");
+        loadNotifications();
+      } else {
+        notifDropdownMenu.classList.add("hidden");
+      }
+    });
+
+    // Click outside to close
+    document.addEventListener("click", (e) => {
+      if (!notifDropdownMenu.contains(e.target) && !notifBellBtn.contains(e.target)) {
+        notifDropdownMenu.classList.add("hidden");
+      }
+    });
+
+    // Mark all as read
+    if (notifMarkAllReadBtn) {
+      notifMarkAllReadBtn.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        try {
+          await fetch("/api/notifications/read-all", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "x-csrf-token": csrfToken },
+          });
+          notifBadge.classList.add("hidden");
+          loadNotifications();
+        } catch (_) {}
+      });
+    }
+
+    // Polling định kỳ mỗi 60s để nhận thông báo mới
+    setInterval(() => {
+      fetch("/api/notifications")
+        .then((r) => r.json())
+        .then((d) => {
+          if (d.success && notifBadge) {
+            if (d.unreadCount > 0) {
+              notifBadge.textContent = d.unreadCount > 99 ? "99+" : d.unreadCount;
+              notifBadge.classList.remove("hidden");
+            } else {
+              notifBadge.classList.add("hidden");
+            }
+          }
+        })
+        .catch(() => {});
+    }, 60000);
+  }
 });

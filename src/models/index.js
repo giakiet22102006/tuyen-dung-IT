@@ -12,6 +12,7 @@ const Feedback = require("./feedback.model");
 const SavedJob = require("./savedJob.model");
 const JobAlert = require("./jobAlert.model");
 const CompanyFollow = require("./companyFollow.model");
+const Notification = require("./notification.model");
 const { Article, ARTICLE_CATEGORIES, ARTICLE_CATEGORY_LABELS } = require("./article.model");
 
 module.exports = {
@@ -28,6 +29,7 @@ module.exports = {
   SavedJob,
   JobAlert,
   CompanyFollow,
+  Notification,
   Article,
   ARTICLE_CATEGORIES,
   ARTICLE_CATEGORY_LABELS,

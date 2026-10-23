@@ -268,6 +268,9 @@ const renderJobDetails = async (req, res) => {
     });
   }
 
+  // Tăng lượt xem thực tế cho tin tuyển dụng (Recruitment Analytics)
+  Job.updateOne({ _id: data.job._id }, { $inc: { viewsCount: 1 } }).catch(() => {});
+
   res.render("pages/job-details", {
     title: `${data.job.title} - ${data.job.employerId.companyName}`,
     job: data.job,
@@ -359,6 +362,17 @@ const postApplyJob = async (req, res) => {
       viewed: false,
       status: "pending",
     });
+
+    // Tạo thông báo In-App cho Nhà tuyển dụng
+    const { createNotification } = require("../../services/notification.service");
+    createNotification({
+      recipientId: job.employerId,
+      recipientType: "employer",
+      title: "Ứng viên mới nộp hồ sơ",
+      message: `${fullName.trim()} vừa ứng tuyển vào vị trí "${job.title}".`,
+      link: "/employer/cvs",
+      type: "application_new",
+    }).catch(() => {});
   } catch (err) {
     if (err.code === 11000) {
       req.flash("error", "Bạn đã ứng tuyển công việc này rồi.");

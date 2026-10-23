@@ -5,6 +5,8 @@ const employerAuth = require("../controllers/employer/employerAuth.controller");
 const passwordReset = require("../controllers/auth/passwordReset.controller");
 const employerJob = require("../controllers/employer/employerJob.controller");
 const employerCv = require("../controllers/employer/employerCv.controller");
+const employerTalent = require("../controllers/employer/employerTalent.controller");
+const employerOps = require("../controllers/employer/employerOps.controller");
 const { requireEmployer, requireGuest } = require("../middlewares/auth.middleware");
 const { doubleCsrfProtection } = require("../middlewares/csrf.middleware");
 const { loginRateLimiter, otpRateLimiter } = require("../middlewares/rateLimit.middleware");
@@ -63,7 +65,22 @@ router.post("/cvs/:id/status", requireEmployer, doubleCsrfProtection, asyncHandl
 router.post("/cvs/:id/invite", requireEmployer, doubleCsrfProtection, asyncHandler(employerCv.postSendInterviewInvite));
 router.post("/cvs/:id/ai-draft-invite", requireEmployer, asyncHandler(employerCv.postAiDraftInterviewInvite));
 router.post("/cvs/:id/ai-draft-rejection", requireEmployer, asyncHandler(employerCv.postAiDraftRejection));
+router.post("/cvs/:id/notes", requireEmployer, doubleCsrfProtection, asyncHandler(employerCv.postAddInternalNote));
+router.post("/cvs/:id/rating", requireEmployer, doubleCsrfProtection, asyncHandler(employerCv.postUpdateRating));
+router.post("/cvs/:id/schedule", requireEmployer, doubleCsrfProtection, asyncHandler(employerCv.postScheduleInterview));
 router.post("/cvs/:id/delete", requireEmployer, doubleCsrfProtection, asyncHandler(employerCv.postDeleteCv));
 router.get("/cvs/:id/pdf", requireEmployer, asyncHandler(employerCv.streamEmployerCvPdf));
+
+// Kho Ứng viên IT & Săn đầu người (Talent Pool)
+router.get("/candidates", requireEmployer, asyncHandler(employerTalent.renderTalentPool));
+router.post("/candidates/:id/invite", requireEmployer, doubleCsrfProtection, asyncHandler(employerTalent.postInviteCandidate));
+
+// Báo cáo & Phân tích tuyển dụng (Analytics)
+router.get("/analytics", requireEmployer, asyncHandler(employerOps.renderAnalytics));
+
+// Quản lý Đội ngũ Tuyển dụng (Multi-Recruiter Team)
+router.get("/team", requireEmployer, asyncHandler(employerOps.renderTeam));
+router.post("/team", requireEmployer, doubleCsrfProtection, asyncHandler(employerOps.postAddTeamMember));
+router.post("/team/:memberId/delete", requireEmployer, doubleCsrfProtection, asyncHandler(employerOps.postRemoveTeamMember));
 
 module.exports = router;

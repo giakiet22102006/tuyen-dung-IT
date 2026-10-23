@@ -1,0 +1,141 @@
+extends ../layouts/default.pug
+
+block title 
+    title #{title || "Báo cáo & Phân tích Hiệu suất Tuyển dụng - VN.ITJobs"}
+
+block main
+    div(class="py-[30px] sm:py-[50px] bg-[#F8FAFC] min-h-screen")
+        div(class="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8")
+            
+            //- Breadcrumb & Header
+            div(class="flex flex-col md:flex-row md:items-center justify-between gap-[16px] mb-[28px]")
+                div
+                    div(class="inline-flex items-center gap-[6px] text-[12px] font-[700] uppercase tracking-wider text-[#0088FF] mb-[4px]")
+                        <i class="fa-solid fa-chart-line"></i>
+                        span Recruitment Intelligence
+                    h1(class="font-[800] text-[22px] sm:text-[28px] text-[#000065] tracking-tight") Báo Cáo & Phân Tích Tuyển Dụng
+                    p(class="text-[14px] text-gray-500 mt-[2px]") Đo lường chính xác hiệu quả từng tin tuyển dụng, lượt xem thực tế và tỷ lệ chuyển đổi ứng viên.
+
+                div(class="flex items-center gap-[10px]")
+                    a(href="/employer/pipeline" class="inline-flex items-center gap-[8px] bg-white border border-gray-200 hover:border-[#0088FF] text-gray-700 font-[600] text-[13.5px] px-[16px] py-[10px] rounded-[8px] shadow-xs transition-all")
+                        <i class="fa-solid fa-table-columns text-[#0088FF]"></i>
+                        span Hiring Pipeline
+                    a(href="/employer/jobs/create" class="inline-flex items-center gap-[8px] bg-[#0088FF] hover:bg-[#0070d6] text-white font-[700] text-[13.5px] px-[18px] py-[10px] rounded-[8px] shadow-sm transition-all")
+                        <i class="fa-solid fa-plus"></i>
+                        span Đăng Tin Tuyển Mới
+
+            //- 4 KPI Cards Tổng quan
+            div(class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[16px] sm:gap-[20px] mb-[28px]")
+                //- Card 1: Tổng lượt xem
+                div(class="bg-white p-[20px] rounded-[14px] border border-gray-200 shadow-xs flex items-center justify-between")
+                    div
+                        div(class="text-[12px] font-[700] uppercase tracking-wider text-gray-500 mb-[4px]") Lượt xem tin đăng
+                        div(class="text-[26px] sm:text-[30px] font-[800] text-[#000065] leading-tight") #{totalViews.toLocaleString('vi-VN')}
+                        div(class="text-[11.5px] text-emerald-600 font-[600] mt-[4px] flex items-center gap-[4px]")
+                            <i class="fa-solid fa-eye"></i>
+                            span Lượt xem tích lũy
+                    div(class="w-[50px] h-[50px] rounded-[12px] bg-blue-50 text-[#0088FF] flex items-center justify-center text-[22px] shrink-0")
+                        <i class="fa-solid fa-chart-column"></i>
+
+                //- Card 2: Tổng hồ sơ ứng tuyển
+                div(class="bg-white p-[20px] rounded-[14px] border border-gray-200 shadow-xs flex items-center justify-between")
+                    div
+                        div(class="text-[12px] font-[700] uppercase tracking-wider text-gray-500 mb-[4px]") Hồ sơ CV nộp về
+                        div(class="text-[26px] sm:text-[30px] font-[800] text-emerald-600 leading-tight") #{totalApplications.toLocaleString('vi-VN')}
+                        div(class="text-[11.5px] text-gray-500 font-[500] mt-[4px]")
+                            span #{activeJobsCount} việc làm đang tuyển
+                    div(class="w-[50px] h-[50px] rounded-[12px] bg-emerald-50 text-emerald-600 flex items-center justify-center text-[22px] shrink-0")
+                        <i class="fa-solid fa-file-invoice"></i>
+
+                //- Card 3: Tỷ lệ chuyển đổi (Conversion Rate)
+                div(class="bg-white p-[20px] rounded-[14px] border border-gray-200 shadow-xs flex items-center justify-between")
+                    div
+                        div(class="text-[12px] font-[700] uppercase tracking-wider text-gray-500 mb-[4px]") Tỷ lệ chuyển đổi (CV/View)
+                        div(class="text-[26px] sm:text-[30px] font-[800] text-[#0088FF] leading-tight") #{conversionRate}%
+                        div(class="text-[11.5px] text-blue-600 font-[600] mt-[4px]")
+                            span Chuẩn ngành IT: 1.5% - 4%
+                    div(class="w-[50px] h-[50px] rounded-[12px] bg-purple-50 text-purple-600 flex items-center justify-center text-[22px] shrink-0")
+                        <i class="fa-solid fa-bullseye"></i>
+
+                //- Card 4: Tỷ lệ phỏng vấn
+                div(class="bg-white p-[20px] rounded-[14px] border border-gray-200 shadow-xs flex items-center justify-between")
+                    div
+                        div(class="text-[12px] font-[700] uppercase tracking-wider text-gray-500 mb-[4px]") Đang trong phỏng vấn
+                        div(class="text-[26px] sm:text-[30px] font-[800] text-amber-600 leading-tight") #{pipelineStats.interviewing || 0}
+                        div(class="text-[11.5px] text-gray-500 font-[500] mt-[4px]")
+                            span #{pipelineStats.approved || 0} đã duyệt phù hợp
+                    div(class="w-[50px] h-[50px] rounded-[12px] bg-amber-50 text-amber-600 flex items-center justify-center text-[22px] shrink-0")
+                        <i class="fa-solid fa-comments"></i>
+
+            //- Phân bổ phễu tuyển dụng (Pipeline Funnel)
+            div(class="bg-white p-[20px] sm:p-[24px] rounded-[14px] border border-gray-200 shadow-xs mb-[28px]")
+                div(class="flex items-center justify-between mb-[16px]")
+                    h3(class="font-[700] text-[16px] text-[#000065] flex items-center gap-[8px]")
+                        <i class="fa-solid fa-filter-circle-dollar text-[#0088FF]"></i>
+                        span Phễu Tuyển Dụng & Trạng Thái Ứng Viên
+                    span(class="text-[12px] text-gray-500") Cập nhật theo thời gian thực
+
+                div(class="grid grid-cols-2 sm:grid-cols-5 gap-[12px]")
+                    div(class="p-[14px] rounded-[10px] bg-amber-50 border border-amber-200 text-center")
+                        div(class="text-[20px] font-[800] text-amber-700") #{pipelineStats.pending || 0}
+                        div(class="text-[12px] font-[600] text-amber-900 mt-[2px]") Chưa xem xét
+                    div(class="p-[14px] rounded-[10px] bg-blue-50 border border-blue-200 text-center")
+                        div(class="text-[20px] font-[800] text-[#0088FF]") #{pipelineStats.reviewing || 0}
+                        div(class="text-[12px] font-[600] text-blue-900 mt-[2px]") Đang đánh giá
+                    div(class="p-[14px] rounded-[10px] bg-purple-50 border border-purple-200 text-center")
+                        div(class="text-[20px] font-[800] text-purple-700") #{pipelineStats.interviewing || 0}
+                        div(class="text-[12px] font-[600] text-purple-900 mt-[2px]") Phỏng vấn
+                    div(class="p-[14px] rounded-[10px] bg-emerald-50 border border-emerald-200 text-center")
+                        div(class="text-[20px] font-[800] text-emerald-700") #{pipelineStats.approved || 0}
+                        div(class="text-[12px] font-[600] text-emerald-900 mt-[2px]") Trúng tuyển / Phù hợp
+                    div(class="p-[14px] rounded-[10px] bg-red-50 border border-red-200 text-center col-span-2 sm:col-span-1")
+                        div(class="text-[20px] font-[800] text-red-700") #{pipelineStats.rejected || 0}
+                        div(class="text-[12px] font-[600] text-red-900 mt-[2px]") Đã từ chối
+
+            //- Bảng thống kê chi tiết theo từng tin tuyển dụng
+            div(class="bg-white rounded-[14px] border border-gray-200 shadow-xs overflow-hidden")
+                div(class="p-[18px] sm:p-[24px] border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-[12px]")
+                    div
+                        h3(class="font-[700] text-[16px] text-[#000065]") Hiệu Suất Từng Tin Đăng Tuyển Dụng
+                        p(class="text-[13px] text-gray-500") So sánh mức độ quan tâm của ứng viên đối với từng vị trí công việc
+                    div(class="text-[13px] text-gray-500 font-[500]")
+                        | Tổng cộng: <span class="font-[700] text-gray-900">#{totalJobs}</span> tin đăng
+
+                div(class="overflow-x-auto")
+                    table(class="w-full text-left border-collapse text-[13.5px]")
+                        thead(class="bg-[#F8FAFC] border-b border-gray-200 text-[11.5px] font-[700] uppercase tracking-wider text-gray-500")
+                            tr
+                                th(class="py-[12px] px-[18px]") Tên công việc / Vị trí
+                                th(class="py-[12px] px-[14px] text-center") Cấp bậc
+                                th(class="py-[12px] px-[14px] text-center") Trạng thái
+                                th(class="py-[12px] px-[14px] text-right") Lượt xem
+                                th(class="py-[12px] px-[14px] text-right") Số lượng CV
+                                th(class="py-[12px] px-[14px] text-right") Tỷ lệ nộp (CV/View)
+                                th(class="py-[12px] px-[18px] text-center") Thao tác
+                        tbody(class="divide-y divide-gray-100")
+                            if jobs && jobs.length > 0
+                                each j in jobs
+                                    tr(class="hover:bg-gray-50/80 transition-colors")
+                                        td(class="py-[14px] px-[18px]")
+                                            a(href=`/jobs/${j.slug}` target="_blank" class="font-[700] text-gray-900 hover:text-[#0088FF] transition-colors block line-clamp-1") #{j.title}
+                                            div(class="text-[12px] text-gray-400 mt-[2px]") Đăng ngày #{formatDate(j.createdAt)} • #{labels.getCityLabel(j.city)}
+                                        td(class="py-[14px] px-[14px] text-center")
+                                            span(class="px-[8px] py-[2px] rounded-full bg-gray-100 text-gray-700 text-[11.5px] font-[600]") #{labels.getPositionLabel(j.position)}
+                                        td(class="py-[14px] px-[14px] text-center")
+                                            if j.employerActive && j.moderation === 'visible'
+                                                span(class="inline-flex items-center gap-[4px] px-[8px] py-[2px] rounded-full bg-emerald-50 text-emerald-700 font-[700] text-[11px]")
+                                                    <i class="fa-solid fa-circle text-[6px] text-emerald-500"></i> Đang hiển thị
+                                            else
+                                                span(class="inline-flex items-center gap-[4px] px-[8px] py-[2px] rounded-full bg-gray-100 text-gray-600 font-[600] text-[11px]") Đang ẩn
+                                        td(class="py-[14px] px-[14px] text-right font-[700] text-gray-700") #{(j.viewsCount || 0).toLocaleString('vi-VN')}
+                                        td(class="py-[14px] px-[14px] text-right font-[800] text-[#0088FF]") #{j.applicationsCount}
+                                        td(class="py-[14px] px-[14px] text-right")
+                                            span(class="font-[700] px-[8px] py-[2px] rounded-full text-[12px] " + (parseFloat(j.conversionRate) >= 3 ? "bg-emerald-50 text-emerald-700" : (parseFloat(j.conversionRate) >= 1 ? "bg-blue-50 text-[#0088FF]" : "bg-gray-100 text-gray-600"))) #{j.conversionRate}%
+                                        td(class="py-[14px] px-[18px] text-center")
+                                            a(href=`/employer/pipeline?jobId=${j._id}` class="inline-flex items-center gap-[4px] text-[#0088FF] hover:underline font-[600] text-[12.5px]")
+                                                <i class="fa-solid fa-users text-[11px]"></i>
+                                                span Xem ứng viên
+                            else
+                                tr
+                                    td(colspan="7" class="py-[36px] text-center text-gray-400")
+                                        | Bạn chưa có tin tuyển dụng nào để phân tích thống kê.

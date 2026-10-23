@@ -166,6 +166,7 @@ async function sendInterviewInvitationEmail({
   location,
   replyTo,
   contactPhone,
+  icsContent,
 }) {
   const mailTransporter = getTransporter();
   const safeSubject = subject || `[VN.ITJobs] Thư mời phỏng vấn vị trí ${jobTitle} - ${companyName}`;
@@ -228,14 +229,31 @@ async function sendInterviewInvitationEmail({
 
   if (mailTransporter) {
     try {
-      const info = await mailTransporter.sendMail({
+      const mailOptions = {
         from: env.SMTP_FROM,
         to: toEmail,
         replyTo: replyTo || undefined,
         subject: safeSubject,
         text: `Chào ${candidateName}, Công ty ${companyName} mời bạn tham gia phỏng vấn vị trí ${jobTitle}. Thời gian: ${interviewDate || "Thỏa thuận"}. Địa điểm: ${location || "Trao đổi qua email"}. Chi tiết: ${content}`,
         html: htmlContent,
-      });
+      };
+
+      if (icsContent) {
+        mailOptions.attachments = [
+          {
+            filename: "interview-invitation.ics",
+            content: icsContent,
+            contentType: "text/calendar; charset=utf-8; method=REQUEST",
+          },
+        ];
+        mailOptions.icalEvent = {
+          filename: "interview-invitation.ics",
+          method: "REQUEST",
+          content: icsContent,
+        };
+      }
+
+      const info = await mailTransporter.sendMail(mailOptions);
       console.log(`📧 Đã gửi thư mời phỏng vấn tới ${toEmail}: ${info.messageId}`);
       return { success: true, messageId: info.messageId };
     } catch (err) {

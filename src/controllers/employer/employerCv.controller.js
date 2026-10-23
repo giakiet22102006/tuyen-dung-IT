@@ -405,6 +405,180 @@ const streamEmployerCvPdf = async (req, res) => {
   fs.createReadStream(filePath).pipe(res);
 };
 
+/**
+ * Thêm ghi chú nội bộ cho hồ sơ ứng viên (HR Private Notes)
+ */
+const postAddInternalNote = async (req, res) => {
+  const { content, author } = req.body;
+  if (!content || !content.trim()) {
+    if (req.xhr || req.headers.accept?.includes("application/json")) {
+      return res.status(400).json({ success: false, message: "Nội dung ghi chú không được để trống." });
+    }
+    req.flash("error", "Nội dung ghi chú không được để trống.");
+    return res.redirect(`/employer/cvs/${req.params.id}`);
+  }
+
+  const application = await Application.findOne({
+    _id: req.params.id,
+    employerId: req.user._id,
+    hiddenByEmployer: false,
+  });
+
+  if (!application) {
+    if (req.xhr || req.headers.accept?.includes("application/json")) {
+      return res.status(404).json({ success: false, message: "Không tìm thấy hồ sơ CV." });
+    }
+    req.flash("error", "Không tìm thấy hồ sơ CV.");
+    return res.redirect("/employer/cvs");
+  }
+
+  const newNote = {
+    author: author ? author.trim() : (req.user.companyName || "HR Recruiter"),
+    content: content.trim(),
+    createdAt: new Date(),
+  };
+
+  application.internalNotes.push(newNote);
+  await application.save();
+
+  if (req.xhr || req.headers.accept?.includes("application/json")) {
+    return res.json({ success: true, message: "Đã thêm ghi chú nội bộ.", note: newNote });
+  }
+
+  req.flash("success", "Đã thêm ghi chú nội bộ thành công.");
+  res.redirect(`/employer/cvs/${application._id}`);
+};
+
+/**
+ * Chấm điểm đánh giá ứng viên (Scorecard 1 - 5 sao)
+ */
+const postUpdateRating = async (req, res) => {
+  const rating = parseInt(req.body.rating, 10);
+  if (isNaN(rating) || rating < 0 || rating > 5) {
+    return res.status(400).json({ success: false, message: "Điểm đánh giá phải từ 0 đến 5 sao." });
+  }
+
+  const application = await Application.findOneAndUpdate(
+    { _id: req.params.id, employerId: req.user._id, hiddenByEmployer: false },
+    { rating },
+    { new: true }
+  );
+
+  if (!application) {
+    return res.status(404).json({ success: false, message: "Không tìm thấy hồ sơ CV." });
+  }
+
+  return res.json({ success: true, rating: application.rating, message: `Đã cập nhật đánh giá ${rating} sao.` });
+};
+
+/**
+ * Thiết lập Lịch phỏng vấn thông minh & Đồng bộ iCalendar (.ics)
+ */
+const postScheduleInterview = async (req, res) => {
+  const {
+    scheduledDate,
+    scheduledTime,
+    durationMinutes,
+    locationType,
+    meetingLink,
+    locationAddress,
+    interviewers,
+    notes,
+  } = req.body;
+
+  const application = await Application.findOne({
+    _id: req.params.id,
+    employerId: req.user._id,
+    hiddenByEmployer: false,
+  }).populate("jobId", "title slug");
+
+  if (!application) {
+    req.flash("error", "Không tìm thấy hồ sơ ứng viên.");
+    return res.redirect("/employer/cvs");
+  }
+
+  if (!scheduledDate || !scheduledTime) {
+    req.flash("error", "Vui lòng chọn ngày và giờ phỏng vấn.");
+    return res.redirect(`/employer/cvs/${application._id}`);
+  }
+
+  // Kết hợp ngày và giờ
+  const [hours, minutes] = scheduledTime.split(":").map(Number);
+  const scheduledAt = new Date(scheduledDate);
+  scheduledAt.setHours(hours || 9, minutes || 0, 0, 0);
+
+  const duration = parseInt(durationMinutes, 10) || 60;
+  const isOnline = locationType === "online";
+  const finalLocation = isOnline
+    ? (meetingLink ? `Google Meet / Zoom: ${meetingLink.trim()}` : "Online Meeting")
+    : (locationAddress ? locationAddress.trim() : (req.user.address || "Văn phòng công ty"));
+
+  application.interviewSchedule = {
+    scheduledAt,
+    durationMinutes: duration,
+    locationType: isOnline ? "online" : "offline",
+    meetingLink: meetingLink ? meetingLink.trim() : "",
+    locationAddress: locationAddress ? locationAddress.trim() : "",
+    interviewers: interviewers ? interviewers.trim() : (req.user.companyName || "Hội đồng tuyển dụng"),
+    notes: notes ? notes.trim() : "",
+    status: "pending",
+    candidateResponse: { status: "", note: "", respondedAt: null },
+  };
+
+  application.status = APPLICATION_STATUS.INTERVIEWING;
+  application.reviewedAt = new Date();
+  await application.save();
+
+  // Tạo file iCalendar .ics
+  const { generateIcsEvent } = require("../../utils/calendar");
+  const jobTitle = application.jobId ? application.jobId.title : "Vị trí tuyển dụng";
+  const icsString = generateIcsEvent({
+    title: `Phỏng vấn vị trí ${jobTitle} - ${req.user.companyName}`,
+    description: `Buổi phỏng vấn giữa ${req.user.companyName} và ứng viên ${application.fullName}.\nNgười phỏng vấn: ${application.interviewSchedule.interviewers}\nGhi chú: ${notes || "Đúng giờ và chuẩn bị CV"}`,
+    location: finalLocation,
+    startDate: scheduledAt,
+    durationMinutes: duration,
+    organizerName: req.user.companyName,
+    organizerEmail: req.user.email,
+    attendeeName: application.fullName,
+    attendeeEmail: application.email,
+    meetingUrl: meetingLink,
+  });
+
+  // Gửi email kèm file lịch .ics
+  try {
+    await sendInterviewInvitationEmail({
+      toEmail: application.email,
+      candidateName: application.fullName,
+      companyName: req.user.companyName || "Nhà tuyển dụng",
+      jobTitle,
+      subject: `[Lịch Phỏng Vấn] ${jobTitle} - ${req.user.companyName}`,
+      content: `Kính mời bạn tham gia buổi phỏng vấn được xếp lịch cụ thể như sau:\n- Thời gian: ${scheduledAt.toLocaleString("vi-VN")}\n- Thời lượng dự kiến: ${duration} phút\n- Hình thức: ${isOnline ? "Phỏng vấn Online" : "Trực tiếp tại văn phòng"}\n- Địa điểm / Đường dẫn: ${finalLocation}\n- Người phỏng vấn: ${application.interviewSchedule.interviewers}\n- Ghi chú: ${notes || "Không có"}\n\nFile lịch đính kèm có thể được thêm trực tiếp vào Google Calendar hoặc Outlook của bạn. Vui lòng xác nhận tham gia trên hệ thống!`,
+      interviewDate: `${scheduledAt.toLocaleString("vi-VN")} (${duration} phút)`,
+      location: finalLocation,
+      replyTo: req.user.email,
+      contactPhone: req.user.phone,
+      icsContent: icsString,
+    });
+  } catch (err) {
+    console.error("Lỗi gửi email lịch phỏng vấn:", err.message);
+  }
+
+  // Gửi thông báo In-App cho ứng viên
+  const { createNotification } = require("../../services/notification.service");
+  createNotification({
+    recipientId: application.candidateId,
+    recipientType: "candidate",
+    title: "Lịch phỏng vấn mới được thiết lập!",
+    message: `${req.user.companyName} đã lên lịch phỏng vấn lúc ${scheduledAt.toLocaleString("vi-VN")}. Hãy bấm vào để xác nhận tham gia!`,
+    link: "/candidate/applied-jobs",
+    type: "interview_schedule",
+  }).catch(() => {});
+
+  req.flash("success", `Đã lên lịch phỏng vấn và gửi file sự kiện Calendar tới ứng viên (${application.email})!`);
+  res.redirect(`/employer/cvs/${application._id}`);
+};
+
 module.exports = {
   renderManageCv,
   renderHiringPipeline,
@@ -415,4 +589,7 @@ module.exports = {
   postAiDraftInterviewInvite,
   postAiDraftRejection,
   streamEmployerCvPdf,
+  postAddInternalNote,
+  postUpdateRating,
+  postScheduleInterview,
 };

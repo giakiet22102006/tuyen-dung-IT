@@ -120,6 +120,14 @@ const employerSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    teamMembers: [
+      {
+        fullName: { type: String, required: true, trim: true },
+        email: { type: String, required: true, lowercase: true, trim: true },
+        role: { type: String, enum: ["admin", "recruiter"], default: "recruiter" },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
   },
   { timestamps: true }
 );

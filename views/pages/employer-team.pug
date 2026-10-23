@@ -1,0 +1,121 @@
+extends ../layouts/default.pug
+
+block title 
+    title #{title || "Quản lý Đội ngũ Tuyển dụng (HR Team) - VN.ITJobs"}
+
+block main
+    div(class="py-[30px] sm:py-[50px] bg-[#F8FAFC] min-h-screen")
+        div(class="w-full max-w-[1100px] mx-auto px-4 sm:px-6 lg:px-8")
+            
+            //- Breadcrumb & Header
+            div(class="flex flex-col md:flex-row md:items-center justify-between gap-[16px] mb-[28px]")
+                div
+                    div(class="inline-flex items-center gap-[6px] text-[12px] font-[700] uppercase tracking-wider text-[#0088FF] mb-[4px]")
+                        <i class="fa-solid fa-users-gear"></i>
+                        span Team Management & Collaboration
+                    h1(class="font-[800] text-[22px] sm:text-[28px] text-[#000065] tracking-tight") Đội Ngũ Tuyển Dụng (HR Team)
+                    p(class="text-[14px] text-gray-500 mt-[2px]") Quản lý phân quyền chuyên viên tuyển dụng trong #{companyName}, hỗ trợ nhiều nhân sự cùng làm việc độc lập.
+
+                div
+                    button(type="button" onclick="document.getElementById('addMemberModal').classList.remove('hidden'); document.getElementById('addMemberModal').classList.add('flex');" class="inline-flex items-center gap-[8px] bg-[#0088FF] hover:bg-[#0070d6] text-white font-[700] text-[13.5px] px-[18px] py-[10px] rounded-[8px] shadow-sm transition-all cursor-pointer")
+                        <i class="fa-solid fa-user-plus"></i>
+                        span Thêm Chuyên Viên Mới
+
+            //- Flash messages
+            if flash && flash.success
+                div(class="mb-[20px] p-[14px] bg-[#E8F5E9] border border-[#A5D6A7] text-[#2E7D32] rounded-[8px] text-[14px] font-[500] flex items-center gap-[8px]")
+                    <i class="fa-solid fa-circle-check"></i>
+                    span #{flash.success}
+            if flash && flash.error
+                div(class="mb-[20px] p-[14px] bg-[#FFEBEE] border border-[#FFCDD2] text-[#C62828] rounded-[8px] text-[14px] font-[500] flex items-center gap-[8px]")
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    span #{flash.error}
+
+            //- Lưu ý hệ thống
+            div(class="bg-blue-50/70 border border-blue-200 rounded-[12px] p-[16px] mb-[24px] flex items-start gap-[12px]")
+                div(class="text-[#0088FF] text-[20px] mt-[1px]")
+                    <i class="fa-solid fa-circle-info"></i>
+                div(class="text-[13.5px] text-gray-700 leading-relaxed")
+                    strong(class="text-[#000065]") Lợi ích cho doanh nghiệp: 
+                    | Việc phân quyền thành viên giúp các chuyên viên tuyển dụng có thể vào sàng lọc CV, chấm điểm ứng viên và xếp lịch phỏng vấn đồng thời mà không lo bị đăng xuất tự động do bảo mật phiên đăng nhập.
+
+            //- Bảng danh sách thành viên
+            div(class="bg-white rounded-[14px] border border-gray-200 shadow-xs overflow-hidden")
+                div(class="p-[18px] sm:p-[20px] border-b border-gray-100 flex items-center justify-between")
+                    h3(class="font-[700] text-[16px] text-gray-900") Danh Sách Nhân Sự Phụ Trách Tuyển Dụng
+                    span(class="text-[12px] bg-gray-100 text-gray-700 font-[700] px-[10px] py-[4px] rounded-full") #{1 + (members ? members.length : 0)} thành viên
+
+                div(class="divide-y divide-gray-100")
+                    //- Chủ tài khoản công ty (Primary Owner)
+                    div(class="p-[18px] sm:p-[20px] flex items-center justify-between flex-wrap gap-[12px] bg-gray-50/40")
+                        div(class="flex items-center gap-[14px]")
+                            div(class="w-[44px] h-[44px] rounded-full bg-[#000065] text-white flex items-center justify-center font-[800] text-[16px] shrink-0")
+                                <i class="fa-solid fa-crown text-[#F59E0B]"></i>
+                            div
+                                div(class="flex items-center gap-[8px]")
+                                    span(class="font-[700] text-[15px] text-gray-900") #{companyName} (Chính)
+                                    span(class="text-[10.5px] font-[700] uppercase tracking-wider bg-purple-50 border border-purple-200 text-purple-700 px-[7px] py-[1px] rounded-full") Chủ tài khoản (Owner)
+                                div(class="text-[13px] text-gray-500 mt-[1px]") #{ownerEmail}
+                        
+                        div(class="text-[12px] text-gray-400 font-[500]") Toàn quyền quản trị
+
+                    //- Các thành viên được mời
+                    if members && members.length > 0
+                        each m in members
+                            div(class="p-[18px] sm:p-[20px] flex items-center justify-between flex-wrap gap-[12px] hover:bg-gray-50/60 transition-colors")
+                                div(class="flex items-center gap-[14px]")
+                                    div(class="w-[44px] h-[44px] rounded-full bg-blue-100 text-[#0088FF] flex items-center justify-center font-[800] text-[16px] shrink-0")
+                                        | #{m.fullName ? m.fullName.charAt(0).toUpperCase() : 'HR'}
+                                    div
+                                        div(class="flex items-center gap-[8px]")
+                                            span(class="font-[700] text-[15px] text-gray-900") #{m.fullName}
+                                            if m.role === 'admin'
+                                                span(class="text-[10.5px] font-[700] uppercase tracking-wider bg-blue-50 border border-blue-200 text-[#0088FF] px-[7px] py-[1px] rounded-full") Quản trị nhóm
+                                            else
+                                                span(class="text-[10.5px] font-[700] uppercase tracking-wider bg-emerald-50 border border-emerald-200 text-emerald-700 px-[7px] py-[1px] rounded-full") Chuyên viên HR
+                                        div(class="text-[13px] text-gray-500 mt-[1px]") #{m.email} • Thêm ngày #{formatDate(m.createdAt)}
+                                
+                                form(action=`/employer/team/${m._id}/delete` method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa thành viên này khỏi nhóm?');")
+                                    input(type="hidden" name="_csrf" value=csrfToken)
+                                    button(type="submit" class="text-red-600 hover:text-red-800 text-[13px] font-[600] px-[12px] py-[6px] rounded hover:bg-red-50 transition cursor-pointer flex items-center gap-[4px]")
+                                        <i class="fa-solid fa-trash-can text-[12px]"></i>
+                                        span Xóa
+                    else
+                        div(class="p-[32px] text-center text-gray-400 text-[14px]")
+                            | Chưa có chuyên viên phụ trách nào được thêm. Hãy bấm nút <strong>"Thêm Chuyên Viên Mới"</strong> ở góc phải trên để mời thêm đồng nghiệp!
+
+    //- Modal Thêm Thành Viên
+    div(id="addMemberModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs items-center justify-center p-[16px]")
+        div(class="bg-white rounded-[16px] shadow-2xl border border-gray-100 max-w-[480px] w-full overflow-hidden text-left")
+            div(class="bg-[#000065] p-[18px] sm:p-[20px] text-white flex items-center justify-between")
+                div(class="flex items-center gap-[10px]")
+                    div(class="w-[36px] h-[36px] rounded-full bg-white/10 flex items-center justify-center text-[16px]")
+                        <i class="fa-solid fa-user-plus text-[#9FDB7C]"></i>
+                    div
+                        h3(class="font-[700] text-[16px]") Thêm Chuyên Viên Tuyển Dụng
+                        p(class="text-[12px] text-white/80") Cấp quyền truy cập quản lý hồ sơ cho nhân sự HR
+                button(type="button" onclick="document.getElementById('addMemberModal').classList.add('hidden'); document.getElementById('addMemberModal').classList.remove('flex');" class="text-white/80 hover:text-white p-[6px] rounded cursor-pointer")
+                    <i class="fa-solid fa-xmark text-[18px]"></i>
+
+            form(method="POST" action="/employer/team" class="p-[20px] sm:p-[24px] space-y-[16px]")
+                input(type="hidden" name="_csrf" value=csrfToken)
+                
+                div
+                    label(class="block text-[13px] font-[700] text-gray-700 mb-[6px]") Họ và tên nhân sự <span class="text-red-500">*</span>
+                    input(type="text" name="fullName" required placeholder="VD: Nguyễn Thị Lan Anh" class="w-full h-[42px] px-[12px] rounded-[8px] border border-gray-300 font-[500] text-[14px] text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#0088FF]")
+
+                div
+                    label(class="block text-[13px] font-[700] text-gray-700 mb-[6px]") Email nhân sự <span class="text-red-500">*</span>
+                    input(type="email" name="email" required placeholder="VD: lananh.hr@congty.com" class="w-full h-[42px] px-[12px] rounded-[8px] border border-gray-300 font-[500] text-[14px] text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#0088FF]")
+
+                div
+                    label(class="block text-[13px] font-[700] text-gray-700 mb-[6px]") Vai trò phụ trách
+                    select(name="role" class="w-full h-[42px] px-[12px] rounded-[8px] border border-gray-300 font-[500] text-[14px] text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#0088FF] bg-white cursor-pointer")
+                        option(value="recruiter") Chuyên viên Tuyển dụng (Sàng lọc CV & Lên lịch phỏng vấn)
+                        option(value="admin") Quản trị viên nhóm (Toàn quyền quản lý tin & ứng viên)
+
+                div(class="flex items-center justify-end gap-[10px] pt-[10px] border-t border-gray-100")
+                    button(type="button" onclick="document.getElementById('addMemberModal').classList.add('hidden'); document.getElementById('addMemberModal').classList.remove('flex');" class="px-[18px] py-[10px] rounded-[8px] border border-gray-300 text-gray-700 font-[600] text-[13.5px] hover:bg-gray-50 transition cursor-pointer") Hủy
+                    button(type="submit" class="px-[22px] py-[10px] rounded-[8px] bg-[#0088FF] hover:bg-[#0070d6] text-white font-[700] text-[13.5px] shadow-sm transition cursor-pointer flex items-center gap-[6px]")
+                        <i class="fa-solid fa-plus"></i>
+                        span Thêm Nhân Sự

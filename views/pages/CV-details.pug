@@ -31,19 +31,31 @@ block main
                         else if application.status === 'rejected'
                             span(class="font-[600] text-[#C62828] ml-[6px]") <i class="fa-solid fa-circle-xmark mr-[2px]"></i> Đã từ chối
 
+                    //- Scorecard / Đánh giá ứng viên (1-5 sao)
+                    div(class="flex items-center gap-[10px] mt-[12px] flex-wrap")
+                        span(class="font-[400] text-[15px] sm:text-[16px] text-gray-700") Đánh giá nội bộ:
+                        div(id="starRatingContainer" class="flex items-center gap-[4px] cursor-pointer text-[18px]" data-application-id=application._id data-current-rating=(application.rating || 0))
+                            each star in [1, 2, 3, 4, 5]
+                                <i class="fa-solid fa-star star-btn #{ (application.rating || 0) >= star ? 'text-amber-400' : 'text-gray-300' } hover:text-amber-400 transition-colors" data-value=star></i>
+                        span(id="ratingText" class="text-[13px] font-[600] text-gray-500") #{application.rating ? (application.rating + '/5 sao') : 'Chưa chấm điểm'}
+
                     div(class="flex flex-wrap items-center gap-[10px] mt-[16px]")
                         form(action="/employer/cvs/" + application._id + "/status" method="POST" class="inline")
                             input(type="hidden" name="_csrf" value=csrfToken)
                             input(type="hidden" name="status" value="approved")
                             button(type="submit" class="bg-[#9FDB7C] hover:bg-[#8ccb6a] rounded-[6px] py-[8px] px-[20px] cursor-pointer font-[600] text-[13px] text-black shadow-xs") Duyệt phù hợp
 
-                        button(type="button" id="btnOpenRejectModal" class="bg-[#FF5100] hover:bg-[#e64900] rounded-[6px] py-[8px] px-[20px] cursor-pointer font-[600] text-[13px] text-white shadow-xs inline-flex items-center gap-[6px]")
-                            <i class="fa-solid fa-ban text-[12px]"></i>
-                            span Từ chối hồ sơ
+                        button(type="button" id="btnOpenScheduleModal" class="inline-flex items-center gap-[6px] bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-[6px] py-[8px] px-[18px] cursor-pointer font-[600] text-[13px] shadow-xs transition-colors")
+                            <i class="fa-solid fa-calendar-plus text-[13px]"></i>
+                            span Lên Lịch Phỏng Vấn (Google Calendar)
 
                         button(type="button" id="btnOpenInviteModal" class="inline-flex items-center gap-[6px] bg-[#000071] hover:bg-[#000055] text-white rounded-[6px] py-[8px] px-[18px] cursor-pointer font-[600] text-[13px] shadow-xs transition-colors")
                             <i class="fa-solid fa-envelope-open-text text-[13px]"></i>
-                            span Gửi Thư Mời Phỏng Vấn (Email)
+                            span Gửi Thư Mời (Email)
+
+                        button(type="button" id="btnOpenRejectModal" class="bg-[#FF5100] hover:bg-[#e64900] rounded-[6px] py-[8px] px-[20px] cursor-pointer font-[600] text-[13px] text-white shadow-xs inline-flex items-center gap-[6px]")
+                            <i class="fa-solid fa-ban text-[12px]"></i>
+                            span Từ chối hồ sơ
 
                     if application.status === 'rejected'
                         div(class="mt-[14px] p-[16px] bg-red-50/90 border border-red-200 rounded-[8px] flex items-start gap-[12px]")
@@ -74,6 +86,36 @@ block main
                                 if application.interviewInvitation.location
                                     div(class="text-emerald-700") Hình thức / Địa điểm: <span class="font-[600]">#{application.interviewInvitation.location}</span>
                                 button(type="button" id="btnOpenInviteModalAgain" class="mt-[6px] text-[#0088FF] hover:underline font-[600] inline-block cursor-pointer") Gửi lại / Cập nhật thư mời khác →
+
+                    if application.interviewSchedule && application.interviewSchedule.scheduledAt
+                        div(class="mt-[14px] p-[16px] bg-purple-50 border border-purple-200 rounded-[10px] flex items-start gap-[12px]")
+                            div(class="text-purple-600 text-[20px] mt-[1px]")
+                                <i class="fa-solid fa-calendar-check"></i>
+                            div(class="flex-1 text-[13px] text-purple-900")
+                                div(class="font-[700] text-[15px] flex items-center justify-between flex-wrap gap-[6px]")
+                                    span Lịch Phỏng Vấn Chính Thức (Đồng bộ iCalendar .ics)
+                                    if application.interviewSchedule.status === 'confirmed'
+                                        span(class="bg-emerald-100 text-emerald-800 text-[11px] font-[700] px-[8px] py-[2px] rounded-full border border-emerald-300") ✓ Ứng viên đã xác nhận tham gia
+                                    else if application.interviewSchedule.status === 'rescheduled'
+                                        span(class="bg-amber-100 text-amber-800 text-[11px] font-[700] px-[8px] py-[2px] rounded-full border border-amber-300") ⚠️ Ứng viên đề xuất đổi lịch
+                                    else
+                                        span(class="bg-purple-100 text-purple-800 text-[11px] font-[700] px-[8px] py-[2px] rounded-full border border-purple-300") Đang chờ ứng viên xác nhận
+                                
+                                div(class="mt-[6px] space-y-[4px] text-gray-700")
+                                    div ⏱️ <strong>Thời gian:</strong> #{formatDateTime(application.interviewSchedule.scheduledAt)} (#{application.interviewSchedule.durationMinutes} phút)
+                                    div 📍 <strong>Hình thức:</strong> #{application.interviewSchedule.locationType === 'online' ? 'Trực tuyến (Online Meeting)' : 'Trực tiếp tại văn phòng'}
+                                    if application.interviewSchedule.meetingLink
+                                        div 🔗 <strong>Link phòng họp:</strong> <a href=application.interviewSchedule.meetingLink target="_blank" class="text-[#0088FF] underline font-[600]">#{application.interviewSchedule.meetingLink}</a>
+                                    if application.interviewSchedule.locationAddress
+                                        div 🏢 <strong>Địa chỉ:</strong> #{application.interviewSchedule.locationAddress}
+                                    if application.interviewSchedule.interviewers
+                                        div 👥 <strong>Người phỏng vấn:</strong> #{application.interviewSchedule.interviewers}
+                                    if application.interviewSchedule.candidateResponse && application.interviewSchedule.candidateResponse.note
+                                        div(class="mt-[8px] p-[8px] bg-white rounded border border-purple-200 text-purple-950")
+                                            strong Phản hồi từ ứng viên: 
+                                            | "#{application.interviewSchedule.candidateResponse.note}"
+                                
+                                button(type="button" onclick="document.getElementById('scheduleInterviewModal').classList.remove('hidden'); document.getElementById('scheduleInterviewModal').classList.add('flex');" class="mt-[8px] text-[#0088FF] hover:underline font-[600] inline-block cursor-pointer") Chỉnh sửa / Đổi lịch phỏng vấn khác →
 
                     //- Trợ lý AI Tuyển Dụng (CV Screening & Executive Summary)
                     div(class="mt-[24px] p-[20px] bg-gradient-to-r from-blue-50/70 via-indigo-50/50 to-white rounded-[10px] border border-blue-200")
@@ -117,6 +159,33 @@ block main
                                         <i class="fa-solid fa-circle-question text-amber-500"></i>
                                         span Điểm cần làm rõ khi phỏng vấn (Probes)
                                     ul(id="aiScreenConcerns" class="space-y-[6px]")
+
+                    //- Ghi chú nội bộ dành riêng cho HR
+                    div(class="mt-[20px] p-[18px] bg-gray-50/80 rounded-[10px] border border-gray-200")
+                        div(class="flex items-center justify-between mb-[12px]")
+                            div(class="font-[700] text-[15px] text-gray-900 flex items-center gap-[6px]")
+                                <i class="fa-solid fa-lock text-amber-500"></i>
+                                span Ghi Chú Tuyển Dụng Nội Bộ (Private Notes)
+                            span(class="text-[11.5px] text-gray-400 font-[500]") Chỉ HR công ty thấy, ứng viên không thấy
+
+                        //- Danh sách ghi chú đã lưu
+                        if application.internalNotes && application.internalNotes.length > 0
+                            div(class="space-y-[8px] mb-[14px]")
+                                each note in application.internalNotes
+                                    div(class="bg-white p-[12px] rounded-[8px] border border-gray-200 shadow-xs")
+                                        div(class="flex items-center justify-between text-[11.5px] text-gray-400 mb-[4px]")
+                                            span(class="font-[700] text-gray-700") #{note.author || 'HR Recruiter'}
+                                            span #{formatDateTime(note.createdAt)}
+                                        div(class="text-[13.5px] text-gray-800 leading-relaxed whitespace-pre-line") #{note.content}
+                        else
+                            div(class="text-[13px] text-gray-400 italic mb-[12px]") Chưa có ghi chú nội bộ nào cho ứng viên này.
+
+                        //- Form thêm ghi chú
+                        form(action=`/employer/cvs/${application._id}/notes` method="POST" class="flex gap-[10px] flex-col sm:flex-row items-stretch sm:items-end")
+                            input(type="hidden" name="_csrf" value=csrfToken)
+                            div(class="flex-1")
+                                textarea(name="content" rows="2" required placeholder="Ghi chú đánh giá, mức deal lương kỳ vọng, nhận xét tech test..." class="w-full p-[10px] rounded-[6px] border border-gray-300 text-[13.5px] focus:outline-none focus:ring-2 focus:ring-[#0088FF] bg-white")
+                            button(type="submit" class="bg-[#000065] hover:bg-[#000085] text-white px-[16px] py-[10px] rounded-[6px] font-[600] text-[13px] shrink-0 cursor-pointer transition") Lưu Ghi Chú
 
                     div(class="mt-[20px]")
                         div(class="font-[400] text-[16px] my-[10px] flex justify-between items-center")
@@ -242,10 +311,163 @@ block main
                             <i class="fa-solid fa-circle-xmark"></i>
                             span Xác Nhận Từ Chối
 
+        //- ==========================================
+        //- MODAL LẬP LỊCH PHỎNG VẤN (GOOGLE CALENDAR SYNC .ICS)
+        //- ==========================================
+        div(id="scheduleInterviewModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-xs p-[16px]")
+            div(class="bg-white rounded-[14px] shadow-2xl max-w-[560px] w-full max-h-[92vh] flex flex-col overflow-hidden animate-fadeIn text-left")
+                div(class="p-[18px] border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-blue-600 to-indigo-700 text-white")
+                    div(class="flex items-center gap-[10px]")
+                        div(class="w-[38px] h-[38px] rounded-full bg-white/20 flex items-center justify-center text-[18px]")
+                            <i class="fa-solid fa-calendar-plus"></i>
+                        div
+                            h3(class="font-[700] text-[16px]") Lập Lịch Phỏng Vấn (Google Calendar .ics)
+                            p(class="text-[12px] text-white/80") Tự động gửi file sự kiện đính kèm tới #{application.email}
+                    button(type="button" id="btnCloseScheduleModal" class="text-white/80 hover:text-white text-[20px] p-[4px] cursor-pointer")
+                        <i class="fa-solid fa-xmark"></i>
+
+                form(action=`/employer/cvs/${application._id}/schedule` method="POST" id="formScheduleInterview" class="p-[20px] overflow-y-auto flex-1 space-y-[14px]")
+                    input(type="hidden" name="_csrf" value=csrfToken)
+                    
+                    div(class="grid sm:grid-cols-2 grid-cols-1 gap-[12px]")
+                        div
+                            label(class="block text-[13px] font-[600] text-gray-700 mb-[4px]") Ngày phỏng vấn *
+                            input(type="date" name="scheduledDate" required id="schedDateInput" class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[8px] text-[14px] focus:outline-none focus:ring-2 focus:ring-[#0088FF]")
+                        div
+                            label(class="block text-[13px] font-[600] text-gray-700 mb-[4px]") Giờ bắt đầu *
+                            input(type="time" name="scheduledTime" required value="09:30" class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[8px] text-[14px] focus:outline-none focus:ring-2 focus:ring-[#0088FF]")
+
+                    div(class="grid sm:grid-cols-2 grid-cols-1 gap-[12px]")
+                        div
+                            label(class="block text-[13px] font-[600] text-gray-700 mb-[4px]") Thời lượng dự kiến
+                            select(name="durationMinutes" class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[8px] text-[14px] bg-white cursor-pointer")
+                                option(value="30") 30 Phút
+                                option(value="45") 45 Phút
+                                option(value="60" selected) 60 Phút (1 Giờ)
+                                option(value="90") 90 Phút
+                        div
+                            label(class="block text-[13px] font-[600] text-gray-700 mb-[4px]") Hình thức phỏng vấn
+                            select(name="locationType" id="schedLocationType" class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[8px] text-[14px] bg-white cursor-pointer")
+                                option(value="online" selected) Trực tuyến (Online Meeting)
+                                option(value="offline") Trực tiếp tại văn phòng
+
+                    div(id="schedOnlineGroup")
+                        label(class="block text-[13px] font-[600] text-gray-700 mb-[4px]") Link phòng họp (Google Meet / Zoom / Teams)
+                        input(type="url" name="meetingLink" placeholder="https://meet.google.com/abc-defg-hij" class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[8px] text-[14px] focus:outline-none focus:ring-2 focus:ring-[#0088FF]")
+
+                    div(id="schedOfflineGroup" class="hidden")
+                        label(class="block text-[13px] font-[600] text-gray-700 mb-[4px]") Địa chỉ văn phòng phỏng vấn
+                        input(type="text" name="locationAddress" placeholder="Tầng 12, Tòa nhà Keangnam, Mễ Trì, Hà Nội" class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[8px] text-[14px] focus:outline-none focus:ring-2 focus:ring-[#0088FF]")
+
+                    div
+                        label(class="block text-[13px] font-[600] text-gray-700 mb-[4px]") Người / Hội đồng phỏng vấn
+                        input(type="text" name="interviewers" placeholder="VD: Anh Tuấn (Tech Lead) & Chị Mai (HR)" class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[8px] text-[14px] focus:outline-none focus:ring-2 focus:ring-[#0088FF]")
+
+                    div
+                        label(class="block text-[13px] font-[600] text-gray-700 mb-[4px]") Ghi chú chuẩn bị cho ứng viên
+                        textarea(name="notes" rows="2" placeholder="VD: Vui lòng mang laptop và chuẩn bị sẵn sàng demo dự án nổi bật..." class="w-full border border-gray-300 rounded-[6px] p-[10px] text-[13px] focus:outline-none focus:ring-2 focus:ring-[#0088FF]")
+
+                    div(class="p-[12px] bg-blue-50 border border-blue-200 rounded-[8px] text-[12px] text-blue-900 leading-relaxed")
+                        <i class="fa-solid fa-circle-check text-blue-600 mr-[4px]"></i>
+                        | Hệ thống sẽ tự động tạo file chuẩn <strong>.ics</strong> đính kèm email. Khi mở email, ứng viên và nhà tuyển dụng có thể bấm thêm trực tiếp vào Google Calendar hoặc Outlook.
+
+                    div(class="pt-[10px] border-t border-gray-200 flex justify-end gap-[10px]")
+                        button(type="button" id="btnCancelScheduleModal" class="px-[16px] py-[8px] border border-gray-300 rounded-[6px] text-[13px] font-[600] text-gray-700 hover:bg-gray-100 cursor-pointer") Hủy
+                        button(type="submit" class="px-[20px] py-[8px] bg-[#2563EB] hover:bg-[#1D4ED8] rounded-[6px] text-[13px] font-[700] text-white cursor-pointer shadow-xs inline-flex items-center gap-[6px]")
+                            <i class="fa-solid fa-calendar-check"></i>
+                            span Xác Nhận & Gửi Lịch
+
     script.
         (function() {
             function runInit() {
                 if (window.initAiCvScreening) window.initAiCvScreening("#{application._id}");
+                
+                // 1. Quản lý Modal Lập Lịch Phỏng Vấn
+                var modalSchedule = document.getElementById("scheduleInterviewModal");
+                var btnOpenSchedule = document.getElementById("btnOpenScheduleModal");
+                var btnCloseSchedule = document.getElementById("btnCloseScheduleModal");
+                var btnCancelSchedule = document.getElementById("btnCancelScheduleModal");
+                var schedLocationType = document.getElementById("schedLocationType");
+                var schedOnlineGroup = document.getElementById("schedOnlineGroup");
+                var schedOfflineGroup = document.getElementById("schedOfflineGroup");
+                var schedDateInput = document.getElementById("schedDateInput");
+
+                // Mặc định ngày mai
+                if (schedDateInput && !schedDateInput.value) {
+                    var tomorrow = new Date();
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    schedDateInput.value = tomorrow.toISOString().split('T')[0];
+                }
+
+                function openScheduleModal() {
+                    if (modalSchedule) {
+                        modalSchedule.classList.remove("hidden");
+                        modalSchedule.classList.add("flex");
+                    }
+                }
+                function closeScheduleModal() {
+                    if (modalSchedule) {
+                        modalSchedule.classList.add("hidden");
+                        modalSchedule.classList.remove("flex");
+                    }
+                }
+
+                if (btnOpenSchedule) btnOpenSchedule.addEventListener("click", openScheduleModal);
+                if (btnCloseSchedule) btnCloseSchedule.addEventListener("click", closeScheduleModal);
+                if (btnCancelSchedule) btnCancelSchedule.addEventListener("click", closeScheduleModal);
+
+                if (schedLocationType) {
+                    schedLocationType.addEventListener("change", function() {
+                        if (schedLocationType.value === "online") {
+                            if (schedOnlineGroup) schedOnlineGroup.classList.remove("hidden");
+                            if (schedOfflineGroup) schedOfflineGroup.classList.add("hidden");
+                        } else {
+                            if (schedOnlineGroup) schedOnlineGroup.classList.add("hidden");
+                            if (schedOfflineGroup) schedOfflineGroup.classList.remove("hidden");
+                        }
+                    });
+                }
+
+                // 2. Chấm điểm sao đánh giá (Scorecard Rating)
+                var starContainer = document.getElementById("starRatingContainer");
+                var ratingText = document.getElementById("ratingText");
+                if (starContainer) {
+                    var stars = starContainer.querySelectorAll(".star-btn");
+                    stars.forEach(function(s) {
+                        s.addEventListener("click", async function() {
+                            var val = parseInt(s.getAttribute("data-value"), 10);
+                            var csrfMeta = document.querySelector('meta[name="csrf-token"]');
+                            var csrfToken = csrfMeta ? csrfMeta.getAttribute("content") : "";
+
+                            try {
+                                var res = await fetch("/employer/cvs/#{application._id}/rating", {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                        "x-csrf-token": csrfToken
+                                    },
+                                    body: JSON.stringify({ rating: val })
+                                });
+                                var data = await res.json();
+                                if (data.success) {
+                                    stars.forEach(function(starEl) {
+                                        var starVal = parseInt(starEl.getAttribute("data-value"), 10);
+                                        if (starVal <= val) {
+                                            starEl.classList.remove("text-gray-300");
+                                            starEl.classList.add("text-amber-400");
+                                        } else {
+                                            starEl.classList.remove("text-amber-400");
+                                            starEl.classList.add("text-gray-300");
+                                        }
+                                    });
+                                    if (ratingText) ratingText.textContent = val + "/5 sao";
+                                }
+                            } catch(err) {
+                                console.error(err);
+                            }
+                        });
+                    });
+                }
                 
                 // Quản lý Modal Thư Mời Phỏng Vấn
                 var modal = document.getElementById("modalInterviewInvite");

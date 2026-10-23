@@ -51,6 +51,10 @@ const candidateSchema = new mongoose.Schema(
       linkedinUrl: { type: String, default: "", trim: true },
       portfolioUrl: { type: String, default: "", trim: true },
       skills: [{ type: String, trim: true }],
+      openToWork: { type: Boolean, default: true },
+      hideFromCurrentCompany: { type: String, default: "", trim: true },
+      expectedSalary: { type: Number, default: 0 },
+      preferredCity: { type: String, default: "ha-noi" },
       workExperience: [
         {
           company: { type: String, default: "", trim: true },

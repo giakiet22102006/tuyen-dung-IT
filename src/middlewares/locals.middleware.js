@@ -24,6 +24,17 @@ async function localsMiddleware(req, res, next) {
     }
   }
 
+  // Đếm thông báo chưa đọc cho Candidate hoặc Employer
+  res.locals.unreadNotificationCount = 0;
+  if (req.user && req.user._id && (req.role === "candidate" || req.role === "employer")) {
+    try {
+      const { getUnreadCount } = require("../services/notification.service");
+      res.locals.unreadNotificationCount = await getUnreadCount(req.user._id, req.role);
+    } catch (_) {
+      res.locals.unreadNotificationCount = 0;
+    }
+  }
+
   // Helpers
   res.locals.formatSalary = formatSalary;
   res.locals.labels = labels;

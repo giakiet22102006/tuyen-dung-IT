@@ -6,6 +6,7 @@ const salaryController = require("../controllers/client/salary.controller");
 const jobAlertController = require("../controllers/client/jobAlert.controller");
 const candidateCompanyFollow = require("../controllers/candidate/candidateCompanyFollow.controller");
 const blogController = require("../controllers/client/blog.controller");
+const notificationController = require("../controllers/client/notification.controller");
 const asyncHandler = require("../utils/asyncHandler");
 const { Candidate, Employer, Admin } = require("../models");
 const { signUserToken, signAdminToken } = require("../services/auth.service");
@@ -42,6 +43,12 @@ router.get("/job-alerts/unsubscribe/:token", asyncHandler(jobAlertController.get
 // IT Blog & Cẩm nang nghề nghiệp lập trình viên
 router.get("/blog", asyncHandler(blogController.renderBlogList));
 router.get("/blog/:slug", asyncHandler(blogController.renderBlogDetails));
+
+// API Thông báo trực tiếp In-App
+router.get("/api/notifications", asyncHandler(notificationController.getNotificationsApi));
+router.post("/api/notifications/:id/read", doubleCsrfProtection, asyncHandler(notificationController.markReadApi));
+router.post("/api/notifications/read-all", doubleCsrfProtection, asyncHandler(notificationController.markAllReadApi));
+
 router.post(
   "/api/feedback",
   asyncHandler(clientController.postSubmitFeedback)

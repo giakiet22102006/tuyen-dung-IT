@@ -95,8 +95,62 @@ const streamCandidateCv = async (req, res) => {
   fs.createReadStream(filePath).pipe(res);
 };
 
+const postRespondInterview = async (req, res) => {
+  const { responseStatus, note } = req.body;
+  if (!["confirmed", "rescheduled"].includes(responseStatus)) {
+    req.flash("error", "Trạng thái phản hồi không hợp lệ.");
+    return res.redirect("/candidate/applied-jobs");
+  }
+
+  const application = await Application.findOne({
+    _id: req.params.id,
+    candidateId: req.user._id,
+    hiddenByCandidate: false,
+  }).populate("jobId", "title").populate("employerId", "companyName");
+
+  if (!application || !application.interviewSchedule || !application.interviewSchedule.scheduledAt) {
+    req.flash("error", "Không tìm thấy lịch phỏng vấn cần phản hồi.");
+    return res.redirect("/candidate/applied-jobs");
+  }
+
+  application.interviewSchedule.candidateResponse = {
+    status: responseStatus,
+    note: note ? note.trim() : "",
+    respondedAt: new Date(),
+  };
+
+  if (responseStatus === "confirmed") {
+    application.interviewSchedule.status = "confirmed";
+  } else if (responseStatus === "rescheduled") {
+    application.interviewSchedule.status = "rescheduled";
+  }
+
+  await application.save();
+
+  // Bắn thông báo In-App cho Nhà tuyển dụng
+  const { createNotification } = require("../../services/notification.service");
+  const actionText = responseStatus === "confirmed" ? "đã XÁC NHẬN tham gia" : "đã ĐỀ NGHỊ ĐỔI LỊCH";
+  createNotification({
+    recipientId: application.employerId._id,
+    recipientType: "employer",
+    title: `Ứng viên ${actionText} phỏng vấn`,
+    message: `Ứng viên ${application.fullName} ${actionText} phỏng vấn vị trí "${application.jobId ? application.jobId.title : 'việc làm'}". ${note ? `Ghi chú: ${note.trim()}` : ''}`,
+    link: `/employer/cvs/${application._id}`,
+    type: "interview_response",
+  }).catch(() => {});
+
+  req.flash(
+    "success",
+    responseStatus === "confirmed"
+      ? "Đã xác nhận tham gia phỏng vấn thành công!"
+      : "Đã gửi đề xuất dời lịch phỏng vấn đến nhà tuyển dụng!"
+  );
+  res.redirect("/candidate/applied-jobs");
+};
+
 module.exports = {
   renderAppliedJobs,
   postWithdrawApplication,
   streamCandidateCv,
+  postRespondInterview,
 };

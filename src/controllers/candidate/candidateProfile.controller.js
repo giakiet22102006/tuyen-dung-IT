@@ -89,6 +89,10 @@ const postItProfile = async (req, res) => {
     linkedinUrl,
     portfolioUrl,
     skills,
+    openToWork,
+    expectedSalary,
+    preferredCity,
+    hideFromCurrentCompany,
     workExperience,
     projects,
     education,
@@ -119,10 +123,16 @@ const postItProfile = async (req, res) => {
   const eduList = safeParseArray(education);
   const certList = safeParseArray(certificates);
 
+  const isOpenToWork = openToWork === "true" || openToWork === "on" || openToWork === true || openToWork === 1 || openToWork === "1";
+
   candidate.itProfile = {
     title: (title || "").trim(),
     level: level || "junior",
     yearsOfExperience: Number(yearsOfExperience) || 0,
+    openToWork: isOpenToWork,
+    expectedSalary: Number(expectedSalary) || 0,
+    preferredCity: (preferredCity || "ha-noi").trim(),
+    hideFromCurrentCompany: (hideFromCurrentCompany || "").trim(),
     bio: (bio || "").trim(),
     githubUrl: (githubUrl || "").trim(),
     linkedinUrl: (linkedinUrl || "").trim(),

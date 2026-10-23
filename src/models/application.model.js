@@ -84,6 +84,45 @@ const applicationSchema = new mongoose.Schema(
       interviewDate: { type: String, default: "" },
       location: { type: String, default: "" },
     },
+    // Đánh giá ứng viên (Scorecard 1 - 5 sao)
+    rating: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5,
+    },
+    // Ghi chú nội bộ của nhà tuyển dụng (Private Internal Notes)
+    internalNotes: [
+      {
+        author: { type: String, default: "HR Recruiter" },
+        content: { type: String, required: true, trim: true },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
+    // Lập lịch phỏng vấn thông minh & Đồng bộ Calendar
+    interviewSchedule: {
+      scheduledAt: { type: Date, default: null },
+      durationMinutes: { type: Number, default: 60 },
+      locationType: {
+        type: String,
+        enum: ["online", "offline"],
+        default: "online",
+      },
+      meetingLink: { type: String, default: "", trim: true },
+      locationAddress: { type: String, default: "", trim: true },
+      interviewers: { type: String, default: "", trim: true },
+      notes: { type: String, default: "", trim: true },
+      status: {
+        type: String,
+        enum: ["pending", "confirmed", "rescheduled", "cancelled"],
+        default: "pending",
+      },
+      candidateResponse: {
+        status: { type: String, default: "" },
+        note: { type: String, default: "" },
+        respondedAt: { type: Date, default: null },
+      },
+    },
   },
   { timestamps: true }
 );

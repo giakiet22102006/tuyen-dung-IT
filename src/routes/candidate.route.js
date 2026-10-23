@@ -57,6 +57,7 @@ router.post("/it-profile", requireCandidate, doubleCsrfProtection, asyncHandler(
 // Quản lý CV đã nộp (Ứng tuyển)
 router.get("/applied-jobs", requireCandidate, asyncHandler(candidateApplication.renderAppliedJobs));
 router.post("/applied-jobs/:id/delete", requireCandidate, doubleCsrfProtection, asyncHandler(candidateApplication.postWithdrawApplication));
+router.post("/applied-jobs/:id/respond-interview", requireCandidate, doubleCsrfProtection, asyncHandler(candidateApplication.postRespondInterview));
 router.get("/applied-jobs/:id/pdf", requireCandidate, asyncHandler(candidateApplication.streamCandidateCv));
 
 // Quản lý Việc làm đã lưu (Saved Jobs)
