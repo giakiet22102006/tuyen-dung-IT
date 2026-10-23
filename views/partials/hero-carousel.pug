@@ -5,8 +5,8 @@ div(class="py-[20px] sm:py-[30px] bg-[#000055]")
             
             //- Slide 1: AI Smart Matching
             div(class="hero-carousel-slide active bg-gradient-to-r from-[#000055] via-[#000080] to-[#0A2668] p-[24px] sm:p-[40px] lg:p-[48px] text-white")
-                div(class="grid grid-cols-1 lg:grid-cols-12 gap-[24px] lg:gap-[32px] items-center")
-                    div(class="lg:col-span-7")
+                div(class="grid grid-cols-1 lg:grid-cols-12 gap-[24px] lg:gap-[32px] items-center relative z-10")
+                    div(class="lg:col-span-7 slide-content-left")
                         div(class="inline-flex items-center gap-[6px] px-[12px] py-[4px] rounded-full bg-[#0088FF]/20 border border-[#0088FF]/40 text-[#60A5FA] text-[11px] sm:text-[12px] font-[700] uppercase tracking-wider mb-[12px]")
                             <i class="fa-solid fa-wand-magic-sparkles text-[12px]"></i>
                             span Đột phá Công nghệ AI 2026
@@ -25,7 +25,7 @@ div(class="py-[20px] sm:py-[30px] bg-[#000055]")
                                 <i class="fa-solid fa-magnifying-glass text-[12px]"></i>
                                 span Tìm Việc Theo Kỹ Năng
                     
-                    div(class="lg:col-span-5")
+                    div(class="lg:col-span-5 slide-content-right")
                         div(class="relative max-w-[340px] mx-auto")
                             div(class="bg-white/10 backdrop-blur-md border border-white/20 p-[20px] rounded-[16px] shadow-2xl animate-float")
                                 div(class="flex items-center justify-between pb-[12px] border-b border-white/10 mb-[14px]")
@@ -51,8 +51,8 @@ div(class="py-[20px] sm:py-[30px] bg-[#000055]")
 
             //- Slide 2: Salary Benchmark
             div(class="hero-carousel-slide bg-gradient-to-r from-[#031433] via-[#0A2658] to-[#013872] p-[24px] sm:p-[40px] lg:p-[48px] text-white")
-                div(class="grid grid-cols-1 lg:grid-cols-12 gap-[24px] lg:gap-[32px] items-center")
-                    div(class="lg:col-span-7")
+                div(class="grid grid-cols-1 lg:grid-cols-12 gap-[24px] lg:gap-[32px] items-center relative z-10")
+                    div(class="lg:col-span-7 slide-content-left")
                         div(class="inline-flex items-center gap-[6px] px-[12px] py-[4px] rounded-full bg-[#EA1E30]/20 border border-[#EA1E30]/40 text-[#FCA5A5] text-[11px] sm:text-[12px] font-[700] uppercase tracking-wider mb-[12px]")
                             <i class="fa-solid fa-calculator text-[12px]"></i>
                             span Báo Cáo Lương IT 2026
@@ -72,7 +72,7 @@ div(class="py-[20px] sm:py-[30px] bg-[#000055]")
                                 <i class="fa-solid fa-building text-[12px]"></i>
                                 span Xem Công Ty Đãi Ngộ Cao
                     
-                    div(class="lg:col-span-5")
+                    div(class="lg:col-span-5 slide-content-right")
                         div(class="relative max-w-[340px] mx-auto")
                             div(class="bg-white/10 backdrop-blur-md border border-white/20 p-[20px] rounded-[16px] shadow-2xl animate-float")
                                 div(class="flex items-center justify-between pb-[10px] border-b border-white/10 mb-[12px]")
@@ -104,8 +104,8 @@ div(class="py-[20px] sm:py-[30px] bg-[#000055]")
 
             //- Slide 3: Top Employers & Tech Unicorns
             div(class="hero-carousel-slide bg-gradient-to-r from-[#02102A] via-[#06214E] to-[#01356F] p-[24px] sm:p-[40px] lg:p-[48px] text-white")
-                div(class="grid grid-cols-1 lg:grid-cols-12 gap-[24px] lg:gap-[32px] items-center")
-                    div(class="lg:col-span-7")
+                div(class="grid grid-cols-1 lg:grid-cols-12 gap-[24px] lg:gap-[32px] items-center relative z-10")
+                    div(class="lg:col-span-7 slide-content-left")
                         div(class="inline-flex items-center gap-[6px] px-[12px] py-[4px] rounded-full bg-[#10B981]/20 border border-[#10B981]/40 text-[#6EE7B7] text-[11px] sm:text-[12px] font-[700] uppercase tracking-wider mb-[12px]")
                             <i class="fa-solid fa-medal text-[12px]"></i>
                             span Môi Trường Làm Việc Đẳng Cấp
@@ -124,7 +124,7 @@ div(class="py-[20px] sm:py-[30px] bg-[#000055]")
                                 <i class="fa-solid fa-fire text-[#EA1E30] text-[12px]"></i>
                                 span Việc Làm Tuyển Gấp
                     
-                    div(class="lg:col-span-5")
+                    div(class="lg:col-span-5 slide-content-right")
                         div(class="relative max-w-[340px] mx-auto")
                             div(class="bg-white/10 backdrop-blur-md border border-white/20 p-[20px] rounded-[16px] shadow-2xl animate-float space-y-[10px]")
                                 if topEmployers && topEmployers.length >= 3

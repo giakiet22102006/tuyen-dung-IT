@@ -289,7 +289,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const startAutoPlay = () => {
       stopAutoPlay();
-      autoPlayTimer = setInterval(nextSlide, 5500);
+      autoPlayTimer = setInterval(nextSlide, 7000);
     };
 
     const stopAutoPlay = () => {
