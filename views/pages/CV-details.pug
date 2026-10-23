@@ -115,7 +115,7 @@ block main
                                             strong Phản hồi từ ứng viên: 
                                             | "#{application.interviewSchedule.candidateResponse.note}"
                                 
-                                button(type="button" onclick="document.getElementById('scheduleInterviewModal').classList.remove('hidden'); document.getElementById('scheduleInterviewModal').classList.add('flex');" class="mt-[8px] text-[#0088FF] hover:underline font-[600] inline-block cursor-pointer") Chỉnh sửa / Đổi lịch phỏng vấn khác →
+                                button(type="button" id="btnOpenScheduleAgain" class="mt-[8px] text-[#0088FF] hover:underline font-[600] inline-block cursor-pointer") Chỉnh sửa / Đổi lịch phỏng vấn khác →
 
                     //- Trợ lý AI Tuyển Dụng (CV Screening & Executive Summary)
                     div(class="mt-[24px] p-[20px] bg-gradient-to-r from-blue-50/70 via-indigo-50/50 to-white rounded-[10px] border border-blue-200")
@@ -385,6 +385,7 @@ block main
                 // 1. Quản lý Modal Lập Lịch Phỏng Vấn
                 var modalSchedule = document.getElementById("scheduleInterviewModal");
                 var btnOpenSchedule = document.getElementById("btnOpenScheduleModal");
+                var btnOpenScheduleAgain = document.getElementById("btnOpenScheduleAgain");
                 var btnCloseSchedule = document.getElementById("btnCloseScheduleModal");
                 var btnCancelSchedule = document.getElementById("btnCancelScheduleModal");
                 var schedLocationType = document.getElementById("schedLocationType");
@@ -413,6 +414,7 @@ block main
                 }
 
                 if (btnOpenSchedule) btnOpenSchedule.addEventListener("click", openScheduleModal);
+                if (btnOpenScheduleAgain) btnOpenScheduleAgain.addEventListener("click", openScheduleModal);
                 if (btnCloseSchedule) btnCloseSchedule.addEventListener("click", closeScheduleModal);
                 if (btnCancelSchedule) btnCancelSchedule.addEventListener("click", closeScheduleModal);
 

@@ -17,7 +17,7 @@ block main
                     p(class="text-[14px] text-gray-500 mt-[2px]") Quản lý phân quyền chuyên viên tuyển dụng trong #{companyName}, hỗ trợ nhiều nhân sự cùng làm việc độc lập.
 
                 div
-                    button(type="button" onclick="document.getElementById('addMemberModal').classList.remove('hidden'); document.getElementById('addMemberModal').classList.add('flex');" class="inline-flex items-center gap-[8px] bg-[#0088FF] hover:bg-[#0070d6] text-white font-[700] text-[13.5px] px-[18px] py-[10px] rounded-[8px] shadow-sm transition-all cursor-pointer")
+                    button(type="button" id="btnOpenAddMember" class="inline-flex items-center gap-[8px] bg-[#0088FF] hover:bg-[#0070d6] text-white font-[700] text-[13.5px] px-[18px] py-[10px] rounded-[8px] shadow-sm transition-all cursor-pointer")
                         <i class="fa-solid fa-user-plus"></i>
                         span Thêm Chuyên Viên Mới
 
@@ -94,7 +94,7 @@ block main
                     div
                         h3(class="font-[700] text-[16px]") Thêm Chuyên Viên Tuyển Dụng
                         p(class="text-[12px] text-white/80") Cấp quyền truy cập quản lý hồ sơ cho nhân sự HR
-                button(type="button" onclick="document.getElementById('addMemberModal').classList.add('hidden'); document.getElementById('addMemberModal').classList.remove('flex');" class="text-white/80 hover:text-white p-[6px] rounded cursor-pointer")
+                button(type="button" id="btnCloseAddMember" class="text-white/80 hover:text-white p-[6px] rounded cursor-pointer")
                     <i class="fa-solid fa-xmark text-[18px]"></i>
 
             form(method="POST" action="/employer/team" class="p-[20px] sm:p-[24px] space-y-[16px]")
@@ -115,7 +115,41 @@ block main
                         option(value="admin") Quản trị viên nhóm (Toàn quyền quản lý tin & ứng viên)
 
                 div(class="flex items-center justify-end gap-[10px] pt-[10px] border-t border-gray-100")
-                    button(type="button" onclick="document.getElementById('addMemberModal').classList.add('hidden'); document.getElementById('addMemberModal').classList.remove('flex');" class="px-[18px] py-[10px] rounded-[8px] border border-gray-300 text-gray-700 font-[600] text-[13.5px] hover:bg-gray-50 transition cursor-pointer") Hủy
+                    button(type="button" id="btnCancelAddMember" class="px-[18px] py-[10px] rounded-[8px] border border-gray-300 text-gray-700 font-[600] text-[13.5px] hover:bg-gray-50 transition cursor-pointer") Hủy
                     button(type="submit" class="px-[22px] py-[10px] rounded-[8px] bg-[#0088FF] hover:bg-[#0070d6] text-white font-[700] text-[13.5px] shadow-sm transition cursor-pointer flex items-center gap-[6px]")
                         <i class="fa-solid fa-plus"></i>
                         span Thêm Nhân Sự
+
+    script.
+        (function() {
+            function initTeamModal() {
+                var modal = document.getElementById("addMemberModal");
+                var btnOpen = document.getElementById("btnOpenAddMember");
+                var btnClose = document.getElementById("btnCloseAddMember");
+                var btnCancel = document.getElementById("btnCancelAddMember");
+
+                function openModal() {
+                    if (modal) {
+                        modal.classList.remove("hidden");
+                        modal.classList.add("flex");
+                    }
+                }
+
+                function closeModal() {
+                    if (modal) {
+                        modal.classList.add("hidden");
+                        modal.classList.remove("flex");
+                    }
+                }
+
+                if (btnOpen) btnOpen.addEventListener("click", openModal);
+                if (btnClose) btnClose.addEventListener("click", closeModal);
+                if (btnCancel) btnCancel.addEventListener("click", closeModal);
+            }
+
+            if (document.readyState === "loading") {
+                document.addEventListener("DOMContentLoaded", initTeamModal);
+            } else {
+                initTeamModal();
+            }
+        })();
