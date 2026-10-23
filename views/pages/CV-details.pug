@@ -37,14 +37,30 @@ block main
                             input(type="hidden" name="status" value="approved")
                             button(type="submit" class="bg-[#9FDB7C] hover:bg-[#8ccb6a] rounded-[6px] py-[8px] px-[20px] cursor-pointer font-[600] text-[13px] text-black shadow-xs") Duyệt phù hợp
 
-                        form(action="/employer/cvs/" + application._id + "/status" method="POST" class="inline")
-                            input(type="hidden" name="_csrf" value=csrfToken)
-                            input(type="hidden" name="status" value="rejected")
-                            button(type="submit" class="bg-[#FF5100] hover:bg-[#e64900] rounded-[6px] py-[8px] px-[20px] cursor-pointer font-[600] text-[13px] text-white shadow-xs") Từ chối hồ sơ
+                        button(type="button" id="btnOpenRejectModal" class="bg-[#FF5100] hover:bg-[#e64900] rounded-[6px] py-[8px] px-[20px] cursor-pointer font-[600] text-[13px] text-white shadow-xs inline-flex items-center gap-[6px]")
+                            <i class="fa-solid fa-ban text-[12px]"></i>
+                            span Từ chối hồ sơ
 
                         button(type="button" id="btnOpenInviteModal" class="inline-flex items-center gap-[6px] bg-[#000071] hover:bg-[#000055] text-white rounded-[6px] py-[8px] px-[18px] cursor-pointer font-[600] text-[13px] shadow-xs transition-colors")
                             <i class="fa-solid fa-envelope-open-text text-[13px]"></i>
                             span Gửi Thư Mời Phỏng Vấn (Email)
+
+                    if application.status === 'rejected'
+                        div(class="mt-[14px] p-[16px] bg-red-50/90 border border-red-200 rounded-[8px] flex items-start gap-[12px]")
+                            div(class="text-red-600 text-[20px] mt-[2px]")
+                                <i class="fa-solid fa-circle-xmark"></i>
+                            div(class="flex-1 text-[13px] text-red-900")
+                                div(class="font-[700] text-[15px] flex items-center justify-between flex-wrap gap-[6px]")
+                                    span Đã từ chối hồ sơ ứng tuyển này
+                                    if application.rejectedAt || application.reviewedAt
+                                        span(class="text-[12px] font-[400] text-gray-500") Thời gian: #{formatDateTime(application.rejectedAt || application.reviewedAt)}
+                                if application.rejectionReason
+                                    div(class="mt-[6px] text-red-950 font-[600]") Lý do từ chối: <span class="font-[500] text-gray-800">#{application.rejectionReason}</span>
+                                if application.rejectionNote
+                                    div(class="mt-[8px] p-[10px] bg-white rounded-[6px] border border-red-100 text-gray-700 leading-relaxed whitespace-pre-line text-[13px]")
+                                        div(class="text-[11px] font-[700] text-gray-400 uppercase tracking-wide mb-[4px]") Lời nhắn gửi ứng viên:
+                                        span #{application.rejectionNote}
+                                button(type="button" id="btnOpenRejectModalAgain" class="mt-[8px] text-[#0088FF] hover:underline font-[600] inline-block cursor-pointer") Cập nhật lại lý do từ chối →
 
                     if application.interviewInvitation && application.interviewInvitation.sentAt
                         div(class="mt-[14px] p-[14px] bg-emerald-50 border border-emerald-200 rounded-[8px] flex items-start gap-[12px]")
@@ -174,6 +190,58 @@ block main
                         button(type="button" id="btnCancelInviteModal" class="px-[16px] py-[8px] border border-gray-300 rounded-[6px] text-[13px] font-[600] text-gray-700 hover:bg-gray-100 cursor-pointer") Hủy
                         button(type="submit" class="px-[20px] py-[8px] bg-[#0088FF] hover:bg-[#0070D2] rounded-[6px] text-[13px] font-[700] text-white cursor-pointer shadow-xs") <i class="fa-solid fa-paper-plane mr-[6px]"></i> Gửi Email Đến Ứng Viên
 
+        //- ==========================================
+        //- MODAL TỪ CHỐI HỒ SƠ ỨNG VIÊN
+        //- ==========================================
+        div(id="modalRejectCv" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-xs p-[16px]")
+            div(class="bg-white rounded-[12px] shadow-2xl max-w-[620px] w-full max-h-[92vh] flex flex-col overflow-hidden animate-fadeIn")
+                div(class="p-[18px] border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-red-50 to-orange-50")
+                    div(class="flex items-center gap-[10px]")
+                        div(class="w-[36px] h-[36px] rounded-full bg-[#FF5100] text-white flex items-center justify-center text-[16px]")
+                            <i class="fa-solid fa-user-xmark"></i>
+                        div
+                            h3(class="font-[700] text-[16px] text-gray-900") Từ Chối Hồ Sơ Ứng Tuyển
+                            p(class="text-[12px] text-gray-500") Ứng viên: #{application.fullName} (#{application.email})
+                    button(type="button" id="btnCloseRejectModal" class="text-gray-400 hover:text-gray-600 text-[20px] p-[4px] cursor-pointer")
+                        <i class="fa-solid fa-xmark"></i>
+
+                form(action="/employer/cvs/" + application._id + "/status" method="POST" id="formRejectCv" class="p-[20px] overflow-y-auto flex-1 space-y-[14px]")
+                    input(type="hidden" name="_csrf" value=csrfToken)
+                    input(type="hidden" name="status" value="rejected")
+
+                    div
+                        label(class="block text-[13px] font-[700] text-gray-700 mb-[6px]") Gợi ý lý do từ chối nhanh:
+                        div(class="flex flex-wrap gap-[6px]" id="rejectReasonChips")
+                            button(type="button" data-reason="Chưa đáp ứng đủ số năm kinh nghiệm theo yêu cầu" class="chip-reason px-[10px] py-[5px] bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-[12px] cursor-pointer transition border border-gray-200") Chưa đủ năm kinh nghiệm
+                            button(type="button" data-reason="Kỹ năng chuyên môn / Công nghệ chưa phù hợp với vị trí" class="chip-reason px-[10px] py-[5px] bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-[12px] cursor-pointer transition border border-gray-200") Kỹ năng chưa tương thích
+                            button(type="button" data-reason="Đã tuyển đủ chỉ tiêu cho vị trí này trong đợt tuyển dụng" class="chip-reason px-[10px] py-[5px] bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-[12px] cursor-pointer transition border border-gray-200") Đã tuyển đủ chỉ tiêu
+                            button(type="button" data-reason="Mức lương kỳ vọng hoặc hình thức làm việc chưa tương thích" class="chip-reason px-[10px] py-[5px] bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-[12px] cursor-pointer transition border border-gray-200") Lương / Thời gian
+                            button(type="button" data-reason="Hồ sơ chưa đạt yêu cầu đánh giá đầu vào" class="chip-reason px-[10px] py-[5px] bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-[12px] cursor-pointer transition border border-gray-200") Chưa đạt bài test
+
+                    div
+                        label(class="block text-[13px] font-[600] text-gray-700 mb-[4px]") Lý do từ chối chính *
+                        input(type="text" id="rejectReason" name="rejectionReason" required value=(application.rejectionReason || "Chưa đáp ứng đủ số năm kinh nghiệm theo yêu cầu") placeholder="Nhập tóm tắt lý do từ chối..." class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[8px] text-[14px]")
+
+                    div
+                        div(class="flex items-center justify-between mb-[4px]")
+                            label(class="block text-[13px] font-[600] text-gray-700") Lời nhắn gửi ứng viên (Tùy chọn)
+                            button(type="button" id="btnAiDraftReject" class="inline-flex items-center gap-[4px] text-[12px] font-[600] text-[#0088FF] hover:underline cursor-pointer")
+                                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                span ✨ AI Viết Lời Nhắn Lịch Sự
+                                span(id="aiDraftRejectSpin" class="hidden animate-spin") <i class="fa-solid fa-spinner"></i>
+                        textarea(id="rejectNote" name="rejectionNote" rows="5" placeholder="Soạn lời nhắn hoặc lý do chi tiết gửi ứng viên để giúp họ hiểu rõ và tiếp tục cải thiện..." class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[8px] text-[13px] leading-relaxed")= (application.rejectionNote || "")
+
+                    div(class="p-[12px] bg-amber-50 border border-amber-200 rounded-[8px]")
+                        label(class="flex items-center gap-[8px] cursor-pointer select-none text-[13px] text-amber-900 font-[500]")
+                            input(type="checkbox" name="sendEmail" value="true" checked class="w-[16px] h-[16px] text-[#0088FF] rounded border-gray-300 cursor-pointer")
+                            span Gửi email thông báo kết quả & lý do từ chối đến ứng viên (#{application.email})
+
+                    div(class="pt-[10px] border-t border-gray-200 flex justify-end gap-[10px]")
+                        button(type="button" id="btnCancelRejectModal" class="px-[16px] py-[8px] border border-gray-300 rounded-[6px] text-[13px] font-[600] text-gray-700 hover:bg-gray-100 cursor-pointer") Hủy Bỏ
+                        button(type="submit" class="px-[20px] py-[8px] bg-[#FF5100] hover:bg-[#e64900] rounded-[6px] text-[13px] font-[700] text-white cursor-pointer shadow-xs inline-flex items-center gap-[6px]")
+                            <i class="fa-solid fa-circle-xmark"></i>
+                            span Xác Nhận Từ Chối
+
     script.
         (function() {
             function runInit() {
@@ -243,6 +311,92 @@ block main
                         } finally {
                             btnAiDraft.disabled = false;
                             if (aiSpin) aiSpin.classList.add("hidden");
+                        }
+                    });
+                }
+
+                // Quản lý Modal Từ Chối CV
+                var modalReject = document.getElementById("modalRejectCv");
+                var btnOpenReject = document.getElementById("btnOpenRejectModal");
+                var btnOpenRejectAgain = document.getElementById("btnOpenRejectModalAgain");
+                var btnCloseReject = document.getElementById("btnCloseRejectModal");
+                var btnCancelReject = document.getElementById("btnCancelRejectModal");
+                var rejectReasonInput = document.getElementById("rejectReason");
+                var rejectNoteTextarea = document.getElementById("rejectNote");
+                var btnAiDraftReject = document.getElementById("btnAiDraftReject");
+                var aiDraftRejectSpin = document.getElementById("aiDraftRejectSpin");
+                var chipButtons = document.querySelectorAll("#rejectReasonChips .chip-reason");
+
+                function openRejectModal() {
+                    if (modalReject) {
+                        modalReject.classList.remove("hidden");
+                        modalReject.classList.add("flex");
+                    }
+                }
+
+                function closeRejectModal() {
+                    if (modalReject) {
+                        modalReject.classList.add("hidden");
+                        modalReject.classList.remove("flex");
+                    }
+                }
+
+                if (btnOpenReject) btnOpenReject.addEventListener("click", openRejectModal);
+                if (btnOpenRejectAgain) btnOpenRejectAgain.addEventListener("click", openRejectModal);
+                if (btnCloseReject) btnCloseReject.addEventListener("click", closeRejectModal);
+                if (btnCancelReject) btnCancelReject.addEventListener("click", closeRejectModal);
+
+                // Click chọn chip lý do nhanh
+                chipButtons.forEach(function(chip) {
+                    chip.addEventListener("click", function() {
+                        var val = chip.getAttribute("data-reason");
+                        if (rejectReasonInput) rejectReasonInput.value = val;
+                        // Đổi style active chip
+                        chipButtons.forEach(function(c) {
+                            c.classList.remove("bg-[#FF5100]", "text-white", "border-[#FF5100]");
+                            c.classList.add("bg-gray-100", "text-gray-700", "border-gray-200");
+                        });
+                        chip.classList.remove("bg-gray-100", "text-gray-700", "border-gray-200");
+                        chip.classList.add("bg-[#FF5100]", "text-white", "border-[#FF5100]");
+                    });
+                });
+
+                // AI soạn lời nhắn từ chối lịch sự
+                if (btnAiDraftReject) {
+                    btnAiDraftReject.addEventListener("click", async function() {
+                        btnAiDraftReject.disabled = true;
+                        if (aiDraftRejectSpin) aiDraftRejectSpin.classList.remove("hidden");
+
+                        try {
+                            var csrfMeta = document.querySelector('meta[name="csrf-token"]');
+                            var csrfToken = csrfMeta ? csrfMeta.getAttribute("content") : "";
+                            var currentReason = rejectReasonInput ? rejectReasonInput.value : "";
+                            var currentNote = rejectNoteTextarea ? rejectNoteTextarea.value : "";
+
+                            var res = await fetch("/employer/cvs/#{application._id}/ai-draft-rejection", {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    "x-csrf-token": csrfToken
+                                },
+                                body: JSON.stringify({
+                                    reasonType: currentReason,
+                                    customNote: currentNote
+                                })
+                            });
+                            var data = await res.json();
+                            if (data.success) {
+                                if (data.reason && rejectReasonInput) rejectReasonInput.value = data.reason;
+                                if (data.content && rejectNoteTextarea) rejectNoteTextarea.value = data.content;
+                            } else {
+                                alert(data.message || "Không thể tạo lời nhắn từ chối");
+                            }
+                        } catch(e) {
+                            console.error(e);
+                            alert("Có lỗi xảy ra khi tạo lời nhắn bằng AI");
+                        } finally {
+                            btnAiDraftReject.disabled = false;
+                            if (aiDraftRejectSpin) aiDraftRejectSpin.classList.add("hidden");
                         }
                     });
                 }

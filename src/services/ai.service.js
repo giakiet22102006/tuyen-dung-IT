@@ -30,10 +30,12 @@ async function callGemini(prompt, systemInstruction = "", timeoutMs = 12000) {
 
   for (let i = 0; i < modelsToTry.length; i++) {
     const modelName = modelsToTry[i];
+    let timeoutHandle;
     try {
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Timeout vượt quá hạn phản hồi")), timeoutMs)
-      );
+      const timeoutPromise = new Promise((_, reject) => {
+        timeoutHandle = setTimeout(() => reject(new Error("Timeout vượt quá hạn phản hồi")), timeoutMs);
+        if (timeoutHandle && timeoutHandle.unref) timeoutHandle.unref();
+      });
       const callPromise = aiClient.models.generateContent({
         model: modelName,
         contents: prompt,
@@ -49,6 +51,8 @@ async function callGemini(prompt, systemInstruction = "", timeoutMs = 12000) {
       if (i === modelsToTry.length - 1) {
         console.error("❌ Tất cả các model Gemini đều không phản hồi, chuyển sang phân tích thông minh nội bộ.");
       }
+    } finally {
+      if (timeoutHandle) clearTimeout(timeoutHandle);
     }
   }
 
@@ -757,6 +761,64 @@ Bộ phận Tuyển dụng Nhân tài - ${companyName}`
   };
 }
 
+// =========================================================================
+// AI Feature 7: Draft Rejection Letter (Thư Từ Chối Lịch Sự & Văn Minh)
+// =========================================================================
+async function draftRejectionLetter({
+  candidateName = "Ứng viên",
+  jobTitle = "Lập trình viên IT",
+  companyName = "Công ty",
+  reasonType = "Chưa đáp ứng đủ số năm kinh nghiệm theo yêu cầu",
+  customNote = "",
+}) {
+  const prompt = `
+Bạn là Chuyên gia Tuyển dụng Nhân sự Chuyên nghiệp (HR Tech Specialist) tại Việt Nam.
+Hãy soạn một lời nhắn / thư từ chối ứng viên (Candidate Rejection Note) bằng tiếng Việt thật tinh tế, lịch sự, tôn trọng thời gian của ứng viên và mang tính xây dựng:
+- Tên ứng viên: ${candidateName}
+- Vị trí ứng tuyển: ${jobTitle}
+- Tên công ty: ${companyName}
+- Lý do từ chối chính: ${reasonType}
+${customNote ? `- Ghi chú thêm từ NTD: ${customNote}` : ""}
+
+YÊU CẦU:
+1. Thể hiện lòng biết ơn chân thành vì ứng viên đã quan tâm và nộp hồ sơ.
+2. Trình bày lý do từ chối một cách khéo léo, nhã nhặn, không làm tổn thương hay nản lòng ứng viên.
+3. Bày tỏ mong muốn lưu giữ thông tin hồ sơ cho các cơ hội tiếp theo trong tương lai khi có dự án phù hợp hơn.
+4. Trả về đúng định dạng JSON hợp lệ:
+{
+  "reason": "Tóm tắt lý do ngắn gọn (1 câu)",
+  "content": "Toàn văn nội dung lời nhắn gửi ứng viên (xuống dòng bằng \\n)"
+}
+`;
+
+  try {
+    const raw = await callGemini(prompt, "Bạn là chuyên gia nhân sự IT. Luôn trả về JSON hợp lệ.");
+    const parsed = parseJsonFromLlm(raw);
+    if (parsed && (parsed.reason || parsed.content)) {
+      return {
+        reason: parsed.reason || reasonType,
+        content: parsed.content || "",
+      };
+    }
+  } catch (err) {
+    console.error("Lỗi AI draftRejectionLetter:", err.message);
+  }
+
+  // Fallback chất lượng cao
+  return {
+    reason: reasonType,
+    content: `Chào bạn ${candidateName},
+
+Cảm ơn bạn đã dành thời gian và sự quan tâm đến vị trí ${jobTitle} tại ${companyName}.
+
+Sau khi xem xét kỹ lưỡng hồ sơ, chúng tôi nhận thấy các kỹ năng và kinh nghiệm hiện tại của bạn chưa thực sự tương thích với yêu cầu cụ thể của vị trí này ở giai đoạn hiện tại (${reasonType.toLowerCase()}).
+
+Chúng tôi rất trân trọng tiềm năng của bạn và xin phép được lưu lại thông tin hồ sơ trong hệ thống dữ liệu nhân tài để có thể liên hệ lại khi có cơ hội phù hợp hơn trong tương lai.
+
+Chúc bạn luôn thành công và sớm tìm được bến đỗ nghề nghiệp ưng ý!`,
+  };
+}
+
 module.exports = {
   callGemini,
   extractTextFromPdf,
@@ -767,4 +829,5 @@ module.exports = {
   moderateJobContent,
   generateMarketInsights,
   draftInterviewInvitation,
+  draftRejectionLetter,
 };

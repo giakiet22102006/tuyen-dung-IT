@@ -253,8 +253,109 @@ async function sendInterviewInvitationEmail({
   }
 }
 
+/**
+ * Gửi email thông báo kết quả và lý do từ chối hồ sơ tới Ứng viên
+ */
+async function sendRejectionEmail({
+  toEmail,
+  candidateName,
+  companyName,
+  jobTitle,
+  reason,
+  note,
+  replyTo,
+}) {
+  const mailTransporter = getTransporter();
+  const safeSubject = `[VN.ITJobs] Thông báo kết quả ứng tuyển vị trí ${jobTitle} - ${companyName}`;
+  const defaultReason = reason || "Chưa phù hợp với yêu cầu của vị trí tại thời điểm này";
+
+  const formattedNote = note
+    ? String(note)
+        .replace(/\r\n/g, "\n")
+        .split("\n")
+        .map((line) => line.trim() ? `<p style="margin: 0 0 10px 0; line-height: 1.6; color: #475569;">${line}</p>` : `<br/>`)
+        .join("")
+    : "";
+
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #E0E0E0; border-radius: 8px; overflow: hidden; background-color: #ffffff;">
+      <div style="background-color: #000071; padding: 24px; text-align: center;">
+        <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: bold; letter-spacing: 1px;">VN.ITJobs</h1>
+        <p style="color: #A6A6A6; margin: 6px 0 0; font-size: 13px;">Cổng thông tin việc làm IT hàng đầu Việt Nam</p>
+      </div>
+
+      <div style="padding: 28px 24px;">
+        <div style="display: inline-block; background-color: #FEE2E2; color: #991B1B; font-size: 12px; font-weight: bold; padding: 4px 10px; border-radius: 4px; margin-bottom: 12px;">
+          📋 THÔNG BÁO KẾT QUẢ ỨNG TUYỂN
+        </div>
+        <h2 style="color: #121212; font-size: 19px; margin: 0 0 16px 0;">Kết Quả Ứng Tuyển: ${jobTitle}</h2>
+        <p style="color: #475569; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
+          Kính gửi bạn <strong>${candidateName}</strong>,<br/>
+          Lời đầu tiên, Ban Tuyển dụng công ty <strong>${companyName}</strong> chân thành cảm ơn bạn đã quan tâm và dành thời gian gửi hồ sơ ứng tuyển cho vị trí <strong>${jobTitle}</strong>.
+        </p>
+
+        <!-- Lý do từ chối -->
+        <div style="background-color: #FFF5F5; border-left: 4px solid #EF4444; border-radius: 4px; padding: 14px 16px; margin-bottom: 20px;">
+          <h4 style="margin: 0 0 8px 0; font-size: 13px; color: #991B1B; text-transform: uppercase; letter-spacing: 0.5px;">Phản hồi từ Nhà tuyển dụng:</h4>
+          <div style="font-size: 14px; color: #7F1D1D; font-weight: 600; margin-bottom: ${note ? '8px' : '0'};">
+            • Lý do: ${defaultReason}
+          </div>
+          ${formattedNote ? `<div style="font-size: 13px; color: #475569; font-style: italic; border-top: 1px dashed #FECACA; padding-top: 8px; margin-top: 8px;">${formattedNote}</div>` : ""}
+        </div>
+
+        <p style="color: #475569; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
+          Mặc dù rất tiếc vì chưa thể đồng hành cùng bạn ở vị trí này tại thời điểm hiện tại, chúng tôi xin phép được lưu lại hồ sơ của bạn trong hệ thống cơ sở dữ liệu nhân tài. Khi có cơ hội và dự án mới phù hợp hơn với định hướng của bạn, chúng tôi sẽ chủ động liên hệ lại.
+        </p>
+
+        <p style="color: #475569; font-size: 14px; line-height: 1.6; margin-bottom: 24px;">
+          Chúc bạn luôn dồi dào sức khỏe, may mắn và sớm tìm được cơ hội nghề nghiệp ưng ý trên con đường sự nghiệp!
+        </p>
+
+        <div style="text-align: center; margin: 24px 0 10px;">
+          <a href="https://tuyen-dung-it.vercel.app/search" style="display: inline-block; background-color: #0088FF; color: #ffffff; font-weight: bold; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-size: 14px;">
+            🔍 Khám Phá Các Cơ Hội IT Khác
+          </a>
+        </div>
+      </div>
+
+      <div style="background-color: #F7F7F7; padding: 16px; text-align: center; color: #888888; font-size: 12px;">
+        Thông báo được gửi từ <strong>${companyName}</strong> thông qua cổng tuyển dụng <strong>VN.ITJobs</strong>.<br/>
+        © 2026 VN.ITJobs. Mọi quyền được bảo lưu.
+      </div>
+    </div>
+  `;
+
+  if (mailTransporter) {
+    try {
+      const info = await mailTransporter.sendMail({
+        from: env.SMTP_FROM,
+        to: toEmail,
+        replyTo: replyTo || undefined,
+        subject: safeSubject,
+        text: `Chào ${candidateName}, Công ty ${companyName} cảm ơn bạn đã ứng tuyển vị trí ${jobTitle}. Sau khi xem xét, rất tiếc hồ sơ của bạn chưa phù hợp ở thời điểm này: ${defaultReason}. Lời nhắn: ${note || ""}`,
+        html: htmlContent,
+      });
+      console.log(`📧 Đã gửi email từ chối tới ${toEmail}: ${info.messageId}`);
+      return { success: true, messageId: info.messageId };
+    } catch (err) {
+      console.error(`❌ Lỗi gửi email thông báo từ chối: ${err.message}`);
+      return { success: false, error: err.message };
+    }
+  } else {
+    console.log("=================================================");
+    console.log(`📧 [MÔ PHỎNG EMAIL THÔNG BÁO TỪ CHỐI CV] Tới: ${toEmail}`);
+    console.log(`🏢 Công ty: ${companyName} | Vị trí: ${jobTitle}`);
+    console.log(`❌ Lý do: ${defaultReason}`);
+    console.log(`📝 Lời nhắn: ${note || "Không có"}`);
+    console.log(`✉️ Tiêu đề: ${safeSubject}`);
+    console.log("=================================================");
+    return { success: true, simulated: true };
+  }
+}
+
 module.exports = {
   sendOtpEmail,
   sendRegistrationOtpEmail,
   sendInterviewInvitationEmail,
+  sendRejectionEmail,
 };

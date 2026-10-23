@@ -53,6 +53,20 @@ const applicationSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    rejectionReason: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    rejectionNote: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    rejectedAt: {
+      type: Date,
+      default: null,
+    },
     hiddenByEmployer: {
       type: Boolean,
       default: false,

@@ -432,6 +432,79 @@ describe("Phase 5: Candidate Profile, Application & Employer CV Management Tests
       expect(check.reviewedAt).not.toBeNull();
     });
 
+    test("POST /employer/cvs/:id/status từ chối hồ sơ kèm lý do và ứng viên xem được lý do", async () => {
+      const { employer, cookies: empCookies } = await createAndLoginEmployer();
+      const job = await Job.create({
+        employerId: employer._id,
+        title: "Golang Backend Developer",
+        slug: "golang-backend-dev-job",
+        position: "senior",
+        workingForm: "office",
+        city: "ho-chi-minh",
+        employerActive: true,
+        moderation: JOB_MODERATION.VISIBLE,
+      });
+
+      const { candidate, cookies: candCookies } = await createAndLoginCandidate({
+        email: "cand-reject-test@test.com",
+        fullName: "Lê Văn Ứng Viên",
+      });
+
+      const appDoc = await Application.create({
+        jobId: job._id,
+        employerId: employer._id,
+        candidateId: candidate._id,
+        fullName: candidate.fullName,
+        email: candidate.email,
+        phone: candidate.phone,
+        cv: { key: "cv-golang-test.pdf", originalName: "cv.pdf" },
+        status: APPLICATION_STATUS.PENDING,
+      });
+
+      const page = await getCsrfAndCookies("/employer/cvs", empCookies);
+
+      // NTD gọi POST từ chối kèm lý do và lời nhắn
+      const rejectRes = await request(app)
+        .post(`/employer/cvs/${appDoc._id}/status`)
+        .set("Cookie", page.cookies)
+        .type("form")
+        .send({
+          _csrf: page.csrfToken,
+          status: APPLICATION_STATUS.REJECTED,
+          rejectionReason: "Kỹ năng Golang chưa đáp ứng yêu cầu Senior",
+          rejectionNote: "Cảm ơn bạn. Dự án yêu cầu tối thiểu 3 năm kinh nghiệm với kiến trúc Microservices và gRPC.",
+        });
+
+      expect(rejectRes.status).toBe(302);
+
+      const check = await Application.findById(appDoc._id);
+      expect(check.status).toBe(APPLICATION_STATUS.REJECTED);
+      expect(check.rejectionReason).toBe("Kỹ năng Golang chưa đáp ứng yêu cầu Senior");
+      expect(check.rejectionNote).toContain("Microservices");
+      expect(check.rejectedAt).not.toBeNull();
+
+      // Kiểm tra ứng viên truy cập trang CV đã gửi thấy lý do từ chối
+      const candPage = await request(app)
+        .get("/candidate/applied-jobs")
+        .set("Cookie", candCookies);
+
+      expect(candPage.status).toBe(200);
+      expect(candPage.text).toContain("Kỹ năng Golang chưa đáp ứng yêu cầu Senior");
+      expect(candPage.text).toContain("Microservices");
+
+      // Kiểm tra endpoint AI draft rejection
+      const aiDraftRes = await request(app)
+        .post(`/employer/cvs/${appDoc._id}/ai-draft-rejection`)
+        .set("Cookie", page.cookies)
+        .send({
+          reasonType: "Chưa đủ kinh nghiệm yêu cầu",
+        });
+
+      expect(aiDraftRes.status).toBe(200);
+      expect(aiDraftRes.body.success).toBe(true);
+      expect(aiDraftRes.body.content).toBeDefined();
+    });
+
     test("POST /employer/cvs/:id/invite gửi thư mời phỏng vấn và cập nhật trạng thái approved", async () => {
       const { employer, cookies } = await createAndLoginEmployer();
       const job = await Job.create({

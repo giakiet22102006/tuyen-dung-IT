@@ -3,8 +3,8 @@ const fs = require("fs");
 const { Application, Job, Employer } = require("../../models");
 const { APPLICATION_STATUS } = require("../../config/constants");
 const { getCVPath, deleteCV } = require("../../services/storage.service");
-const { sendInterviewInvitationEmail } = require("../../services/mail.service");
-const { draftInterviewInvitation } = require("../../services/ai.service");
+const { sendInterviewInvitationEmail, sendRejectionEmail } = require("../../services/mail.service");
+const { draftInterviewInvitation, draftRejectionLetter } = require("../../services/ai.service");
 const paginate = require("../../utils/pagination");
 
 const renderManageCv = async (req, res) => {
@@ -89,7 +89,7 @@ const renderCvDetails = async (req, res) => {
 };
 
 const postCvStatus = async (req, res) => {
-  const { status } = req.body;
+  const { status, rejectionReason, rejectionNote, sendEmail } = req.body;
   if (![APPLICATION_STATUS.APPROVED, APPLICATION_STATUS.REJECTED].includes(status)) {
     req.flash("error", "Trạng thái duyệt không hợp lệ.");
     return res.redirect(req.headers.referer || "/employer/cvs");
@@ -99,7 +99,7 @@ const postCvStatus = async (req, res) => {
     _id: req.params.id,
     employerId: req.user._id,
     hiddenByEmployer: false,
-  });
+  }).populate("jobId", "title slug");
 
   if (!application) {
     req.flash("error", "Không tìm thấy hồ sơ CV yêu cầu.");
@@ -108,6 +108,34 @@ const postCvStatus = async (req, res) => {
 
   application.status = status;
   application.reviewedAt = new Date();
+
+  if (status === APPLICATION_STATUS.REJECTED) {
+    application.rejectionReason = rejectionReason ? rejectionReason.trim() : (application.rejectionReason || "Chưa phù hợp với yêu cầu vị trí tại thời điểm này");
+    application.rejectionNote = rejectionNote ? rejectionNote.trim() : "";
+    application.rejectedAt = new Date();
+
+    const shouldSendEmail = sendEmail === "true" || sendEmail === "on" || sendEmail === true;
+    if (shouldSendEmail && application.email) {
+      try {
+        await sendRejectionEmail({
+          toEmail: application.email,
+          candidateName: application.fullName,
+          companyName: req.user.companyName || "Nhà tuyển dụng",
+          jobTitle: application.jobId ? application.jobId.title : "Vị trí tuyển dụng",
+          reason: application.rejectionReason,
+          note: application.rejectionNote,
+          replyTo: req.user.email,
+        });
+      } catch (err) {
+        console.error("Lỗi khi gửi email từ chối:", err.message);
+      }
+    }
+  } else if (status === APPLICATION_STATUS.APPROVED) {
+    application.rejectionReason = "";
+    application.rejectionNote = "";
+    application.rejectedAt = null;
+  }
+
   await application.save();
 
   const statusLabel = status === APPLICATION_STATUS.APPROVED ? "Đã duyệt phù hợp" : "Đã từ chối";
@@ -229,6 +257,33 @@ const postAiDraftInterviewInvite = async (req, res) => {
   }
 };
 
+const postAiDraftRejection = async (req, res) => {
+  try {
+    const application = await Application.findOne({
+      _id: req.params.id,
+      employerId: req.user._id,
+      hiddenByEmployer: false,
+    }).populate("jobId", "title");
+
+    if (!application) {
+      return res.status(404).json({ success: false, message: "Không tìm thấy hồ sơ." });
+    }
+
+    const { reasonType, customNote } = req.body || {};
+    const draft = await draftRejectionLetter({
+      candidateName: application.fullName,
+      jobTitle: application.jobId ? application.jobId.title : "Lập trình viên IT",
+      companyName: req.user.companyName || "Nhà tuyển dụng",
+      reasonType: reasonType || "Chưa đáp ứng đủ số năm kinh nghiệm theo yêu cầu",
+      customNote: customNote || "",
+    });
+
+    return res.json({ success: true, ...draft });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: "Lỗi tạo lời nhắn từ chối: " + err.message });
+  }
+};
+
 const streamEmployerCvPdf = async (req, res) => {
   const application = await Application.findOne({
     _id: req.params.id,
@@ -262,5 +317,6 @@ module.exports = {
   postDeleteCv,
   postSendInterviewInvite,
   postAiDraftInterviewInvite,
+  postAiDraftRejection,
   streamEmployerCvPdf,
 };

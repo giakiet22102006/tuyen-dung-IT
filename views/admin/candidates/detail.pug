@@ -122,7 +122,9 @@ block main
                                         else if app.status === 'approved'
                                             span(class="px-[8px] py-[2px] rounded text-[12px] font-[600] bg-emerald-50 text-emerald-700") Phù hợp
                                         else if app.status === 'rejected'
-                                            span(class="px-[8px] py-[2px] rounded text-[12px] font-[600] bg-red-50 text-red-700") Từ chối
+                                            span(class="px-[8px] py-[2px] rounded text-[12px] font-[600] bg-red-50 text-red-700 block text-center") Từ chối
+                                            if app.rejectionReason
+                                                span(class="text-[11px] text-gray-500 block text-center truncate max-w-[150px] mx-auto" title=app.rejectionReason) #{app.rejectionReason}
                         else
                             tr
                                 td(colspan="4" class="py-[24px] text-center text-[#6B7280]") Ứng viên chưa nộp hồ sơ vào công việc nào.

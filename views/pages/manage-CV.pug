@@ -41,6 +41,8 @@ block main
                                     div(class="font-[500] text-[13px] text-[#2E7D32] text-center mt-[6px]") <i class="fa-solid fa-circle-check mr-[4px]"></i> Đã duyệt phù hợp
                                 else if app.status === 'rejected'
                                     div(class="font-[500] text-[13px] text-[#C62828] text-center mt-[6px]") <i class="fa-solid fa-circle-xmark mr-[4px]"></i> Đã từ chối
+                                    if app.rejectionReason
+                                        div(class="text-[12px] text-gray-600 text-center truncate px-[6px] mt-[2px]" title=app.rejectionReason) Lý do: #{app.rejectionReason}
                                 
                                 div(class="grid grid-cols-2 sm:flex sm:flex-wrap justify-center gap-[6px] sm:gap-[8px] mt-[14px]")
                                     a(href="/employer/cvs/" + app._id class="bg-[#0088FF] hover:bg-[#0070d6] rounded-[4px] py-[8px] px-[12px] cursor-pointer font-[500] text-[13px] text-white flex items-center justify-center text-center shadow-xs") Xem
@@ -50,10 +52,9 @@ block main
                                         input(type="hidden" name="status" value="approved")
                                         button(type="submit" class="bg-[#9FDB7C] hover:bg-[#8ccb6a] rounded-[4px] py-[8px] px-[12px] cursor-pointer font-[500] text-[13px] text-black w-full shadow-xs") Duyệt
 
-                                    form(action="/employer/cvs/" + app._id + "/status" method="POST" class="inline")
-                                        input(type="hidden" name="_csrf" value=csrfToken)
-                                        input(type="hidden" name="status" value="rejected")
-                                        button(type="submit" class="bg-[#FF5100] hover:bg-[#e64900] rounded-[4px] py-[8px] px-[12px] cursor-pointer font-[500] text-[13px] text-white w-full shadow-xs") Từ chối
+                                    button(type="button" class="btn-open-reject bg-[#FF5100] hover:bg-[#e64900] rounded-[4px] py-[8px] px-[12px] cursor-pointer font-[500] text-[13px] text-white w-full shadow-xs inline-flex items-center justify-center gap-[4px]" data-id=app._id data-name=app.fullName data-email=app.email data-job=(app.jobId ? app.jobId.title : "") data-reason=(app.rejectionReason || "") data-note=(app.rejectionNote || ""))
+                                        <i class="fa-solid fa-ban text-[11px]"></i>
+                                        span Từ chối
 
                                     form(action="/employer/cvs/" + app._id + "/delete" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa hồ sơ CV này không?');" class="inline")
                                         input(type="hidden" name="_csrf" value=csrfToken)
@@ -66,4 +67,161 @@ block main
                         select(class="pagination-select border border-[#DEDEDE] rounded-[8px] py-[12px] px-[18px] font-[400] text-[16px] text-[#414042] cursor-pointer")
                             - for (let i = 1; i <= pagination.totalPages; i++)
                                 option(value=i selected=(pagination.currentPage === i)) Trang #{i}
+
+        //- ==========================================
+        //- MODAL TỪ CHỐI HỒ SƠ ỨNG VIÊN
+        //- ==========================================
+        div(id="modalRejectCv" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-xs p-[16px]")
+            div(class="bg-white rounded-[12px] shadow-2xl max-w-[600px] w-full max-h-[92vh] flex flex-col overflow-hidden animate-fadeIn")
+                div(class="p-[18px] border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-red-50 to-orange-50")
+                    div(class="flex items-center gap-[10px]")
+                        div(class="w-[36px] h-[36px] rounded-full bg-[#FF5100] text-white flex items-center justify-center text-[16px]")
+                            <i class="fa-solid fa-user-xmark"></i>
+                        div
+                            h3(class="font-[700] text-[16px] text-gray-900") Từ Chối Hồ Sơ Ứng Tuyển
+                            p(id="rejectModalCandidateInfo" class="text-[12px] text-gray-500") Ứng viên
+                    button(type="button" id="btnCloseRejectModal" class="text-gray-400 hover:text-gray-600 text-[20px] p-[4px] cursor-pointer")
+                        <i class="fa-solid fa-xmark"></i>
+
+                form(action="" method="POST" id="formRejectCv" class="p-[20px] overflow-y-auto flex-1 space-y-[14px]")
+                    input(type="hidden" name="_csrf" value=csrfToken)
+                    input(type="hidden" name="status" value="rejected")
+
+                    div
+                        label(class="block text-[13px] font-[700] text-gray-700 mb-[6px]") Gợi ý lý do từ chối nhanh:
+                        div(class="flex flex-wrap gap-[6px]" id="rejectReasonChips")
+                            button(type="button" data-reason="Chưa đáp ứng đủ số năm kinh nghiệm theo yêu cầu" class="chip-reason px-[10px] py-[5px] bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-[12px] cursor-pointer transition border border-gray-200") Chưa đủ năm kinh nghiệm
+                            button(type="button" data-reason="Kỹ năng chuyên môn / Công nghệ chưa phù hợp với vị trí" class="chip-reason px-[10px] py-[5px] bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-[12px] cursor-pointer transition border border-gray-200") Kỹ năng chưa tương thích
+                            button(type="button" data-reason="Đã tuyển đủ chỉ tiêu cho vị trí này trong đợt tuyển dụng" class="chip-reason px-[10px] py-[5px] bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-[12px] cursor-pointer transition border border-gray-200") Đã tuyển đủ chỉ tiêu
+                            button(type="button" data-reason="Mức lương kỳ vọng hoặc hình thức làm việc chưa tương thích" class="chip-reason px-[10px] py-[5px] bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-[12px] cursor-pointer transition border border-gray-200") Lương / Thời gian
+                            button(type="button" data-reason="Hồ sơ chưa đạt yêu cầu đánh giá đầu vào" class="chip-reason px-[10px] py-[5px] bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-[12px] cursor-pointer transition border border-gray-200") Chưa đạt bài test
+
+                    div
+                        label(class="block text-[13px] font-[600] text-gray-700 mb-[4px]") Lý do từ chối chính *
+                        input(type="text" id="rejectReason" name="rejectionReason" required placeholder="Nhập tóm tắt lý do từ chối..." class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[8px] text-[14px]")
+
+                    div
+                        div(class="flex items-center justify-between mb-[4px]")
+                            label(class="block text-[13px] font-[600] text-gray-700") Lời nhắn gửi ứng viên (Tùy chọn)
+                            button(type="button" id="btnAiDraftReject" class="inline-flex items-center gap-[4px] text-[12px] font-[600] text-[#0088FF] hover:underline cursor-pointer")
+                                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                span ✨ AI Viết Lời Nhắn Lịch Sự
+                                span(id="aiDraftRejectSpin" class="hidden animate-spin") <i class="fa-solid fa-spinner"></i>
+                        textarea(id="rejectNote" name="rejectionNote" rows="4" placeholder="Soạn lời nhắn hoặc lý do chi tiết gửi ứng viên để giúp họ hiểu rõ và tiếp tục cải thiện..." class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[8px] text-[13px] leading-relaxed")
+
+                    div(class="p-[12px] bg-amber-50 border border-amber-200 rounded-[8px]")
+                        label(class="flex items-center gap-[8px] cursor-pointer select-none text-[13px] text-amber-900 font-[500]")
+                            input(type="checkbox" name="sendEmail" value="true" checked class="w-[16px] h-[16px] text-[#0088FF] rounded border-gray-300 cursor-pointer")
+                            span(id="rejectEmailNoticeLabel") Gửi email thông báo kết quả & lý do từ chối đến ứng viên
+
+                    div(class="pt-[10px] border-t border-gray-200 flex justify-end gap-[10px]")
+                        button(type="button" id="btnCancelRejectModal" class="px-[16px] py-[8px] border border-gray-300 rounded-[6px] text-[13px] font-[600] text-gray-700 hover:bg-gray-100 cursor-pointer") Hủy Bỏ
+                        button(type="submit" class="px-[20px] py-[8px] bg-[#FF5100] hover:bg-[#e64900] rounded-[6px] text-[13px] font-[700] text-white cursor-pointer shadow-xs inline-flex items-center gap-[6px]")
+                            <i class="fa-solid fa-circle-xmark"></i>
+                            span Xác Nhận Từ Chối
+
+    script.
+        (function() {
+            var modal = document.getElementById("modalRejectCv");
+            var form = document.getElementById("formRejectCv");
+            var info = document.getElementById("rejectModalCandidateInfo");
+            var emailNotice = document.getElementById("rejectEmailNoticeLabel");
+            var reasonInput = document.getElementById("rejectReason");
+            var noteTextarea = document.getElementById("rejectNote");
+            var btnClose = document.getElementById("btnCloseRejectModal");
+            var btnCancel = document.getElementById("btnCancelRejectModal");
+            var btnAiDraft = document.getElementById("btnAiDraftReject");
+            var aiSpin = document.getElementById("aiDraftRejectSpin");
+            var chipButtons = document.querySelectorAll("#rejectReasonChips .chip-reason");
+            var currentAppId = "";
+
+            function openModal(btn) {
+                currentAppId = btn.getAttribute("data-id");
+                var name = btn.getAttribute("data-name") || "Ứng viên";
+                var email = btn.getAttribute("data-email") || "";
+                var job = btn.getAttribute("data-job") || "";
+                var reason = btn.getAttribute("data-reason") || "Chưa đáp ứng đủ số năm kinh nghiệm theo yêu cầu";
+                var note = btn.getAttribute("data-note") || "";
+
+                if (form) form.action = "/employer/cvs/" + currentAppId + "/status";
+                if (info) info.textContent = "Ứng viên: " + name + (email ? " (" + email + ")" : "") + (job ? " - " + job : "");
+                if (emailNotice) emailNotice.textContent = "Gửi email thông báo kết quả & lý do từ chối đến ứng viên" + (email ? " (" + email + ")" : "");
+                if (reasonInput) reasonInput.value = reason;
+                if (noteTextarea) noteTextarea.value = note;
+
+                if (modal) {
+                    modal.classList.remove("hidden");
+                    modal.classList.add("flex");
+                }
+            }
+
+            function closeModal() {
+                if (modal) {
+                    modal.classList.add("hidden");
+                    modal.classList.remove("flex");
+                }
+            }
+
+            document.querySelectorAll(".btn-open-reject").forEach(function(btn) {
+                btn.addEventListener("click", function() {
+                    openModal(btn);
+                });
+            });
+
+            if (btnClose) btnClose.addEventListener("click", closeModal);
+            if (btnCancel) btnCancel.addEventListener("click", closeModal);
+
+            chipButtons.forEach(function(chip) {
+                chip.addEventListener("click", function() {
+                    var val = chip.getAttribute("data-reason");
+                    if (reasonInput) reasonInput.value = val;
+                    chipButtons.forEach(function(c) {
+                        c.classList.remove("bg-[#FF5100]", "text-white", "border-[#FF5100]");
+                        c.classList.add("bg-gray-100", "text-gray-700", "border-gray-200");
+                    });
+                    chip.classList.remove("bg-gray-100", "text-gray-700", "border-gray-200");
+                    chip.classList.add("bg-[#FF5100]", "text-white", "border-[#FF5100]");
+                });
+            });
+
+            if (btnAiDraft) {
+                btnAiDraft.addEventListener("click", async function() {
+                    if (!currentAppId) return;
+                    btnAiDraft.disabled = true;
+                    if (aiSpin) aiSpin.classList.remove("hidden");
+
+                    try {
+                        var csrfMeta = document.querySelector('meta[name="csrf-token"]');
+                        var csrfToken = csrfMeta ? csrfMeta.getAttribute("content") : "";
+                        var currentReason = reasonInput ? reasonInput.value : "";
+                        var currentNote = noteTextarea ? noteTextarea.value : "";
+
+                        var res = await fetch("/employer/cvs/" + currentAppId + "/ai-draft-rejection", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "x-csrf-token": csrfToken
+                            },
+                            body: JSON.stringify({
+                                reasonType: currentReason,
+                                customNote: currentNote
+                            })
+                        });
+                        var data = await res.json();
+                        if (data.success) {
+                            if (data.reason && reasonInput) reasonInput.value = data.reason;
+                            if (data.content && noteTextarea) noteTextarea.value = data.content;
+                        } else {
+                            alert(data.message || "Không thể tạo lời nhắn bằng AI");
+                        }
+                    } catch(e) {
+                        console.error(e);
+                        alert("Có lỗi xảy ra khi tạo lời nhắn bằng AI");
+                    } finally {
+                        btnAiDraft.disabled = false;
+                        if (aiSpin) aiSpin.classList.add("hidden");
+                    }
+                });
+            }
+        })();
     //- Hết Quản lý CV

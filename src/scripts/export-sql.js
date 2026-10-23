@@ -255,6 +255,8 @@ async function exportToSql() {
   sql += `  \`cv_file_key\` VARCHAR(255) DEFAULT NULL,\n`;
   sql += `  \`cv_original_name\` VARCHAR(255) DEFAULT NULL,\n`;
   sql += `  \`status\` ENUM('pending', 'reviewed', 'interviewed', 'accepted', 'rejected') DEFAULT 'pending',\n`;
+  sql += `  \`rejection_reason\` VARCHAR(255) DEFAULT NULL,\n`;
+  sql += `  \`rejection_note\` TEXT DEFAULT NULL,\n`;
   sql += `  \`viewed\` BOOLEAN DEFAULT FALSE,\n`;
   sql += `  \`hidden_by_candidate\` BOOLEAN DEFAULT FALSE,\n`;
   sql += `  \`hidden_by_employer\` BOOLEAN DEFAULT FALSE,\n`;
@@ -269,11 +271,11 @@ async function exportToSql() {
 
   const applications = await Application.find({}).lean();
   if (applications.length > 0) {
-    sql += `INSERT INTO \`applications\` (\`id\`, \`job_id\`, \`employer_id\`, \`candidate_id\`, \`full_name\`, \`email\`, \`phone\`, \`cv_file_key\`, \`cv_original_name\`, \`status\`, \`viewed\`, \`hidden_by_candidate\`, \`hidden_by_employer\`, \`reviewed_at\`, \`created_at\`, \`updated_at\`) VALUES\n`;
+    sql += `INSERT INTO \`applications\` (\`id\`, \`job_id\`, \`employer_id\`, \`candidate_id\`, \`full_name\`, \`email\`, \`phone\`, \`cv_file_key\`, \`cv_original_name\`, \`status\`, \`rejection_reason\`, \`rejection_note\`, \`viewed\`, \`hidden_by_candidate\`, \`hidden_by_employer\`, \`reviewed_at\`, \`created_at\`, \`updated_at\`) VALUES\n`;
     const appValues = applications.map((a) => {
       const fileKey = a.cv ? a.cv.key : null;
       const originalName = a.cv ? a.cv.originalName : null;
-      return `(${escapeSql(a._id.toString())}, ${escapeSql(a.jobId.toString())}, ${escapeSql(a.employerId.toString())}, ${escapeSql(a.candidateId.toString())}, ${escapeSql(a.fullName)}, ${escapeSql(a.email)}, ${escapeSql(a.phone)}, ${escapeSql(fileKey)}, ${escapeSql(originalName)}, ${escapeSql(a.status)}, ${escapeSql(a.viewed)}, ${escapeSql(a.hiddenByCandidate)}, ${escapeSql(a.hiddenByEmployer)}, ${escapeSql(a.reviewedAt)}, ${escapeSql(a.createdAt)}, ${escapeSql(a.updatedAt)})`;
+      return `(${escapeSql(a._id.toString())}, ${escapeSql(a.jobId.toString())}, ${escapeSql(a.employerId.toString())}, ${escapeSql(a.candidateId.toString())}, ${escapeSql(a.fullName)}, ${escapeSql(a.email)}, ${escapeSql(a.phone)}, ${escapeSql(fileKey)}, ${escapeSql(originalName)}, ${escapeSql(a.status)}, ${escapeSql(a.rejectionReason || null)}, ${escapeSql(a.rejectionNote || null)}, ${escapeSql(a.viewed)}, ${escapeSql(a.hiddenByCandidate)}, ${escapeSql(a.hiddenByEmployer)}, ${escapeSql(a.reviewedAt)}, ${escapeSql(a.createdAt)}, ${escapeSql(a.updatedAt)})`;
     });
     sql += appValues.join(",\n") + ";\n\n";
   }
