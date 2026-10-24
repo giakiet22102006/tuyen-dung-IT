@@ -331,14 +331,18 @@ document.addEventListener("DOMContentLoaded", () => {
     heroCarousel.addEventListener("focusin", stopAutoPlay);
     heroCarousel.addEventListener("focusout", startAutoPlay);
 
-    // Touch Swipe Support for Mobile/Tablet
+    // Touch Swipe Support for Mobile/Tablet (Cảm ứng lướt mượt mà trên điện thoại)
     let touchStartX = 0;
+    let touchStartY = 0;
     let touchEndX = 0;
+    let touchEndY = 0;
 
     heroCarousel.addEventListener(
       "touchstart",
       (e) => {
-        touchStartX = e.changedTouches[0].screenX;
+        if (!e.changedTouches || !e.changedTouches[0]) return;
+        touchStartX = e.changedTouches[0].clientX;
+        touchStartY = e.changedTouches[0].clientY;
         stopAutoPlay();
       },
       { passive: true }
@@ -347,12 +351,19 @@ document.addEventListener("DOMContentLoaded", () => {
     heroCarousel.addEventListener(
       "touchend",
       (e) => {
-        touchEndX = e.changedTouches[0].screenX;
+        if (!e.changedTouches || !e.changedTouches[0]) return;
+        touchEndX = e.changedTouches[0].clientX;
+        touchEndY = e.changedTouches[0].clientY;
         const diffX = touchEndX - touchStartX;
-        if (diffX > 45) {
-          prevSlide(); // Vuốt sang phải -> Slide trước
-        } else if (diffX < -45) {
-          nextSlide(); // Vuốt sang trái -> Slide kế
+        const diffY = touchEndY - touchStartY;
+
+        // Chỉ chuyển slide khi thao tác lướt ngang rõ rệt (tránh nhầm lẫn với cuộn trang dọc)
+        if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 35) {
+          if (diffX > 0) {
+            prevSlide(); // Lướt sang phải -> Xem slide trước
+          } else {
+            nextSlide(); // Lướt sang trái -> Xem slide tiếp theo
+          }
         }
         startAutoPlay();
       },

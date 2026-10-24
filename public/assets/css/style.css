@@ -251,6 +251,9 @@ footer.site-footer {
   grid-template-rows: 1fr;
   background-color: #000055;
   isolation: isolate;
+  touch-action: pan-y;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .hero-carousel-slide {
