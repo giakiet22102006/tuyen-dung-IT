@@ -4,7 +4,7 @@ div(class="py-[20px] sm:py-[30px] bg-[#000055]")
         div(id="heroCarousel" class="relative overflow-hidden rounded-[16px] sm:rounded-[20px] shadow-2xl border border-white/15 select-none")
             
             //- Slide 1: AI Smart Matching
-            div(class="hero-carousel-slide active bg-gradient-to-r from-[#000055] via-[#000080] to-[#0A2668] p-[24px] sm:p-[40px] lg:p-[48px] text-white")
+            div(class="hero-carousel-slide active bg-gradient-to-r from-[#000055] via-[#000080] to-[#0A2668] px-[40px] sm:px-[76px] lg:px-[90px] py-[28px] sm:py-[40px] lg:py-[48px] text-white")
                 div(class="grid grid-cols-1 lg:grid-cols-12 gap-[24px] lg:gap-[32px] items-center relative z-10")
                     div(class="lg:col-span-7 slide-content-left")
                         div(class="inline-flex items-center gap-[6px] px-[12px] py-[4px] rounded-full bg-[#0088FF]/20 border border-[#0088FF]/40 text-[#60A5FA] text-[11px] sm:text-[12px] font-[700] uppercase tracking-wider mb-[12px]")
@@ -50,7 +50,7 @@ div(class="py-[20px] sm:py-[30px] bg-[#000055]")
                                         span(class="bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 text-[12px] font-[600] px-[8px] py-[2px] rounded-full") ✓ TypeScript
 
             //- Slide 2: Salary Benchmark
-            div(class="hero-carousel-slide bg-gradient-to-r from-[#031433] via-[#0A2658] to-[#013872] p-[24px] sm:p-[40px] lg:p-[48px] text-white")
+            div(class="hero-carousel-slide bg-gradient-to-r from-[#031433] via-[#0A2658] to-[#013872] px-[40px] sm:px-[76px] lg:px-[90px] py-[28px] sm:py-[40px] lg:py-[48px] text-white")
                 div(class="grid grid-cols-1 lg:grid-cols-12 gap-[24px] lg:gap-[32px] items-center relative z-10")
                     div(class="lg:col-span-7 slide-content-left")
                         div(class="inline-flex items-center gap-[6px] px-[12px] py-[4px] rounded-full bg-[#EA1E30]/20 border border-[#EA1E30]/40 text-[#FCA5A5] text-[11px] sm:text-[12px] font-[700] uppercase tracking-wider mb-[12px]")
@@ -103,7 +103,7 @@ div(class="py-[20px] sm:py-[30px] bg-[#000055]")
                                             div(class="bg-[#F59E0B] h-full rounded-full w-[65%]")
 
             //- Slide 3: Top Employers & Tech Unicorns
-            div(class="hero-carousel-slide bg-gradient-to-r from-[#02102A] via-[#06214E] to-[#01356F] p-[24px] sm:p-[40px] lg:p-[48px] text-white")
+            div(class="hero-carousel-slide bg-gradient-to-r from-[#02102A] via-[#06214E] to-[#01356F] px-[40px] sm:px-[76px] lg:px-[90px] py-[28px] sm:py-[40px] lg:py-[48px] text-white")
                 div(class="grid grid-cols-1 lg:grid-cols-12 gap-[24px] lg:gap-[32px] items-center relative z-10")
                     div(class="lg:col-span-7 slide-content-left")
                         div(class="inline-flex items-center gap-[6px] px-[12px] py-[4px] rounded-full bg-[#10B981]/20 border border-[#10B981]/40 text-[#6EE7B7] text-[11px] sm:text-[12px] font-[700] uppercase tracking-wider mb-[12px]")
@@ -161,14 +161,14 @@ div(class="py-[20px] sm:py-[30px] bg-[#000055]")
                                             div(class="text-[11px] text-white/70") 40+ vị trí Cloud / AI
                                         span(class="text-[11px] bg-emerald-500/30 text-emerald-300 font-[600] px-[6px] py-[1px] rounded") Hot
 
-            //- Nút chuyển Slide Trước / Sau
-            button(type="button" id="carouselPrevBtn" class="absolute left-[12px] top-1/2 -translate-y-1/2 w-[36px] sm:w-[42px] h-[36px] sm:h-[42px] rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-md text-white flex items-center justify-center border border-white/20 transition-all cursor-pointer opacity-80 hover:opacity-100 z-20 shadow-md" aria-label="Slide trước")
-                <i class="fa-solid fa-angle-left text-[16px] sm:text-[18px]"></i>
-            button(type="button" id="carouselNextBtn" class="absolute right-[12px] top-1/2 -translate-y-1/2 w-[36px] sm:w-[42px] h-[36px] sm:h-[42px] rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-md text-white flex items-center justify-center border border-white/20 transition-all cursor-pointer opacity-80 hover:opacity-100 z-20 shadow-md" aria-label="Slide tiếp theo")
-                <i class="fa-solid fa-angle-right text-[16px] sm:text-[18px]"></i>
+            //- Nút chuyển Slide Trước / Sau (Thiết kế Kính mờ Pha lê, không che chữ)
+            button(type="button" id="carouselPrevBtn" class="carousel-nav-btn prev-btn absolute left-[10px] sm:left-[20px] top-1/2 -translate-y-1/2 w-[36px] sm:w-[46px] h-[36px] sm:h-[46px] rounded-full bg-white/10 hover:bg-white/25 active:scale-90 backdrop-blur-md text-white flex items-center justify-center border border-white/25 hover:border-white/60 transition-all duration-300 cursor-pointer shadow-[0_4px_16px_rgba(0,0,0,0.3)] hover:shadow-[0_0_20px_rgba(0,136,255,0.45)] z-20 group" aria-label="Slide trước")
+                <i class="fa-solid fa-chevron-left text-[14px] sm:text-[16px] text-white transition-transform duration-300 group-hover:-translate-x-[2px]"></i>
+            button(type="button" id="carouselNextBtn" class="carousel-nav-btn next-btn absolute right-[10px] sm:right-[20px] top-1/2 -translate-y-1/2 w-[36px] sm:w-[46px] h-[36px] sm:h-[46px] rounded-full bg-white/10 hover:bg-white/25 active:scale-90 backdrop-blur-md text-white flex items-center justify-center border border-white/25 hover:border-white/60 transition-all duration-300 cursor-pointer shadow-[0_4px_16px_rgba(0,0,0,0.3)] hover:shadow-[0_0_20px_rgba(0,136,255,0.45)] z-20 group" aria-label="Slide tiếp theo")
+                <i class="fa-solid fa-chevron-right text-[14px] sm:text-[16px] text-white transition-transform duration-300 group-hover:translate-x-[2px]"></i>
 
-            //- Chấm tròn chỉ báo (Pagination Dots)
-            div(id="carouselDots" class="absolute bottom-[14px] left-1/2 -translate-x-1/2 flex items-center gap-[8px] z-20")
+            //- Chấm tròn chỉ báo (Pagination Dots trong Dock kính mờ cao cấp)
+            div(id="carouselDots" class="absolute bottom-[12px] sm:bottom-[16px] left-1/2 -translate-x-1/2 flex items-center gap-[8px] z-20 px-[12px] py-[6px] rounded-full bg-black/30 backdrop-blur-md border border-white/15 shadow-sm")
                 button(type="button" class="carousel-dot active w-[24px] h-[8px] rounded-full bg-white transition-all cursor-pointer" data-index="0" aria-label="Slide 1")
                 button(type="button" class="carousel-dot w-[8px] h-[8px] rounded-full bg-white/40 hover:bg-white/80 transition-all cursor-pointer" data-index="1" aria-label="Slide 2")
                 button(type="button" class="carousel-dot w-[8px] h-[8px] rounded-full bg-white/40 hover:bg-white/80 transition-all cursor-pointer" data-index="2" aria-label="Slide 3")
