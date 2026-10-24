@@ -12,6 +12,7 @@ const { CITIES, POSITIONS, WORKING_FORMS, BENEFITS, JOB_MODERATION, EMPLOYER_STA
 const { Skill, Job, Application, Review, Employer, Feedback, Candidate, CompanyFollow } = require("../../models");
 const { uploadCV, saveCvBuffer } = require("../../services/storage.service");
 const { generateItProfilePdf } = require("../../services/pdfGenerator.service");
+const { getCompanyMapData } = require("../../utils/googleMaps");
 
 const renderIndex = async (req, res) => {
   const [totalPublicJobs, topEmployers, marqueeEmployers] = await Promise.all([
@@ -140,6 +141,8 @@ const renderCompanyDetails = async (req, res) => {
     isFollowed = !!(await CompanyFollow.exists({ candidateId: req.user._id, employerId: data.company._id }));
   }
 
+  const mapData = getCompanyMapData(data.company);
+
   res.render("pages/company-details", {
     title: `${data.company.companyName} - VN.ITJobs`,
     company: data.company,
@@ -150,6 +153,7 @@ const renderCompanyDetails = async (req, res) => {
     ratingCounts,
     followersCount,
     isFollowed,
+    mapData,
   });
 };
 
@@ -271,11 +275,14 @@ const renderJobDetails = async (req, res) => {
   // Tăng lượt xem thực tế cho tin tuyển dụng (Recruitment Analytics)
   Job.updateOne({ _id: data.job._id }, { $inc: { viewsCount: 1 } }).catch(() => {});
 
+  const mapData = getCompanyMapData(data.job.employerId, data.job);
+
   res.render("pages/job-details", {
     title: `${data.job.title} - ${data.job.employerId.companyName}`,
     job: data.job,
     company: data.job.employerId,
     companyJobCount: data.companyJobCount,
+    mapData,
   });
 };
 

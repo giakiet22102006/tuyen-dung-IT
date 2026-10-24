@@ -76,6 +76,48 @@ block main
                     div(class="prose max-w-none text-[#121212]") !{company.description}
             //- Hết Mô tả chi tiết
 
+            //- ==========================================
+            //- BẢN ĐỒ VỊ TRÍ GOOGLE MAPS
+            //- ==========================================
+            if mapData && mapData.embedUrl
+                div(class="border border-[#DEDEDE] rounded-[8px] bg-white p-[20px] mt-[20px] shadow-xs")
+                    div(class="flex flex-col sm:flex-row sm:items-center justify-between gap-[12px] mb-[16px]")
+                        div
+                            h2(class="font-[700] text-[18px] sm:text-[22px] text-[#121212] flex items-center gap-[8px]")
+                                <i class="fa-solid fa-map-location-dot text-[#0088FF]"></i>
+                                span Bản đồ & Vị trí văn phòng công ty
+                            p(class="text-[13px] text-gray-500 mt-[3px]") Định vị trực quan trên bản đồ Google Maps giúp ứng viên tra cứu đường đi và địa điểm phỏng vấn
+                        
+                        div(class="flex items-center gap-[8px] flex-wrap")
+                            button(type="button" id="btnCopyAddress" data-address=mapData.fullAddress class="inline-flex items-center gap-[6px] bg-gray-100 hover:bg-gray-200 text-gray-700 text-[13px] font-[600] px-[12px] py-[8px] rounded-[6px] transition cursor-pointer")
+                                <i class="fa-regular fa-copy"></i>
+                                span(id="copyAddressText") Sao chép địa chỉ
+
+                            a(href=mapData.searchUrl target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-[6px] bg-[#0088FF] hover:bg-[#0070d6] text-white text-[13px] font-[600] px-[14px] py-[8px] rounded-[6px] transition shadow-xs cursor-pointer")
+                                <i class="fa-solid fa-diamond-turn-right"></i>
+                                span Chỉ đường trên Google Maps
+                                <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+
+                    div(class="p-[12px] bg-blue-50/70 border border-blue-100 rounded-[6px] mb-[16px] flex items-start gap-[10px]")
+                        <i class="fa-solid fa-location-dot text-[#EA1E30] text-[16px] mt-[2px] shrink-0"></i>
+                        div
+                            span(class="text-[11.5px] font-[700] text-gray-500 uppercase tracking-wider block") Địa chỉ trụ sở làm việc:
+                            span(class="text-[14px] font-[600] text-gray-900") #{mapData.fullAddress}
+
+                    //- Google Maps Iframe Container
+                    div(class="w-full h-[320px] sm:h-[420px] rounded-[8px] overflow-hidden border border-gray-200 relative bg-gray-100 shadow-inner")
+                        iframe(
+                            width="100%"
+                            height="100%"
+                            style="border:0;"
+                            loading="lazy"
+                            allowfullscreen=""
+                            referrerpolicy="no-referrer-when-downgrade"
+                            src=mapData.embedUrl
+                            title=`Bản đồ vị trí ${company.companyName}`
+                        )
+            //- Hết Bản đồ Google Maps
+
             //- Công việc
             div(class="mt-[30px]")
                 h1(class="font-[700] text-[28px] text-[#121212] mb-[20px]") Công ty có #{jobs ? jobs.length : 0} việc làm
@@ -271,6 +313,24 @@ block main
                     followBtn.disabled = false;
                 }
             });
+
+            // Sao chép địa chỉ công ty
+            var copyBtn = document.getElementById("btnCopyAddress");
+            if (copyBtn) {
+                copyBtn.addEventListener("click", function() {
+                    var addr = this.getAttribute("data-address");
+                    if (addr && navigator.clipboard) {
+                        navigator.clipboard.writeText(addr).then(function() {
+                            var txt = document.getElementById("copyAddressText");
+                            if (txt) {
+                                var old = txt.textContent;
+                                txt.textContent = "Đã sao chép!";
+                                setTimeout(function() { txt.textContent = old; }, 2000);
+                            }
+                        });
+                    }
+                });
+            }
         });
 
     //- Hết Chi tiết công ty

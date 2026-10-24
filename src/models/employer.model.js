@@ -58,6 +58,11 @@ const employerSchema = new mongoose.Schema(
       trim: true,
       default: "",
     },
+    googleMapsUrl: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     companyModel: {
       type: String,
       trim: true,

@@ -43,6 +43,12 @@ app.use(
         ],
         fontSrc: ["'self'", "https://cdnjs.cloudflare.com", "https://fonts.gstatic.com"],
         imgSrc: ["'self'", "data:", "blob:", "https:"],
+        frameSrc: [
+          "'self'",
+          "https://www.google.com",
+          "https://maps.google.com",
+          "https://*.google.com",
+        ],
         objectSrc: ["'self'"],
         frameAncestors: ["'self'"],
       },

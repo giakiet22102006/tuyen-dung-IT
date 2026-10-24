@@ -8,14 +8,17 @@ const { notifyMatchingSubscribers } = require("../../services/jobAlert.service")
 const sanitizeHtml = require("../../utils/sanitizeHtml");
 const slugify = require("../../utils/slugify");
 const paginate = require("../../utils/pagination");
+const { getCompanyMapData } = require("../../utils/googleMaps");
 
 // 1. Hồ sơ công ty
 const renderCompanyProfile = async (req, res) => {
   const company = await Employer.findById(req.user._id).lean();
+  const mapData = getCompanyMapData(company);
   res.render("pages/company-profile", {
     title: "Thông tin công ty",
     company,
     cities: CITIES,
+    mapData,
     errors: {},
   });
 };
@@ -30,6 +33,7 @@ const postCompanyProfile = async (req, res) => {
     companyName,
     city,
     address,
+    googleMapsUrl,
     companyModel,
     companySize,
     workingTime,
@@ -50,6 +54,7 @@ const postCompanyProfile = async (req, res) => {
   company.companyName = companyName.trim();
   company.city = city || company.city;
   company.address = (address || "").trim();
+  company.googleMapsUrl = (googleMapsUrl || "").trim();
   company.companyModel = (companyModel || "").trim();
   company.companySize = (companySize || "").trim();
   company.workingTime = (workingTime || "").trim();
