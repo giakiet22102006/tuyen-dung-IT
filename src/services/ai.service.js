@@ -927,6 +927,7 @@ async function curateArticleFromSourceWithAi({ sourceUrl = "", rawContent = "", 
       else if (host.includes("dev.to")) sourceName = "Dev.to";
       else if (host.includes("techcrunch.com")) sourceName = "TechCrunch";
       else if (host.includes("itviec.com")) sourceName = "ITviec Blog";
+      else if (host.includes("topdev.vn")) sourceName = "TopDev Blog";
       else if (host.includes("topcv.vn")) sourceName = "TopCV";
       else if (host.includes("github.com")) sourceName = "GitHub Blog";
       else sourceName = host;

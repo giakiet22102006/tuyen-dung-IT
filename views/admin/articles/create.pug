@@ -185,8 +185,9 @@ block main
                         span Lưu Cẩm Nang
 
     script.
+        const adminPath = "#{adminPath || 'admin'}";
         document.addEventListener("DOMContentLoaded", function () {
-            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content");
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || document.querySelector('input[name="_csrf"]')?.value || "#{csrfToken || ''}";
 
             // Chuyển đổi Tab AI
             const tabAiCreateBtn = document.getElementById("tabAiCreateBtn");
