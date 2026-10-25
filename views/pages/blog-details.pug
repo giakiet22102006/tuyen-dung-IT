@@ -72,9 +72,44 @@ block main
                     div(class="bg-blue-50/60 border-l-4 border-[#0088FF] p-[16px] rounded-r-[8px] mb-[25px] text-[15px] text-gray-700 italic leading-relaxed")
                         | #{article.summary}
 
-                    //- Nội dung chính
-                    div(class="article-body prose max-w-none text-gray-800 text-[15px] sm:text-[16px] leading-relaxed space-y-[18px]")
-                        | !{article.content}
+                    //- Nội dung chính hoặc Khung khóa độc quyền
+                    if isLocked
+                        div(class="relative mt-[24px] rounded-[14px] overflow-hidden border border-amber-200 bg-gradient-to-b from-amber-50/50 via-white to-amber-50/80 p-[24px] sm:p-[40px] text-center shadow-md")
+                            div(class="max-w-[540px] mx-auto space-y-[16px]")
+                                div(class="w-[64px] h-[64px] rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto text-[28px] shadow-xs")
+                                    <i class="fa-solid fa-lock"></i>
+                                div
+                                    if requiredRole === 'candidate'
+                                        span(class="inline-block bg-emerald-100 text-emerald-800 text-[11px] font-[700] px-[12px] py-[4px] rounded-full uppercase tracking-wider mb-[10px]")
+                                            <i class="fa-solid fa-code mr-[4px]"></i> Cẩm Nang Độc Quyền Cho Ứng Viên IT
+                                        h3(class="text-[20px] sm:text-[23px] font-[800] text-gray-900 leading-snug")
+                                            | Đăng Nhập Tài Khoản Ứng Viên Để Mở Khóa Bài Viết
+                                        p(class="text-[14px] text-gray-600 mt-[8px] leading-relaxed")
+                                            | Bài viết này chứa các kiến thức thực chiến, đề bài kỹ thuật và bí quyết đàm phán độc quyền được bảo mật dành riêng cho cộng đồng Lập trình viên VN.ITJobs.
+                                        div(class="flex flex-col sm:flex-row items-center justify-center gap-[12px] pt-[14px]")
+                                            a(href=`/candidate/login?next=/blog/${article.slug}` class="w-full sm:w-auto bg-[#0088FF] hover:bg-[#0070D2] text-white font-[700] text-[14px] px-[24px] py-[11px] rounded-[8px] shadow-sm transition flex items-center justify-center gap-[8px]")
+                                                <i class="fa-solid fa-right-to-bracket"></i>
+                                                span Đăng nhập Ứng viên
+                                            a(href=`/candidate/signup?next=/blog/${article.slug}` class="w-full sm:w-auto bg-white hover:bg-gray-50 text-gray-800 border border-gray-300 font-[600] text-[14px] px-[20px] py-[11px] rounded-[8px] transition flex items-center justify-center gap-[8px]")
+                                                <i class="fa-solid fa-user-plus text-[#0088FF]"></i>
+                                                span Tạo tài khoản miễn phí
+                                    else if requiredRole === 'employer'
+                                        span(class="inline-block bg-amber-100 text-amber-800 text-[11px] font-[700] px-[12px] py-[4px] rounded-full uppercase tracking-wider mb-[10px]")
+                                            <i class="fa-solid fa-building mr-[4px]"></i> Cẩm Nang Độc Quyền Cho Nhà Tuyển Dụng
+                                        h3(class="text-[20px] sm:text-[23px] font-[800] text-gray-900 leading-snug")
+                                            | Đăng Nhập Tài Khoản Nhà Tuyển Dụng Để Mở Khóa Bài Viết
+                                        p(class="text-[14px] text-gray-600 mt-[8px] leading-relaxed")
+                                            | Bài viết này chứa các chiến lược săn nhân tài IT, khung rubric đánh giá và báo cáo đãi ngộ độc quyền dành riêng cho Doanh nghiệp tuyển dụng VN.ITJobs.
+                                        div(class="flex flex-col sm:flex-row items-center justify-center gap-[12px] pt-[14px]")
+                                            a(href=`/employer/login?next=/blog/${article.slug}` class="w-full sm:w-auto bg-[#000065] hover:bg-[#000085] text-white font-[700] text-[14px] px-[24px] py-[11px] rounded-[8px] shadow-sm transition flex items-center justify-center gap-[8px]")
+                                                <i class="fa-solid fa-right-to-bracket"></i>
+                                                span Đăng nhập Nhà tuyển dụng
+                                            a(href=`/employer/signup?next=/blog/${article.slug}` class="w-full sm:w-auto bg-white hover:bg-gray-50 text-gray-800 border border-gray-300 font-[600] text-[14px] px-[20px] py-[11px] rounded-[8px] transition flex items-center justify-center gap-[8px]")
+                                                <i class="fa-solid fa-building text-[#0088FF]"></i>
+                                                span Đăng ký Nhà tuyển dụng
+                    else
+                        div(class="article-body prose max-w-none text-gray-800 text-[15px] sm:text-[16px] leading-relaxed space-y-[18px]")
+                            | !{article.content}
 
                     //- Tags
                     if article.tags && article.tags.length > 0

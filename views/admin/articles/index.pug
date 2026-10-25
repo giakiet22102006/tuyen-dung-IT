@@ -93,11 +93,19 @@ block main
                                     //- Cột Đối tượng
                                     td(class="px-[16px] py-[14px] whitespace-nowrap")
                                         if art.targetAudience === 'candidate'
-                                            span(class="inline-flex items-center gap-[4px] px-[8px] py-[2px] rounded text-[11px] font-[600] bg-emerald-50 text-emerald-700 border border-emerald-200")
-                                                <i class="fa-solid fa-code text-[10px]"></i> Ứng viên IT
+                                            div(class="flex flex-col items-start gap-[4px]")
+                                                span(class="inline-flex items-center gap-[4px] px-[8px] py-[2px] rounded text-[11px] font-[600] bg-emerald-50 text-emerald-700 border border-emerald-200")
+                                                    <i class="fa-solid fa-code text-[10px]"></i> Ứng viên IT
+                                                if art.isGated
+                                                    span(class="inline-flex items-center gap-[3px] text-[10px] text-amber-700 font-[700] bg-amber-50 px-[6px] py-[1px] rounded border border-amber-200")
+                                                        <i class="fa-solid fa-lock text-[9px]"></i> Khóa độc quyền
                                         else if art.targetAudience === 'employer'
-                                            span(class="inline-flex items-center gap-[4px] px-[8px] py-[2px] rounded text-[11px] font-[600] bg-amber-50 text-amber-700 border border-amber-200")
-                                                <i class="fa-solid fa-building text-[10px]"></i> Nhà tuyển dụng
+                                            div(class="flex flex-col items-start gap-[4px]")
+                                                span(class="inline-flex items-center gap-[4px] px-[8px] py-[2px] rounded text-[11px] font-[600] bg-amber-50 text-amber-700 border border-amber-200")
+                                                    <i class="fa-solid fa-building text-[10px]"></i> Nhà tuyển dụng
+                                                if art.isGated
+                                                    span(class="inline-flex items-center gap-[3px] text-[10px] text-amber-700 font-[700] bg-amber-50 px-[6px] py-[1px] rounded border border-amber-200")
+                                                        <i class="fa-solid fa-lock text-[9px]"></i> Khóa độc quyền
                                         else
                                             span(class="inline-flex items-center gap-[4px] px-[8px] py-[2px] rounded text-[11px] font-[500] bg-purple-50 text-purple-700 border border-purple-200")
                                                 <i class="fa-solid fa-users text-[10px]"></i> Tất cả

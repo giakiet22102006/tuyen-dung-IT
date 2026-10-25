@@ -91,6 +91,7 @@ const SEED_ARTICLES = [
     slug: "cam-nang-vuot-qua-vong-live-coding-whiteboard",
     category: ARTICLE_CATEGORIES.INTERVIEW_TIPS,
     targetAudience: TARGET_AUDIENCES.CANDIDATE,
+    isGated: true,
     summary: "Quy tắc 5 bước 'Nói to suy nghĩ' (Think Aloud) và cách tối ưu độ phức tạp thuật toán O(N) khi phỏng vấn trực tiếp trước hội đồng tuyển dụng.",
     readingTime: 7,
     tags: ["Live Coding", "Algorithms", "Data Structures", "LeetCode"],
@@ -135,6 +136,7 @@ const SEED_ARTICLES = [
     slug: "cam-nang-tuyen-dung-lap-trinh-vien-senior-2026",
     category: ARTICLE_CATEGORIES.RECRUITMENT_TIPS,
     targetAudience: TARGET_AUDIENCES.EMPLOYER,
+    isGated: true,
     summary: "Chiến lược xây dựng thương hiệu tuyển dụng kỹ thuật, thiết kế bài test thực chiến và quy trình phỏng vấn chuẩn mực để chiêu mộ nhân tài công nghệ hàng đầu.",
     readingTime: 8,
     tags: ["Tech Recruiting", "Tuyển Dụng IT", "Headhunter", "HR Tech"],
@@ -351,11 +353,16 @@ async function createArticle(data) {
     ? data.tags.split(",").map((t) => t.trim()).filter(Boolean)
     : [];
 
+  const isGated =
+    (data.targetAudience === TARGET_AUDIENCES.CANDIDATE || data.targetAudience === TARGET_AUDIENCES.EMPLOYER) &&
+    (data.isGated === "true" || data.isGated === true || data.isGated === "on");
+
   const article = new Article({
     title: data.title.trim(),
     slug: finalSlug,
     category: data.category || ARTICLE_CATEGORIES.TECH_TRENDS,
     targetAudience: data.targetAudience || TARGET_AUDIENCES.ALL,
+    isGated,
     summary: data.summary.trim(),
     content: data.content,
     thumbnail: data.thumbnail || "/assets/images/demo/demo1.png",
@@ -410,6 +417,14 @@ async function updateArticle(id, data) {
   article.sourceName = data.sourceName ? data.sourceName.trim() : "";
   article.sourceUrl = data.sourceUrl ? data.sourceUrl.trim() : "";
   article.originalAuthor = data.originalAuthor ? data.originalAuthor.trim() : "";
+
+  if (data.isGated !== undefined || data.targetAudience !== undefined) {
+    const aud = data.targetAudience || article.targetAudience;
+    const gated = data.isGated !== undefined ? data.isGated : article.isGated;
+    article.isGated =
+      (aud === TARGET_AUDIENCES.CANDIDATE || aud === TARGET_AUDIENCES.EMPLOYER) &&
+      (gated === "true" || gated === true || gated === "on");
+  }
 
   if (data.isPublished !== undefined) {
     const wasPublished = article.isPublished;

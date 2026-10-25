@@ -58,11 +58,31 @@ async function renderBlogDetails(req, res) {
     .populate("employerId", "companyName logo")
     .lean();
 
+  // Kiểm tra quyền mở khóa bài viết độc quyền (Exclusive Gated Content)
+  let isLocked = false;
+  let requiredRole = null;
+
+  if (article.isGated) {
+    if (article.targetAudience === "candidate") {
+      requiredRole = "candidate";
+      if (req.role !== "candidate" && !req.admin) {
+        isLocked = true;
+      }
+    } else if (article.targetAudience === "employer") {
+      requiredRole = "employer";
+      if (req.role !== "employer" && !req.admin) {
+        isLocked = true;
+      }
+    }
+  }
+
   res.render("pages/blog-details", {
     title: `${article.title} | VN.ITJobs Blog`,
     article,
     relatedArticles,
     featuredJobs,
+    isLocked,
+    requiredRole,
     categoryLabel: blogService.ARTICLE_CATEGORY_LABELS[article.category] || "Cẩm Nang IT",
   });
 }

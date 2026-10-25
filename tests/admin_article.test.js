@@ -246,4 +246,46 @@ describe("Admin Article Management & AI Content Curation", () => {
     expect(curateRes.body.data.sourceName).toBe("Viblo");
     expect(curateRes.body.data.isOriginal).toBe(false);
   });
+
+  test("6. Khóa bài viết độc quyền (isGated): Khách vãng lai bị khóa, đúng tài khoản thì mở khóa", async () => {
+    const gatedCandArticle = await Article.create({
+      title: "Bài viết khóa cho Ứng viên",
+      slug: "bai-viet-khoa-cho-ung-vien",
+      category: "interview_tips",
+      targetAudience: "candidate",
+      isGated: true,
+      summary: "Tóm tắt bài viết độc quyền cho Ứng viên",
+      content: "<p>Nội dung siêu bí mật cho ứng viên</p>",
+      isPublished: true,
+    });
+
+    // 1. Khách vãng lai truy cập -> bị khóa (thấy hộp thông báo đăng nhập Ứng viên)
+    const guestRes = await request(app).get(`/blog/${gatedCandArticle.slug}`);
+    expect(guestRes.status).toBe(200);
+    expect(guestRes.text).toContain("Đăng Nhập Tài Khoản Ứng Viên Để Mở Khóa Bài Viết");
+    expect(guestRes.text).not.toContain("Nội dung siêu bí mật cho ứng viên");
+
+    // 2. Tạo và đăng nhập tài khoản Ứng viên
+    const { Candidate } = require("../src/models");
+    const { signUserToken } = require("../src/services/auth.service");
+    const cand = await Candidate.create({
+      fullName: "Ứng Viên VIP",
+      email: "candidate_vip@test.com",
+      password: "HashedPassword123",
+      isEmailVerified: true,
+      status: "active",
+      tokenVersion: 1,
+    });
+
+    const token = signUserToken(cand, "candidate");
+
+    // 3. Ứng viên truy cập -> mở khóa toàn văn
+    const candRes = await request(app)
+      .get(`/blog/${gatedCandArticle.slug}`)
+      .set("Cookie", [`itj_token=${token}`]);
+
+    expect(candRes.status).toBe(200);
+    expect(candRes.text).toContain("Nội dung siêu bí mật cho ứng viên");
+    expect(candRes.text).not.toContain("Đăng Nhập Tài Khoản Ứng Viên Để Mở Khóa Bài Viết");
+  });
 });

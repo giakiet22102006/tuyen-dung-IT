@@ -67,6 +67,9 @@ block main
                                         if art.targetAudience === 'employer'
                                             span(class="bg-amber-600/90 backdrop-blur-xs text-white text-[10px] font-[700] px-[8px] py-[3px] rounded-full uppercase tracking-wider")
                                                 | NTD
+                                        if art.isGated
+                                            span(class="bg-rose-600/90 backdrop-blur-xs text-white text-[10px] font-[700] px-[8px] py-[3px] rounded-full uppercase tracking-wider flex items-center gap-[3px]")
+                                                <i class="fa-solid fa-lock text-[9px]"></i> Khóa độc quyền
                                     if !art.isOriginal && art.sourceName
                                         span(class="absolute bottom-[10px] right-[10px] bg-black/75 backdrop-blur-xs text-white text-[10px] font-[500] px-[8px] py-[2px] rounded flex items-center gap-[4px]")
                                             <i class="fa-solid fa-link text-[9px]"></i> #{art.sourceName}
@@ -99,8 +102,12 @@ block main
                             div(class="px-[18px] py-[12px] bg-gray-50/70 border-t border-gray-100 flex items-center justify-between text-[12px]")
                                 span(class="text-gray-500") #{formatDate(art.publishedAt)}
                                 a(href=`/blog/${art.slug}` class="text-[#0088FF] font-[600] hover:underline flex items-center gap-[4px]")
-                                    | Đọc tiếp
-                                    i(class="fa-solid fa-arrow-right text-[10px]")
+                                    if art.isGated
+                                        span Mở khóa đọc
+                                        i(class="fa-solid fa-lock text-[10px] text-amber-500")
+                                    else
+                                        span Đọc tiếp
+                                        i(class="fa-solid fa-arrow-right text-[10px]")
 
                 //- Phân trang
                 if pagination && pagination.totalPages > 1

@@ -73,6 +73,12 @@ const articleSchema = new mongoose.Schema(
         trim: true,
       },
     ],
+    // Khóa nội dung riêng tư (chỉ đúng vai trò tài khoản mới được đọc chi tiết)
+    isGated: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
     // Hỗ trợ trích xuất nguồn từ internet
     isOriginal: {
       type: Boolean,
