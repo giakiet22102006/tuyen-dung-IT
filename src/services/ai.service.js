@@ -819,6 +819,240 @@ Chúc bạn luôn thành công và sớm tìm được bến đỗ nghề nghi�
   };
 }
 
+/**
+ * AI Sinh Cẩm Nang IT tự động theo chủ đề và đối tượng
+ */
+async function generateArticleWithAi({ topic, targetAudience = "all", category = "tech_trends" }) {
+  const audienceLabel =
+    targetAudience === "employer"
+      ? "Nhà tuyển dụng & Quản lý IT (HR Tech, Tech Lead, Engineering Manager)"
+      : targetAudience === "candidate"
+      ? "Ứng viên Lập trình viên IT (Junior/Middle/Senior Software Engineer)"
+      : "Cả Ứng viên IT và Nhà tuyển dụng";
+
+  const prompt = `
+Bạn là Trưởng ban biên tập Cẩm nang Công nghệ & Tuyển dụng IT tại sàn việc làm VN.ITJobs.
+Hãy sáng tạo một bài viết cẩm nang IT chuyên sâu, thực tế và cuốn hút dựa trên yêu cầu sau:
+
+- Chủ đề / Ý tưởng: "${topic}"
+- Đối tượng độc giả mục tiêu: ${audienceLabel}
+- Chuyên mục mong muốn: ${category}
+
+Yêu cầu xuất bản:
+1. Tiêu đề: Cuốn hút, chuẩn SEO, phản ánh đúng trọng tâm vấn đề.
+2. Slug: Không dấu, nối bằng gạch ngang (kebab-case).
+3. Đoạn tóm tắt (Lead Summary): 2-3 câu súc tích dẫn dắt người đọc vào bài viết.
+4. Nội dung bài viết (content): Định dạng bằng HTML semantic đẹp mắt (dùng <h2>, <h3>, <p>, <ul>, <li>, <strong>, <code>, <blockquote> nếu cần). Bài viết có cấu trúc rõ ràng từ 3-5 luận điểm chính, số liệu hoặc ví dụ minh họa thực tiễn, phân tích chuyên môn sâu sắc.
+5. Tags: 3-5 tags từ khóa công nghệ / nghề nghiệp liên quan.
+6. Thời gian đọc ước tính: (số phút, ví dụ: 6).
+7. Danh mục phù hợp nhất: một trong [career_roadmap, interview_tips, salary_insights, tech_trends, recruitment_tips].
+
+Vui lòng trả về DUY NHẤT một chuỗi JSON hợp lệ theo cấu trúc:
+{
+  "title": "Tiêu đề bài viết",
+  "slug": "tieu-de-bai-viet",
+  "category": "${category}",
+  "targetAudience": "${targetAudience}",
+  "summary": "Tóm tắt ngắn gọn",
+  "content": "<h2>1. Tiêu đề mục</h2><p>Nội dung...</p>",
+  "tags": ["Tag1", "Tag2", "Tag3"],
+  "readingTime": 6
+}
+`;
+
+  try {
+    const raw = await callGemini(
+      prompt,
+      "Bạn là chuyên gia biên tập công nghệ & nhân sự IT. Luôn chỉ trả về JSON hợp lệ."
+    );
+    const parsed = parseJsonFromLlm(raw);
+    if (parsed && parsed.title && parsed.content) {
+      return {
+        title: parsed.title,
+        slug: parsed.slug || require("../utils/slugify")(parsed.title),
+        category: parsed.category || category,
+        targetAudience: parsed.targetAudience || targetAudience,
+        summary: parsed.summary || "",
+        content: parsed.content,
+        tags: Array.isArray(parsed.tags) ? parsed.tags : ["IT", "KinhNghiem"],
+        readingTime: parseInt(parsed.readingTime, 10) || 5,
+        isOriginal: true,
+      };
+    }
+  } catch (err) {
+    console.error("Lỗi AI generateArticleWithAi:", err.message);
+  }
+
+  // Fallback thông minh nếu không gọi được Gemini
+  const slugify = require("../utils/slugify");
+  const fallbackTitle = topic.trim().length > 5 ? topic.trim() : "Cẩm Nang Phát Triển Kỹ Năng IT Toàn Diện 2026";
+  return {
+    title: fallbackTitle,
+    slug: slugify(fallbackTitle),
+    category,
+    targetAudience,
+    summary: `Phân tích chuyên sâu và các góc nhìn thực tiễn về chủ đề ${fallbackTitle} dành cho cộng đồng công nghệ VN.ITJobs.`,
+    content: `
+      <h2>1. Tổng quan vấn đề</h2>
+      <p>Trong bối cảnh thị trường công nghệ thông tin ngày càng cạnh tranh, việc nắm bắt sâu sắc các kỹ năng và xu hướng mới là chìa khóa then chốt giúp bứt phá sự nghiệp.</p>
+      <h2>2. Các yếu tố cốt lõi cần lưu ý</h2>
+      <ul>
+        <li><strong>Nền tảng vững vàng:</strong> Làm chủ tư duy giải quyết vấn đề và kiến trúc hệ thống bền vững.</li>
+        <li><strong>Cập nhật liên tục:</strong> Thích ứng với các công cụ tự động hóa, quy trình CI/CD và trí tuệ nhân tạo.</li>
+        <li><strong>Kỹ năng giao tiếp:</strong> Năng lực trình bày giải pháp và phối hợp nhóm hiệu quả.</li>
+      </ul>
+      <h2>3. Lời khuyên hành động thực tế</h2>
+      <p>Hãy xây dựng kế hoạch hành động cụ thể theo từng tháng, đo lường tiến độ và tích cực tham gia đóng góp cho các dự án thực tế.</p>
+    `,
+    tags: ["IT Career", "CongNghe", "KinhNghiem"],
+    readingTime: 5,
+    isOriginal: true,
+  };
+}
+
+/**
+ * AI Trích xuất, tổng hợp & biên tập bài viết từ nguồn ngoài (Content Curation)
+ */
+async function curateArticleFromSourceWithAi({ sourceUrl = "", rawContent = "", targetAudience = "all" }) {
+  let sourceName = "";
+  let fetchedText = "";
+
+  // 1. Phân tích tên domain nguồn từ URL
+  if (sourceUrl && sourceUrl.trim()) {
+    try {
+      const urlObj = new URL(sourceUrl.trim());
+      const host = urlObj.hostname.replace(/^www\./, "");
+      if (host.includes("medium.com")) sourceName = "Medium";
+      else if (host.includes("viblo.asia")) sourceName = "Viblo";
+      else if (host.includes("dev.to")) sourceName = "Dev.to";
+      else if (host.includes("techcrunch.com")) sourceName = "TechCrunch";
+      else if (host.includes("itviec.com")) sourceName = "ITviec Blog";
+      else if (host.includes("topcv.vn")) sourceName = "TopCV";
+      else if (host.includes("github.com")) sourceName = "GitHub Blog";
+      else sourceName = host;
+    } catch (e) {
+      sourceName = "Internet";
+    }
+  }
+
+  // 2. Nếu có URL mà chưa có rawContent, cố gắng fetch nhanh văn bản trang
+  if (sourceUrl && (!rawContent || rawContent.trim().length < 50)) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 6000);
+      const res = await fetch(sourceUrl, {
+        signal: controller.signal,
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Accept": "text/html,application/xhtml+xml",
+        },
+      });
+      clearTimeout(timeout);
+      if (res.ok) {
+        const html = await res.text();
+        // Lọc thẻ HTML cơ bản để lấy text
+        fetchedText = html
+          .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+          .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "")
+          .replace(/<[^>]+>/g, " ")
+          .replace(/\s+/g, " ")
+          .substring(0, 5000);
+      }
+    } catch (fetchErr) {
+      console.warn("⚠️ Không thể fetch trực tiếp URL nguồn:", fetchErr.message);
+    }
+  }
+
+  const textToAnalyze = (rawContent && rawContent.trim().length > 30 ? rawContent : fetchedText).trim();
+
+  const prompt = `
+Bạn là Trưởng ban biên tập tại sàn tuyển dụng IT VN.ITJobs.
+Chúng tôi muốn tổng hợp, tuyển chọn (Content Curation) và biên tập lại một bài viết cẩm nang công nghệ giá trị từ nguồn bên ngoài để cung cấp cho người dùng, có trích xuất nguồn đầy đủ.
+
+Thông tin nguồn:
+- Link nguồn: ${sourceUrl || "N/A"}
+- Tên nguồn dự kiến: ${sourceName || "N/A"}
+- Đối tượng độc giả mong muốn: ${targetAudience}
+- Nội dung gốc / bản nháp bài viết:
+"""
+${textToAnalyze ? textToAnalyze.substring(0, 4000) : "Chưa có văn bản chi tiết, hãy biên tập cẩm nang dựa trên chủ đề của link " + sourceUrl}
+"""
+
+Nhiệm vụ biên tập của bạn:
+1. Đặt lại Tiêu đề tiếng Việt chuyên nghiệp, hấp dẫn, chuẩn SEO.
+2. Tạo Slug không dấu (kebab-case).
+3. Viết đoạn tóm tắt (Summary) súc tích, nêu bật giá trị then chốt của bài viết.
+4. Biên tập lại toàn bộ nội dung thành bài viết hoàn chỉnh bằng định dạng HTML (<h2>, <h3>, <p>, <ul>, <li>, <code>, <blockquote>). Văn phong mạch lạc, cô đọng, dễ hiểu và chuyên sâu về IT.
+5. Gợi ý 3-5 Tags, thời gian đọc ước tính (readingTime).
+6. Xác định Danh mục (category) phù hợp nhất: [career_roadmap, interview_tips, salary_insights, tech_trends, recruitment_tips].
+7. Xác định Tên nguồn gốc (sourceName), Tác giả gốc nếu có trong văn bản (originalAuthor).
+
+Vui lòng trả về DUY NHẤT định dạng JSON:
+{
+  "title": "Tiêu đề tiếng Việt",
+  "slug": "tieu-de-slug",
+  "category": "tech_trends",
+  "targetAudience": "${targetAudience}",
+  "summary": "Tóm tắt ngắn gọn...",
+  "content": "<h2>1. Đề mục</h2><p>Nội dung...</p>",
+  "tags": ["Tag1", "Tag2"],
+  "readingTime": 5,
+  "sourceName": "${sourceName || "Nguồn tham khảo"}",
+  "sourceUrl": "${sourceUrl || ""}",
+  "originalAuthor": "Tác giả gốc hoặc để trống nếu không rõ"
+}
+`;
+
+  try {
+    const raw = await callGemini(
+      prompt,
+      "Bạn là biên tập viên cao cấp. Luôn trả về định dạng JSON thuần không kèm giải thích."
+    );
+    const parsed = parseJsonFromLlm(raw);
+    if (parsed && parsed.title && parsed.content) {
+      return {
+        title: parsed.title,
+        slug: parsed.slug || require("../utils/slugify")(parsed.title),
+        category: parsed.category || "tech_trends",
+        targetAudience: parsed.targetAudience || targetAudience,
+        summary: parsed.summary || "",
+        content: parsed.content,
+        tags: Array.isArray(parsed.tags) ? parsed.tags : ["CongNghe", "TríchNguồn"],
+        readingTime: parseInt(parsed.readingTime, 10) || 5,
+        sourceName: parsed.sourceName || sourceName || "Nguồn tham khảo",
+        sourceUrl: sourceUrl.trim(),
+        originalAuthor: parsed.originalAuthor || "",
+        isOriginal: false,
+      };
+    }
+  } catch (err) {
+    console.error("Lỗi AI curateArticleFromSourceWithAi:", err.message);
+  }
+
+  // Fallback
+  const slugify = require("../utils/slugify");
+  const fallbackTitle = "Tổng Hợp Xu Hướng & Cẩm Nang IT Nổi Bật";
+  return {
+    title: fallbackTitle,
+    slug: slugify(fallbackTitle),
+    category: "tech_trends",
+    targetAudience,
+    summary: `Bài viết tổng hợp và biên tập các kiến thức thực tiễn hữu ích từ ${sourceName || "nguồn công nghệ uy tín"}.`,
+    content: `
+      <h2>1. Giới thiệu nguồn tham khảo</h2>
+      <p>Nội dung này được tổng hợp và biên tập từ <strong>${sourceName || "nguồn bên ngoài"}</strong> nhằm cung cấp thông tin kịp thời cho cộng đồng lập trình viên và nhà tuyển dụng.</p>
+      <h2>2. Các điểm cốt lõi</h2>
+      <p>${textToAnalyze ? textToAnalyze.substring(0, 500) + "..." : "Tham khảo chi tiết tại đường link gốc."}</p>
+    `,
+    tags: ["TongHop", "TríchNguồn", "IT"],
+    readingTime: 4,
+    sourceName: sourceName || "Nguồn tham khảo",
+    sourceUrl: sourceUrl.trim(),
+    originalAuthor: "",
+    isOriginal: false,
+  };
+}
+
 module.exports = {
   callGemini,
   extractTextFromPdf,
@@ -830,4 +1064,6 @@ module.exports = {
   generateMarketInsights,
   draftInterviewInvitation,
   draftRejectionLetter,
+  generateArticleWithAi,
+  curateArticleFromSourceWithAi,
 };

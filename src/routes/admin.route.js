@@ -8,6 +8,7 @@ const adminEmployer = require("../controllers/admin/adminEmployer.controller");
 const adminCandidate = require("../controllers/admin/adminCandidate.controller");
 const adminLog = require("../controllers/admin/adminLog.controller");
 const adminFeedback = require("../controllers/admin/adminFeedback.controller");
+const adminArticle = require("../controllers/admin/adminArticle.controller");
 
 const { requireAdmin, requireSuperAdmin, adminSecurityHeaders } = require("../middlewares/auth.middleware");
 const { doubleCsrfProtection } = require("../middlewares/csrf.middleware");
@@ -67,5 +68,16 @@ router.get("/logs", requireAdmin, asyncHandler(adminLog.renderLogs));
 router.get("/feedbacks", requireAdmin, asyncHandler(adminFeedback.renderFeedbacks));
 router.post("/feedbacks/:id/status", requireAdmin, doubleCsrfProtection, asyncHandler(adminFeedback.postUpdateStatus));
 router.post("/feedbacks/:id/delete", requireAdmin, doubleCsrfProtection, asyncHandler(adminFeedback.postDeleteFeedback));
+
+// Quản lý Cẩm nang IT & Trợ lý AI Biên tập
+router.get("/articles", requireAdmin, asyncHandler(adminArticle.renderList));
+router.get("/articles/create", requireAdmin, adminArticle.renderCreate);
+router.post("/articles/create", requireAdmin, doubleCsrfProtection, asyncHandler(adminArticle.postCreate));
+router.get("/articles/:id/edit", requireAdmin, asyncHandler(adminArticle.renderEdit));
+router.post("/articles/:id/edit", requireAdmin, doubleCsrfProtection, asyncHandler(adminArticle.postEdit));
+router.post("/articles/:id/toggle-publish", requireAdmin, doubleCsrfProtection, asyncHandler(adminArticle.postTogglePublish));
+router.post("/articles/:id/delete", requireAdmin, doubleCsrfProtection, asyncHandler(adminArticle.postDelete));
+router.post("/articles/ai-generate", requireAdmin, doubleCsrfProtection, asyncHandler(adminArticle.postAiGenerate));
+router.post("/articles/ai-curate", requireAdmin, doubleCsrfProtection, asyncHandler(adminArticle.postAiCurate));
 
 module.exports = router;

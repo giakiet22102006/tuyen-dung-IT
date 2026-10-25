@@ -21,8 +21,15 @@ block main
                 article(class="lg:col-span-2 bg-white rounded-[12px] p-[24px] sm:p-[35px] shadow-xs border border-gray-200/80")
                     //- Header Bài Viết
                     div(class="mb-[20px] pb-[20px] border-b border-gray-100")
-                        span(class="inline-block bg-blue-50 text-[#0088FF] text-[12px] font-[700] px-[12px] py-[4px] rounded-full uppercase tracking-wider mb-[12px]")
-                            | #{categoryLabel}
+                        div(class="flex flex-wrap items-center gap-[8px] mb-[12px]")
+                            span(class="inline-block bg-blue-50 text-[#0088FF] text-[12px] font-[700] px-[12px] py-[4px] rounded-full uppercase tracking-wider")
+                                | #{categoryLabel}
+                            if article.targetAudience === 'employer'
+                                span(class="inline-block bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-[700] px-[10px] py-[3px] rounded-full uppercase tracking-wider")
+                                    <i class="fa-solid fa-building mr-[3px]"></i> Dành cho Nhà Tuyển Dụng
+                            else if article.targetAudience === 'candidate'
+                                span(class="inline-block bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-[700] px-[10px] py-[3px] rounded-full uppercase tracking-wider")
+                                    <i class="fa-solid fa-code mr-[3px]"></i> Dành cho Ứng Viên IT
 
                         h1(class="font-[800] text-[24px] sm:text-[34px] text-gray-900 leading-tight mb-[16px]")
                             | #{article.title}
@@ -46,6 +53,20 @@ block main
                                 span
                                     i(class="fa-regular fa-eye mr-[4px]")
                                     | #{article.views || 0} lượt xem
+
+                    //- Hộp trích dẫn nguồn nếu là bài viết tổng hợp từ internet
+                    if article.isOriginal === false && (article.sourceName || article.sourceUrl)
+                        div(class="mb-[22px] p-[16px] bg-slate-50 border border-slate-200 rounded-[10px] flex items-start gap-[12px]")
+                            div(class="w-[36px] h-[36px] rounded-full bg-blue-100 text-[#0088FF] flex items-center justify-center shrink-0 mt-[2px]")
+                                <i class="fa-solid fa-circle-info text-[16px]"></i>
+                            div(class="text-[13px] text-gray-700 leading-relaxed")
+                                div(class="font-[700] text-gray-900 mb-[2px]") Trích dẫn & Nguồn tham khảo
+                                p Bài viết được Ban Biên Tập VN.ITJobs tổng hợp và biên tập từ #[strong #{article.sourceName || "Nguồn internet"}]#{article.originalAuthor ? ` của tác giả ${article.originalAuthor}` : ''} nhằm mục đích chia sẻ kiến thức công nghệ hữu ích cho cộng đồng.
+                                if article.sourceUrl
+                                    div(class="mt-[6px]")
+                                        a(href=article.sourceUrl target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-[4px] text-[#0088FF] font-[600] hover:underline")
+                                            span Xem bài viết gốc trên #{article.sourceName || "trang nguồn"}
+                                            <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
 
                     //- Tóm tắt (Lead summary)
                     div(class="bg-blue-50/60 border-l-4 border-[#0088FF] p-[16px] rounded-r-[8px] mb-[25px] text-[15px] text-gray-700 italic leading-relaxed")

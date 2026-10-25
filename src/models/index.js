@@ -13,7 +13,13 @@ const SavedJob = require("./savedJob.model");
 const JobAlert = require("./jobAlert.model");
 const CompanyFollow = require("./companyFollow.model");
 const Notification = require("./notification.model");
-const { Article, ARTICLE_CATEGORIES, ARTICLE_CATEGORY_LABELS } = require("./article.model");
+const {
+  Article,
+  ARTICLE_CATEGORIES,
+  ARTICLE_CATEGORY_LABELS,
+  TARGET_AUDIENCES,
+  TARGET_AUDIENCE_LABELS,
+} = require("./article.model");
 
 module.exports = {
   Candidate,
@@ -33,4 +39,6 @@ module.exports = {
   Article,
   ARTICLE_CATEGORIES,
   ARTICLE_CATEGORY_LABELS,
+  TARGET_AUDIENCES,
+  TARGET_AUDIENCE_LABELS,
 };

@@ -7,24 +7,28 @@ const { JOB_MODERATION } = require("../../config/constants");
  * Hiển thị danh sách bài viết / Cẩm nang IT
  */
 async function renderBlogList(req, res) {
-  const { category = "", search = "", page = 1 } = req.query;
+  const { category = "", audience = "", search = "", page = 1 } = req.query;
 
   const { articles, pagination, total } = await blogService.getArticles({
     category,
+    audience,
     search,
     page: parseInt(page, 10) || 1,
     limit: 6,
   });
 
   res.render("pages/blog-list", {
-    title: "Cẩm Nang IT & Kinh Nghiệm Phỏng Vấn | VN.ITJobs",
+    title: "Cẩm Nang IT, Tuyển Dụng & Phát Triển Nghề Nghiệp | VN.ITJobs",
     articles,
     pagination,
     total,
     selectedCategory: category,
+    selectedAudience: audience,
     searchKeyword: search,
     categories: blogService.ARTICLE_CATEGORIES,
     categoryLabels: blogService.ARTICLE_CATEGORY_LABELS,
+    audiences: blogService.TARGET_AUDIENCES,
+    audienceLabels: blogService.TARGET_AUDIENCE_LABELS,
   });
 }
 

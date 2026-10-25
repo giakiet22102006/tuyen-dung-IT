@@ -1,0 +1,127 @@
+extends ../../layouts/admin.pug
+
+block title
+    title #{title || "Sửa Cẩm Nang IT | Admin"}
+
+block main
+    div(class="max-w-[1000px] mx-auto space-y-[24px]")
+        //- Tiêu đề & Breadcrumb
+        div(class="flex items-center justify-between")
+            div
+                div(class="flex items-center gap-[8px] text-[13px] text-gray-500 mb-[4px]")
+                    a(href=`/${adminPath}/articles` class="hover:text-[#0088FF]") Cẩm Nang IT
+                    span /
+                    span(class="text-gray-800 font-[500]") Chỉnh sửa
+                h1(class="text-[24px] font-[700] text-gray-900") Chỉnh Sửa Cẩm Nang IT
+            div(class="flex items-center gap-[10px]")
+                a(href=`/blog/${article.slug}` target="_blank" class="text-blue-600 hover:text-blue-800 px-[14px] py-[8px] rounded-[6px] border border-blue-200 font-[500] text-[13px] bg-blue-50/50 transition flex items-center gap-[6px]")
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Xem trên web
+                a(href=`/${adminPath}/articles` class="text-gray-600 hover:text-gray-800 px-[14px] py-[8px] rounded-[6px] border border-gray-300 font-[500] text-[13px] transition")
+                    <i class="fa-solid fa-arrow-left mr-[6px]"></i> Quay lại
+
+        //- FORM CHỈNH SỬA
+        div(class="bg-white rounded-[12px] p-[24px] sm:p-[32px] shadow-xs border border-gray-200")
+            form(action=`/${adminPath}/articles/${article._id}/edit` method="POST" class="space-y-[20px]")
+                input(type="hidden" name="_csrf" value=csrfToken)
+
+                //- Tiêu đề & Slug
+                div(class="grid grid-cols-1 md:grid-cols-3 gap-[16px]")
+                    div(class="md:col-span-2")
+                        label(class="block text-[13px] font-[600] text-gray-700 mb-[6px]") Tiêu đề cẩm nang <span class="text-red-500">*</span>
+                        input(type="text" name="title" required value=article.title class="w-full px-[14px] py-[10px] border border-gray-300 rounded-[8px] text-[15px] focus:outline-none focus:border-[#0088FF] font-[600]")
+                    div
+                        label(class="block text-[13px] font-[600] text-gray-700 mb-[6px]") Đường dẫn tĩnh (Slug)
+                        input(type="text" name="slug" value=article.slug class="w-full px-[14px] py-[10px] border border-gray-300 rounded-[8px] text-[14px] bg-gray-50 focus:outline-none focus:border-[#0088FF]")
+
+                //- Chuyên mục & Đối tượng & Thời gian đọc
+                div(class="grid grid-cols-1 md:grid-cols-3 gap-[16px]")
+                    div
+                        label(class="block text-[13px] font-[600] text-gray-700 mb-[6px]") Chuyên mục <span class="text-red-500">*</span>
+                        select(name="category" class="w-full px-[12px] py-[10px] border border-gray-300 rounded-[8px] text-[14px] bg-white focus:outline-none focus:border-[#0088FF]")
+                            each catKey, catVal in categories
+                                option(value=catVal selected=(article.category === catVal)) #{categoryLabels[catVal]}
+                    div
+                        label(class="block text-[13px] font-[600] text-gray-700 mb-[6px]") Đối tượng độc giả <span class="text-red-500">*</span>
+                        select(name="targetAudience" class="w-full px-[12px] py-[10px] border border-gray-300 rounded-[8px] text-[14px] bg-white focus:outline-none focus:border-[#0088FF]")
+                            each audVal, audKey in audiences
+                                option(value=audVal selected=(article.targetAudience === audVal)) #{audienceLabels[audVal]}
+                    div
+                        label(class="block text-[13px] font-[600] text-gray-700 mb-[6px]") Thời gian đọc (Phút)
+                        input(type="number" name="readingTime" value=(article.readingTime || 5) min="1" max="60" class="w-full px-[12px] py-[10px] border border-gray-300 rounded-[8px] text-[14px] focus:outline-none focus:border-[#0088FF]")
+
+                //- Thumbnail & Tags
+                div(class="grid grid-cols-1 md:grid-cols-2 gap-[16px]")
+                    div
+                        label(class="block text-[13px] font-[600] text-gray-700 mb-[6px]") Ảnh đại diện (Thumbnail URL)
+                        input(type="text" name="thumbnail" value=article.thumbnail class="w-full px-[14px] py-[10px] border border-gray-300 rounded-[8px] text-[14px] focus:outline-none focus:border-[#0088FF]")
+                    div
+                        label(class="block text-[13px] font-[600] text-gray-700 mb-[6px]") Tags từ khóa (Cách nhau bằng dấu phẩy)
+                        input(type="text" name="tags" value=(article.tags ? article.tags.join(", ") : "") class="w-full px-[14px] py-[10px] border border-gray-300 rounded-[8px] text-[14px] focus:outline-none focus:border-[#0088FF]")
+
+                //- Khu vực thông tin trích nguồn
+                div(class="p-[16px] rounded-[8px] border border-gray-200 bg-gray-50/60 space-y-[12px]")
+                    div(class="flex items-center justify-between")
+                        label(class="text-[13px] font-[700] text-gray-800 flex items-center gap-[6px]")
+                            <i class="fa-solid fa-link text-[#0088FF]"></i>
+                            span Thông tin bản quyền & Trích nguồn bài viết
+                        div(class="flex items-center gap-[14px] text-[13px]")
+                            label(class="flex items-center gap-[6px] cursor-pointer")
+                                input(type="radio" name="isOriginal" id="radioEditOriginalTrue" value="true" checked=(article.isOriginal !== false) class="text-[#0088FF]")
+                                span Bài viết tự biên soạn (Gốc)
+                            label(class="flex items-center gap-[6px] cursor-pointer")
+                                input(type="radio" name="isOriginal" id="radioEditOriginalFalse" value="false" checked=(article.isOriginal === false) class="text-[#0088FF]")
+                                span(class="font-[600] text-indigo-700") Trích nguồn từ internet
+
+                    div(id="editSourceFieldsGroup" class="grid grid-cols-1 md:grid-cols-3 gap-[12px] pt-[8px] border-t border-gray-200 " + (article.isOriginal === false ? "" : "hidden"))
+                        div
+                            label(class="block text-[12px] font-[600] text-gray-600 mb-[4px]") Tên nguồn (Ví dụ: Medium, Viblo, TechCrunch)
+                            input(type="text" name="sourceName" value=article.sourceName placeholder="Viblo / Medium..." class="w-full px-[12px] py-[8px] border border-gray-300 rounded-[6px] text-[13px] bg-white")
+                        div
+                            label(class="block text-[12px] font-[600] text-gray-600 mb-[4px]") Link bài viết gốc (URL)
+                            input(type="url" name="sourceUrl" value=article.sourceUrl placeholder="https://..." class="w-full px-[12px] py-[8px] border border-gray-300 rounded-[6px] text-[13px] bg-white")
+                        div
+                            label(class="block text-[12px] font-[600] text-gray-600 mb-[4px]") Tác giả gốc (Nếu có)
+                            input(type="text" name="originalAuthor" value=article.originalAuthor placeholder="Tên tác giả gốc..." class="w-full px-[12px] py-[8px] border border-gray-300 rounded-[6px] text-[13px] bg-white")
+
+                //- Tóm tắt
+                div
+                    label(class="block text-[13px] font-[600] text-gray-700 mb-[6px]") Tóm tắt bài viết (Lead summary) <span class="text-red-500">*</span>
+                    textarea(name="summary" required rows="3" class="w-full px-[14px] py-[10px] border border-gray-300 rounded-[8px] text-[14px] focus:outline-none focus:border-[#0088FF]") #{article.summary}
+
+                //- Nội dung
+                div
+                    div(class="flex items-center justify-between mb-[6px]")
+                        label(class="text-[13px] font-[600] text-gray-700") Nội dung cẩm nang (Định dạng HTML) <span class="text-red-500">*</span>
+                        span(class="text-[12px] text-gray-400") Hỗ trợ thẻ &lt;h2&gt;, &lt;h3&gt;, &lt;p&gt;, &lt;ul&gt;, &lt;li&gt;, &lt;code&gt;
+                    textarea(name="content" required rows="14" class="w-full p-[14px] font-mono text-[13px] border border-gray-300 rounded-[8px] focus:outline-none focus:border-[#0088FF] leading-relaxed") #{article.content}
+
+                //- Trạng thái xuất bản
+                div(class="flex items-center gap-[10px] pt-[8px]")
+                    input(type="checkbox" name="isPublished" id="editFormIsPublished" checked=article.isPublished class="w-[18px] h-[18px] text-[#0088FF] rounded cursor-pointer")
+                    label(for="editFormIsPublished" class="text-[14px] font-[600] text-gray-800 cursor-pointer")
+                        | Xuất bản cẩm nang trên website
+
+                //- Nút bấm Submit
+                div(class="flex items-center justify-end gap-[12px] pt-[16px] border-t border-gray-200")
+                    a(href=`/${adminPath}/articles` class="px-[20px] py-[10px] rounded-[8px] border border-gray-300 text-gray-700 font-[600] text-[14px] hover:bg-gray-100 transition") Hủy bỏ
+                    button(type="submit" class="bg-[#0088FF] hover:bg-[#0077EE] text-white px-[24px] py-[10px] rounded-[8px] font-[700] text-[14px] shadow-sm transition flex items-center gap-[8px]")
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        span Cập Nhật Cẩm Nang
+
+    script.
+        document.addEventListener("DOMContentLoaded", function () {
+            const radioTrue = document.getElementById("radioEditOriginalTrue");
+            const radioFalse = document.getElementById("radioEditOriginalFalse");
+            const group = document.getElementById("editSourceFieldsGroup");
+
+            function toggleFields() {
+                if (radioFalse.checked) {
+                    group.classList.remove("hidden");
+                } else {
+                    group.classList.add("hidden");
+                }
+            }
+
+            radioTrue.addEventListener("change", toggleFields);
+            radioFalse.addEventListener("change", toggleFields);
+        });

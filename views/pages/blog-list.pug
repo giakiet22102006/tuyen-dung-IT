@@ -28,15 +28,29 @@ block main
     //- Danh sách bài viết & Danh mục
     div(class="py-[35px] sm:py-[50px] bg-[#F4F5F7] min-h-[600px]")
         .contain
+            //- Bộ lọc đối tượng độc giả (Ứng viên / Nhà tuyển dụng / Tất cả)
+            div(class="flex items-center justify-between flex-wrap gap-[12px] mb-[18px]")
+                div(class="flex items-center gap-[6px] bg-white p-[4px] rounded-full border border-gray-200 shadow-2xs")
+                    a(href=`/blog?${selectedCategory ? 'category=' + selectedCategory : ''}${searchKeyword ? '&search=' + encodeURIComponent(searchKeyword) : ''}` class=`px-[14px] py-[6px] rounded-full text-[12px] sm:text-[13px] font-[600] transition ${!selectedAudience ? 'bg-[#0088FF] text-white shadow-xs' : 'text-gray-600 hover:text-gray-900'}`)
+                        <i class="fa-solid fa-users mr-[4px]"></i> Tất cả
+                    a(href=`/blog?audience=candidate${selectedCategory ? '&category=' + selectedCategory : ''}${searchKeyword ? '&search=' + encodeURIComponent(searchKeyword) : ''}` class=`px-[14px] py-[6px] rounded-full text-[12px] sm:text-[13px] font-[600] transition ${selectedAudience === 'candidate' ? 'bg-[#0088FF] text-white shadow-xs' : 'text-gray-600 hover:text-gray-900'}`)
+                        <i class="fa-solid fa-code mr-[4px]"></i> Dành cho Ứng viên
+                    a(href=`/blog?audience=employer${selectedCategory ? '&category=' + selectedCategory : ''}${searchKeyword ? '&search=' + encodeURIComponent(searchKeyword) : ''}` class=`px-[14px] py-[6px] rounded-full text-[12px] sm:text-[13px] font-[600] transition ${selectedAudience === 'employer' ? 'bg-[#0088FF] text-white shadow-xs' : 'text-gray-600 hover:text-gray-900'}`)
+                        <i class="fa-solid fa-building mr-[4px]"></i> Cho Nhà tuyển dụng
+
+                if total
+                    div(class="text-[13px] text-gray-500")
+                        | Đang hiển thị <strong class="text-gray-800">#{articles.length}</strong> / #{total} cẩm nang
+
             //- Tabs phân loại danh mục
             div(class="flex items-center gap-[8px] overflow-x-auto pb-[10px] mb-[25px] border-b border-gray-200")
-                a(href="/blog" class=`inline-flex items-center gap-[6px] px-[16px] py-[8px] rounded-full text-[13px] font-[600] whitespace-nowrap transition ${!selectedCategory ? 'bg-[#000071] text-white shadow-xs' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}`)
+                a(href=`/blog?${selectedAudience ? 'audience=' + selectedAudience : ''}${searchKeyword ? '&search=' + encodeURIComponent(searchKeyword) : ''}` class=`inline-flex items-center gap-[6px] px-[16px] py-[8px] rounded-full text-[13px] font-[600] whitespace-nowrap transition ${!selectedCategory ? 'bg-[#000071] text-white shadow-xs' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}`)
                     i(class="fa-solid fa-layer-group text-[12px]")
-                    | Tất cả bài viết
+                    | Tất cả chuyên mục
                 each catKey in Object.keys(categories)
                     - var catVal = categories[catKey]
                     - var isCatActive = (selectedCategory === catVal)
-                    a(href=`/blog?category=${catVal}${searchKeyword ? '&search=' + encodeURIComponent(searchKeyword) : ''}` class=`inline-flex items-center gap-[6px] px-[16px] py-[8px] rounded-full text-[13px] font-[600] whitespace-nowrap transition ${isCatActive ? 'bg-[#000071] text-white shadow-xs' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}`)
+                    a(href=`/blog?category=${catVal}${selectedAudience ? '&audience=' + selectedAudience : ''}${searchKeyword ? '&search=' + encodeURIComponent(searchKeyword) : ''}` class=`inline-flex items-center gap-[6px] px-[16px] py-[8px] rounded-full text-[13px] font-[600] whitespace-nowrap transition ${isCatActive ? 'bg-[#000071] text-white shadow-xs' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}`)
                         | #{categoryLabels[catVal]}
 
             if articles && articles.length > 0
@@ -44,11 +58,18 @@ block main
                     each art in articles
                         article(class="bg-white rounded-[12px] overflow-hidden shadow-xs border border-gray-200/80 hover:shadow-md transition flex flex-col justify-between group")
                             div
-                                //- Thumbnail
+                                //- Thumbnail & Badges
                                 a(href=`/blog/${art.slug}` class="block aspect-[16/9] overflow-hidden relative bg-gray-100")
                                     img(src=art.thumbnail alt=art.title class="w-full h-full object-cover group-hover:scale-105 transition duration-300")
-                                    span(class="absolute top-[10px] left-[10px] bg-[#000071]/85 backdrop-blur-xs text-white text-[11px] font-[600] px-[10px] py-[3px] rounded-full uppercase tracking-wider")
-                                        | #{categoryLabels[art.category] || "Cẩm Nang"}
+                                    div(class="absolute top-[10px] left-[10px] flex flex-wrap gap-[6px]")
+                                        span(class="bg-[#000071]/85 backdrop-blur-xs text-white text-[11px] font-[600] px-[10px] py-[3px] rounded-full uppercase tracking-wider")
+                                            | #{categoryLabels[art.category] || "Cẩm Nang"}
+                                        if art.targetAudience === 'employer'
+                                            span(class="bg-amber-600/90 backdrop-blur-xs text-white text-[10px] font-[700] px-[8px] py-[3px] rounded-full uppercase tracking-wider")
+                                                | NTD
+                                    if !art.isOriginal && art.sourceName
+                                        span(class="absolute bottom-[10px] right-[10px] bg-black/75 backdrop-blur-xs text-white text-[10px] font-[500] px-[8px] py-[2px] rounded flex items-center gap-[4px]")
+                                            <i class="fa-solid fa-link text-[9px]"></i> #{art.sourceName}
 
                                 div(class="p-[18px]")
                                     //- Meta (Reading time & Views)
@@ -85,17 +106,17 @@ block main
                 if pagination && pagination.totalPages > 1
                     div(class="flex justify-center items-center gap-[6px]")
                         if pagination.hasPrev
-                            a(href=`/blog?page=${pagination.prevPage}${selectedCategory ? '&category=' + selectedCategory : ''}${searchKeyword ? '&search=' + encodeURIComponent(searchKeyword) : ''}` class="w-[36px] h-[36px] rounded-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 flex items-center justify-center text-[13px] transition")
+                            a(href=`/blog?page=${pagination.prevPage}${selectedCategory ? '&category=' + selectedCategory : ''}${selectedAudience ? '&audience=' + selectedAudience : ''}${searchKeyword ? '&search=' + encodeURIComponent(searchKeyword) : ''}` class="w-[36px] h-[36px] rounded-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 flex items-center justify-center text-[13px] transition")
                                 i(class="fa-solid fa-chevron-left")
 
                         each pageNum in Array.from({length: pagination.totalPages}, (_, i) => i + 1)
                             if pageNum === pagination.currentPage
                                 span(class="w-[36px] h-[36px] rounded-full bg-[#0088FF] text-white font-[700] flex items-center justify-center text-[13px] shadow-xs") #{pageNum}
                             else if pageNum === 1 || pageNum === pagination.totalPages || Math.abs(pageNum - pagination.currentPage) <= 1
-                                a(href=`/blog?page=${pageNum}${selectedCategory ? '&category=' + selectedCategory : ''}${searchKeyword ? '&search=' + encodeURIComponent(searchKeyword) : ''}` class="w-[36px] h-[36px] rounded-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 flex items-center justify-center text-[13px] transition") #{pageNum}
+                                a(href=`/blog?page=${pageNum}${selectedCategory ? '&category=' + selectedCategory : ''}${selectedAudience ? '&audience=' + selectedAudience : ''}${searchKeyword ? '&search=' + encodeURIComponent(searchKeyword) : ''}` class="w-[36px] h-[36px] rounded-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 flex items-center justify-center text-[13px] transition") #{pageNum}
 
                         if pagination.hasNext
-                            a(href=`/blog?page=${pagination.nextPage}${selectedCategory ? '&category=' + selectedCategory : ''}${searchKeyword ? '&search=' + encodeURIComponent(searchKeyword) : ''}` class="w-[36px] h-[36px] rounded-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 flex items-center justify-center text-[13px] transition")
+                            a(href=`/blog?page=${pagination.nextPage}${selectedCategory ? '&category=' + selectedCategory : ''}${selectedAudience ? '&audience=' + selectedAudience : ''}${searchKeyword ? '&search=' + encodeURIComponent(searchKeyword) : ''}` class="w-[36px] h-[36px] rounded-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 flex items-center justify-center text-[13px] transition")
                                 i(class="fa-solid fa-chevron-right")
             else
                 div(class="bg-white rounded-[12px] p-[50px] text-center shadow-xs border border-gray-200")
