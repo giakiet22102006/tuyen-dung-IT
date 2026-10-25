@@ -2,6 +2,7 @@
 const blogService = require("../../services/blog.service");
 const aiService = require("../../services/ai.service");
 const { logAdminAction } = require("../../services/audit.service");
+const { uploadArticleThumbnail } = require("../../services/storage.service");
 
 /**
  * Hiển thị danh sách cẩm nang IT trong trang Quản trị
@@ -74,6 +75,19 @@ async function postCreate(req, res) {
   }
 
   try {
+    let finalThumbnail = (thumbnail || "").trim();
+    if (req.file) {
+      try {
+        const uploaded = await uploadArticleThumbnail(req.file);
+        if (uploaded && uploaded.url) {
+          finalThumbnail = uploaded.url;
+        }
+      } catch (uploadErr) {
+        req.flash("error", `Lỗi tải ảnh lên: ${uploadErr.message}`);
+        return res.redirect(`/${res.locals.adminPath}/articles/create`);
+      }
+    }
+
     const article = await blogService.createArticle({
       title,
       slug,
@@ -81,7 +95,7 @@ async function postCreate(req, res) {
       targetAudience,
       summary,
       content,
-      thumbnail,
+      thumbnail: finalThumbnail || "/assets/images/demo/demo1.png",
       tags,
       readingTime,
       isGated: isGated === "true" || isGated === true || isGated === "on",
@@ -162,14 +176,26 @@ async function postEdit(req, res) {
   }
 
   try {
-    const updated = await blogService.updateArticle(id, {
+    let finalThumbnail = (thumbnail || "").trim();
+    if (req.file) {
+      try {
+        const uploaded = await uploadArticleThumbnail(req.file);
+        if (uploaded && uploaded.url) {
+          finalThumbnail = uploaded.url;
+        }
+      } catch (uploadErr) {
+        req.flash("error", `Lỗi tải ảnh lên: ${uploadErr.message}`);
+        return res.redirect(`/${res.locals.adminPath}/articles/${id}/edit`);
+      }
+    }
+
+    const updatePayload = {
       title,
       slug,
       category,
       targetAudience,
       summary,
       content,
-      thumbnail,
       tags,
       readingTime,
       isGated: isGated === "true" || isGated === true || isGated === "on",
@@ -178,7 +204,13 @@ async function postEdit(req, res) {
       sourceUrl,
       originalAuthor,
       isPublished: isPublished === "true" || isPublished === true || isPublished === "on",
-    });
+    };
+
+    if (finalThumbnail) {
+      updatePayload.thumbnail = finalThumbnail;
+    }
+
+    const updated = await blogService.updateArticle(id, updatePayload);
 
     await logAdminAction({
       adminId: req.admin._id,

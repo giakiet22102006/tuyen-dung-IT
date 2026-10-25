@@ -44,7 +44,8 @@ const articleSchema = new mongoose.Schema(
     },
     category: {
       type: String,
-      enum: Object.values(ARTICLE_CATEGORIES),
+      required: true,
+      trim: true,
       default: ARTICLE_CATEGORIES.CAREER_ROADMAP,
       index: true,
     },

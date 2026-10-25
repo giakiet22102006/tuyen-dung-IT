@@ -52,6 +52,9 @@ block main
                     - var isCatActive = (selectedCategory === catVal)
                     a(href=`/blog?category=${catVal}${selectedAudience ? '&audience=' + selectedAudience : ''}${searchKeyword ? '&search=' + encodeURIComponent(searchKeyword) : ''}` class=`inline-flex items-center gap-[6px] px-[16px] py-[8px] rounded-full text-[13px] font-[600] whitespace-nowrap transition ${isCatActive ? 'bg-[#000071] text-white shadow-xs' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}`)
                         | #{categoryLabels[catVal]}
+                if selectedCategory && !Object.values(categories).includes(selectedCategory)
+                    a(href=`/blog?category=${selectedCategory}${selectedAudience ? '&audience=' + selectedAudience : ''}${searchKeyword ? '&search=' + encodeURIComponent(searchKeyword) : ''}` class="inline-flex items-center gap-[6px] px-[16px] py-[8px] rounded-full text-[13px] font-[600] whitespace-nowrap bg-[#000071] text-white shadow-xs")
+                        | #{categoryLabels[selectedCategory] || selectedCategory}
 
             if articles && articles.length > 0
                 div(class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[24px] mb-[35px]")

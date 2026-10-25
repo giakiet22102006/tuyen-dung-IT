@@ -12,6 +12,7 @@ const adminArticle = require("../controllers/admin/adminArticle.controller");
 
 const { requireAdmin, requireSuperAdmin, adminSecurityHeaders } = require("../middlewares/auth.middleware");
 const { doubleCsrfProtection } = require("../middlewares/csrf.middleware");
+const { uploadArticleThumbnailMiddleware } = require("../middlewares/upload.middleware");
 const { adminLoginRateLimiter } = require("../middlewares/rateLimit.middleware");
 const asyncHandler = require("../utils/asyncHandler");
 
@@ -72,9 +73,9 @@ router.post("/feedbacks/:id/delete", requireAdmin, doubleCsrfProtection, asyncHa
 // Quản lý Cẩm nang IT & Trợ lý AI Biên tập
 router.get("/articles", requireAdmin, asyncHandler(adminArticle.renderList));
 router.get("/articles/create", requireAdmin, adminArticle.renderCreate);
-router.post("/articles/create", requireAdmin, doubleCsrfProtection, asyncHandler(adminArticle.postCreate));
+router.post("/articles/create", requireAdmin, uploadArticleThumbnailMiddleware, doubleCsrfProtection, asyncHandler(adminArticle.postCreate));
 router.get("/articles/:id/edit", requireAdmin, asyncHandler(adminArticle.renderEdit));
-router.post("/articles/:id/edit", requireAdmin, doubleCsrfProtection, asyncHandler(adminArticle.postEdit));
+router.post("/articles/:id/edit", requireAdmin, uploadArticleThumbnailMiddleware, doubleCsrfProtection, asyncHandler(adminArticle.postEdit));
 router.post("/articles/:id/toggle-publish", requireAdmin, doubleCsrfProtection, asyncHandler(adminArticle.postTogglePublish));
 router.post("/articles/:id/delete", requireAdmin, doubleCsrfProtection, asyncHandler(adminArticle.postDelete));
 router.post("/articles/ai-generate", requireAdmin, doubleCsrfProtection, asyncHandler(adminArticle.postAiGenerate));

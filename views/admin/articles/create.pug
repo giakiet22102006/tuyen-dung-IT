@@ -83,7 +83,7 @@ block main
         //- FORM CHI TIẾT BÀI VIẾT CẨM NANG IT
         //- ========================================================
         div(class="bg-white rounded-[12px] p-[24px] sm:p-[32px] shadow-xs border border-gray-200")
-            form(action=`/${adminPath}/articles/create` method="POST" id="articleForm" class="space-y-[20px]")
+            form(action=`/${adminPath}/articles/create` method="POST" id="articleForm" enctype="multipart/form-data" class="space-y-[20px]")
                 input(type="hidden" name="_csrf" value=csrfToken)
 
                 //- Tiêu đề & Slug
@@ -99,9 +99,15 @@ block main
                 div(class="grid grid-cols-1 md:grid-cols-3 gap-[16px]")
                     div
                         label(class="block text-[13px] font-[600] text-gray-700 mb-[6px]") Chuyên mục <span class="text-red-500">*</span>
-                        select(name="category" id="formCategory" class="w-full px-[12px] py-[10px] border border-gray-300 rounded-[8px] text-[14px] bg-white focus:outline-none focus:border-[#0088FF]")
+                        input(type="text" name="category" id="formCategory" list="categoryDatalist" required placeholder="Chọn gợi ý hoặc tự nhập..." class="w-full px-[12px] py-[10px] border border-gray-300 rounded-[8px] text-[14px] bg-white focus:outline-none focus:border-[#0088FF]" value="career_roadmap")
+                        datalist#categoryDatalist
                             each catVal, catKey in categories
-                                option(value=catVal) #{categoryLabels[catVal]}
+                                option(value=categoryLabels[catVal] || catVal) #{categoryLabels[catVal]}
+                            option(value="Cẩm Nang Sinh Viên IT")
+                            option(value="Kỹ Năng Fresher")
+                            option(value="Góc Chia Sẻ IT")
+                            option(value="Công Nghệ & Đời Sống")
+                        span(class="text-[11px] text-gray-400 mt-1 block") Có thể chọn gợi ý hoặc gõ tự do tên chuyên mục mới.
                     div
                         label(class="block text-[13px] font-[600] text-gray-700 mb-[6px]") Đối tượng độc giả <span class="text-red-500">*</span>
                         select(name="targetAudience" id="formTargetAudience" class="w-full px-[12px] py-[10px] border border-gray-300 rounded-[8px] text-[14px] bg-white focus:outline-none focus:border-[#0088FF]")
@@ -125,9 +131,20 @@ block main
 
                 //- Thumbnail & Tags
                 div(class="grid grid-cols-1 md:grid-cols-2 gap-[16px]")
-                    div
-                        label(class="block text-[13px] font-[600] text-gray-700 mb-[6px]") Ảnh đại diện (Thumbnail URL)
-                        input(type="text" name="thumbnail" id="formThumbnail" value="/assets/images/demo/demo1.png" class="w-full px-[14px] py-[10px] border border-gray-300 rounded-[8px] text-[14px] focus:outline-none focus:border-[#0088FF]")
+                    div(class="space-y-[6px]")
+                        label(class="block text-[13px] font-[600] text-gray-700") Ảnh đại diện cẩm nang (Thumbnail)
+                        div(class="flex items-center gap-[12px]")
+                            div(class="w-[90px] h-[58px] rounded-[8px] border border-gray-300 bg-gray-100 overflow-hidden shrink-0 flex items-center justify-center shadow-2xs")
+                                img(id="thumbnailPreview" src="/assets/images/demo/demo1.png" alt="Preview" class="w-full h-full object-cover")
+                            div(class="flex-1 space-y-[6px]")
+                                div(class="flex items-center gap-[8px]")
+                                    label(for="inputThumbnailFile" class="px-[12px] py-[6px] rounded-[6px] border border-gray-300 bg-white hover:bg-gray-50 text-[12px] font-[600] text-gray-700 cursor-pointer inline-flex items-center gap-[6px] transition shadow-2xs")
+                                        <i class="fa-solid fa-folder-open text-[#0088FF]"></i>
+                                        span Chọn tệp từ máy
+                                    input(type="file" name="thumbnailFile" id="inputThumbnailFile" accept="image/png,image/jpeg,image/webp" class="hidden")
+                                    span(id="selectedFileName" class="text-[11px] text-gray-500 truncate max-w-[150px]") Chưa chọn tệp
+                                input(type="text" name="thumbnail" id="formThumbnail" value="/assets/images/demo/demo1.png" placeholder="Hoặc dán link URL ảnh (https://...)" class="w-full px-[12px] py-[6px] border border-gray-300 rounded-[6px] text-[13px] focus:outline-none focus:border-[#0088FF]")
+                        span(class="text-[11px] text-gray-400 block") Tải ảnh từ máy (JPG, PNG, WebP) hoặc nhập link ảnh trực tiếp.
                     div
                         label(class="block text-[13px] font-[600] text-gray-700 mb-[6px]") Tags từ khóa (Cách nhau bằng dấu phẩy)
                         input(type="text" name="tags" id="formTags" placeholder="ReactJS, NodeJS, Interview, Career" class="w-full px-[14px] py-[10px] border border-gray-300 rounded-[8px] text-[14px] focus:outline-none focus:border-[#0088FF]")
@@ -246,6 +263,37 @@ block main
             formTargetAudience.addEventListener("change", updateGatedVisibility);
             updateGatedVisibility();
 
+            // Xử lý chọn tệp ảnh Thumbnail từ máy & preview
+            const inputThumbnailFile = document.getElementById("inputThumbnailFile");
+            const thumbnailPreview = document.getElementById("thumbnailPreview");
+            const formThumbnail = document.getElementById("formThumbnail");
+            const selectedFileName = document.getElementById("selectedFileName");
+
+            if (inputThumbnailFile) {
+                inputThumbnailFile.addEventListener("change", function () {
+                    const file = inputThumbnailFile.files[0];
+                    if (file) {
+                        selectedFileName.textContent = file.name;
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            thumbnailPreview.src = e.target.result;
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        selectedFileName.textContent = "Chưa chọn tệp";
+                    }
+                });
+            }
+
+            if (formThumbnail) {
+                formThumbnail.addEventListener("input", function () {
+                    const val = formThumbnail.value.trim();
+                    if (val) {
+                        thumbnailPreview.src = val;
+                    }
+                });
+            }
+
             // Điền dữ liệu vào form
             function populateForm(data) {
                 if (data.title) document.getElementById("formTitle").value = data.title;
@@ -256,6 +304,10 @@ block main
                 if (data.content) document.getElementById("formContent").value = data.content;
                 if (data.readingTime) document.getElementById("formReadingTime").value = data.readingTime;
                 if (data.isGated !== undefined) document.getElementById("formIsGated").checked = !!data.isGated;
+                if (data.thumbnail) {
+                    document.getElementById("formThumbnail").value = data.thumbnail;
+                    thumbnailPreview.src = data.thumbnail;
+                }
                 updateGatedVisibility();
                 if (data.tags && Array.isArray(data.tags)) {
                     document.getElementById("formTags").value = data.tags.join(", ");

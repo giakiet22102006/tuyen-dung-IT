@@ -27,9 +27,16 @@ const uploadCvMulter = multer({
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
 });
 
+// Upload Article Thumbnail: tối đa 5MB
+const uploadArticleThumbnailMulter = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+});
+
 module.exports = {
   uploadLogoMiddleware: uploadLogoMulter.single("logo"),
   uploadAvatarMiddleware: uploadAvatarMulter.single("avatar"),
+  uploadArticleThumbnailMiddleware: uploadArticleThumbnailMulter.single("thumbnailFile"),
   uploadJobImagesMiddleware: uploadJobImagesMulter.array("images", 5),
   uploadCvMiddleware: uploadCvMulter.single("cv"),
 };

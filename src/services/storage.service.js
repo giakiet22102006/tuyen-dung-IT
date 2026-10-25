@@ -12,10 +12,11 @@ const BASE_STORAGE_DIR = isVercel ? "/tmp/storage" : path.join(__dirname, "../..
 const AVATARS_DIR = path.join(BASE_UPLOAD_DIR, "avatars");
 const LOGOS_DIR = path.join(BASE_UPLOAD_DIR, "logos");
 const JOBS_DIR = path.join(BASE_UPLOAD_DIR, "jobs");
+const ARTICLES_DIR = path.join(BASE_UPLOAD_DIR, "articles");
 const CV_STORAGE_DIR = path.join(BASE_STORAGE_DIR, "private/cv");
 
 // Đảm bảo các thư mục upload và storage tồn tại (bọc try-catch an toàn cho môi trường Serverless)
-[AVATARS_DIR, LOGOS_DIR, JOBS_DIR, CV_STORAGE_DIR].forEach((dir) => {
+[AVATARS_DIR, LOGOS_DIR, JOBS_DIR, ARTICLES_DIR, CV_STORAGE_DIR].forEach((dir) => {
   try {
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
@@ -115,6 +116,31 @@ async function uploadAvatar(file) {
 
   return {
     url: `/uploads/avatars/${filename}`,
+    key: filename,
+  };
+}
+
+/**
+ * Xử lý và lưu trữ ảnh Thumbnail bài viết Cẩm Nang IT (resize 1200x675 tỉ lệ 16:9, format WebP)
+ */
+async function uploadArticleThumbnail(file) {
+  if (!file || !file.buffer) return null;
+
+  const valid = await checkFileType(file.buffer, ["image/jpeg", "image/png", "image/webp"]);
+  if (!valid) {
+    throw new Error("Định dạng file không hợp lệ. Chỉ chấp nhận JPG, PNG hoặc WebP.");
+  }
+
+  const filename = `article-thumb-${crypto.randomBytes(12).toString("hex")}.webp`;
+  const absolutePath = path.join(ARTICLES_DIR, filename);
+
+  await sharp(file.buffer)
+    .resize(1200, 675, { fit: "cover" })
+    .webp({ quality: 85 })
+    .toFile(absolutePath);
+
+  return {
+    url: `/uploads/articles/${filename}`,
     key: filename,
   };
 }
@@ -234,6 +260,7 @@ module.exports = {
   checkPdf,
   uploadLogo,
   uploadAvatar,
+  uploadArticleThumbnail,
   uploadJobImage,
   uploadCV,
   saveCvBuffer,
