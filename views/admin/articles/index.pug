@@ -30,7 +30,7 @@ block main
                     label(class="block text-[12px] font-[600] text-gray-600 mb-[4px]") Chuyên mục
                     select(name="category" class="w-full px-[12px] py-[8px] border border-gray-300 rounded-[6px] text-[14px] bg-white focus:outline-none focus:border-[#0088FF]")
                         option(value="") -- Tất cả chuyên mục --
-                        each catKey, catVal in categories
+                        each catVal, catKey in categories
                             option(value=catVal selected=(filters.category === catVal)) #{categoryLabels[catVal]}
 
                 //- Lọc Đối tượng
