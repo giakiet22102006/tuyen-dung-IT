@@ -919,6 +919,7 @@ async function curateArticleFromSourceWithAi({ sourceUrl = "", rawContent = "", 
   let extractedThumbnail = "";
   let extractedOriginalAuthor = "";
   let extractedPageTitle = "";
+  const extractedImages = [];
 
   // 1. Phân tích tên domain nguồn từ URL
   if (sourceUrl && sourceUrl.trim()) {
@@ -939,44 +940,116 @@ async function curateArticleFromSourceWithAi({ sourceUrl = "", rawContent = "", 
     }
   }
 
-  // 2. Nếu có URL mà chưa có rawContent, cố gắng fetch nhanh văn bản trang và trích xuất nội dung bài viết chính
-  if (sourceUrl && (!rawContent || rawContent.trim().length < 50)) {
+  // 2. Tải nội dung bài viết từ URL: Thử trực tiếp trước, nếu bị chặn (HTTP 403 TopCV, Cloudflare) tự động dùng Reader Proxy
+  if (sourceUrl && sourceUrl.trim().startsWith("http")) {
+    const trimmedUrl = sourceUrl.trim();
+    let rawHtml = "";
+    let isJinaContent = false;
+
+    // Bước 2.1: Thử fetch trực tiếp với User-Agent mô phỏng browser
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 3500);
-      const res = await fetch(sourceUrl.trim(), {
+      const timeout = setTimeout(() => controller.abort(), 4000);
+      const res = await fetch(trimmedUrl, {
         signal: controller.signal,
         headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+          "Accept-Language": "vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7",
         },
       });
       clearTimeout(timeout);
       if (res.ok) {
-        const html = await res.text();
+        rawHtml = await res.text();
+      } else {
+        console.warn(`[AI Curate] Direct fetch trả về HTTP ${res.status}. Sẽ chuyển sang Reader Proxy.`);
+      }
+    } catch (fetchErr) {
+      console.warn(`[AI Curate] Direct fetch không thành công (${fetchErr.message}). Sẽ chuyển sang Reader Proxy.`);
+    }
 
-        // Trích xuất metadata ảnh thumbnail và tác giả
-        const ogImageMatch = html.match(/<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i)
-          || html.match(/<meta\s+content=["']([^"']+)["']\s+property=["']og:image["']/i);
-        if (ogImageMatch && ogImageMatch[1]) {
-          extractedThumbnail = ogImageMatch[1].trim();
+    // Bước 2.2: Nếu direct fetch bị chặn (như Cloudflare 403 trên TopCV) hoặc rỗng, dùng Jina Reader proxy
+    if (!rawHtml || rawHtml.length < 300) {
+      try {
+        const jinaUrl = `https://r.jina.ai/${trimmedUrl}`;
+        const jinaCtrl = new AbortController();
+        const jinaTimeout = setTimeout(() => jinaCtrl.abort(), 8000);
+        const jinaRes = await fetch(jinaUrl, {
+          signal: jinaCtrl.signal,
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            "Accept": "text/plain,text/markdown,*/*",
+            "X-No-Cache": "true",
+          },
+        });
+        clearTimeout(jinaTimeout);
+        if (jinaRes.ok) {
+          const jinaText = await jinaRes.text();
+          if (jinaText && jinaText.length > 200) {
+            rawHtml = jinaText;
+            isJinaContent = true;
+            console.log(`[AI Curate] Đã trích xuất thành công qua Jina Reader proxy: ${jinaText.length} ký tự.`);
+          }
         }
+      } catch (jinaErr) {
+        console.warn("[AI Curate] Jina proxy cảnh báo:", jinaErr.message);
+      }
+    }
 
-        const authorMatch = html.match(/<meta\s+name=["']author["']\s+content=["']([^"']+)["']/i)
-          || html.match(/<meta\s+property=["']article:author["']\s+content=["']([^"']+)["']/i)
-          || html.match(/class=["'][^"']*(?:author-name|author vcard|author__name)[^"']*["'][^>]*>([^<]+)</i);
-        if (authorMatch && authorMatch[1]) {
-          extractedOriginalAuthor = authorMatch[1].trim();
-        }
-
-        const titleMatch = html.match(/<meta\s+property=["']og:title["']\s+content=["']([^"']+)["']/i)
-          || html.match(/<title>([^<]+)<\/title>/i);
+    // Bước 2.3: Phân tích nội dung đã tải về
+    if (rawHtml) {
+      if (isJinaContent) {
+        // Parse định dạng Markdown từ Jina Reader
+        const titleMatch = rawHtml.match(/^Title:\s*(.+)$/m);
         if (titleMatch && titleMatch[1]) {
           extractedPageTitle = titleMatch[1].replace(/\|.*$/i, "").replace(/-.*$/i, "").trim();
         }
 
-        // Lọc thẻ nhiễu: script, style, header, nav, footer, aside, form, svg
-        let clean = html
+        const authorMatch = rawHtml.match(/^Author:\s*(.+)$/m) || rawHtml.match(/Published Time:[^\n]*\n+By\s+([^\n]+)/i);
+        if (authorMatch && authorMatch[1]) {
+          extractedOriginalAuthor = authorMatch[1].trim();
+        }
+
+        // Trích xuất hình ảnh dạng Markdown: ![alt](url)
+        const mdImgRegex = /!\[(.*?)\]\((https?:\/\/[^\s\)]+)\)/g;
+        let mdMatch;
+        while ((mdMatch = mdImgRegex.exec(rawHtml)) !== null) {
+          const alt = mdMatch[1] ? mdMatch[1].replace(/^Image\s*\d*:\s*/i, "").trim() : "";
+          const src = mdMatch[2].trim();
+          const isExcluded = src.includes("avatar") || src.includes("logo") || src.includes("icon") || src.includes("badge") || src.endsWith(".svg") || src.startsWith("data:image");
+          if (!isExcluded && (src.includes("wp-content") || src.includes("uploads") || /\.(jpe?g|png|webp|avif)/i.test(src))) {
+            if (!extractedImages.some((i) => i.src === src)) {
+              extractedImages.push({ src, alt });
+            }
+          }
+        }
+
+        // Nội dung chính
+        const contentIdx = rawHtml.indexOf("Markdown Content:");
+        fetchedText = contentIdx !== -1 ? rawHtml.substring(contentIdx + 17).trim() : rawHtml;
+      } else {
+        // Parse định dạng HTML thông thường
+        const ogImageMatch = rawHtml.match(/<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i)
+          || rawHtml.match(/<meta\s+content=["']([^"']+)["']\s+property=["']og:image["']/i);
+        if (ogImageMatch && ogImageMatch[1]) {
+          extractedThumbnail = ogImageMatch[1].trim();
+        }
+
+        const authorMatch = rawHtml.match(/<meta\s+name=["']author["']\s+content=["']([^"']+)["']/i)
+          || rawHtml.match(/<meta\s+property=["']article:author["']\s+content=["']([^"']+)["']/i)
+          || rawHtml.match(/class=["'][^"']*(?:author-name|author vcard|author__name)[^"']*["'][^>]*>([^<]+)</i);
+        if (authorMatch && authorMatch[1]) {
+          extractedOriginalAuthor = authorMatch[1].trim();
+        }
+
+        const titleMatch = rawHtml.match(/<meta\s+property=["']og:title["']\s+content=["']([^"']+)["']/i)
+          || rawHtml.match(/<title>([^<]+)<\/title>/i);
+        if (titleMatch && titleMatch[1]) {
+          extractedPageTitle = titleMatch[1].replace(/\|.*$/i, "").replace(/-.*$/i, "").trim();
+        }
+
+        // Lọc thẻ nhiễu
+        let clean = rawHtml
           .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
           .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "")
           .replace(/<header\b[^<]*(?:(?!<\/header>)<[^<]*)*<\/header>/gi, "")
@@ -986,7 +1059,6 @@ async function curateArticleFromSourceWithAi({ sourceUrl = "", rawContent = "", 
           .replace(/<form\b[^<]*(?:(?!<\/form>)<[^<]*)*<\/form>/gi, "")
           .replace(/<svg\b[^<]*(?:(?!<\/svg>)<[^<]*)*<\/svg>/gi, "");
 
-        // Ưu tiên trích xuất vùng nội dung bài viết chính: <article>, .td-post-content, .entry-content, .post-content, hoặc từ <h1
         let mainHtml = "";
         const articleMatch = clean.match(/<article[\s\S]*?<\/article>/i);
         if (articleMatch) {
@@ -1005,67 +1077,101 @@ async function curateArticleFromSourceWithAi({ sourceUrl = "", rawContent = "", 
           }
         }
 
+        // Trích xuất hình ảnh từ HTML
+        const imgRegex = /<img\s+[^>]*src=["']([^"']+)["'][^>]*>/gi;
+        let imgMatch;
+        while ((imgMatch = imgRegex.exec(mainHtml)) !== null) {
+          const tag = imgMatch[0];
+          let src = imgMatch[1];
+          const dataSrcMatch = tag.match(/data-src=["']([^"']+)["']/i) || tag.match(/data-lazy-src=["']([^"']+)["']/i);
+          if (dataSrcMatch && dataSrcMatch[1]) {
+            src = dataSrcMatch[1];
+          }
+          try {
+            if (sourceUrl) src = new URL(src, sourceUrl.trim()).href;
+          } catch (e) {}
+
+          const altMatch = tag.match(/alt=["']([^"']*)["']/i);
+          const alt = altMatch ? altMatch[1].trim() : "";
+
+          const isExcluded = src.includes("avatar") || src.includes("logo") || src.includes("icon") || src.includes("badge") || src.endsWith(".svg") || src.startsWith("data:image");
+          if (!isExcluded && (src.includes("wp-content") || src.includes("uploads") || /\.(jpe?g|png|webp|avif)/i.test(src))) {
+            if (!extractedImages.some((i) => i.src === src)) {
+              extractedImages.push({ src, alt });
+            }
+          }
+        }
+
         fetchedText = mainHtml
           .replace(/<[^>]+>/g, " ")
           .replace(/\s+/g, " ")
           .trim()
           .substring(0, 10000);
-      } else {
-        console.warn(`[AI Curate] Không thể tải trực tiếp URL (HTTP ${res.status}), chuyển sang suy luận chủ đề từ đường dẫn.`);
-        const urlObj = new URL(sourceUrl.trim());
-        const slugPart = urlObj.pathname.split("/").filter(Boolean).pop() || "";
-        const topicInferred = slugPart.replace(/[-_]+/g, " ").replace(/\.html?$/i, "").trim();
-        if (topicInferred) {
-          extractedPageTitle = topicInferred.charAt(0).toUpperCase() + topicInferred.slice(1);
-        }
       }
-    } catch (fetchErr) {
-      console.warn("⚠️ Không thể fetch trực tiếp URL nguồn:", fetchErr.message);
-      try {
-        const urlObj = new URL(sourceUrl.trim());
-        const slugPart = urlObj.pathname.split("/").filter(Boolean).pop() || "";
-        const topicInferred = slugPart.replace(/[-_]+/g, " ").replace(/\.html?$/i, "").trim();
-        if (topicInferred) {
-          extractedPageTitle = topicInferred.charAt(0).toUpperCase() + topicInferred.slice(1);
-        }
-      } catch (e) {}
     }
   }
 
-  // Trích xuất danh sách hình ảnh minh họa từ HTML bài viết chính hoặc rawContent
-  const extractedImages = [];
-  const htmlToScan = (fetchedText ? fetchedText : "") + " " + (rawContent || "");
-  const scanSources = [];
-  if (typeof mainHtml !== "undefined" && mainHtml) scanSources.push(mainHtml);
-  if (rawContent) scanSources.push(rawContent);
-
-  scanSources.forEach((htmlChunk) => {
+  // 3. Nếu người dùng có dán nội dung thô (rawContent), bổ sung quét ảnh từ rawContent
+  if (rawContent && rawContent.trim()) {
     const imgRegex = /<img\s+[^>]*src=["']([^"']+)["'][^>]*>/gi;
     let imgMatch;
-    while ((imgMatch = imgRegex.exec(htmlChunk)) !== null) {
-      const tag = imgMatch[0];
-      let src = imgMatch[1];
-      const dataSrcMatch = tag.match(/data-src=["']([^"']+)["']/i) || tag.match(/data-lazy-src=["']([^"']+)["']/i);
-      if (dataSrcMatch && dataSrcMatch[1]) {
-        src = dataSrcMatch[1];
-      }
-      try {
-        if (sourceUrl) src = new URL(src, sourceUrl.trim()).href;
-      } catch (e) {}
-
-      const altMatch = tag.match(/alt=["']([^"']*)["']/i);
+    while ((imgMatch = imgRegex.exec(rawContent)) !== null) {
+      const src = imgMatch[1];
+      const altMatch = imgMatch[0].match(/alt=["']([^"']*)["']/i);
       const alt = altMatch ? altMatch[1].trim() : "";
-
-      const isExcluded = src.includes("avatar") || src.includes("logo") || src.includes("icon") || src.includes("badge") || src.endsWith(".svg") || src.startsWith("data:image");
-      if (!isExcluded && (src.includes("wp-content") || src.includes("uploads") || /\.(jpe?g|png|webp|avif)/i.test(src))) {
-        if (!extractedImages.some((i) => i.src === src)) {
-          extractedImages.push({ src, alt });
-        }
+      if (!extractedImages.some((i) => i.src === src)) {
+        extractedImages.push({ src, alt });
       }
     }
-  });
+  }
 
-  // Nếu chưa có thumbnail, ưu tiên lấy ảnh đầu tiên làm thumbnail
+  // 4. Nếu không trích xuất được tiêu đề từ HTML/Jina, suy luận tiêu đề đẹp từ slug đường dẫn
+  if (!extractedPageTitle && sourceUrl) {
+    try {
+      const urlObj = new URL(sourceUrl.trim());
+      const slugPart = urlObj.pathname.split("/").filter(Boolean).pop() || "";
+      const words = slugPart.replace(/[-_]+/g, " ").replace(/\.html?$/i, "").trim().split(/\s+/);
+      extractedPageTitle = words.map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+    } catch (e) {}
+  }
+
+  // 5. Nếu không trích xuất được ảnh nào từ bài viết gốc, bổ sung ảnh công nghệ chất lượng cao từ kho Unsplash
+  if (extractedImages.length === 0) {
+    const isEmployerTopic = targetAudience === "employer" || /tuyen-dung|recruitment|talent|interview|hr/i.test(sourceUrl || "");
+    if (isEmployerTopic) {
+      extractedImages.push(
+        {
+          src: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1000&auto=format&fit=crop&q=80",
+          alt: "Quy trình phỏng vấn và đánh giá năng lực ứng viên IT chuyên nghiệp"
+        },
+        {
+          src: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1000&auto=format&fit=crop&q=80",
+          alt: "Đội ngũ kỹ sư công nghệ trao đổi và phát triển giải pháp phần mềm"
+        },
+        {
+          src: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=1000&auto=format&fit=crop&q=80",
+          alt: "Chiến lược xây dựng thương hiệu tuyển dụng thu hút nhân tài IT"
+        }
+      );
+    } else {
+      extractedImages.push(
+        {
+          src: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=1000&auto=format&fit=crop&q=80",
+          alt: "Lập trình viên làm việc trên mã nguồn và hệ thống công nghệ"
+        },
+        {
+          src: "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=1000&auto=format&fit=crop&q=80",
+          alt: "Thảo luận kiến trúc hệ thống và lộ trình phát triển nghề nghiệp IT"
+        },
+        {
+          src: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1000&auto=format&fit=crop&q=80",
+          alt: "Học tập và rèn luyện kỹ năng thực chiến cùng cộng đồng công nghệ"
+        }
+      );
+    }
+  }
+
+  // Nếu chưa có thumbnail, lấy ảnh đầu tiên làm thumbnail
   if (!extractedThumbnail && extractedImages.length > 0) {
     extractedThumbnail = extractedImages[0].src;
   }
@@ -1073,20 +1179,20 @@ async function curateArticleFromSourceWithAi({ sourceUrl = "", rawContent = "", 
   const textToAnalyze = (rawContent && rawContent.trim().length > 30 ? rawContent : fetchedText).trim();
 
   const imagePromptSection = extractedImages.length > 0 ? `
-DANH SÁCH HÌNH ẢNH MINH HỌA TRÍCH XUẤT TỪ BÀI VIẾT GỐC:
-${extractedImages.slice(0, 5).map((img, idx) => `- [Hình ${idx + 1}]: URL: "${img.src}" | Chú thích: "${img.alt || 'Hình ảnh minh họa thực tế'}"`).join('\n')}
+DANH SÁCH HÌNH ẢNH MINH HỌA TRÍCH XUẤT TỪ BÀI VIẾT GỐC (ƯU TIÊN DÙNG CHÍNH XÁC CÁC URL NÀY):
+${extractedImages.slice(0, 6).map((img, idx) => `- [Hình ${idx + 1}]: URL: "${img.src}" | Chú thích gợi ý: "${img.alt || 'Hình ảnh minh họa thực tế'}"`).join('\n')}
 
-QUY ĐỊNH CHÈN HÌNH ẢNH VÀO BÀI VIẾT:
-Bạn hãy chọn lọc và chèn từ 2 đến 4 hình ảnh từ danh sách trên vào các vị trí đề mục phù hợp trong nội dung bài viết HTML để tăng tính thẩm mỹ và trực quan cho người đọc.
-Định dạng bắt buộc cho mỗi ảnh chèn:
+QUY ĐỊNH CHÈN HÌNH ẢNH VÀO NỘI DUNG HTML:
+Bạn hãy chọn lọc và chèn từ 2 đến 4 hình ảnh từ danh sách trên vào các vị trí đề mục phù hợp trong nội dung bài viết HTML để tạo sự sinh động, hấp dẫn và tăng tính thẩm mỹ cho người đọc.
+Định dạng thẻ bắt buộc cho mỗi ảnh được chèn:
 <figure class="my-6 text-center">
-  <img src="[URL_HÌNH_ẢNH]" alt="[Mô tả ảnh]" class="rounded-xl shadow-md mx-auto max-h-[480px] object-cover" />
-  <figcaption class="text-[13px] text-gray-500 italic mt-2">[Chú thích ngắn gọn cho hình ảnh]</figcaption>
+  <img src="[URL_HÌNH_ẢNH_CHÍNH_XÁC]" alt="[Mô tả ảnh]" class="rounded-xl shadow-md mx-auto max-h-[480px] object-cover" />
+  <figcaption class="text-[13px] text-gray-500 italic mt-2">[Chú thích ngắn gọn, chuyên nghiệp cho hình ảnh]</figcaption>
 </figure>
-TUYỆT ĐỐI giữ nguyên chính xác URL hình ảnh từ danh sách trên, không tự bịa đặt URL ảnh.
+TUYỆT ĐỐI giữ nguyên chính xác URL hình ảnh từ danh sách trên, KHÔNG tự chế hoặc làm hỏng URL ảnh.
 ` : `
 QUY ĐỊNH HÌNH ẢNH:
-Không có hình ảnh từ bài viết gốc. Bạn hãy tập trung định dạng bài viết chuyên nghiệp với các đề mục, danh sách và callout.
+Tập trung định dạng bài viết chuyên nghiệp với các đề mục, danh sách và callout.
 `;
 
   const prompt = `
@@ -1102,15 +1208,15 @@ Thông tin nguồn tham khảo:
 - Đối tượng độc giả mục tiêu: ${targetAudience} (${targetAudience === "employer" ? "Nhà tuyển dụng / Doanh nghiệp IT" : targetAudience === "candidate" ? "Sinh viên / Lập trình viên / Ứng viên IT" : "Toàn bộ cộng đồng IT"})
 - Toàn bộ nội dung bài viết gốc cần phân tích:
 """
-${textToAnalyze ? textToAnalyze.substring(0, 8500) : "Chưa có nội dung thô chi tiết, hãy biên soạn một cẩm nang toàn diện, đầy đủ nhất dựa trên chủ đề: " + (extractedPageTitle || sourceUrl)}
+${textToAnalyze ? textToAnalyze.substring(0, 9000) : "Chưa có nội dung thô chi tiết, hãy biên soạn một cẩm nang toàn diện, đầy đủ nhất dựa trên chủ đề: " + (extractedPageTitle || sourceUrl)}
 """
 ${imagePromptSection}
 
-YÊU CẦU ĐỊNH DẠNG VÀ CẤU TRÚC BÀI VIẾT BẮT BUỘC (ĐỂ HIỂN THỊ CSS ĐẸP MẮT):
-1. Tiêu đề (title): Tiếng Việt chuyên nghiệp, hấp dẫn, chuẩn SEO, phản ánh đúng toàn bộ tinh thần cẩm nang.
-2. Đường dẫn tĩnh (slug): Dạng kebab-case không dấu (vd: cam-nang-it-cho-sinh-vien-lap-trinh).
+YÊU CẦU ĐỊNH DẠNG VÀ CẤU TRÚC BÀI VIẾT BẮT BUỘC:
+1. Tiêu đề (title): BẮT BUỘC có đầy đủ DẤU TIẾNG VIỆT, viết hoa theo phong cách tiêu đề báo chí công nghệ (Title Case), văn phong lôi cuốn, chuyên nghiệp, chuẩn SEO. TUYỆT ĐỐI KHÔNG để tiêu đề không dấu dạng slug (vd: 'Quy trinh tuyen dung it...'). Nếu đề bài gốc thiếu dấu, bạn phải chuyển thành tiếng Việt có dấu chuẩn xác kèm phân tích sâu (vd: 'Quy Trình Tuyển Dụng IT Chuyên Nghiệp: 5 Bước Thu Phục Nhân Tài Công Nghệ Hàng Đầu').
+2. Đường dẫn tĩnh (slug): Dạng kebab-case không dấu (vd: quy-trinh-tuyen-dung-it-chuyen-nghiep).
 3. Đoạn tóm tắt (summary): Từ 2-3 câu súc tích nêu bật lý do và giá trị then chốt mà cẩm nang mang lại.
-4. Chuyên mục (category): Đặt tên chuyên mục phù hợp (ví dụ: "Cẩm Nang Sinh Viên IT", "Kinh Nghiệm Phỏng Vấn", "Lộ Trình Nghề Nghiệp", "Xu Hướng Công Nghệ", ...).
+4. Chuyên mục (category): Đặt tên chuyên mục phù hợp (ví dụ: "Cẩm Nang Sinh Viên IT", "Kinh Nghiệm Tuyển Dụng", "Kinh Nghiệm Phỏng Vấn", "Lộ Trình Nghề Nghiệp", "Xu Hướng Công Nghệ", ...).
 5. Nội dung bài viết (content): Bắt buộc định dạng HTML ngữ nghĩa phong phú:
    - Tối thiểu 5 - 7 mục lớn <h2> làm tiêu đề cho từng phần bài viết.
    - Mỗi phần <h2> phải có từ 2 - 3 tiểu mục <h3> kèm đoạn văn phân tích chi tiết <p> (mỗi đoạn 3 - 5 câu, diễn giải sâu sắc và có ví dụ minh họa).
@@ -1127,9 +1233,9 @@ YÊU CẦU ĐỊNH DẠNG VÀ CẤU TRÚC BÀI VIẾT BẮT BUỘC (ĐỂ HIỂN
 
 Vui lòng trả về DUY NHẤT định dạng JSON:
 {
-  "title": "Tiêu đề tiếng Việt",
+  "title": "Tiêu đề tiếng Việt chuẩn mực có dấu",
   "slug": "slug-bai-viet",
-  "category": "Cẩm Nang Sinh Viên IT",
+  "category": "Kinh Nghiệm Tuyển Dụng",
   "targetAudience": "${targetAudience}",
   "summary": "Tóm tắt...",
   "content": "<h2>1. Đề mục lớn</h2><p>Phân tích chi tiết...</p><figure class=\"my-6 text-center\"><img src=\"...\" alt=\"...\" class=\"rounded-xl shadow-md mx-auto max-h-[480px] object-cover\" /><figcaption class=\"text-[13px] text-gray-500 italic mt-2\">Chú thích ảnh</figcaption></figure><h3>1.1. Chi tiết</h3><p>Nội dung...</p><ul><li><strong>Ý cốt lõi:</strong> Diễn giải...</li></ul><blockquote>Lời khuyên từ chuyên gia...</blockquote>",
@@ -1169,35 +1275,44 @@ Vui lòng trả về DUY NHẤT định dạng JSON:
     console.error("Lỗi AI curateArticleFromSourceWithAi:", err.message);
   }
 
-  // Fallback chất lượng cao nếu Gemini không phản hồi
+  // Fallback chất lượng cao nếu Gemini không phản hồi hoặc timeout
   const slugify = require("../utils/slugify");
-  const fallbackTopic = extractedPageTitle || "Cẩm Nang Định Hướng Nghề Nghiệp & Phát Triển Kỹ Năng IT";
+  let fallbackTopic = extractedPageTitle || "Cẩm Nang Định Hướng Nghề Nghiệp & Phát Triển Kỹ Năng IT";
+  // Nếu tiêu đề bị dính dạng không dấu từ slug, chuyển thành tiêu đề tiếng Việt có dấu mỹ cảm
+  if (!/[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i.test(fallbackTopic)) {
+    if (/tuyen.*dung/i.test(fallbackTopic)) {
+      fallbackTopic = "Quy Trình Tuyển Dụng IT Chuyên Nghiệp: Cẩm Nang Thu Phục & Đánh Giá Nhân Tài";
+    } else {
+      fallbackTopic = "Cẩm Nang Phát Triển Kỹ Năng & Lộ Trình Sự Nghiệp IT Chuyên Sâu 2026";
+    }
+  }
+
   return {
     title: fallbackTopic,
     slug: slugify(fallbackTopic),
-    category: "Cẩm Nang Sinh Viên IT",
+    category: targetAudience === "employer" ? "Kinh Nghiệm Tuyển Dụng" : "Cẩm Nang Sinh Viên IT",
     targetAudience,
     summary: `Phân tích chuyên sâu và cẩm nang hướng dẫn thực chiến được tổng hợp và biên tập từ ${sourceName || "nguồn công nghệ uy tín"}.`,
     thumbnail: extractedThumbnail || "",
     content: `
       <h2>1. Giới thiệu & Bối cảnh ngành IT hiện nay</h2>
-      <p>Trong bối cảnh công nghệ thông tin phát triển với tốc độ chóng mặt, yêu cầu từ các doanh nghiệp tuyển dụng không ngừng gia tăng. Bài viết này được tổng hợp và biên tập từ <strong>${sourceName || "nguồn công nghệ"}</strong> nhằm mang đến góc nhìn toàn diện, giúp độc giả nắm vững lộ trình phát triển bài bản và giảm thiểu rủi ro trên con đường sự nghiệp.</p>
+      <p>Trong bối cảnh công nghệ thông tin phát triển với tốc độ chóng mặt, yêu cầu từ các doanh nghiệp tuyển dụng không ngừng gia tăng. Bài viết này được tổng hợp và biên tập từ <strong>${sourceName || "nguồn công nghệ"}</strong> nhằm mang đến góc nhìn toàn diện, giúp độc giả nắm vững quy trình bài bản và giảm thiểu rủi ro trên con đường phát triển sự nghiệp.</p>
       ${extractedImages.length > 0 ? `
       <figure class="my-6 text-center">
         <img src="${extractedImages[0].src}" alt="${extractedImages[0].alt || fallbackTopic}" class="rounded-xl shadow-md mx-auto max-h-[480px] object-cover" />
-        <figcaption class="text-[13px] text-gray-500 italic mt-2">${extractedImages[0].alt || "Hình ảnh minh họa cẩm nang công nghệ"}</figcaption>
+        <figcaption class="text-[13px] text-gray-500 italic mt-2">${extractedImages[0].alt || "Hình ảnh minh họa thực tế"}</figcaption>
       </figure>
       ` : ''}
       <h2>2. Những năng lực và tư duy cốt lõi cần chuẩn bị</h2>
-      <p>Để tạo dựng lợi thế cạnh tranh bền vững trên thị trường lao động, mỗi cá nhân cần tập trung hoàn thiện bộ kỹ năng theo mô hình chữ T (T-shaped skills):</p>
+      <p>Để tạo dựng lợi thế cạnh tranh bền vững trên thị trường lao động, mỗi cá nhân và doanh nghiệp cần tập trung hoàn thiện các tiêu chuẩn năng lực chất lượng cao:</p>
       <ul>
-        <li><strong>Nền tảng kỹ thuật vững vàng:</strong> Hiểu rõ bản chất cấu trúc dữ liệu, giải thuật, mạng máy tính và tư duy hướng đối tượng.</li>
+        <li><strong>Nền tảng kỹ thuật vững vàng:</strong> Hiểu rõ bản chất cấu trúc dữ liệu, giải thuật, mạng máy tính và tư duy thiết kế hệ thống.</li>
         <li><strong>Năng lực tự nghiên cứu và làm chủ công cụ mới:</strong> Thành thạo các hệ thống quản lý mã nguồn <code>Git</code>, quy trình <code>CI/CD</code> và ứng dụng công cụ hỗ trợ AI một cách thông minh.</li>
         <li><strong>Kỹ năng mềm và phối hợp nhóm:</strong> Khả năng trình bày giải pháp kỹ thuật, lắng nghe phản hồi và làm việc theo phương pháp <code>Agile / Scrum</code>.</li>
       </ul>
 
       <blockquote>
-        <strong>Lời khuyên từ chuyên gia:</strong> Đừng chỉ dừng lại ở việc đọc tài liệu lý thuyết. Giá trị thực sự của một kỹ sư IT nằm ở số lượng dòng code thực chiến và những bài toán thực tế đã giải quyết thành công.
+        <strong>Lời khuyên từ chuyên gia:</strong> Đừng chỉ dừng lại ở việc đọc tài liệu lý thuyết. Giá trị thực sự của một chuyên gia IT nằm ở số lượng bài toán thực tế đã giải quyết thành công và văn hóa đóng góp cho tập thể.
       </blockquote>
 
       <h2>3. Lộ trình hành động từng bước để bứt phá</h2>
@@ -1207,24 +1322,24 @@ Vui lòng trả về DUY NHẤT định dạng JSON:
         <figcaption class="text-[13px] text-gray-500 italic mt-2">${extractedImages[1].alt || "Phân tích quy trình và lộ trình hành động"}</figcaption>
       </figure>
       ` : ''}
-      <h3>3.1. Giai đoạn 1: Chuẩn hóa kiến thức và xây dựng dự án mẫu (Portfolio)</h3>
-      <p>Hãy bắt đầu bằng việc xây dựng từ 2 đến 3 dự án cá nhân có chiều sâu thay vì làm quá nhiều dự án đơn giản. Dự án cần có tài liệu hướng dẫn <code>README.md</code> chỉn chu, mã nguồn sạch sẽ và đường link chạy thử (live demo) trực tiếp.</p>
+      <h3>3.1. Giai đoạn 1: Chuẩn hóa tiêu chí và xây dựng quy trình chuẩn mực</h3>
+      <p>Hãy bắt đầu bằng việc xác định rõ chân dung ứng viên, các mục tiêu kỹ thuật cụ thể và các chỉ số đo lường hiệu suất rõ ràng thay vì đưa ra các tiêu chuẩn mơ hồ.</p>
       
-      <h3>3.2. Giai đoạn 2: Tối ưu hồ sơ ứng tuyển và rèn luyện kỹ năng phỏng vấn</h3>
-      <p>Một bản CV chuẩn mực cần nêu bật những đóng góp định lượng (ví dụ: tối ưu hóa thời gian tải trang 30%, xử lý hàng ngàn request đồng thời) thay vì chỉ liệt kê các công nghệ đã từng nghe qua.</p>
+      <h3>3.2. Giai đoạn 2: Tối ưu trải nghiệm ứng viên và rèn luyện kỹ năng đánh giá</h3>
+      <p>Một quy trình chuẩn mực cần nêu bật tính minh bạch, phản hồi nhanh chóng và đánh giá năng lực thực chiến thay vì các câu hỏi đánh đố lý thuyết suông.</p>
 
       <h2>4. Những sai lầm phổ biến cần tuyệt đối tránh</h2>
       <ul>
-        <li><strong>Học theo xu hướng một cách hời hợt:</strong> Chạy theo các công nghệ mới nổi nhưng bỏ quên các nguyên lý nền tảng cơ bản.</li>
-        <li><strong>Thiếu tính chủ động trong giao tiếp:</strong> E ngại việc đặt câu hỏi hoặc trao đổi với người hướng dẫn và đồng nghiệp khi gặp khó khăn.</li>
+        <li><strong>Đánh giá hời hợt hoặc thiên kiến:</strong> Đưa ra nhận định dựa trên cảm tính thay vì rubric tiêu chí rõ ràng.</li>
+        <li><strong>Thiếu tính chủ động trong giao tiếp:</strong> Phản hồi chậm trễ gây mất thiện cảm và đánh mất các nhân sự tiềm năng.</li>
       </ul>
 
       <blockquote>
-        <strong>Lưu ý quan trọng:</strong> Hành trình trở thành một kỹ sư phần mềm xuất sắc là một cuộc chạy marathon đường dài, đòi hỏi sự kiên trì và kỷ luật tự giác mỗi ngày.
+        <strong>Lưu ý quan trọng:</strong> Hành trình xây dựng đội ngũ IT tinh nhuệ là một chiến lược đường dài, đòi hỏi sự kiên trì, tôn trọng lẫn nhau và tinh thần học hỏi không ngừng.
       </blockquote>
 
       <h2>5. Tổng kết và kế hoạch hành động</h2>
-      <p>Hy vọng cẩm nang này sẽ trở thành kim chỉ nam hữu ích đồng hành cùng bạn trên chặng đường chinh phục các mục tiêu nghề nghiệp. Hãy bắt tay vào hành động ngay hôm nay bằng cách vạch ra kế hoạch học tập cụ thể cho từng tuần và từng tháng!</p>
+      <p>Hy vọng cẩm nang này sẽ trở thành kim chỉ nam hữu ích đồng hành cùng bạn trên chặng đường chinh phục các mục tiêu nghề nghiệp và tuyển dụng. Hãy bắt tay vào hành động ngay hôm nay bằng cách vạch ra kế hoạch cụ thể cho từng giai đoạn!</p>
     `,
     tags: ["CamNangIT", "TríchNguồn", "KyNangIT", "DinhHuong"],
     readingTime: 8,
