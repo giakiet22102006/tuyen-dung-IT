@@ -197,6 +197,24 @@ async function ensureSeedArticles() {
   }
 }
 
+function normalizeCategory(cat) {
+  if (!cat || typeof cat !== "string") return ARTICLE_CATEGORIES.CAREER_ROADMAP;
+  const trimmed = cat.trim();
+  for (const [key, val] of Object.entries(ARTICLE_CATEGORIES)) {
+    if (trimmed === val || trimmed.toLowerCase() === val.toLowerCase()) return val;
+  }
+  for (const [val, label] of Object.entries(ARTICLE_CATEGORY_LABELS)) {
+    if (trimmed.toLowerCase() === label.toLowerCase()) return val;
+  }
+  const slug = trimmed.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (slug.includes("tuyen dung")) return ARTICLE_CATEGORIES.RECRUITMENT_TIPS;
+  if (slug.includes("phong van")) return ARTICLE_CATEGORIES.INTERVIEW_TIPS;
+  if (slug.includes("luong") || slug.includes("dai ngo")) return ARTICLE_CATEGORIES.SALARY_INSIGHTS;
+  if (slug.includes("lo trinh") || slug.includes("career") || slug.includes("sinh vien")) return ARTICLE_CATEGORIES.CAREER_ROADMAP;
+  if (slug.includes("xu huong") || slug.includes("cong nghe") || slug.includes("tech")) return ARTICLE_CATEGORIES.TECH_TRENDS;
+  return trimmed;
+}
+
 /**
  * Lấy danh sách bài viết kèm bộ lọc, tìm kiếm và phân trang
  */
@@ -204,27 +222,44 @@ async function getArticles({ category = "", audience = "", search = "", page = 1
   await ensureSeedArticles();
 
   const filter = { isPublished: true };
+  const andConditions = [];
 
-  if (category && Object.values(ARTICLE_CATEGORIES).includes(category)) {
-    filter.category = category;
+  if (category) {
+    const normalizedCat = normalizeCategory(category);
+    const labelForCat = ARTICLE_CATEGORY_LABELS[normalizedCat];
+    const categoryOrConditions = [
+      { category: normalizedCat },
+      { category: category },
+    ];
+    if (labelForCat) {
+      categoryOrConditions.push({ category: labelForCat });
+      categoryOrConditions.push({ category: new RegExp(labelForCat, "i") });
+    }
+    andConditions.push({ $or: categoryOrConditions });
   }
 
   if (audience && Object.values(TARGET_AUDIENCES).includes(audience)) {
     if (audience === TARGET_AUDIENCES.CANDIDATE) {
-      filter.targetAudience = { $in: [TARGET_AUDIENCES.CANDIDATE, TARGET_AUDIENCES.ALL] };
+      andConditions.push({ targetAudience: { $in: [TARGET_AUDIENCES.CANDIDATE, TARGET_AUDIENCES.ALL] } });
     } else if (audience === TARGET_AUDIENCES.EMPLOYER) {
-      filter.targetAudience = { $in: [TARGET_AUDIENCES.EMPLOYER, TARGET_AUDIENCES.ALL] };
+      andConditions.push({ targetAudience: { $in: [TARGET_AUDIENCES.EMPLOYER, TARGET_AUDIENCES.ALL] } });
     }
   }
 
   if (search && search.trim()) {
     const s = search.trim();
-    filter.$or = [
-      { title: { $regex: s, $options: "i" } },
-      { summary: { $regex: s, $options: "i" } },
-      { tags: { $in: [new RegExp(s, "i")] } },
-      { sourceName: { $regex: s, $options: "i" } },
-    ];
+    andConditions.push({
+      $or: [
+        { title: { $regex: s, $options: "i" } },
+        { summary: { $regex: s, $options: "i" } },
+        { tags: { $in: [new RegExp(s, "i")] } },
+        { sourceName: { $regex: s, $options: "i" } },
+      ],
+    });
+  }
+
+  if (andConditions.length > 0) {
+    filter.$and = andConditions;
   }
 
   const total = await Article.countDocuments(filter);
@@ -288,8 +323,15 @@ async function getAdminArticles({ search = "", category = "", audience = "", isP
 
   const filter = {};
 
-  if (category && Object.values(ARTICLE_CATEGORIES).includes(category)) {
-    filter.category = category;
+  if (category) {
+    const normalizedCat = normalizeCategory(category);
+    const labelForCat = ARTICLE_CATEGORY_LABELS[normalizedCat];
+    const categoryOrConditions = [
+      { category: normalizedCat },
+      { category: category },
+    ];
+    if (labelForCat) categoryOrConditions.push({ category: labelForCat });
+    filter.$or = categoryOrConditions;
   }
 
   if (audience && Object.values(TARGET_AUDIENCES).includes(audience)) {
@@ -360,7 +402,7 @@ async function createArticle(data) {
   const article = new Article({
     title: data.title.trim(),
     slug: finalSlug,
-    category: data.category || ARTICLE_CATEGORIES.TECH_TRENDS,
+    category: normalizeCategory(data.category) || ARTICLE_CATEGORIES.TECH_TRENDS,
     targetAudience: data.targetAudience || TARGET_AUDIENCES.ALL,
     isGated,
     summary: data.summary.trim(),
@@ -397,7 +439,7 @@ async function updateArticle(id, data) {
       article.slug = data.slug.trim();
     }
   }
-  if (data.category) article.category = data.category;
+  if (data.category) article.category = normalizeCategory(data.category);
   if (data.targetAudience) article.targetAudience = data.targetAudience;
   if (data.summary) article.summary = data.summary.trim();
   if (data.content) article.content = data.content;

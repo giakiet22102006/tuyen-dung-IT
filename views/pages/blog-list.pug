@@ -132,6 +132,13 @@ block main
                 div(class="bg-white rounded-[12px] p-[50px] text-center shadow-xs border border-gray-200")
                     div(class="w-[60px] h-[60px] rounded-full bg-blue-50 text-[#0088FF] flex items-center justify-center mx-auto mb-[16px] text-[26px]")
                         i(class="fa-solid fa-magnifying-glass")
-                    h3(class="font-[700] text-[18px] text-gray-800 mb-[6px]") Không tìm thấy bài viết phù hợp
-                    p(class="text-[14px] text-gray-500 mb-[18px]") Thử tìm kiếm với từ khóa khác hoặc xem các danh mục cẩm nang phổ biến.
-                    a(href="/blog" class="inline-block bg-[#0088FF] text-white text-[13px] font-[600] px-[18px] py-[8px] rounded-[6px]") Xem tất cả bài viết
+                    h3(class="font-[700] text-[18px] text-gray-800 mb-[6px]") Chưa có bài viết phù hợp trong phân luồng này
+                    if selectedAudience === 'candidate'
+                        p(class="text-[14px] text-gray-500 mb-[18px]") Bài viết trong chuyên mục này có thể đang được thiết lập dành riêng cho Nhà Tuyển Dụng. Bạn hãy bấm chuyển sang tab #[strong "Tất cả"] hoặc #[strong "Cho Nhà tuyển dụng"] để khám phá cẩm nang nhé!
+                    else
+                        p(class="text-[14px] text-gray-500 mb-[18px]") Thử tìm kiếm với từ khóa khác hoặc chuyển sang tab Tất cả để xem các danh mục cẩm nang IT phổ biến.
+                    div(class="flex items-center justify-center gap-[10px] flex-wrap")
+                        if selectedAudience
+                            a(href=`/blog?${selectedCategory ? 'category=' + selectedCategory : ''}` class="inline-block bg-[#000071] text-white text-[13px] font-[600] px-[18px] py-[8px] rounded-[6px] hover:bg-[#000085] transition")
+                                <i class="fa-solid fa-users mr-[5px]"></i> Xem trong tab "Tất cả"
+                        a(href="/blog" class="inline-block bg-[#0088FF] text-white text-[13px] font-[600] px-[18px] py-[8px] rounded-[6px] hover:bg-[#0070D2] transition") Xem tất cả bài viết
