@@ -10,9 +10,10 @@ const { GoogleGenAI } = require("@google/genai");
 const env = require("../config/env");
 
 let aiClient = null;
-if (env.GEMINI_API_KEY && env.GEMINI_API_KEY.trim()) {
+const cleanApiKey = (env.GEMINI_API_KEY || "").replace(/[\uFEFF\u200B-\u200D\s]/g, "");
+if (cleanApiKey) {
   try {
-    aiClient = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY.trim() });
+    aiClient = new GoogleGenAI({ apiKey: cleanApiKey });
     console.log("🤖 Google Gemini AI Client initialized successfully.");
   } catch (err) {
     console.error("Lỗi khởi tạo Gemini AI:", err.message);
@@ -20,12 +21,18 @@ if (env.GEMINI_API_KEY && env.GEMINI_API_KEY.trim()) {
 }
 
 /**
- * Gọi Gemini API với cơ chế timeout an toàn và Fallback đa tầng
+ * Gọi Gemini API với cơ chế timeout an toàn, loại bỏ triệt để ký tự BOM và tối ưu hóa quota
  */
 async function callGemini(prompt, systemInstruction = "", timeoutMs = 28000) {
   if (!aiClient) return null;
-  const primaryModel = env.GEMINI_MODEL || "gemini-3.5-flash-lite";
-  const candidateModels = [primaryModel, "gemini-3.5-flash-lite", "gemini-3.5-flash"].filter(Boolean);
+  const rawModel = env.GEMINI_MODEL || "gemini-3.5-flash-lite";
+  const primaryModel = rawModel.replace(/[\uFEFF\u200B-\u200D\s]/g, "");
+  // Ưu tiên gemini-3.5-flash-lite: Model Flash-Lite nhẹ nhất, tiêu tốn ít quota nhất và tốc độ phản hồi nhanh nhất
+  const candidateModels = [
+    primaryModel,
+    "gemini-3.5-flash-lite",
+    "gemini-3.5-flash",
+  ].map((m) => (m || "").replace(/[\uFEFF\u200B-\u200D\s]/g, "")).filter(Boolean);
   const modelsToTry = [...new Set(candidateModels)];
 
   for (let i = 0; i < modelsToTry.length; i++) {
@@ -973,7 +980,7 @@ async function curateArticleFromSourceWithAi({ sourceUrl = "", rawContent = "", 
       try {
         const jinaUrl = `https://r.jina.ai/${trimmedUrl}`;
         const jinaCtrl = new AbortController();
-        const jinaTimeout = setTimeout(() => jinaCtrl.abort(), 8000);
+        const jinaTimeout = setTimeout(() => jinaCtrl.abort(), 22000);
         const jinaRes = await fetch(jinaUrl, {
           signal: jinaCtrl.signal,
           headers: {
@@ -1111,14 +1118,25 @@ async function curateArticleFromSourceWithAi({ sourceUrl = "", rawContent = "", 
     }
   }
 
-  // 3. Nếu người dùng có dán nội dung thô (rawContent), bổ sung quét ảnh từ rawContent
+  // 3. Nếu người dùng có dán nội dung thô (rawContent), bổ sung quét cả thẻ HTML img và Markdown img từ rawContent
   if (rawContent && rawContent.trim()) {
+    // Quét thẻ HTML <img src="...">
     const imgRegex = /<img\s+[^>]*src=["']([^"']+)["'][^>]*>/gi;
     let imgMatch;
     while ((imgMatch = imgRegex.exec(rawContent)) !== null) {
       const src = imgMatch[1];
       const altMatch = imgMatch[0].match(/alt=["']([^"']*)["']/i);
       const alt = altMatch ? altMatch[1].trim() : "";
+      if (!extractedImages.some((i) => i.src === src)) {
+        extractedImages.push({ src, alt });
+      }
+    }
+    // Quét cú pháp Markdown ![alt](url)
+    const mdRegex = /!\[(.*?)\]\((https?:\/\/[^\s\)]+)\)/g;
+    let mdMatch;
+    while ((mdMatch = mdRegex.exec(rawContent)) !== null) {
+      const alt = mdMatch[1] ? mdMatch[1].trim() : "";
+      const src = mdMatch[2].trim();
       if (!extractedImages.some((i) => i.src === src)) {
         extractedImages.push({ src, alt });
       }
@@ -1131,47 +1149,11 @@ async function curateArticleFromSourceWithAi({ sourceUrl = "", rawContent = "", 
       const urlObj = new URL(sourceUrl.trim());
       const slugPart = urlObj.pathname.split("/").filter(Boolean).pop() || "";
       const words = slugPart.replace(/[-_]+/g, " ").replace(/\.html?$/i, "").trim().split(/\s+/);
-      extractedPageTitle = words.map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+      extractedPageTitle = words.map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
     } catch (e) {}
   }
 
-  // 5. Nếu không trích xuất được ảnh nào từ bài viết gốc, bổ sung ảnh công nghệ chất lượng cao từ kho Unsplash
-  if (extractedImages.length === 0) {
-    const isEmployerTopic = targetAudience === "employer" || /tuyen-dung|recruitment|talent|interview|hr/i.test(sourceUrl || "");
-    if (isEmployerTopic) {
-      extractedImages.push(
-        {
-          src: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1000&auto=format&fit=crop&q=80",
-          alt: "Quy trình phỏng vấn và đánh giá năng lực ứng viên IT chuyên nghiệp"
-        },
-        {
-          src: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1000&auto=format&fit=crop&q=80",
-          alt: "Đội ngũ kỹ sư công nghệ trao đổi và phát triển giải pháp phần mềm"
-        },
-        {
-          src: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=1000&auto=format&fit=crop&q=80",
-          alt: "Chiến lược xây dựng thương hiệu tuyển dụng thu hút nhân tài IT"
-        }
-      );
-    } else {
-      extractedImages.push(
-        {
-          src: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=1000&auto=format&fit=crop&q=80",
-          alt: "Lập trình viên làm việc trên mã nguồn và hệ thống công nghệ"
-        },
-        {
-          src: "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=1000&auto=format&fit=crop&q=80",
-          alt: "Thảo luận kiến trúc hệ thống và lộ trình phát triển nghề nghiệp IT"
-        },
-        {
-          src: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1000&auto=format&fit=crop&q=80",
-          alt: "Học tập và rèn luyện kỹ năng thực chiến cùng cộng đồng công nghệ"
-        }
-      );
-    }
-  }
-
-  // Nếu chưa có thumbnail, lấy ảnh đầu tiên làm thumbnail
+  // 5. Nếu chưa có thumbnail, ưu tiên lấy ảnh gốc đầu tiên làm thumbnail
   if (!extractedThumbnail && extractedImages.length > 0) {
     extractedThumbnail = extractedImages[0].src;
   }
@@ -1179,20 +1161,20 @@ async function curateArticleFromSourceWithAi({ sourceUrl = "", rawContent = "", 
   const textToAnalyze = (rawContent && rawContent.trim().length > 30 ? rawContent : fetchedText).trim();
 
   const imagePromptSection = extractedImages.length > 0 ? `
-DANH SÁCH HÌNH ẢNH MINH HỌA TRÍCH XUẤT TỪ BÀI VIẾT GỐC (ƯU TIÊN DÙNG CHÍNH XÁC CÁC URL NÀY):
-${extractedImages.slice(0, 6).map((img, idx) => `- [Hình ${idx + 1}]: URL: "${img.src}" | Chú thích gợi ý: "${img.alt || 'Hình ảnh minh họa thực tế'}"`).join('\n')}
+DANH SÁCH HÌNH ẢNH MINH HỌA TRÍCH XUẤT CHÍNH XÁC TỪ BÀI VIẾT GỐC (BẮT BUỘC DÙNG CÁC URL NÀY):
+${extractedImages.slice(0, 8).map((img, idx) => `- [Hình ${idx + 1}]: URL: "${img.src}" | Chú thích ảnh gốc: "${img.alt || 'Hình ảnh minh họa từ bài viết gốc'}"`).join('\n')}
 
-QUY ĐỊNH CHÈN HÌNH ẢNH VÀO NỘI DUNG HTML:
-Bạn hãy chọn lọc và chèn từ 2 đến 4 hình ảnh từ danh sách trên vào các vị trí đề mục phù hợp trong nội dung bài viết HTML để tạo sự sinh động, hấp dẫn và tăng tính thẩm mỹ cho người đọc.
-Định dạng thẻ bắt buộc cho mỗi ảnh được chèn:
+QUY ĐỊNH CHÈN HÌNH ẢNH:
+- Bạn hãy chọn lọc và chèn từ 2 đến 4 hình ảnh từ danh sách trên vào các vị trí đề mục phù hợp trong nội dung bài viết HTML để tăng tính thẩm mỹ và phản ánh chân thực bài viết gốc.
+- Định dạng thẻ bắt buộc cho mỗi ảnh chèn:
 <figure class="my-6 text-center">
-  <img src="[URL_HÌNH_ẢNH_CHÍNH_XÁC]" alt="[Mô tả ảnh]" class="rounded-xl shadow-md mx-auto max-h-[480px] object-cover" />
-  <figcaption class="text-[13px] text-gray-500 italic mt-2">[Chú thích ngắn gọn, chuyên nghiệp cho hình ảnh]</figcaption>
+  <img src="[URL_HÌNH_ẢNH_CHÍNH_XÁC_TỪ_DANH_SÁCH_TRÊN]" alt="[Mô tả ảnh]" class="rounded-xl shadow-md mx-auto max-h-[480px] object-cover" />
+  <figcaption class="text-[13px] text-gray-500 italic mt-2">[Chú thích ngắn gọn cho hình ảnh]</figcaption>
 </figure>
-TUYỆT ĐỐI giữ nguyên chính xác URL hình ảnh từ danh sách trên, KHÔNG tự chế hoặc làm hỏng URL ảnh.
+- TUYỆT ĐỐI CHỈ SỬ DỤNG CÁC URL HÌNH ẢNH TỪ BÀI VIẾT GỐC TRÊN. KHÔNG tự ý chế hoặc sử dụng link ảnh từ nơi khác (như Unsplash).
 ` : `
 QUY ĐỊNH HÌNH ẢNH:
-Tập trung định dạng bài viết chuyên nghiệp với các đề mục, danh sách và callout.
+Bài viết gốc không có hình ảnh minh họa đính kèm. Bạn hãy tập trung định dạng bài viết chuyên nghiệp với các đề mục, danh sách và callout mà không cần chèn thẻ img.
 `;
 
   const prompt = `
