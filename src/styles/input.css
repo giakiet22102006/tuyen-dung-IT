@@ -8,3 +8,101 @@
   --breakpoint-lg: 992px;
   --breakpoint-xl: 1200px;
 }
+
+/* Article Body Typography for Cẩm Nang IT */
+.article-body {
+  color: #334155;
+  font-size: 16px;
+  line-height: 1.85;
+}
+
+.article-body h2 {
+  font-size: 22px;
+  font-weight: 800;
+  color: #000071;
+  margin-top: 36px;
+  margin-bottom: 16px;
+  padding: 10px 16px;
+  background: linear-gradient(90deg, rgba(0, 136, 255, 0.08) 0%, rgba(0, 136, 255, 0.01) 100%);
+  border-left: 5px solid #0088FF;
+  border-radius: 0 8px 8px 0;
+  display: flex;
+  align-items: center;
+  line-height: 1.4;
+}
+
+@media (min-width: 640px) {
+  .article-body h2 {
+    font-size: 24px;
+  }
+}
+
+.article-body h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0F172A;
+  margin-top: 24px;
+  margin-bottom: 12px;
+  line-height: 1.45;
+  position: relative;
+  padding-left: 20px;
+}
+
+.article-body h3::before {
+  content: "▸";
+  position: absolute;
+  left: 0;
+  color: #0088FF;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.article-body p {
+  margin-bottom: 18px;
+  color: #374151;
+  text-align: justify;
+}
+
+.article-body ul {
+  list-style-type: disc !important;
+  padding-left: 26px !important;
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+
+.article-body ol {
+  list-style-type: decimal !important;
+  padding-left: 26px !important;
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+
+.article-body li {
+  margin-bottom: 8px;
+  line-height: 1.75;
+  color: #374151;
+}
+
+.article-body blockquote {
+  margin: 24px 0;
+  padding: 18px 24px;
+  background: linear-gradient(135deg, #F0F7FF 0%, #E8F2FF 100%);
+  border-left: 5px solid #0088FF;
+  border-radius: 0 12px 12px 0;
+  color: #1E293B;
+  font-style: italic;
+  font-size: 15.5px;
+  line-height: 1.75;
+}
+
+.article-body code {
+  background-color: #F1F5F9;
+  color: #0284C7;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 5px;
+  border: 1px solid #E2E8F0;
+}
+

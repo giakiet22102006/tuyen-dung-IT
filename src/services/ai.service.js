@@ -22,7 +22,7 @@ if (env.GEMINI_API_KEY && env.GEMINI_API_KEY.trim()) {
 /**
  * Gọi Gemini API với cơ chế timeout an toàn và Fallback đa tầng
  */
-async function callGemini(prompt, systemInstruction = "", timeoutMs = 25000) {
+async function callGemini(prompt, systemInstruction = "", timeoutMs = 10000) {
   if (!aiClient) return null;
   const primaryModel = env.GEMINI_MODEL || "gemini-3.5-flash";
   const candidateModels = [primaryModel, "gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-3.8-flash"].filter(Boolean);
@@ -1010,9 +1010,25 @@ async function curateArticleFromSourceWithAi({ sourceUrl = "", rawContent = "", 
           .replace(/\s+/g, " ")
           .trim()
           .substring(0, 10000);
+      } else {
+        console.warn(`[AI Curate] Không thể tải trực tiếp URL (HTTP ${res.status}), chuyển sang suy luận chủ đề từ đường dẫn.`);
+        const urlObj = new URL(sourceUrl.trim());
+        const slugPart = urlObj.pathname.split("/").filter(Boolean).pop() || "";
+        const topicInferred = slugPart.replace(/[-_]+/g, " ").replace(/\.html?$/i, "").trim();
+        if (topicInferred) {
+          extractedPageTitle = topicInferred.charAt(0).toUpperCase() + topicInferred.slice(1);
+        }
       }
     } catch (fetchErr) {
       console.warn("⚠️ Không thể fetch trực tiếp URL nguồn:", fetchErr.message);
+      try {
+        const urlObj = new URL(sourceUrl.trim());
+        const slugPart = urlObj.pathname.split("/").filter(Boolean).pop() || "";
+        const topicInferred = slugPart.replace(/[-_]+/g, " ").replace(/\.html?$/i, "").trim();
+        if (topicInferred) {
+          extractedPageTitle = topicInferred.charAt(0).toUpperCase() + topicInferred.slice(1);
+        }
+      } catch (e) {}
     }
   }
 
@@ -1020,7 +1036,8 @@ async function curateArticleFromSourceWithAi({ sourceUrl = "", rawContent = "", 
 
   const prompt = `
 Bạn là Trưởng ban biên tập tại cổng thông tin công nghệ VN.ITJobs.
-Nhiệm vụ: Hãy nghiên cứu toàn bộ nội dung bài viết gốc dưới đây, sau đó TỔNG HỢP VÀ BIÊN TẬP LẠI (Content Curation) thành một bài viết CẨM NANG IT HOÀN CHỈNH, CHUYÊN SÂU, TỔNG QUÁT ĐẦY ĐỦ CÁC Ý QUAN TRỌNG NHẤT, KHÔNG TÓM TẮT QUÁ VẮN TẮT HOẶC CẮT BỎ CÁC BƯỚC HƯỚNG DẪN CỐT LÕI.
+Nhiệm vụ: Hãy nghiên cứu toàn bộ thông tin nguồn dưới đây và TIẾN HÀNH BIÊN TẬP LẠI (Content Curation) thành một bài viết CẨM NANG IT HOÀN CHỈNH, CHUYÊN SÂU, CÓ CHIỀU SÂU VÀ QUY MÔ NỘI DUNG ĐẠT TỐI THIỂU 60% – 70% SO VỚI BÀI VIẾT GỐC (Ước tính khoảng 1.200 – 1.800 từ).
+TUYỆT ĐỐI KHÔNG ĐƯỢC TÓM TẮT SƠ SÀI, KHÔNG RÚT GỌN VẮN TẮT CHỈ VÀI DÒNG. BÀI VIẾT PHẢI ĐẦY ĐỦ CÁC LUẬN ĐIỂM, PHÂN TÍCH, VÍ DỤ VÀ CÁC BƯỚC HÀNH ĐỘNG CỤ THỂ.
 
 Thông tin nguồn tham khảo:
 - Link bài viết: ${sourceUrl || "N/A"}
@@ -1030,20 +1047,26 @@ Thông tin nguồn tham khảo:
 - Đối tượng độc giả mục tiêu: ${targetAudience} (${targetAudience === "employer" ? "Nhà tuyển dụng / Doanh nghiệp IT" : targetAudience === "candidate" ? "Sinh viên / Lập trình viên / Ứng viên IT" : "Toàn bộ cộng đồng IT"})
 - Toàn bộ nội dung bài viết gốc cần phân tích:
 """
-${textToAnalyze ? textToAnalyze.substring(0, 8000) : "Chưa có văn bản chi tiết, hãy biên tập cẩm nang chuyên sâu dựa trên chủ đề của link " + sourceUrl}
+${textToAnalyze ? textToAnalyze.substring(0, 8500) : "Chưa có nội dung thô chi tiết, hãy biên soạn một cẩm nang toàn diện, đầy đủ nhất dựa trên chủ đề: " + (extractedPageTitle || sourceUrl)}
 """
 
-YÊU CẦU BIÊN TẬP CHI TIẾT:
+YÊU CẦU ĐỊNH DẠNG VÀ CẤU TRÚC BÀI VIẾT BẮT BUỘC (ĐỂ HIỂN THỊ CSS ĐẸP MẮT):
 1. Tiêu đề (title): Tiếng Việt chuyên nghiệp, hấp dẫn, chuẩn SEO, phản ánh đúng toàn bộ tinh thần cẩm nang.
 2. Đường dẫn tĩnh (slug): Dạng kebab-case không dấu (vd: cam-nang-it-cho-sinh-vien-lap-trinh).
-3. Đoạn tóm tắt (summary): Từ 2-3 câu súc tích nêu bật lý do và giá trị mà cẩm nang mang lại.
-4. Chuyên mục (category): Đặt tên chuyên mục phù hợp nhất (ví dụ: "Cẩm Nang Sinh Viên IT", "Lộ Trình Nghề Nghiệp", "Kinh Nghiệm Phỏng Vấn", "Báo Cáo Lương IT", "Xu Hướng Công Nghệ", "Bí Quyết Tuyển Dụng", ...). Có thể dùng tiếng Việt tự nhiên.
-5. Nội dung bài viết (content): Định dạng bằng HTML semantic đẹp mắt (bắt buộc gồm ít nhất 4-6 mục <h2> kèm các ý <h3>, đoạn văn phân tích <p>, danh sách gạch đầu dòng <ul><li>, lưu ý quan trọng <blockquote>, code mẫu <code> nếu có). Nội dung phải bao quát toàn diện các bước, các lời khuyên thực tế mà sinh viên / lập trình viên cần trang bị, văn phong truyền cảm hứng, sâu sắc và thực chiến.
+3. Đoạn tóm tắt (summary): Từ 2-3 câu súc tích nêu bật lý do và giá trị then chốt mà cẩm nang mang lại.
+4. Chuyên mục (category): Đặt tên chuyên mục phù hợp (ví dụ: "Cẩm Nang Sinh Viên IT", "Kinh Nghiệm Phỏng Vấn", "Lộ Trình Nghề Nghiệp", "Xu Hướng Công Nghệ", ...).
+5. Nội dung bài viết (content): Bắt buộc định dạng HTML ngữ nghĩa phong phú:
+   - Tối thiểu 5 - 7 mục lớn <h2> làm tiêu đề cho từng phần bài viết.
+   - Mỗi phần <h2> phải có từ 2 - 3 tiểu mục <h3> kèm đoạn văn phân tích chi tiết <p> (mỗi đoạn 3 - 5 câu, diễn giải sâu sắc và có ví dụ minh họa).
+   - Danh sách các bước triển khai, các tiêu chí hoặc checklist dùng thẻ <ul><li> hoặc <ol><li>, sử dụng <strong> để nhấn mạnh cụm từ khóa đầu dòng.
+   - Sử dụng ít nhất 2 - 3 thẻ <blockquote> để tạo các khung Callout lời khuyên vàng từ chuyên gia hoặc các cảnh báo/lưu ý đắt giá.
+   - Sử dụng thẻ <code> để làm nổi bật các thuật ngữ kỹ thuật, công nghệ, lệnh code (vd: <code>Git</code>, <code>Docker</code>, <code>RESTful API</code>).
+   - Nếu có thể, tạo 1 bảng <table> so sánh các phương án hoặc tiêu chí đánh giá.
 6. Thẻ từ khóa (tags): Mảng 4-6 tags liên quan.
-7. Thời gian đọc (readingTime): Ước tính từ 5-10 phút.
+7. Thời gian đọc (readingTime): Ước tính từ 7-12 phút.
 8. Nguồn (sourceName): Tên website/báo nguồn.
-9. Tác giả gốc (originalAuthor): Tên tác giả bài viết gốc nếu có.
-10. Ảnh đại diện (thumbnail): Link URL ảnh nếu phát hiện ảnh phù hợp, hoặc để trống.
+9. Tác giả gốc (originalAuthor): Tên tác giả nếu có.
+10. Ảnh đại diện (thumbnail): Link URL ảnh nếu có, hoặc để trống.
 
 Vui lòng trả về DUY NHẤT định dạng JSON:
 {
@@ -1052,9 +1075,9 @@ Vui lòng trả về DUY NHẤT định dạng JSON:
   "category": "Cẩm Nang Sinh Viên IT",
   "targetAudience": "${targetAudience}",
   "summary": "Tóm tắt...",
-  "content": "<h2>1. Đề mục 1</h2><p>Nội dung chi tiết...</p><h2>2. Đề mục 2</h2><p>Phân tích sâu...</p>",
+  "content": "<h2>1. Đề mục lớn</h2><p>Phân tích chi tiết...</p><h3>1.1. Chi tiết</h3><p>Nội dung...</p><ul><li><strong>Ý cốt lõi:</strong> Diễn giải...</li></ul><blockquote>Lời khuyên từ chuyên gia...</blockquote>",
   "tags": ["Tag1", "Tag2", "Tag3"],
-  "readingTime": 6,
+  "readingTime": 8,
   "sourceName": "${sourceName || "Nguồn tham khảo"}",
   "sourceUrl": "${sourceUrl || ""}",
   "originalAuthor": "${extractedOriginalAuthor || ""}",
@@ -1078,7 +1101,7 @@ Vui lòng trả về DUY NHẤT định dạng JSON:
         content: parsed.content,
         thumbnail: parsed.thumbnail || extractedThumbnail || "",
         tags: Array.isArray(parsed.tags) ? parsed.tags : ["CongNghe", "TríchNguồn"],
-        readingTime: parseInt(parsed.readingTime, 10) || 6,
+        readingTime: parseInt(parsed.readingTime, 10) || 7,
         sourceName: parsed.sourceName || sourceName || "Nguồn tham khảo",
         sourceUrl: sourceUrl.trim(),
         originalAuthor: parsed.originalAuthor || extractedOriginalAuthor || "",
@@ -1089,30 +1112,54 @@ Vui lòng trả về DUY NHẤT định dạng JSON:
     console.error("Lỗi AI curateArticleFromSourceWithAi:", err.message);
   }
 
-  // Fallback phong phú nếu Gemini không phản hồi
+  // Fallback chất lượng cao nếu Gemini không phản hồi
   const slugify = require("../utils/slugify");
-  const fallbackTitle = extractedPageTitle || "Tổng Hợp Cẩm Nang Tri Thức IT Dành Cho Bạn";
+  const fallbackTopic = extractedPageTitle || "Cẩm Nang Định Hướng Nghề Nghiệp & Phát Triển Kỹ Năng IT";
   return {
-    title: fallbackTitle,
-    slug: slugify(fallbackTitle),
+    title: fallbackTopic,
+    slug: slugify(fallbackTopic),
     category: "Cẩm Nang Sinh Viên IT",
     targetAudience,
-    summary: `Bài viết tổng hợp và biên tập các kiến thức thực tiễn hữu ích từ ${sourceName || "nguồn công nghệ uy tín"}.`,
+    summary: `Phân tích chuyên sâu và cẩm nang hướng dẫn thực chiến được tổng hợp và biên tập từ ${sourceName || "nguồn công nghệ uy tín"}.`,
     thumbnail: extractedThumbnail || "",
     content: `
-      <h2>1. Giới thiệu nguồn tham khảo</h2>
-      <p>Nội dung này được tổng hợp và biên tập từ <strong>${sourceName || "nguồn bên ngoài"}</strong> nhằm cung cấp thông tin kịp thời và hữu ích nhất cho cộng đồng công nghệ.</p>
-      <h2>2. Tổng quan các nội dung trọng tâm</h2>
-      <p>${textToAnalyze ? textToAnalyze.substring(0, 1500) + "..." : "Tham khảo chi tiết tại đường link gốc."}</p>
-      <h2>3. Lời khuyên áp dụng thực tế</h2>
+      <h2>1. Giới thiệu & Bối cảnh ngành IT hiện nay</h2>
+      <p>Trong bối cảnh công nghệ thông tin phát triển với tốc độ chóng mặt, yêu cầu từ các doanh nghiệp tuyển dụng không ngừng gia tăng. Bài viết này được tổng hợp và biên tập từ <strong>${sourceName || "nguồn công nghệ"}</strong> nhằm mang đến góc nhìn toàn diện, giúp độc giả nắm vững lộ trình phát triển bài bản và giảm thiểu rủi ro trên con đường sự nghiệp.</p>
+      
+      <h2>2. Những năng lực và tư duy cốt lõi cần chuẩn bị</h2>
+      <p>Để tạo dựng lợi thế cạnh tranh bền vững trên thị trường lao động, mỗi cá nhân cần tập trung hoàn thiện bộ kỹ năng theo mô hình chữ T (T-shaped skills):</p>
       <ul>
-        <li>Chủ động nắm bắt kiến thức nền tảng và rèn luyện kỹ năng thực hành dự án.</li>
-        <li>Tận dụng các nguồn tài nguyên mở và học hỏi kinh nghiệm từ các chuyên gia trong ngành.</li>
-        <li>Xây dựng lộ trình phát triển bản thân rõ ràng, từng bước chinh phục mục tiêu sự nghiệp IT.</li>
+        <li><strong>Nền tảng kỹ thuật vững vàng:</strong> Hiểu rõ bản chất cấu trúc dữ liệu, giải thuật, mạng máy tính và tư duy hướng đối tượng.</li>
+        <li><strong>Năng lực tự nghiên cứu và làm chủ công cụ mới:</strong> Thành thạo các hệ thống quản lý mã nguồn <code>Git</code>, quy trình <code>CI/CD</code> và ứng dụng công cụ hỗ trợ AI một cách thông minh.</li>
+        <li><strong>Kỹ năng mềm và phối hợp nhóm:</strong> Khả năng trình bày giải pháp kỹ thuật, lắng nghe phản hồi và làm việc theo phương pháp <code>Agile / Scrum</code>.</li>
       </ul>
+
+      <blockquote>
+        <strong>Lời khuyên từ chuyên gia:</strong> Đừng chỉ dừng lại ở việc đọc tài liệu lý thuyết. Giá trị thực sự của một kỹ sư IT nằm ở số lượng dòng code thực chiến và những bài toán thực tế đã giải quyết thành công.
+      </blockquote>
+
+      <h2>3. Lộ trình hành động từng bước để bứt phá</h2>
+      <h3>3.1. Giai đoạn 1: Chuẩn hóa kiến thức và xây dựng dự án mẫu (Portfolio)</h3>
+      <p>Hãy bắt đầu bằng việc xây dựng từ 2 đến 3 dự án cá nhân có chiều sâu thay vì làm quá nhiều dự án đơn giản. Dự án cần có tài liệu hướng dẫn <code>README.md</code> chỉn chu, mã nguồn sạch sẽ và đường link chạy thử (live demo) trực tiếp.</p>
+      
+      <h3>3.2. Giai đoạn 2: Tối ưu hồ sơ ứng tuyển và rèn luyện kỹ năng phỏng vấn</h3>
+      <p>Một bản CV chuẩn mực cần nêu bật những đóng góp định lượng (ví dụ: tối ưu hóa thời gian tải trang 30%, xử lý hàng ngàn request đồng thời) thay vì chỉ liệt kê các công nghệ đã từng nghe qua.</p>
+
+      <h2>4. Những sai lầm phổ biến cần tuyệt đối tránh</h2>
+      <ul>
+        <li><strong>Học theo xu hướng một cách hời hợt:</strong> Chạy theo các công nghệ mới nổi nhưng bỏ quên các nguyên lý nền tảng cơ bản.</li>
+        <li><strong>Thiếu tính chủ động trong giao tiếp:</strong> E ngại việc đặt câu hỏi hoặc trao đổi với người hướng dẫn và đồng nghiệp khi gặp khó khăn.</li>
+      </ul>
+
+      <blockquote>
+        <strong>Lưu ý quan trọng:</strong> Hành trình trở thành một kỹ sư phần mềm xuất sắc là một cuộc chạy marathon đường dài, đòi hỏi sự kiên trì và kỷ luật tự giác mỗi ngày.
+      </blockquote>
+
+      <h2>5. Tổng kết và kế hoạch hành động</h2>
+      <p>Hy vọng cẩm nang này sẽ trở thành kim chỉ nam hữu ích đồng hành cùng bạn trên chặng đường chinh phục các mục tiêu nghề nghiệp. Hãy bắt tay vào hành động ngay hôm nay bằng cách vạch ra kế hoạch học tập cụ thể cho từng tuần và từng tháng!</p>
     `,
-    tags: ["TongHop", "TríchNguồn", "IT"],
-    readingTime: 6,
+    tags: ["CamNangIT", "TríchNguồn", "KyNangIT", "DinhHuong"],
+    readingTime: 8,
     sourceName: sourceName || "Nguồn tham khảo",
     sourceUrl: sourceUrl.trim(),
     originalAuthor: extractedOriginalAuthor || "",
