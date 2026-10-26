@@ -22,10 +22,10 @@ if (env.GEMINI_API_KEY && env.GEMINI_API_KEY.trim()) {
 /**
  * Gọi Gemini API với cơ chế timeout an toàn và Fallback đa tầng
  */
-async function callGemini(prompt, systemInstruction = "", timeoutMs = 10000) {
+async function callGemini(prompt, systemInstruction = "", timeoutMs = 28000) {
   if (!aiClient) return null;
-  const primaryModel = env.GEMINI_MODEL || "gemini-3.5-flash";
-  const candidateModels = [primaryModel, "gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-3.8-flash"].filter(Boolean);
+  const primaryModel = env.GEMINI_MODEL || "gemini-3.5-flash-lite";
+  const candidateModels = [primaryModel, "gemini-3.5-flash-lite", "gemini-3.5-flash"].filter(Boolean);
   const modelsToTry = [...new Set(candidateModels)];
 
   for (let i = 0; i < modelsToTry.length; i++) {
@@ -81,7 +81,7 @@ async function extractTextFromPdf(pdfBuffer) {
   // 2. Bước 2 (Fallback): Nếu pdf-parse không đọc được hoặc PDF là dạng scan/ảnh (Canva, Photoshop không nhúng text stream), dùng Gemini Multimodal Vision/OCR
   if (aiClient) {
     try {
-      const primaryModel = env.GEMINI_MODEL || "gemini-3.8-flash";
+      const primaryModel = env.GEMINI_MODEL || "gemini-3.5-flash-lite";
       const response = await aiClient.models.generateContent({
         model: primaryModel,
         contents: [
@@ -943,7 +943,7 @@ async function curateArticleFromSourceWithAi({ sourceUrl = "", rawContent = "", 
   if (sourceUrl && (!rawContent || rawContent.trim().length < 50)) {
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 10000);
+      const timeout = setTimeout(() => controller.abort(), 3500);
       const res = await fetch(sourceUrl.trim(), {
         signal: controller.signal,
         headers: {

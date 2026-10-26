@@ -357,7 +357,12 @@ block main
                         },
                         body: JSON.stringify({ topic, targetAudience }),
                     });
-                    const resData = await res.json();
+                    let resData;
+                    try {
+                        resData = await res.json();
+                    } catch (e) {
+                        throw new Error("Máy chủ đang xử lý kéo dài hoặc phản hồi chậm. Vui lòng thử lại!");
+                    }
                     if (resData.success && resData.data) {
                         populateForm(resData.data);
                         aiStatusText.textContent = "✅ Đã soạn thảo cẩm nang IT thành công! Vui lòng rà soát lại và bấm Lưu.";
@@ -402,7 +407,12 @@ block main
                         },
                         body: JSON.stringify({ sourceUrl, rawContent, targetAudience }),
                     });
-                    const resData = await res.json();
+                    let resData;
+                    try {
+                        resData = await res.json();
+                    } catch (e) {
+                        throw new Error("Máy chủ đang xử lý kéo dài hoặc phản hồi chậm. Vui lòng thử lại!");
+                    }
                     if (resData.success && resData.data) {
                         populateForm(resData.data);
                         aiStatusText.textContent = "✅ Đã trích xuất nguồn và biên tập thành công! Vui lòng rà soát lại và bấm Lưu.";
