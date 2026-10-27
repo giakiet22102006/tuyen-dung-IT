@@ -917,6 +917,33 @@ Vui lòng trả về DUY NHẤT một chuỗi JSON hợp lệ theo cấu trúc:
   };
 }
 
+function isSafeExternalUrl(urlStr) {
+  try {
+    const parsed = new URL(urlStr);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return false;
+    const host = parsed.hostname.toLowerCase();
+    if (
+      host === "localhost" ||
+      host === "127.0.0.1" ||
+      host === "::1" ||
+      host === "0.0.0.0" ||
+      host.endsWith(".local") ||
+      host.endsWith(".internal") ||
+      host === "169.254.169.254" ||
+      host === "metadata.google.internal"
+    ) {
+      return false;
+    }
+    // Chặn dải IP nội bộ RFC 1918 & link-local
+    if (/^(10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|192\.168\.|169\.254\.)/.test(host)) {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * AI Trích xuất, tổng hợp & biên tập bài viết từ nguồn ngoài (Content Curation)
  */
@@ -947,8 +974,8 @@ async function curateArticleFromSourceWithAi({ sourceUrl = "", rawContent = "", 
     }
   }
 
-  // 2. Tải nội dung bài viết từ URL: Thử trực tiếp trước, nếu bị chặn (HTTP 403 TopCV, Cloudflare) tự động dùng Reader Proxy
-  if (sourceUrl && sourceUrl.trim().startsWith("http")) {
+  // 2. Tải nội dung bài viết từ URL: Kiểm tra SSRF an toàn trước khi fetch
+  if (sourceUrl && isSafeExternalUrl(sourceUrl.trim())) {
     const trimmedUrl = sourceUrl.trim();
     let rawHtml = "";
     let isJinaContent = false;
@@ -1332,6 +1359,66 @@ Vui lòng trả về DUY NHẤT định dạng JSON:
   };
 }
 
+/**
+ * Trợ lý AI hỗ trợ tư vấn trực tuyến cho Ứng viên & Nhà tuyển dụng trên VN.ITJobs
+ */
+async function chatWithSupportAssistant({ message, history = [], userRole = "guest", userName = "" }) {
+  const cleanMsg = (message || "").trim();
+  if (!cleanMsg) return "Xin chào! Tôi có thể giúp gì cho bạn về việc làm hoặc tuyển dụng IT hôm nay?";
+
+  const roleDesc = userRole === "candidate" ? "Ứng viên tìm việc" : userRole === "employer" ? "Nhà tuyển dụng doanh nghiệp" : "Khách truy cập website";
+  const userGreetingName = userName ? userName : "bạn";
+
+  const systemInstruction = `Bạn là Trợ lý ảo AI thông minh, nhiệt tình của nền tảng tuyển dụng công nghệ VN.ITJobs (website việc làm IT hàng đầu Việt Nam).
+Người dùng hiện tại: ${userGreetingName} (${roleDesc}).
+
+Nhiệm vụ & Quy tắc phản hồi:
+1. Luôn trả lời bằng tiếng Việt thân thiện, súc tích, lịch sự và định dạng Markdown cơ bản (in đậm, danh sách gạch đầu dòng) để người dùng dễ đọc trên ô chatbox nhỏ.
+2. Nắm rõ các chức năng của VN.ITJobs:
+   - Ứng viên: Tìm kiếm việc làm IT theo ngôn ngữ/kỹ năng (Java, Python, React, Golang, AWS, AI...), địa điểm (Hà Nội, TP.HCM, Đà Nẵng, Remote), nộp hồ sơ CV, theo dõi trạng thái ứng tuyển, nhận thư mời phỏng vấn.
+   - Nhà tuyển dụng: Đăng tin tuyển dụng IT chuẩn SEO, quản lý ứng viên theo Pipeline, dùng AI sàng lọc CV và gợi ý câu hỏi phỏng vấn, gửi thư mời/từ chối tự động.
+   - Báo lỗi & Đánh giá: Nếu người dùng phản ánh sự cố kỹ thuật hoặc muốn góp ý, hãy hướng dẫn họ chuyển sang tab "Báo lỗi" hoặc "Đánh giá web" ngay trên cửa sổ này để gửi thẳng cho Ban Quản trị.
+3. Tư vấn nghề nghiệp IT: Gợi ý kỹ năng cần học, mẹo viết CV nổi bật, bí quyết trả lời phỏng vấn IT, phân tích mức lương tham khảo.
+4. Giới hạn độ dài: Trả lời ngắn gọn từ 2-4 đoạn nhỏ hoặc 3-5 gạch đầu dòng súc tích. Tuyệt đối không bịa đặt các đường link ngoài hay chính sách chưa có.`;
+
+  const formattedHistory = (history || [])
+    .slice(-5)
+    .filter((h) => h && h.role && h.text)
+    .map((h) => `${h.role === "user" ? "Người dùng" : "Trợ lý"}: ${h.text}`)
+    .join("\n");
+
+  const prompt = `${formattedHistory ? `Lịch sử hội thoại trước đó:\n${formattedHistory}\n\n` : ""}Người dùng: ${cleanMsg}\nTrợ lý:`;
+
+  try {
+    const rawReply = await callGemini(prompt, systemInstruction, 15000);
+    if (rawReply && rawReply.trim()) {
+      return rawReply.trim();
+    }
+  } catch (err) {
+    console.warn("⚠️ [Chatbot AI] Lỗi gọi Gemini, chuyển sang fallback:", err.message);
+  }
+
+  // Fallback thông minh dựa trên từ khóa nếu Gemini bận hoặc hết quota
+  const lower = cleanMsg.toLowerCase();
+  if (lower.includes("lỗi") || lower.includes("sự cố") || lower.includes("bug") || lower.includes("không bấm được") || lower.includes("hỏng")) {
+    return `Rất tiếc về sự bất tiện bạn đang gặp phải! 🛠️\n\nBạn vui lòng bấm sang tab **"Báo lỗi"** ngay bên cạnh cửa sổ này, điền mô tả ngắn và gửi cho Ban Quản trị VN.ITJobs nhé. Đội ngũ kỹ thuật sẽ kiểm tra và khắc phục sớm nhất có thể!`;
+  }
+  if (lower.includes("cv") || lower.includes("hồ sơ") || lower.includes("nộp đơn") || lower.includes("ứng tuyển")) {
+    return `Để ứng tuyển việc làm trên **VN.ITJobs**:\n\n1. Chuẩn bị file CV định dạng PDF rõ ràng, nổi bật kỹ năng trọng tâm (VD: React, Node.js, Spring Boot, AWS...).\n2. Tìm kiếm công việc phù hợp tại trang **Việc làm IT** và bấm nút **"Ứng tuyển ngay"**.\n3. Bạn có thể theo dõi tiến độ xét duyệt tại mục **"Việc làm đã ứng tuyển"** trong menu tài khoản!`;
+  }
+  if (lower.includes("đăng tin") || lower.includes("tuyển dụng") || lower.includes("nhà tuyển dụng") || lower.includes("doanh nghiệp")) {
+    return `Dành cho Nhà tuyển dụng trên **VN.ITJobs**:\n\n• Bạn có thể đăng ký tài khoản Doanh nghiệp để đăng tin tuyển dụng IT tiếp cận hàng ngàn kỹ sư tiềm năng.\n• Hệ thống tích hợp **AI Sàng lọc CV** và tự động tạo thư mời/từ chối phỏng vấn giúp tiết kiệm 70% thời gian tuyển dụng!\n• Truy cập mục **"Dành cho Nhà tuyển dụng"** ở góc trên website để bắt đầu.`;
+  }
+  if (lower.includes("đánh giá") || lower.includes("sao") || lower.includes("góp ý")) {
+    return `VN.ITJobs luôn trân trọng mọi ý kiến đóng góp từ bạn! ⭐\n\nBạn có thể bấm sang tab **"Đánh giá web"** ngay trên cửa sổ này để chấm điểm sao và gửi nhận xét giúp chúng tôi hoàn thiện hơn nhé. Cảm ơn bạn rất nhiều!`;
+  }
+  if (lower.includes("chào") || lower.includes("hi") || lower.includes("hello")) {
+    return `Xin chào ${userGreetingName}! 👋\n\nTôi là Trợ lý AI của **VN.ITJobs**. Tôi có thể giúp bạn giải đáp thắc mắc về tìm kiếm việc làm IT, cách viết CV, đăng tin tuyển dụng hoặc hướng dẫn sử dụng website. Bạn cần hỗ trợ điều gì hôm nay?`;
+  }
+
+  return `Cảm ơn câu hỏi của bạn! Tôi là Trợ lý AI của **VN.ITJobs**.\n\nBạn có thể tìm kiếm việc làm IT mới nhất trên thanh tìm kiếm của trang chủ, hoặc nếu cần hỗ trợ kỹ thuật, hãy gửi thông tin qua tab **"Báo lỗi"** để Ban Quản trị hỗ trợ bạn nhanh nhất nhé!`;
+}
+
 module.exports = {
   callGemini,
   extractTextFromPdf,
@@ -1345,4 +1432,5 @@ module.exports = {
   draftRejectionLetter,
   generateArticleWithAi,
   curateArticleFromSourceWithAi,
+  chatWithSupportAssistant,
 };

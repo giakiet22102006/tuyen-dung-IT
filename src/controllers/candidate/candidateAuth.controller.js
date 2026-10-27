@@ -11,6 +11,7 @@ const {
   changePasswordSchema,
 } = require("../../validators/auth.validator");
 const env = require("../../config/env");
+const isSafeRedirect = require("../../utils/sanitizeRedirect");
 
 const renderSignup = (req, res) => {
   res.render("pages/candidate-signup", {
@@ -333,7 +334,7 @@ const postLogin = async (req, res) => {
   }).catch((err) => console.error("Lỗi gửi email cảnh báo bảo mật ứng viên:", err.message));
 
   req.flash("success", "Đăng nhập thành công!");
-  const redirectUrl = req.body.next && req.body.next.startsWith("/") ? req.body.next : "/";
+  const redirectUrl = isSafeRedirect(req.body.next) ? req.body.next : "/";
   res.redirect(redirectUrl);
 };
 
@@ -405,7 +406,7 @@ const redirectToGoogle = (req, res) => {
     return res.redirect("/candidate/login");
   }
 
-  const nextUrl = req.query.next || "/";
+  const nextUrl = isSafeRedirect(req.query.next) ? req.query.next : "/";
   const authUrl = googleAuthService.getGoogleAuthUrl("candidate", nextUrl, req);
   res.redirect(authUrl);
 };
@@ -424,7 +425,7 @@ const handleGoogleCallback = async (req, res) => {
   if (state) {
     try {
       const decoded = JSON.parse(Buffer.from(state, "base64url").toString("utf8"));
-      if (decoded && decoded.next && decoded.next.startsWith("/")) {
+      if (decoded && isSafeRedirect(decoded.next)) {
         nextUrl = decoded.next;
       }
     } catch (e) {}

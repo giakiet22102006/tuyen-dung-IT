@@ -13,6 +13,7 @@ const { Skill, Job, Application, Review, Employer, Feedback, Candidate, CompanyF
 const { uploadCV, saveCvBuffer } = require("../../services/storage.service");
 const { generateItProfilePdf } = require("../../services/pdfGenerator.service");
 const { getCompanyMapData } = require("../../utils/googleMaps");
+const { chatWithSupportAssistant } = require("../../services/ai.service");
 
 const renderIndex = async (req, res) => {
   const [totalPublicJobs, topEmployers, marqueeEmployers] = await Promise.all([
@@ -54,20 +55,29 @@ const renderSearch = async (req, res) => {
     didYouMean,
   } = searchResult;
 
-  // Xác định tiêu đề hiển thị
+  const escapeHtml = (str) =>
+    String(str || "").replace(/[&<>"']/g, (s) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;",
+    }[s] || s));
+
+  // Xác định tiêu đề hiển thị an toàn chống Reflected XSS
   let searchTitle = `${pagination.totalItems} việc làm IT`;
   if (isFuzzyApplied) {
-    searchTitle = `${pagination.totalItems} việc làm cho từ khóa gợi ý <span class="text-[#0088FF]">"${suggestedKeyword}"</span>`;
+    searchTitle = `${pagination.totalItems} việc làm cho từ khóa gợi ý <span class="text-[#0088FF]">"${escapeHtml(suggestedKeyword)}"</span>`;
   } else if (benefit) {
     const foundBenefit = BENEFITS.find((b) => b.value === benefit);
-    searchTitle = `${pagination.totalItems} việc làm có đãi ngộ <span class="text-[#0088FF]">"${foundBenefit ? foundBenefit.label : benefit}"</span>`;
+    searchTitle = `${pagination.totalItems} việc làm có đãi ngộ <span class="text-[#0088FF]">"${escapeHtml(foundBenefit ? foundBenefit.label : benefit)}"</span>`;
   } else if (skill) {
-    searchTitle = `${pagination.totalItems} việc làm <span class="text-[#0088FF]">${skill}</span>`;
+    searchTitle = `${pagination.totalItems} việc làm <span class="text-[#0088FF]">${escapeHtml(skill)}</span>`;
   } else if (keyword) {
-    searchTitle = `${pagination.totalItems} việc làm cho từ khóa <span class="text-[#0088FF]">"${keyword}"</span>`;
+    searchTitle = `${pagination.totalItems} việc làm cho từ khóa <span class="text-[#0088FF]">"${escapeHtml(keyword)}"</span>`;
   } else if (city) {
     const foundCity = CITIES.find((c) => c.value === city);
-    searchTitle = `${pagination.totalItems} việc làm tại <span class="text-[#0088FF]">${foundCity ? foundCity.label : city}</span>`;
+    searchTitle = `${pagination.totalItems} việc làm tại <span class="text-[#0088FF]">${escapeHtml(foundCity ? foundCity.label : city)}</span>`;
   }
 
   res.render("pages/search", {
@@ -263,6 +273,66 @@ const postSubmitFeedback = async (req, res) => {
   }
 };
 
+// Lưu lịch sử rate-limit gửi chat hỗ trợ (chống spam)
+const chatRateLimitMap = new Map();
+
+const postChatAssistant = async (req, res) => {
+  try {
+    const ip = req.ip || req.headers["x-forwarded-for"] || "127.0.0.1";
+    const now = Date.now();
+    const userWindow = chatRateLimitMap.get(ip) || [];
+    const recentRequests = userWindow.filter((ts) => now - ts < 60 * 1000);
+
+    if (recentRequests.length >= 25) {
+      return res.status(429).json({
+        success: false,
+        message: "Bạn đang gửi tin nhắn quá nhanh. Vui lòng đợi một lát rồi thử lại nhé!",
+      });
+    }
+
+    recentRequests.push(now);
+    chatRateLimitMap.set(ip, recentRequests);
+
+    // Dọn dẹp bộ nhớ định kỳ nếu Map quá lớn
+    if (chatRateLimitMap.size > 5000) {
+      for (const [k, v] of chatRateLimitMap.entries()) {
+        if (v.every((ts) => now - ts > 60 * 1000)) chatRateLimitMap.delete(k);
+      }
+    }
+
+    const { message, history } = req.body;
+    if (!message || typeof message !== "string" || !message.trim()) {
+      return res.status(400).json({ success: false, message: "Vui lòng nhập nội dung câu hỏi." });
+    }
+
+    const cleanMessage = message.trim().slice(0, 500);
+    const safeHistory = Array.isArray(history)
+      ? history.slice(-6).map((h) => ({
+          role: h.role === "user" ? "user" : "assistant",
+          text: String(h.text || "").slice(0, 500),
+        }))
+      : [];
+
+    const reply = await chatWithSupportAssistant({
+      message: cleanMessage,
+      history: safeHistory,
+      userRole: req.role || "guest",
+      userName: req.user ? (req.user.fullName || req.user.companyName) : "",
+    });
+
+    return res.json({
+      success: true,
+      reply,
+    });
+  } catch (err) {
+    console.error("Lỗi xử lý chat trợ lý:", err.message);
+    return res.status(500).json({
+      success: false,
+      message: "Có lỗi khi xử lý tin nhắn của bạn: " + err.message,
+    });
+  }
+};
+
 const renderJobDetails = async (req, res) => {
   const data = await getJobDetails(req.params.slug);
   if (!data) {
@@ -405,6 +475,7 @@ module.exports = {
   renderCompanyDetails,
   postCompanyReview,
   postSubmitFeedback,
+  postChatAssistant,
   renderJobDetails,
   postApplyJob,
   getSearchSuggestions,

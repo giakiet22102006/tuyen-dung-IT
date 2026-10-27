@@ -63,8 +63,8 @@ router.get("/pipeline", requireEmployer, asyncHandler(employerCv.renderHiringPip
 router.get("/cvs/:id", requireEmployer, asyncHandler(employerCv.renderCvDetails));
 router.post("/cvs/:id/status", requireEmployer, doubleCsrfProtection, asyncHandler(employerCv.postCvStatus));
 router.post("/cvs/:id/invite", requireEmployer, doubleCsrfProtection, asyncHandler(employerCv.postSendInterviewInvite));
-router.post("/cvs/:id/ai-draft-invite", requireEmployer, asyncHandler(employerCv.postAiDraftInterviewInvite));
-router.post("/cvs/:id/ai-draft-rejection", requireEmployer, asyncHandler(employerCv.postAiDraftRejection));
+router.post("/cvs/:id/ai-draft-invite", requireEmployer, doubleCsrfProtection, asyncHandler(employerCv.postAiDraftInterviewInvite));
+router.post("/cvs/:id/ai-draft-rejection", requireEmployer, doubleCsrfProtection, asyncHandler(employerCv.postAiDraftRejection));
 router.post("/cvs/:id/notes", requireEmployer, doubleCsrfProtection, asyncHandler(employerCv.postAddInternalNote));
 router.post("/cvs/:id/rating", requireEmployer, doubleCsrfProtection, asyncHandler(employerCv.postUpdateRating));
 router.post("/cvs/:id/schedule", requireEmployer, doubleCsrfProtection, asyncHandler(employerCv.postScheduleInterview));

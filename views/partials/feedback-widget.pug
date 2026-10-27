@@ -1,35 +1,60 @@
 //- views/partials/feedback-widget.pug
 //- Floating Button
 div(class="fixed bottom-[20px] right-[20px] sm:bottom-[24px] sm:right-[24px] z-50" style="position: fixed; bottom: 24px; right: 24px; z-index: 999999;")
-    button(type="button" id="btnOpenFeedbackWidget" class="group flex items-center gap-[8px] bg-gradient-to-r from-[#000071] to-[#0088FF] hover:from-[#000055] hover:to-[#0070D2] text-white py-[10px] px-[16px] rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all cursor-pointer font-[600] text-[13px] border border-white/20" title="Báo cáo sự cố hoặc đánh giá chất lượng web")
-        span(class="w-[20px] h-[20px] rounded-full bg-white/20 flex items-center justify-center text-[12px] group-hover:rotate-12 transition-transform")
-            <i class="fa-solid fa-headset"></i>
-        span(class="hidden sm:inline") Báo Lỗi & Đánh Giá
-        span(class="sm:hidden") Hỗ trợ
+    button(type="button" id="btnOpenFeedbackWidget" class="group flex items-center gap-[8px] bg-gradient-to-r from-[#000071] to-[#0088FF] hover:from-[#000055] hover:to-[#0070D2] text-white py-[10px] px-[16px] rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all cursor-pointer font-[600] text-[13px] border border-white/20" title="Trợ lý AI, Báo cáo sự cố hoặc đánh giá chất lượng web")
+        span(class="w-[22px] h-[22px] rounded-full bg-white/20 flex items-center justify-center text-[12px] group-hover:rotate-12 transition-transform")
+            <i class="fa-solid fa-comments"></i>
+        span(class="hidden sm:inline") Hỗ Trợ & Trợ Lý AI
+        span(class="sm:hidden") Trợ lý AI
 
-//- Floating Feedback Dialog
+//- Floating Support & Feedback Dialog
 div(id="modalFeedbackWidget" class="fixed inset-0 z-50 hidden items-center justify-center sm:items-end sm:justify-end sm:p-[24px] bg-black/50 sm:bg-transparent backdrop-blur-xs sm:backdrop-blur-none" style="z-index: 1000000;")
-    div(class="bg-white rounded-[14px] shadow-2xl border border-gray-200 w-[92vw] max-w-[420px] overflow-hidden animate-fadeIn sm:mb-[60px]")
+    div(class="bg-white rounded-[16px] shadow-2xl border border-gray-200 w-[94vw] max-w-[420px] overflow-hidden animate-fadeIn sm:mb-[60px] flex flex-col")
         //- Header
-        div(class="p-[16px] bg-gradient-to-r from-[#000071] to-[#0088FF] text-white flex items-center justify-between")
-            div(class="flex items-center gap-[8px]")
-                div(class="w-[32px] h-[32px] rounded-full bg-white/20 flex items-center justify-center text-[14px]")
-                    <i class="fa-solid fa-comment-dots"></i>
+        div(class="p-[14px] bg-gradient-to-r from-[#000071] to-[#0088FF] text-white flex items-center justify-between shadow-xs")
+            div(class="flex items-center gap-[10px]")
+                div(class="w-[34px] h-[34px] rounded-full bg-white/20 flex items-center justify-center text-[15px] shrink-0 shadow-inner")
+                    <i class="fa-solid fa-robot"></i>
                 div
-                    h3(class="font-[700] text-[15px] leading-tight") Hỗ Trợ & Góp Ý Website
-                    p(class="text-[11px] text-white/80") Gửi trực tiếp đến Ban Quản trị VN.ITJobs
-            button(type="button" id="btnCloseFeedbackWidget" class="text-white/80 hover:text-white text-[18px] p-[4px] cursor-pointer")
+                    h3(class="font-[700] text-[14px] leading-tight") Hỗ Trợ & Trợ Lý VN.ITJobs
+                    p(class="text-[11px] text-white/85 flex items-center gap-[5px] mt-[1px]")
+                        span(class="w-[7px] h-[7px] rounded-full bg-emerald-400 inline-block animate-pulse")
+                        span Sẵn sàng hỗ trợ trực tuyến 24/7
+            button(type="button" id="btnCloseFeedbackWidget" class="text-white/80 hover:text-white text-[18px] p-[4px] cursor-pointer transition-colors" title="Đóng cửa sổ")
                 <i class="fa-solid fa-xmark"></i>
 
         //- Tabs
-        div(class="flex border-b border-gray-200 bg-gray-50 text-[13px] font-[600]")
-            button(type="button" id="tabFeedbackBug" class="flex-1 py-[10px] text-center border-b-2 border-[#0088FF] text-[#0088FF] bg-white cursor-pointer transition-all")
-                <i class="fa-solid fa-bug mr-[4px]"></i> Báo cáo lỗi
-            button(type="button" id="tabFeedbackRating" class="flex-1 py-[10px] text-center border-b-2 border-transparent text-gray-500 hover:text-gray-800 cursor-pointer transition-all")
-                <i class="fa-solid fa-star text-amber-500 mr-[4px]"></i> Đánh giá web
+        div(class="flex border-b border-gray-200 bg-gray-50 text-[12px] font-[600]")
+            button(type="button" id="tabFeedbackChat" class="flex-1 py-[9px] text-center border-b-2 border-[#0088FF] text-[#0088FF] bg-white cursor-pointer transition-all")
+                <i class="fa-solid fa-robot mr-[4px]"></i> Trợ lý AI
+            button(type="button" id="tabFeedbackBug" class="flex-1 py-[9px] text-center border-b-2 border-transparent text-gray-500 hover:text-gray-800 cursor-pointer transition-all")
+                <i class="fa-solid fa-bug mr-[4px]"></i> Báo lỗi
+            button(type="button" id="tabFeedbackRating" class="flex-1 py-[9px] text-center border-b-2 border-transparent text-gray-500 hover:text-gray-800 cursor-pointer transition-all")
+                <i class="fa-solid fa-star text-amber-500 mr-[4px]"></i> Đánh giá
 
-        //- Body / Forms
-        div(class="p-[16px]")
+        //- 1. KHUNG CHATBOX TRỢ LÝ AI
+        div(id="chatboxContainer" class="flex flex-col")
+            //- Vùng hiển thị tin nhắn
+            div(id="chatMessages" class="p-[12px] space-y-[10px] overflow-y-auto max-h-[330px] min-h-[250px] text-[13px] bg-slate-50/70 select-text")
+                //- Dynamic messages go here
+
+            //- Vùng gợi ý câu hỏi nhanh (Quick Prompts)
+            div(id="chatQuickChips" class="px-[10px] py-[6px] bg-white border-t border-slate-100 flex items-center gap-[6px] overflow-x-auto text-[11px] whitespace-nowrap scrollbar-none")
+                span(class="text-gray-400 font-[500] shrink-0") <i class="fa-regular fa-lightbulb text-amber-500 mr-[2px]"></i> Gợi ý:
+                button(type="button" class="quick-chip-btn bg-slate-100 hover:bg-blue-50 hover:text-[#0088FF] border border-slate-200 hover:border-blue-200 text-gray-700 px-[8px] py-[3px] rounded-full transition-all cursor-pointer") Cách tạo CV IT chuẩn
+                button(type="button" class="quick-chip-btn bg-slate-100 hover:bg-blue-50 hover:text-[#0088FF] border border-slate-200 hover:border-blue-200 text-gray-700 px-[8px] py-[3px] rounded-full transition-all cursor-pointer") Tìm việc lương cao
+                button(type="button" class="quick-chip-btn bg-slate-100 hover:bg-blue-50 hover:text-[#0088FF] border border-slate-200 hover:border-blue-200 text-gray-700 px-[8px] py-[3px] rounded-full transition-all cursor-pointer") Đăng tin tuyển dụng
+                button(type="button" id="quickChipSwitchBug" class="bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 px-[8px] py-[3px] rounded-full transition-all cursor-pointer") <i class="fa-solid fa-bug text-red-500 mr-[2px]"></i> Báo lỗi web
+
+            //- Ô nhập tin nhắn
+            form(id="formChatAssistant" class="p-[10px] bg-white border-t border-gray-200 flex items-center gap-[6px]")
+                input(type="text" id="chatInputMessage" placeholder="Nhập câu hỏi hoặc thắc mắc của bạn..." maxlength="500" autocomplete="off" required class="flex-1 border border-gray-300 rounded-[8px] px-[12px] py-[8px] text-[13px] focus:outline-none focus:border-[#0088FF] focus:ring-1 focus:ring-[#0088FF] bg-slate-50 focus:bg-white transition-all")
+                button(type="submit" id="btnSendChatMessage" class="bg-[#0088FF] hover:bg-[#0070D2] text-white w-[36px] h-[36px] rounded-[8px] flex items-center justify-center shrink-0 cursor-pointer shadow-xs transition-transform active:scale-95 disabled:opacity-50" title="Gửi tin nhắn")
+                    span(id="chatSendIcon") <i class="fa-solid fa-paper-plane text-[13px]"></i>
+                    span(id="chatSendSpin" class="hidden") <i class="fa-solid fa-circle-notch animate-spin text-[13px]"></i>
+
+        //- 2. KHUNG FORM BÁO LỖI & ĐÁNH GIÁ (Gốc)
+        div(id="feedbackFormContainer" class="hidden p-[16px]")
             //- Thông báo thành công
             div(id="feedbackSuccessMsg" class="hidden p-[16px] bg-emerald-50 border border-emerald-200 rounded-[8px] text-center text-emerald-900")
                 div(class="text-emerald-600 text-[28px] mb-[6px]")
@@ -74,23 +99,82 @@ script.
         var btnOpen = document.getElementById("btnOpenFeedbackWidget");
         var modal = document.getElementById("modalFeedbackWidget");
         var btnClose = document.getElementById("btnCloseFeedbackWidget");
+        
+        // Tabs
+        var tabChat = document.getElementById("tabFeedbackChat");
         var tabBug = document.getElementById("tabFeedbackBug");
         var tabRating = document.getElementById("tabFeedbackRating");
+        
+        // Containers
+        var chatboxContainer = document.getElementById("chatboxContainer");
+        var feedbackFormContainer = document.getElementById("feedbackFormContainer");
+        
+        // Feedback elements
         var inputType = document.getElementById("fbType");
         var ratingBlock = document.getElementById("ratingBlock");
         var submitText = document.getElementById("fbSubmitText");
-        var form = document.getElementById("formFeedbackWidget");
+        var formFeedback = document.getElementById("formFeedbackWidget");
         var successMsg = document.getElementById("feedbackSuccessMsg");
         var spin = document.getElementById("fbSpin");
         var btnSubmit = document.getElementById("btnSubmitFeedback");
         var starPicker = document.getElementById("starPickerContainer");
         var inputRating = document.getElementById("fbRatingVal");
 
+        // Chat elements
+        var chatMessages = document.getElementById("chatMessages");
+        var formChat = document.getElementById("formChatAssistant");
+        var chatInput = document.getElementById("chatInputMessage");
+        var btnSendChat = document.getElementById("btnSendChatMessage");
+        var chatSendIcon = document.getElementById("chatSendIcon");
+        var chatSendSpin = document.getElementById("chatSendSpin");
+        var quickChips = document.querySelectorAll(".quick-chip-btn");
+        var quickChipSwitchBug = document.getElementById("quickChipSwitchBug");
+
         if (!btnOpen || !modal) return;
+
+        // Tab state management
+        function activateTab(tabName) {
+            tabChat.className = "flex-1 py-[9px] text-center border-b-2 border-transparent text-gray-500 hover:text-gray-800 cursor-pointer transition-all";
+            tabBug.className = "flex-1 py-[9px] text-center border-b-2 border-transparent text-gray-500 hover:text-gray-800 cursor-pointer transition-all";
+            tabRating.className = "flex-1 py-[9px] text-center border-b-2 border-transparent text-gray-500 hover:text-gray-800 cursor-pointer transition-all";
+
+            if (tabName === "chat") {
+                tabChat.className = "flex-1 py-[9px] text-center border-b-2 border-[#0088FF] text-[#0088FF] bg-white cursor-pointer transition-all";
+                chatboxContainer.classList.remove("hidden");
+                feedbackFormContainer.classList.add("hidden");
+                scrollChatToBottom();
+            } else if (tabName === "bug") {
+                tabBug.className = "flex-1 py-[9px] text-center border-b-2 border-[#0088FF] text-[#0088FF] bg-white cursor-pointer transition-all";
+                chatboxContainer.classList.add("hidden");
+                feedbackFormContainer.classList.remove("hidden");
+                inputType.value = "bug";
+                ratingBlock.classList.add("hidden");
+                submitText.textContent = "Gửi Báo Cáo Sự Cố";
+            } else if (tabName === "rating") {
+                tabRating.className = "flex-1 py-[9px] text-center border-b-2 border-amber-500 text-amber-700 bg-white cursor-pointer transition-all";
+                chatboxContainer.classList.add("hidden");
+                feedbackFormContainer.classList.remove("hidden");
+                inputType.value = "rating";
+                ratingBlock.classList.remove("hidden");
+                submitText.textContent = "Gửi Đánh Giá Website";
+            }
+        }
+
+        tabChat.addEventListener("click", function() { activateTab("chat"); });
+        tabBug.addEventListener("click", function() { activateTab("bug"); });
+        tabRating.addEventListener("click", function() { activateTab("rating"); });
+
+        if (quickChipSwitchBug) {
+            quickChipSwitchBug.addEventListener("click", function() {
+                activateTab("bug");
+            });
+        }
 
         btnOpen.addEventListener("click", function() {
             modal.classList.remove("hidden");
             modal.classList.add("flex");
+            activateTab("chat");
+            setTimeout(scrollChatToBottom, 100);
         });
 
         function hideModal() {
@@ -100,25 +184,171 @@ script.
 
         if (btnClose) btnClose.addEventListener("click", hideModal);
 
-        if (tabBug && tabRating) {
-            tabBug.addEventListener("click", function() {
-                inputType.value = "bug";
-                tabBug.className = "flex-1 py-[10px] text-center border-b-2 border-[#0088FF] text-[#0088FF] bg-white cursor-pointer transition-all";
-                tabRating.className = "flex-1 py-[10px] text-center border-b-2 border-transparent text-gray-500 hover:text-gray-800 cursor-pointer transition-all";
-                ratingBlock.classList.add("hidden");
-                submitText.textContent = "Gửi Báo Cáo Sự Cố";
-            });
+        // =======================
+        // CHATBOX LOGIC
+        // =======================
+        var chatHistory = [];
+        var CHAT_STORAGE_KEY = "itj_support_chat_v1";
 
-            tabRating.addEventListener("click", function() {
-                inputType.value = "rating";
-                tabRating.className = "flex-1 py-[10px] text-center border-b-2 border-amber-500 text-amber-700 bg-white cursor-pointer transition-all";
-                tabBug.className = "flex-1 py-[10px] text-center border-b-2 border-transparent text-gray-500 hover:text-gray-800 cursor-pointer transition-all";
-                ratingBlock.classList.remove("hidden");
-                submitText.textContent = "Gửi Đánh Giá Website";
+        function escapeHtml(text) {
+            var div = document.createElement("div");
+            div.textContent = text || "";
+            return div.innerHTML;
+        }
+
+        function formatMarkdown(text) {
+            var escaped = escapeHtml(text);
+            escaped = escaped.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+            escaped = escaped.replace(/\*(.*?)\*/g, "<em>$1</em>");
+            escaped = escaped.replace(/\n/g, "<br/>");
+            return escaped;
+        }
+
+        function scrollChatToBottom() {
+            if (chatMessages) {
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+        }
+
+        function renderMessage(role, text) {
+            var wrapper = document.createElement("div");
+            wrapper.className = role === "user" ? "flex justify-end" : "flex justify-start items-start gap-[8px]";
+
+            if (role === "assistant") {
+                wrapper.innerHTML = `
+                    <div class="w-[26px] h-[26px] rounded-full bg-gradient-to-tr from-[#000071] to-[#0088FF] text-white flex items-center justify-center text-[11px] shrink-0 mt-[2px] shadow-xs">
+                        <i class="fa-solid fa-robot"></i>
+                    </div>
+                    <div class="max-w-[85%] bg-white border border-gray-200 rounded-[12px] rounded-tl-none p-[10px] text-gray-800 leading-relaxed shadow-xs text-[12.5px]">
+                        ${formatMarkdown(text)}
+                    </div>
+                `;
+            } else {
+                wrapper.innerHTML = `
+                    <div class="max-w-[85%] bg-[#0088FF] text-white rounded-[12px] rounded-tr-none p-[10px] leading-relaxed shadow-xs text-[12.5px]">
+                        ${escapeHtml(text)}
+                    </div>
+                `;
+            }
+
+            chatMessages.appendChild(wrapper);
+            scrollChatToBottom();
+        }
+
+        function showTypingIndicator() {
+            var indicator = document.createElement("div");
+            indicator.id = "chatTypingBubble";
+            indicator.className = "flex justify-start items-start gap-[8px]";
+            indicator.innerHTML = `
+                <div class="w-[26px] h-[26px] rounded-full bg-gradient-to-tr from-[#000071] to-[#0088FF] text-white flex items-center justify-center text-[11px] shrink-0 mt-[2px]">
+                    <i class="fa-solid fa-robot"></i>
+                </div>
+                <div class="bg-white border border-gray-200 rounded-[12px] rounded-tl-none py-[8px] px-[12px] text-gray-400 shadow-xs flex items-center gap-[4px]">
+                    <span class="w-[6px] h-[6px] rounded-full bg-blue-500 animate-bounce"></span>
+                    <span class="w-[6px] h-[6px] rounded-full bg-blue-500 animate-bounce" style="animation-delay: 0.15s"></span>
+                    <span class="w-[6px] h-[6px] rounded-full bg-blue-500 animate-bounce" style="animation-delay: 0.3s"></span>
+                </div>
+            `;
+            chatMessages.appendChild(indicator);
+            scrollChatToBottom();
+        }
+
+        function removeTypingIndicator() {
+            var ind = document.getElementById("chatTypingBubble");
+            if (ind) ind.remove();
+        }
+
+        // Initialize Chat History
+        try {
+            var saved = sessionStorage.getItem(CHAT_STORAGE_KEY);
+            if (saved) {
+                chatHistory = JSON.parse(saved);
+            }
+        } catch(e) {
+            chatHistory = [];
+        }
+
+        if (chatHistory && chatHistory.length > 0) {
+            chatHistory.forEach(function(m) {
+                renderMessage(m.role, m.text);
+            });
+        } else {
+            var greeting = "Xin chào bạn! 👋 Tôi là Trợ lý AI của **VN.ITJobs**.\nTôi có thể hỗ trợ bạn tìm kiếm việc làm IT, mẹo tối ưu CV, quy trình đăng tin hoặc hướng dẫn sử dụng website. Bạn cần hỗ trợ gì hôm nay?";
+            renderMessage("assistant", greeting);
+            chatHistory.push({ role: "assistant", text: greeting });
+        }
+
+        // Handle Send Chat
+        async function sendUserMessage(msgText) {
+            var text = (msgText || "").trim();
+            if (!text) return;
+
+            renderMessage("user", text);
+            chatHistory.push({ role: "user", text: text });
+            chatInput.value = "";
+            chatInput.focus();
+
+            btnSendChat.disabled = true;
+            chatSendIcon.classList.add("hidden");
+            chatSendSpin.classList.remove("hidden");
+            showTypingIndicator();
+
+            var csrfMeta = document.querySelector('meta[name="csrf-token"]');
+            var csrfToken = csrfMeta ? csrfMeta.getAttribute("content") : "";
+
+            try {
+                var res = await fetch("/api/chat-assistant", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "x-csrf-token": csrfToken
+                    },
+                    body: JSON.stringify({
+                        message: text,
+                        history: chatHistory.slice(-6)
+                    })
+                });
+
+                var data = await res.json();
+                removeTypingIndicator();
+
+                if (data.success && data.reply) {
+                    renderMessage("assistant", data.reply);
+                    chatHistory.push({ role: "assistant", text: data.reply });
+                    if (chatHistory.length > 12) chatHistory = chatHistory.slice(-12);
+                    sessionStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(chatHistory));
+                } else {
+                    renderMessage("assistant", data.message || "Rất tiếc, hiện tại hệ thống đang bận. Bạn vui lòng thử lại sau giây lát nhé!");
+                }
+            } catch(err) {
+                removeTypingIndicator();
+                console.error("Lỗi chat:", err);
+                renderMessage("assistant", "⚠️ Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng và thử lại!");
+            } finally {
+                btnSendChat.disabled = false;
+                chatSendIcon.classList.remove("hidden");
+                chatSendSpin.classList.add("hidden");
+            }
+        }
+
+        if (formChat) {
+            formChat.addEventListener("submit", function(e) {
+                e.preventDefault();
+                sendUserMessage(chatInput.value);
             });
         }
 
-        // Xử lý chọn sao rating
+        // Quick chip click
+        quickChips.forEach(function(chip) {
+            chip.addEventListener("click", function() {
+                var query = chip.textContent.trim();
+                sendUserMessage(query);
+            });
+        });
+
+        // =======================
+        // FEEDBACK / RATING FORM LOGIC
+        // =======================
         if (starPicker) {
             var stars = starPicker.querySelectorAll(".star-btn");
             stars.forEach(function(starBtn) {
@@ -136,9 +366,8 @@ script.
             });
         }
 
-        // Xử lý Submit AJAX
-        if (form) {
-            form.addEventListener("submit", async function(e) {
+        if (formFeedback) {
+            formFeedback.addEventListener("submit", async function(e) {
                 e.preventDefault();
                 btnSubmit.disabled = true;
                 if (spin) spin.classList.remove("hidden");
@@ -167,12 +396,12 @@ script.
                     });
                     var data = await res.json();
                     if (data.success) {
-                        form.classList.add("hidden");
+                        formFeedback.classList.add("hidden");
                         successMsg.classList.remove("hidden");
                         setTimeout(function() {
                             hideModal();
-                            form.reset();
-                            form.classList.remove("hidden");
+                            formFeedback.reset();
+                            formFeedback.classList.remove("hidden");
                             successMsg.classList.add("hidden");
                         }, 2200);
                     } else {

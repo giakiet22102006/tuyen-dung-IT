@@ -2,6 +2,17 @@
 const nodemailer = require("nodemailer");
 const env = require("../config/env");
 
+function escapeHtml(text) {
+  if (!text || typeof text !== "string") return "";
+  return text.replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  }[c] || c));
+}
+
 let transporter = null;
 
 function getTransporter() {
@@ -171,11 +182,11 @@ async function sendInterviewInvitationEmail({
   const mailTransporter = getTransporter();
   const safeSubject = subject || `[VN.ITJobs] Thư mời phỏng vấn vị trí ${jobTitle} - ${companyName}`;
 
-  // Format content newlines to HTML <p> / <br>
+  // Format content newlines to HTML <p> / <br> với HTML entity escaping an toàn
   const formattedContent = String(content || "")
     .replace(/\r\n/g, "\n")
     .split("\n")
-    .map((line) => line.trim() ? `<p style="margin: 0 0 10px 0; line-height: 1.6; color: #333333;">${line}</p>` : `<br/>`)
+    .map((line) => line.trim() ? `<p style="margin: 0 0 10px 0; line-height: 1.6; color: #333333;">${escapeHtml(line)}</p>` : `<br/>`)
     .join("");
 
   const htmlContent = `
@@ -291,7 +302,7 @@ async function sendRejectionEmail({
     ? String(note)
         .replace(/\r\n/g, "\n")
         .split("\n")
-        .map((line) => line.trim() ? `<p style="margin: 0 0 10px 0; line-height: 1.6; color: #475569;">${line}</p>` : `<br/>`)
+        .map((line) => line.trim() ? `<p style="margin: 0 0 10px 0; line-height: 1.6; color: #475569;">${escapeHtml(line)}</p>` : `<br/>`)
         .join("")
     : "";
 

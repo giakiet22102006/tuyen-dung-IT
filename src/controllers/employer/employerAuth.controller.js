@@ -12,6 +12,7 @@ const {
 } = require("../../validators/auth.validator");
 const slugify = require("../../utils/slugify");
 const env = require("../../config/env");
+const isSafeRedirect = require("../../utils/sanitizeRedirect");
 
 const renderSignup = (req, res) => {
   res.render("pages/employer-signup", {
@@ -359,7 +360,7 @@ const postLogin = async (req, res) => {
     }).catch((err) => console.error("Lỗi gửi email cảnh báo bảo mật Chuyên viên:", err.message));
 
     req.flash("success", `Chào mừng chuyên viên ${loggedInMember.fullName} đăng nhập thành công!`);
-    const redirectUrl = req.body.next && req.body.next.startsWith("/") ? req.body.next : "/employer/company-profile";
+    const redirectUrl = isSafeRedirect(req.body.next) ? req.body.next : "/employer/company-profile";
     return res.redirect(redirectUrl);
   }
 
@@ -397,7 +398,7 @@ const postLogin = async (req, res) => {
   }).catch((err) => console.error("Lỗi gửi email cảnh báo bảo mật NTD:", err.message));
 
   req.flash("success", "Đăng nhập thành công!");
-  const redirectUrl = req.body.next && req.body.next.startsWith("/") ? req.body.next : "/employer/company-profile";
+  const redirectUrl = isSafeRedirect(req.body.next) ? req.body.next : "/employer/company-profile";
   res.redirect(redirectUrl);
 };
 
@@ -469,7 +470,7 @@ const redirectToGoogle = (req, res) => {
     return res.redirect("/employer/login");
   }
 
-  const nextUrl = req.query.next || "/employer/company-profile";
+  const nextUrl = isSafeRedirect(req.query.next) ? req.query.next : "/employer/company-profile";
   const authUrl = googleAuthService.getGoogleAuthUrl("employer", nextUrl, req);
   res.redirect(authUrl);
 };
@@ -488,7 +489,7 @@ const handleGoogleCallback = async (req, res) => {
   if (state) {
     try {
       const decoded = JSON.parse(Buffer.from(state, "base64url").toString("utf8"));
-      if (decoded && decoded.next && decoded.next.startsWith("/")) {
+      if (decoded && isSafeRedirect(decoded.next)) {
         nextUrl = decoded.next;
       }
     } catch (e) {}

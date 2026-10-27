@@ -140,7 +140,7 @@ block main
                                                 if app.rejectionNote
                                                     div(class="border border-gray-200 rounded-[8px] p-[14px] bg-white")
                                                         h4(class="text-[12px] font-[700] text-gray-500 uppercase tracking-wide mb-[6px]") Lời nhắn từ Nhà tuyển dụng:
-                                                        div(class="text-[13px] text-gray-800 whitespace-pre-line leading-relaxed") !{app.rejectionNote}
+                                                        div(class="text-[13px] text-gray-800 whitespace-pre-line leading-relaxed")= app.rejectionNote
 
                                                 div(class="p-[12px] bg-blue-50/60 border border-blue-200 rounded-[8px] text-[13px] text-blue-900")
                                                     <i class="fa-solid fa-lightbulb text-[#0088FF] mr-[4px]"></i> Đừng nản lòng nhé! Hãy tiếp tục trau dồi kinh nghiệm và khám phá các vị trí IT tiềm năng khác trên VN.ITJobs.
@@ -179,7 +179,7 @@ block main
 
                                                 div(class="border border-gray-200 rounded-[8px] p-[14px] bg-white")
                                                     h4(class="text-[12px] font-[700] text-gray-500 uppercase tracking-wide mb-[8px]") Lời nhắn từ Nhà tuyển dụng:
-                                                    div(class="text-[14px] text-gray-800 whitespace-pre-line leading-relaxed") !{app.interviewInvitation.content}
+                                                    div(class="text-[14px] text-gray-800 whitespace-pre-line leading-relaxed")= app.interviewInvitation.content
 
                                                 div(class="p-[12px] bg-blue-50/60 border border-blue-200 rounded-[8px] text-[13px] space-y-[4px]")
                                                     div(class="font-[700] text-blue-900") 📞 Kênh liên hệ trực tiếp:

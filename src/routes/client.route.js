@@ -14,6 +14,7 @@ const env = require("../config/env");
 const { requireCandidate } = require("../middlewares/auth.middleware");
 const { uploadCvMiddleware } = require("../middlewares/upload.middleware");
 const { doubleCsrfProtection } = require("../middlewares/csrf.middleware");
+const isSafeRedirect = require("../utils/sanitizeRedirect");
 
 router.get("/", asyncHandler(clientController.renderIndex));
 router.get("/search", asyncHandler(clientController.renderSearch));
@@ -53,6 +54,11 @@ router.post(
   "/api/feedback",
   asyncHandler(clientController.postSubmitFeedback)
 );
+router.post(
+  "/api/chat-assistant",
+  doubleCsrfProtection,
+  asyncHandler(clientController.postChatAssistant)
+);
 router.get("/jobs/:slug", asyncHandler(clientController.renderJobDetails));
 router.post(
   "/jobs/:slug/apply",
@@ -62,13 +68,13 @@ router.post(
   asyncHandler(clientController.postApplyJob)
 );
 
-// Dev helpers for visual verification and testing
-if (process.env.NODE_ENV !== "production") {
+// Dev helpers exclusively for test suites (blocked in development & production)
+if (env.NODE_ENV === "test") {
   router.get("/_dev/login-candidate", async (req, res) => {
     const candidate = (await Candidate.findOne({})) || { _id: "67b8f9e01234567890abcdef", fullName: "Lê Văn A", tokenVersion: 0 };
     const token = signUserToken(candidate, "candidate");
     res.cookie("itj_token", token, { httpOnly: true, sameSite: "lax" });
-    res.redirect(req.query.to || "/");
+    res.redirect(isSafeRedirect(req.query.to) ? req.query.to : "/");
   });
 
   router.get("/_dev/login-employer", async (req, res) => {
@@ -83,7 +89,7 @@ if (process.env.NODE_ENV !== "production") {
     }
     const token = signUserToken(employer, "employer");
     res.cookie("itj_token", token, { httpOnly: true, sameSite: "lax" });
-    res.redirect(req.query.to || "/employer/company-profile");
+    res.redirect(isSafeRedirect(req.query.to) ? req.query.to : "/employer/company-profile");
   });
 
   router.get("/_dev/login-admin", async (req, res) => {
@@ -101,7 +107,7 @@ if (process.env.NODE_ENV !== "production") {
     }
     const token = signAdminToken(admin);
     res.cookie("itj_admin_token", token, { httpOnly: true, sameSite: "lax" });
-    res.redirect(req.query.to || `/${env.ADMIN_PATH}`);
+    res.redirect(isSafeRedirect(req.query.to) ? req.query.to : `/${env.ADMIN_PATH}`);
   });
 }
 

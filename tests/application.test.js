@@ -497,6 +497,7 @@ describe("Phase 5: Candidate Profile, Application & Employer CV Management Tests
         .post(`/employer/cvs/${appDoc._id}/ai-draft-rejection`)
         .set("Cookie", page.cookies)
         .send({
+          _csrf: page.csrfToken,
           reasonType: "Chưa đủ kinh nghiệm yêu cầu",
         });
 

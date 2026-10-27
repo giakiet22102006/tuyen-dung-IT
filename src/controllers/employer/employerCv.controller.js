@@ -5,6 +5,7 @@ const { APPLICATION_STATUS } = require("../../config/constants");
 const { getCVPath, deleteCV } = require("../../services/storage.service");
 const { sendInterviewInvitationEmail, sendRejectionEmail } = require("../../services/mail.service");
 const { draftInterviewInvitation, draftRejectionLetter } = require("../../services/ai.service");
+const sanitizeHtml = require("../../utils/sanitizeHtml");
 const paginate = require("../../utils/pagination");
 
 const renderManageCv = async (req, res) => {
@@ -117,7 +118,7 @@ const postCvStatus = async (req, res) => {
 
   if (status === APPLICATION_STATUS.REJECTED) {
     application.rejectionReason = rejectionReason ? rejectionReason.trim() : (application.rejectionReason || "Chưa phù hợp với yêu cầu vị trí tại thời điểm này");
-    application.rejectionNote = rejectionNote ? rejectionNote.trim() : "";
+    application.rejectionNote = rejectionNote ? sanitizeHtml(rejectionNote.trim()) : "";
     application.rejectedAt = new Date();
 
     const shouldSendEmail = sendEmail === "true" || sendEmail === "on" || sendEmail === true;
@@ -292,7 +293,7 @@ const postSendInterviewInvite = async (req, res) => {
   application.interviewInvitation = {
     sentAt: new Date(),
     subject: subject ? subject.trim() : `[Thư Mời Phỏng Vấn] ${application.jobId ? application.jobId.title : ""}`,
-    content: content.trim(),
+    content: sanitizeHtml(content.trim()),
     employerEmail: req.user.email || "",
     employerPhone: req.user.phone || "",
     interviewDate: interviewDate ? interviewDate.trim() : "",

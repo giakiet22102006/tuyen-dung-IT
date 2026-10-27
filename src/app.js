@@ -77,10 +77,13 @@ app.use(async (req, res, next) => {
     next();
   } catch (err) {
     console.error("❌ Database connection failure:", err.message);
+    const displayError = env.NODE_ENV === "production"
+      ? "Lỗi kết nối cơ sở dữ liệu. Vui lòng liên hệ ban quản trị hệ thống."
+      : String(err.message || "").replace(/[&<>"']/g, (s) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[s] || s));
     return res.status(500).send(`
       <div style="font-family: sans-serif; padding: 40px; text-align: center;">
         <h2 style="color: #dc2626;">❌ Không thể kết nối cơ sở dữ liệu MongoDB</h2>
-        <p>Chi tiết: <strong>${err.message}</strong></p>
+        <p>Chi tiết: <strong>${displayError}</strong></p>
         <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; margin: 20px auto; max-width: 600px; text-align: left;">
           <p><strong>Nguyên nhân phổ biến nhất trên Vercel:</strong></p>
           <p>Trên <strong>MongoDB Atlas</strong>, bạn chưa mở quyền truy cập IP cho Cloud.</p>
