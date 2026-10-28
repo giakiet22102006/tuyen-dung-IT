@@ -32,13 +32,16 @@ block main
                         if errors && errors.email
                             div(class="text-[#FF0000] text-[13px] mt-[-10px] mb-[10px]") #{errors.email}
 
-                    div(class="")
+                    div(class="mb-[15px]")
                         div(class="flex justify-between items-center")
                             label(for="password" class="font-[500] text-[14px]") Mật khẩu *
                             a(href="/employer/forgot-password" class="text-[#0088FF] text-[13px] hover:underline") Quên mật khẩu?
-                        input(type="password" id="password" name="password" required class="border border-[#DEDEDE] rounded-[4px] py-[11px] px-[20px] mt-[5px] mb-[15px] block w-full") 
+                        div(class="relative mt-[5px]")
+                            input(type="password" id="password" name="password" required class="border border-[#DEDEDE] rounded-[4px] py-[11px] pl-[16px] pr-[44px] block w-full focus:outline-none focus:border-[#0088FF] transition-colors") 
+                            button(type="button" class="btn-toggle-password absolute right-[12px] top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 p-[4px] cursor-pointer transition-colors" data-target="password" title="Ẩn/Hiện mật khẩu" aria-label="Ẩn/Hiện mật khẩu")
+                                <i class="fa-regular fa-eye-slash text-[16px]"></i>
                         if errors && errors.password
-                            div(class="text-[#FF0000] text-[13px] mt-[-10px] mb-[10px]") #{errors.password}
+                            div(class="text-[#FF0000] text-[13px] mt-[4px]") #{errors.password}
 
                     div(class="") 
                         button(type="submit" class="bg-[#0088FF] py-[14px] rounded-[4px] font-[700] text-[16px] text-white text-center w-full cursor-pointer") Đăng nhập

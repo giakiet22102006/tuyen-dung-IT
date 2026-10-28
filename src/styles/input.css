@@ -130,3 +130,170 @@
   border: 1px solid #E2E8F0;
 }
 
+/* =========================================================================
+   Job Description Modern Typography & High-Aesthetic Styling
+   Chuẩn hóa giao diện hiển thị Mô tả công việc (JD) chuyên nghiệp, thẩm mỹ cao
+   ========================================================================= */
+
+.job-description-content,
+.job-description,
+.prose {
+  color: #334155;
+  font-size: 15.5px;
+  line-height: 1.8;
+}
+
+.job-description-content > *:first-child,
+.job-description > *:first-child,
+.prose > *:first-child {
+  margin-top: 0 !important;
+}
+
+/* Headings (Trách nhiệm công việc, Yêu cầu ứng viên, Quyền lợi...) */
+.job-description-content h2,
+.job-description-content h3,
+.job-description h2,
+.job-description h3,
+.prose h2,
+.prose h3 {
+  font-size: 17.5px;
+  font-weight: 700;
+  color: #0F172A;
+  margin-top: 26px;
+  margin-bottom: 14px;
+  padding: 8px 16px;
+  background: linear-gradient(90deg, #F0F7FF 0%, #FAFCFF 100%);
+  border-left: 4px solid #0088FF;
+  border-radius: 0 8px 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.45;
+  box-shadow: 0 1px 3px rgba(0, 136, 255, 0.05);
+}
+
+@media (min-width: 640px) {
+  .job-description-content h2,
+  .job-description-content h3,
+  .job-description h2,
+  .job-description h3,
+  .prose h2,
+  .prose h3 {
+    font-size: 18.5px;
+  }
+}
+
+.job-description-content h4,
+.job-description h4,
+.prose h4 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1E293B;
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+
+/* Paragraphs */
+.job-description-content p,
+.job-description p,
+.prose p {
+  margin-bottom: 12px;
+  color: #374151;
+  line-height: 1.75;
+}
+
+/* Unordered Lists & Bullet Points */
+.job-description-content ul,
+.job-description ul,
+.prose ul {
+  list-style: none !important;
+  padding-left: 0 !important;
+  margin-top: 10px;
+  margin-bottom: 22px;
+}
+
+.job-description-content ul > li,
+.job-description ul > li,
+.prose ul > li {
+  position: relative;
+  padding-left: 26px;
+  margin-bottom: 12px;
+  line-height: 1.75;
+  color: #334155;
+  font-size: 15px;
+}
+
+.job-description-content ul > li::before,
+.job-description ul > li::before,
+.prose ul > li::before {
+  content: "";
+  position: absolute;
+  left: 8px;
+  top: 9px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #0088FF;
+  box-shadow: 0 0 0 3px rgba(0, 136, 255, 0.15);
+}
+
+/* Ordered Lists */
+.job-description-content ol,
+.job-description ol,
+.prose ol {
+  list-style-type: decimal !important;
+  padding-left: 24px !important;
+  margin-top: 10px;
+  margin-bottom: 22px;
+}
+
+.job-description-content ol > li,
+.job-description ol > li,
+.prose ol > li {
+  margin-bottom: 10px;
+  line-height: 1.75;
+  color: #334155;
+  font-size: 15px;
+}
+
+/* Strong / Bold highlights */
+.job-description-content strong,
+.job-description-content b,
+.job-description strong,
+.job-description b,
+.prose strong,
+.prose b {
+  font-weight: 700;
+  color: #0F172A;
+}
+
+/* Links */
+.job-description-content a,
+.job-description a,
+.prose a {
+  color: #0088FF;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.15s ease;
+}
+
+.job-description-content a:hover,
+.job-description a:hover,
+.prose a:hover {
+  color: #0066CC;
+}
+
+/* Code inline */
+.job-description-content code,
+.job-description code,
+.prose code {
+  background-color: #F1F5F9;
+  color: #0284C7;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 5px;
+  border: 1px solid #E2E8F0;
+}
+

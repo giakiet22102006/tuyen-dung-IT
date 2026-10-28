@@ -2,6 +2,7 @@
 const { generateToken } = require("./csrf.middleware");
 const { getMenuData } = require("../services/menu.service");
 const formatSalary = require("../utils/formatSalary");
+const formatJobDescription = require("../utils/formatJobDescription");
 const labels = require("../utils/labels");
 const env = require("../config/env");
 const { SavedJob, Setting } = require("../models");
@@ -37,6 +38,7 @@ async function localsMiddleware(req, res, next) {
 
   // Helpers
   res.locals.formatSalary = formatSalary;
+  res.locals.formatJobDescription = formatJobDescription;
   res.locals.labels = labels;
   res.locals.formatDate = (date) => {
     if (!date) return "";

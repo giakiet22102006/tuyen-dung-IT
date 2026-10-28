@@ -2,6 +2,7 @@ const slugify = require("../src/utils/slugify");
 const normalizeVi = require("../src/utils/normalizeVi");
 const formatSalary = require("../src/utils/formatSalary");
 const paginate = require("../src/utils/pagination");
+const formatJobDescription = require("../src/utils/formatJobDescription");
 
 describe("Kiểm tra bộ tiện ích (Utils)", () => {
   test("normalizeVi: bỏ dấu và chuyển chữ thường chính xác", () => {
@@ -37,5 +38,27 @@ describe("Kiểm tra bộ tiện ích (Utils)", () => {
     expect(p3.skip).toBe(20);
     expect(p3.hasNext).toBe(false);
     expect(p3.hasPrev).toBe(true);
+  });
+
+  test("formatJobDescription: chuẩn hóa JD văn bản thô / AI thành HTML phân mục đẹp mắt", () => {
+    const raw = `Trách nhiệm công việc:
+Tham gia phát triển hệ thống bằng Golang.
+Xây dựng Docker.
+Yêu cầu ứng viên:
+2 năm kinh nghiệm.`;
+    const formatted = formatJobDescription(raw);
+    expect(formatted).toContain("<h3>Trách nhiệm công việc:</h3>");
+    expect(formatted).toContain("<ul>");
+    expect(formatted).toContain("<li>Tham gia phát triển hệ thống bằng Golang.</li>");
+    expect(formatted).toContain("<h3>Yêu cầu ứng viên:</h3>");
+    expect(formatted).toContain("<li>2 năm kinh nghiệm.</li>");
+  });
+
+  test("formatJobDescription: giữ nguyên và làm sạch HTML hợp lệ có sẵn <ul><li>", () => {
+    const html = `<h3>Trách nhiệm:</h3><ul><li>Viết mã nguồn <script>alert(1)</script></li></ul>`;
+    const formatted = formatJobDescription(html);
+    expect(formatted).toContain("<h3>Trách nhiệm:</h3>");
+    expect(formatted).toContain("<li>Viết mã nguồn </li>");
+    expect(formatted).not.toContain("<script>");
   });
 });

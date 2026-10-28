@@ -526,4 +526,73 @@ document.addEventListener("DOMContentLoaded", () => {
         .catch(() => {});
     }, 60000);
   }
+
+  // 12. Tính năng Ẩn / Hiện mật khẩu (Password Show/Hide Toggle)
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest(".btn-toggle-password");
+    if (!btn) return;
+    e.preventDefault();
+
+    const targetId = btn.getAttribute("data-target");
+    if (!targetId) return;
+
+    const input = document.getElementById(targetId);
+    if (!input) return;
+
+    const icon = btn.querySelector("i");
+    const isPassword = input.getAttribute("type") === "password";
+
+    if (isPassword) {
+      input.setAttribute("type", "text");
+      if (icon) {
+        icon.classList.remove("fa-eye-slash");
+        icon.classList.add("fa-eye");
+      }
+      btn.setAttribute("title", "Ẩn mật khẩu");
+    } else {
+      input.setAttribute("type", "password");
+      if (icon) {
+        icon.classList.remove("fa-eye");
+        icon.classList.add("fa-eye-slash");
+      }
+      btn.setAttribute("title", "Hiện mật khẩu");
+    }
+  });
+
+  // 13. Kiểm tra khớp mật khẩu tại Client cho Form Đăng ký (Signup Forms)
+  const signupForms = document.querySelectorAll('form[action="/candidate/signup"], form[action="/employer/signup"]');
+  signupForms.forEach((form) => {
+    const passwordInput = form.querySelector("#password");
+    const confirmInput = form.querySelector("#confirmPassword");
+    const errorBox = form.querySelector("#confirmPasswordClientError");
+
+    function validateMatch() {
+      if (!passwordInput || !confirmInput) return true;
+      if (confirmInput.value && passwordInput.value !== confirmInput.value) {
+        if (errorBox) errorBox.classList.remove("hidden");
+        confirmInput.classList.add("border-red-500");
+        return false;
+      } else {
+        if (errorBox) errorBox.classList.add("hidden");
+        confirmInput.classList.remove("border-red-500");
+        return true;
+      }
+    }
+
+    if (confirmInput) {
+      confirmInput.addEventListener("input", validateMatch);
+    }
+    if (passwordInput) {
+      passwordInput.addEventListener("input", () => {
+        if (confirmInput && confirmInput.value) validateMatch();
+      });
+    }
+
+    form.addEventListener("submit", (e) => {
+      if (!validateMatch()) {
+        e.preventDefault();
+        confirmInput.focus();
+      }
+    });
+  });
 });

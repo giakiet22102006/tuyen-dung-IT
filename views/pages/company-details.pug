@@ -72,8 +72,11 @@ block main
 
             //- Mô tả chi tiết
             if company.description
-                div(class="border border-[#DEDEDE] rounded-[8px] p-[20px] mt-[20px]") 
-                    div(class="prose max-w-none text-[#121212]") !{company.description}
+                div(class="border border-[#DEDEDE] rounded-[8px] p-[20px] sm:p-[28px] mt-[20px] bg-white shadow-2xs") 
+                    h3(class="font-[700] text-[18px] sm:text-[20px] text-[#121212] mb-[16px] pb-[12px] border-b border-gray-100 flex items-center gap-[8px]")
+                        <i class="fa-solid fa-building text-[#0088FF]"></i>
+                        span Giới thiệu công ty
+                    div(class="job-description-content") !{formatJobDescription(company.description)}
             //- Hết Mô tả chi tiết
 
             //- ==========================================

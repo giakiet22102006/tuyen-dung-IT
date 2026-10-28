@@ -66,8 +66,14 @@ block main
 
                     //- Mô tả chi tiết
                     if job.description
-                        div(class="border border-[#DEDEDE] rounded-[8px] p-[20px] mt-[20px]")
-                            div(class="prose max-w-none text-[#121212]") !{job.description}
+                        div(class="border border-[#DEDEDE] rounded-[8px] p-[20px] sm:p-[28px] mt-[20px] bg-white shadow-2xs")
+                            div(class="flex items-center gap-[10px] pb-[16px] mb-[20px] border-b border-gray-100")
+                                div(class="w-[36px] h-[36px] rounded-[8px] bg-blue-50 text-[#0088FF] flex items-center justify-center text-[16px] shrink-0")
+                                    <i class="fa-solid fa-file-lines"></i>
+                                div
+                                    h2(class="font-[700] text-[18px] sm:text-[20px] text-[#121212] leading-tight") Chi tiết tin tuyển dụng
+                                    p(class="text-[12px] sm:text-[13px] text-gray-500 mt-[2px]") Trách nhiệm công việc, yêu cầu năng lực và quyền lợi dành cho ứng viên
+                            div(class="job-description-content") !{formatJobDescription(job.description)}
                     //- Hết Mô tả chi tiết
 
                     //- Form ứng tuyển

@@ -8,6 +8,7 @@ if (dns && typeof dns.setDefaultResultOrder === "function") {
 
 const { GoogleGenAI } = require("@google/genai");
 const env = require("../config/env");
+const formatJobDescription = require("../utils/formatJobDescription");
 
 let aiClient = null;
 const cleanApiKey = (env.GEMINI_API_KEY || "").replace(/[\uFEFF\u200B-\u200D\s]/g, "");
@@ -457,9 +458,14 @@ YÊU CẦU:
 
   let htmlContent = "";
   const raw = await callGemini(prompt, "Bạn là chuyên gia soạn thảo tin tuyển dụng IT. Trả về HTML sạch bằng tiếng Việt.");
-  if (raw && raw.includes("<h3>")) {
-    htmlContent = raw.replace(/```html\s*/gi, "").replace(/```\s*$/g, "").trim();
-  } else {
+  if (raw && typeof raw === "string" && raw.trim().length > 30) {
+    const formatted = formatJobDescription(raw);
+    if (formatted && formatted.includes("<h3>")) {
+      htmlContent = formatted;
+    }
+  }
+
+  if (!htmlContent) {
     htmlContent = `
 <h3>Trách nhiệm công việc:</h3>
 <ul>

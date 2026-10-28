@@ -132,6 +132,23 @@ describe("Phase 2: Auth & Role Isolation Tests", () => {
       expect(res.text).toContain("Mật khẩu phải chứa ít nhất một chữ số");
     });
 
+    test("Đăng ký ứng viên thất bại khi mật khẩu nhập lại không khớp", async () => {
+      const { cookies, csrfToken } = await getCsrfAndCookies("/candidate/signup");
+      const res = await request(app)
+        .post("/candidate/signup")
+        .set("Cookie", cookies)
+        .send({
+          _csrf: csrfToken,
+          fullName: "Nguyễn Văn Test",
+          email: "candidate.test@gmail.com",
+          password: "Password123",
+          confirmPassword: "Password456",
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.text).toContain("Mật khẩu nhập lại không khớp");
+    });
+
     test("Đăng nhập ứng viên thành công và chặn tài khoản bị khóa", async () => {
       const hashedPassword = await hashPassword("Password123");
       const candidate = await Candidate.create({
@@ -232,6 +249,7 @@ describe("Phase 2: Auth & Role Isolation Tests", () => {
           companyName: "Công ty Công nghệ Alpha",
           email: "alpha@tech.com",
           password: "Password123",
+          confirmPassword: "Password123",
         });
 
       expect(res.status).toBe(302);
@@ -241,6 +259,23 @@ describe("Phase 2: Auth & Role Isolation Tests", () => {
       expect(employer).not.toBeNull();
       expect(employer.status).toBe(EMPLOYER_STATUS.PENDING);
       expect(employer.isEmailVerified).toBe(false);
+    });
+
+    test("Đăng ký nhà tuyển dụng thất bại khi mật khẩu nhập lại không khớp", async () => {
+      const { cookies, csrfToken } = await getCsrfAndCookies("/employer/signup");
+      const res = await request(app)
+        .post("/employer/signup")
+        .set("Cookie", cookies)
+        .send({
+          _csrf: csrfToken,
+          companyName: "Công ty Công nghệ Alpha",
+          email: "alpha-mismatch@tech.com",
+          password: "Password123",
+          confirmPassword: "DifferentPassword123",
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.text).toContain("Mật khẩu nhập lại không khớp");
     });
 
     test("Đăng xuất thành công và xóa cookie itj_token", async () => {

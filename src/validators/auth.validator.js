@@ -8,31 +8,55 @@ const passwordSchema = z
   .regex(/[A-Za-z]/, "Mật khẩu phải chứa ít nhất một chữ cái")
   .regex(/[0-9]/, "Mật khẩu phải chứa ít nhất một chữ số");
 
-const candidateSignupSchema = z.object({
-  fullName: z
-    .string({ required_error: "Họ tên không được để trống" })
-    .trim()
-    .min(2, "Họ tên phải từ 2 ký tự trở lên"),
-  email: z
-    .string({ required_error: "Email không được để trống" })
-    .trim()
-    .email("Email không đúng định dạng")
-    .toLowerCase(),
-  password: passwordSchema,
-});
+const candidateSignupSchema = z
+  .object({
+    fullName: z
+      .string({ required_error: "Họ tên không được để trống" })
+      .trim()
+      .min(2, "Họ tên phải từ 2 ký tự trở lên"),
+    email: z
+      .string({ required_error: "Email không được để trống" })
+      .trim()
+      .email("Email không đúng định dạng")
+      .toLowerCase(),
+    password: passwordSchema,
+    confirmPassword: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.confirmPassword === undefined) return true;
+      return data.password === data.confirmPassword;
+    },
+    {
+      message: "Mật khẩu nhập lại không khớp",
+      path: ["confirmPassword"],
+    }
+  );
 
-const employerSignupSchema = z.object({
-  companyName: z
-    .string({ required_error: "Tên công ty không được để trống" })
-    .trim()
-    .min(2, "Tên công ty phải từ 2 ký tự trở lên"),
-  email: z
-    .string({ required_error: "Email không được để trống" })
-    .trim()
-    .email("Email không đúng định dạng")
-    .toLowerCase(),
-  password: passwordSchema,
-});
+const employerSignupSchema = z
+  .object({
+    companyName: z
+      .string({ required_error: "Tên công ty không được để trống" })
+      .trim()
+      .min(2, "Tên công ty phải từ 2 ký tự trở lên"),
+    email: z
+      .string({ required_error: "Email không được để trống" })
+      .trim()
+      .email("Email không đúng định dạng")
+      .toLowerCase(),
+    password: passwordSchema,
+    confirmPassword: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.confirmPassword === undefined) return true;
+      return data.password === data.confirmPassword;
+    },
+    {
+      message: "Mật khẩu nhập lại không khớp",
+      path: ["confirmPassword"],
+    }
+  );
 
 const loginSchema = z.object({
   email: z
