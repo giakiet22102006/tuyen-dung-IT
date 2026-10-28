@@ -9,6 +9,7 @@ const adminCandidate = require("../controllers/admin/adminCandidate.controller")
 const adminLog = require("../controllers/admin/adminLog.controller");
 const adminFeedback = require("../controllers/admin/adminFeedback.controller");
 const adminArticle = require("../controllers/admin/adminArticle.controller");
+const adminSetting = require("../controllers/admin/adminSetting.controller");
 
 const { requireAdmin, requireSuperAdmin, adminSecurityHeaders } = require("../middlewares/auth.middleware");
 const { doubleCsrfProtection } = require("../middlewares/csrf.middleware");
@@ -80,5 +81,9 @@ router.post("/articles/:id/toggle-publish", requireAdmin, doubleCsrfProtection, 
 router.post("/articles/:id/delete", requireAdmin, doubleCsrfProtection, asyncHandler(adminArticle.postDelete));
 router.post("/articles/ai-generate", requireAdmin, doubleCsrfProtection, asyncHandler(adminArticle.postAiGenerate));
 router.post("/articles/ai-curate", requireAdmin, doubleCsrfProtection, asyncHandler(adminArticle.postAiCurate));
+
+// Cấu hình hệ thống & Trang Về chúng tôi
+router.get("/settings/about", requireAdmin, asyncHandler(adminSetting.renderAboutSettings));
+router.post("/settings/about", requireAdmin, doubleCsrfProtection, asyncHandler(adminSetting.postAboutSettings));
 
 module.exports = router;

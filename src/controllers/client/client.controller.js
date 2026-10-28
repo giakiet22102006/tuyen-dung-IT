@@ -9,7 +9,7 @@ const {
 } = require("../../services/job.service");
 const { getAutocompleteSuggestions } = require("../../services/fuzzySearch.service");
 const { CITIES, POSITIONS, WORKING_FORMS, BENEFITS, JOB_MODERATION, EMPLOYER_STATUS } = require("../../config/constants");
-const { Job, Application, Review, Employer, Feedback, Candidate, CompanyFollow } = require("../../models");
+const { Job, Application, Review, Employer, Feedback, Candidate, CompanyFollow, Setting } = require("../../models");
 const { uploadCV, saveCvBuffer } = require("../../services/storage.service");
 const { generateItProfilePdf } = require("../../services/pdfGenerator.service");
 const { getCompanyMapData } = require("../../utils/googleMaps");
@@ -91,31 +91,50 @@ ${employersList || "- FPT Software, Techcombank, MoMo, VNG, Viettel"}
   });
 };
 
-const renderAbout = (req, res) => {
+const renderAbout = async (req, res) => {
   res.vary("Accept");
+  let settingDoc;
+  try {
+    settingDoc = await Setting.getSettings();
+  } catch (err) {
+    console.error("Lỗi lấy cấu hình Setting:", err);
+  }
+  const about = (settingDoc && settingDoc.about) ? settingDoc.about : {};
+
   if (wantsMarkdown(req)) {
     res.setHeader("Content-Type", "text/markdown; charset=utf-8");
     return res.send(
-`# Về chúng tôi - VN.ITJobs
+`# ${about.title || "Về chúng tôi - VN.ITJobs"}
 
-VN.ITJobs là nền tảng tuyển dụng công nghệ thông tin chuyên biệt và tiên phong tại Việt Nam, thành lập năm 2024.
+${about.subtitle || "Sứ mệnh kết nối tinh hoa công nghệ Việt Nam với các cơ hội nghề nghiệp bứt phá toàn cầu."}
 
-## Sứ mệnh & Tầm nhìn
-- Sứ mệnh: Giúp mọi lập trình viên tìm được công việc mơ ước với mức đãi ngộ xứng đáng, đồng thời hỗ trợ các doanh nghiệp công nghệ chiêu mộ đúng người, đúng thời điểm nhờ công nghệ trí tuệ nhân tạo (AI Matching) tiên tiến.
-- Tầm nhìn: Trở thành trung tâm kết nối nhân tài công nghệ số 1 Đông Nam Á, hỗ trợ chuyển đổi số quốc gia và nâng cao vị thế của kỹ sư lập trình Việt Nam.
+## 1. Giới thiệu tổng quan
+${about.overviewParagraph1 || ""}
 
-## Thông tin pháp lý & Trụ sở
-- Pháp nhân: Công ty Cổ phần Công nghệ VN.ITJobs Việt Nam (VN.ITJobs Technology JSC)
-- Giấy phép ĐKDN: Số 0109988776 do Sở Kế hoạch và Đầu tư TP. Hà Nội cấp.
-- Trụ sở chính: Tầng 12, Tòa nhà Keangnam Landmark 72, Đường Phạm Hùng, Phường Mễ Trì, Quận Nam Từ Liêm, TP. Hà Nội.
-- Chi nhánh TP.HCM: Tầng 6, Bitexco Financial Tower, Số 2 Hải Triều, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh.
-- Email: contact@vn-itjobs.com | Hotline: +84-24-3768-9999
+${about.overviewParagraph2 || ""}
+
+## 2. Sứ mệnh & Tầm nhìn
+- Sứ mệnh: ${about.mission || ""}
+- Tầm nhìn: ${about.vision || ""}
+
+## 3. Các con số ấn tượng
+- ${about.statsJobsLabel || "Việc làm IT mở hàng ngày"}: ${about.statsJobs || "880+"}
+- ${about.statsCompaniesLabel || "Doanh nghiệp công nghệ đối tác"}: ${about.statsCompanies || "1.200+"}
+- ${about.statsCandidatesLabel || "Kỹ sư IT tin tưởng sử dụng"}: ${about.statsCandidates || "150.000+"}
+
+## 4. Thông tin pháp lý & Trụ sở
+- Pháp nhân: ${about.companyName || "Công ty Cổ phần Công nghệ VN.ITJobs Việt Nam"}
+- Giấy phép ĐKDN: ${about.businessCode || ""}
+- Trụ sở chính: ${about.headOffice || ""}
+- Văn phòng đại diện: ${about.branchOffice || ""}
+- Email: ${about.email || "contact@vn-itjobs.com"} | Hotline: ${about.hotline || "+84-24-3768-9999"}
 `
     );
   }
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.render("pages/about", {
-    title: "Về chúng tôi - VN.ITJobs | Nền tảng tuyển dụng IT hàng đầu Việt Nam",
+    title: `${about.title || "Về chúng tôi"} - VN.ITJobs | Nền tảng tuyển dụng IT hàng đầu Việt Nam`,
+    about,
   });
 };
 

@@ -1,0 +1,154 @@
+extends ../../layouts/admin.pug
+
+block title
+    title #{title || "Cấu hình Về chúng tôi | Admin VN.ITJobs"}
+
+block main
+    div(class="max-w-[1000px] mx-auto space-y-[24px]")
+        //- Tiêu đề & Điều hướng nhanh
+        div(class="flex flex-col sm:flex-row sm:items-center justify-between gap-[16px]")
+            div
+                div(class="flex items-center gap-[8px] text-[13px] text-gray-500 mb-[4px]")
+                    span Cài đặt hệ thống
+                    span /
+                    span(class="text-gray-800 font-[500]") Về chúng tôi
+                h1(class="text-[24px] font-[700] text-gray-900") Cấu hình Trang Về chúng tôi
+                p(class="text-[14px] text-gray-600 mt-[2px]") Tùy chỉnh thông tin giới thiệu, sứ mệnh, số liệu thống kê và thông tin pháp lý hiển thị trên web.
+            div(class="flex items-center gap-[10px]")
+                a(href="/about" target="_blank" class="px-[14px] py-[8px] rounded-[6px] border border-gray-300 font-[500] text-[13px] text-gray-700 hover:bg-gray-100 transition flex items-center gap-[6px]")
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    span Xem trang thực tế
+
+        //- Form cập nhật
+        form(action=`/${adminPath}/settings/about` method="POST" class="space-y-[24px]")
+            input(type="hidden" name="_csrf" value=csrfToken)
+
+            //- 1. Tiêu đề Hero Banner
+            div(class="bg-white rounded-[12px] border border-gray-200 shadow-xs p-[20px] sm:p-[24px]")
+                div(class="flex items-center gap-[10px] pb-[16px] mb-[18px] border-b border-gray-100")
+                    div(class="w-[32px] h-[32px] rounded-lg bg-blue-50 text-[#0088FF] flex items-center justify-center font-[700]")
+                        <i class="fa-solid fa-heading"></i>
+                    div
+                        h2(class="font-[700] text-[16px] text-gray-900") 1. Tiêu đề & Banner chính (Hero Section)
+                        p(class="text-[12px] text-gray-500") Hiển thị trên nền xanh phía trên cùng của trang /about.
+
+                div(class="grid grid-cols-1 gap-[16px]")
+                    div
+                        label(class="block text-[13px] font-[600] text-gray-700 mb-[6px]") Tiêu đề chính trang <span class="text-red-500">*</span>
+                        input(type="text" name="title" value=about.title required class="w-full px-[14px] py-[9px] border border-gray-300 rounded-[8px] text-[14px] focus:outline-none focus:border-[#0088FF]")
+                    div
+                        label(class="block text-[13px] font-[600] text-gray-700 mb-[6px]") Khẩu hiệu / Phụ đề banner
+                        input(type="text" name="subtitle" value=about.subtitle class="w-full px-[14px] py-[9px] border border-gray-300 rounded-[8px] text-[14px] focus:outline-none focus:border-[#0088FF]")
+
+            //- 2. Nội dung Giới thiệu tổng quan
+            div(class="bg-white rounded-[12px] border border-gray-200 shadow-xs p-[20px] sm:p-[24px]")
+                div(class="flex items-center gap-[10px] pb-[16px] mb-[18px] border-b border-gray-100")
+                    div(class="w-[32px] h-[32px] rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-[700]")
+                        <i class="fa-solid fa-align-left"></i>
+                    div
+                        h2(class="font-[700] text-[16px] text-gray-900") 2. Giới thiệu tổng quan
+                        p(class="text-[12px] text-gray-500") Nội dung tóm tắt sự hình thành và điểm khác biệt của nền tảng.
+
+                div(class="space-y-[16px]")
+                    div
+                        label(class="block text-[13px] font-[600] text-gray-700 mb-[6px]") Đoạn 1: Lịch sử hình thành & Mục tiêu cốt lõi
+                        textarea(name="overviewParagraph1" rows="3" class="w-full px-[14px] py-[9px] border border-gray-300 rounded-[8px] text-[14px] focus:outline-none focus:border-[#0088FF] leading-relaxed")= about.overviewParagraph1
+                    div
+                        label(class="block text-[13px] font-[600] text-gray-700 mb-[6px]") Đoạn 2: Điểm khác biệt công nghệ & kỹ năng
+                        textarea(name="overviewParagraph2" rows="3" class="w-full px-[14px] py-[9px] border border-gray-300 rounded-[8px] text-[14px] focus:outline-none focus:border-[#0088FF] leading-relaxed")= about.overviewParagraph2
+
+            //- 3. Tầm nhìn & Sứ mệnh
+            div(class="bg-white rounded-[12px] border border-gray-200 shadow-xs p-[20px] sm:p-[24px]")
+                div(class="flex items-center gap-[10px] pb-[16px] mb-[18px] border-b border-gray-100")
+                    div(class="w-[32px] h-[32px] rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center font-[700]")
+                        <i class="fa-solid fa-bullseye"></i>
+                    div
+                        h2(class="font-[700] text-[16px] text-gray-900") 3. Tầm nhìn & Sứ mệnh cốt lõi
+                        p(class="text-[12px] text-gray-500") Định hướng phát triển và giá trị mang lại cho cộng đồng IT.
+
+                div(class="space-y-[16px]")
+                    div
+                        label(class="block text-[13px] font-[600] text-gray-700 mb-[6px]") Tầm nhìn (Vision)
+                        textarea(name="vision" rows="2" class="w-full px-[14px] py-[9px] border border-gray-300 rounded-[8px] text-[14px] focus:outline-none focus:border-[#0088FF] leading-relaxed")= about.vision
+                    div
+                        label(class="block text-[13px] font-[600] text-gray-700 mb-[6px]") Sứ mệnh (Mission)
+                        textarea(name="mission" rows="2" class="w-full px-[14px] py-[9px] border border-gray-300 rounded-[8px] text-[14px] focus:outline-none focus:border-[#0088FF] leading-relaxed")= about.mission
+
+            //- 4. Các con số ấn tượng (Stats Counter)
+            div(class="bg-white rounded-[12px] border border-gray-200 shadow-xs p-[20px] sm:p-[24px]")
+                div(class="flex items-center gap-[10px] pb-[16px] mb-[18px] border-b border-gray-100")
+                    div(class="w-[32px] h-[32px] rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-[700]")
+                        <i class="fa-solid fa-chart-simple"></i>
+                    div
+                        h2(class="font-[700] text-[16px] text-gray-900") 4. Các con số ấn tượng
+                        p(class="text-[12px] text-gray-500") Ba thẻ số liệu thống kê hiển thị nổi bật trên giao diện.
+
+                div(class="grid grid-cols-1 md:grid-cols-3 gap-[16px]")
+                    //- Thống kê 1
+                    div(class="p-[16px] bg-blue-50/50 rounded-[10px] border border-blue-100 space-y-[10px]")
+                        div(class="font-[600] text-[13px] text-blue-900 flex items-center gap-[6px]")
+                            <i class="fa-solid fa-briefcase text-[#0088FF]"></i> Thẻ Việc làm IT
+                        div
+                            label(class="block text-[12px] text-gray-600 mb-[4px]") Con số (ví dụ: 880+)
+                            input(type="text" name="statsJobs" value=about.statsJobs class="w-full px-[12px] py-[8px] border border-gray-300 rounded-[6px] text-[13px] bg-white")
+                        div
+                            label(class="block text-[12px] text-gray-600 mb-[4px]") Nhãn chú thích
+                            input(type="text" name="statsJobsLabel" value=about.statsJobsLabel class="w-full px-[12px] py-[8px] border border-gray-300 rounded-[6px] text-[13px] bg-white")
+
+                    //- Thống kê 2
+                    div(class="p-[16px] bg-emerald-50/50 rounded-[10px] border border-emerald-100 space-y-[10px]")
+                        div(class="font-[600] text-[13px] text-emerald-900 flex items-center gap-[6px]")
+                            <i class="fa-solid fa-building text-emerald-600"></i> Thẻ Doanh nghiệp
+                        div
+                            label(class="block text-[12px] text-gray-600 mb-[4px]") Con số (ví dụ: 1.200+)
+                            input(type="text" name="statsCompanies" value=about.statsCompanies class="w-full px-[12px] py-[8px] border border-gray-300 rounded-[6px] text-[13px] bg-white")
+                        div
+                            label(class="block text-[12px] text-gray-600 mb-[4px]") Nhãn chú thích
+                            input(type="text" name="statsCompaniesLabel" value=about.statsCompaniesLabel class="w-full px-[12px] py-[8px] border border-gray-300 rounded-[6px] text-[13px] bg-white")
+
+                    //- Thống kê 3
+                    div(class="p-[16px] bg-orange-50/50 rounded-[10px] border border-orange-100 space-y-[10px]")
+                        div(class="font-[600] text-[13px] text-orange-900 flex items-center gap-[6px]")
+                            <i class="fa-solid fa-users text-[#E65100]"></i> Thẻ Kỹ sư IT
+                        div
+                            label(class="block text-[12px] text-gray-600 mb-[4px]") Con số (ví dụ: 150.000+)
+                            input(type="text" name="statsCandidates" value=about.statsCandidates class="w-full px-[12px] py-[8px] border border-gray-300 rounded-[6px] text-[13px] bg-white")
+                        div
+                            label(class="block text-[12px] text-gray-600 mb-[4px]") Nhãn chú thích
+                            input(type="text" name="statsCandidatesLabel" value=about.statsCandidatesLabel class="w-full px-[12px] py-[8px] border border-gray-300 rounded-[6px] text-[13px] bg-white")
+
+            //- 5. Thông tin pháp lý & Trụ sở
+            div(class="bg-white rounded-[12px] border border-gray-200 shadow-xs p-[20px] sm:p-[24px]")
+                div(class="flex items-center gap-[10px] pb-[16px] mb-[18px] border-b border-gray-100")
+                    div(class="w-[32px] h-[32px] rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center font-[700]")
+                        <i class="fa-solid fa-scale-balanced"></i>
+                    div
+                        h2(class="font-[700] text-[16px] text-gray-900") 5. Thông tin pháp lý & Liên hệ
+                        p(class="text-[12px] text-gray-500") Thông tin doanh nghiệp và đầu mối hỗ trợ chính thức.
+
+                div(class="grid grid-cols-1 sm:grid-cols-2 gap-[16px]")
+                    div(class="sm:col-span-2")
+                        label(class="block text-[13px] font-[600] text-gray-700 mb-[6px]") Tên pháp nhân công ty
+                        input(type="text" name="companyName" value=about.companyName class="w-full px-[14px] py-[9px] border border-gray-300 rounded-[8px] text-[14px] focus:outline-none focus:border-[#0088FF]")
+                    div(class="sm:col-span-2")
+                        label(class="block text-[13px] font-[600] text-gray-700 mb-[6px]") Giấy phép kinh doanh / Giấy chứng nhận ĐKDN
+                        input(type="text" name="businessCode" value=about.businessCode class="w-full px-[14px] py-[9px] border border-gray-300 rounded-[8px] text-[14px] focus:outline-none focus:border-[#0088FF]")
+                    div(class="sm:col-span-2")
+                        label(class="block text-[13px] font-[600] text-gray-700 mb-[6px]") Trụ sở chính (Hà Nội hoặc trụ sở đăng ký)
+                        input(type="text" name="headOffice" value=about.headOffice class="w-full px-[14px] py-[9px] border border-gray-300 rounded-[8px] text-[14px] focus:outline-none focus:border-[#0088FF]")
+                    div(class="sm:col-span-2")
+                        label(class="block text-[13px] font-[600] text-gray-700 mb-[6px]") Văn phòng đại diện / Chi nhánh
+                        input(type="text" name="branchOffice" value=about.branchOffice class="w-full px-[14px] py-[9px] border border-gray-300 rounded-[8px] text-[14px] focus:outline-none focus:border-[#0088FF]")
+                    div
+                        label(class="block text-[13px] font-[600] text-gray-700 mb-[6px]") Email hỗ trợ chính thức
+                        input(type="email" name="email" value=about.email class="w-full px-[14px] py-[9px] border border-gray-300 rounded-[8px] text-[14px] focus:outline-none focus:border-[#0088FF]")
+                    div
+                        label(class="block text-[13px] font-[600] text-gray-700 mb-[6px]") Hotline liên hệ
+                        input(type="text" name="hotline" value=about.hotline class="w-full px-[14px] py-[9px] border border-gray-300 rounded-[8px] text-[14px] focus:outline-none focus:border-[#0088FF]")
+
+            //- Nút Lưu thay đổi
+            div(class="flex items-center justify-end gap-[12px] pt-[8px]")
+                a(href=`/${adminPath}` class="px-[18px] py-[10px] rounded-[8px] border border-gray-300 text-gray-700 font-[500] text-[14px] hover:bg-gray-100 transition") Hủy bỏ
+                button(type="submit" class="px-[24px] py-[10px] rounded-[8px] bg-[#000065] hover:bg-[#000085] text-white font-[600] text-[14px] shadow-sm flex items-center gap-[8px] transition cursor-pointer")
+                    <i class="fa-solid fa-check"></i>
+                    span Lưu thay đổi
