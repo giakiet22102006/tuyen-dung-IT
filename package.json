@@ -1,8 +1,12 @@
 {
   "name": "vn-itjobs",
   "version": "1.0.0",
-  "description": "VN.ITJobs - Website tuyển dụng IT và Quản trị Admin",
+  "description": "VN.ITJobs - Nền tảng tuyển dụng IT và Quản trị Admin",
   "main": "src/server.js",
+  "bin": {
+    "vn-itjobs": "./bin/cli.js",
+    "vnitjobs": "./bin/cli.js"
+  },
   "type": "commonjs",
   "scripts": {
     "build": "npm run build:css",

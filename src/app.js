@@ -8,6 +8,7 @@ const env = require("./config/env");
 const flashMiddleware = require("./middlewares/flash.middleware");
 const { authenticateUser, authenticateAdmin } = require("./middlewares/auth.middleware");
 const localsMiddleware = require("./middlewares/locals.middleware");
+const { apiRateLimiter } = require("./middlewares/rateLimit.middleware");
 
 const clientRoutes = require("./routes/client.route");
 const candidateRoutes = require("./routes/candidate.route");
@@ -136,6 +137,13 @@ app.use(flashMiddleware);
 app.use(authenticateUser);
 app.use(authenticateAdmin);
 app.use(localsMiddleware);
+
+// Rate limiting & versioning headers cho REST APIs & MCP endpoints (RFC standard rate-limit headers)
+app.use("/api", (req, res, next) => {
+  res.setHeader("API-Version", "1.0.0");
+  next();
+}, apiRateLimiter);
+app.use("/mcp", apiRateLimiter);
 
 // Mount routes
 app.use("/", clientRoutes);

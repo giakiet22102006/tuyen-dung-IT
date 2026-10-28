@@ -1,14 +1,14 @@
 extends ../layouts/default.pug
 
 block title
-    title Tài liệu Lập trình viên & Tích hợp AI Agent - VN.ITJobs Developer Portal
+    title VN.ITJobs Developer Portal &amp; AI Integration - Tài liệu Lập trình viên &amp; CLI Tool
 
 block main
     //- Hero Header
     div(class="bg-[#000065] py-[40px] sm:py-[60px] text-white text-center")
         .contain
             h1(class="font-[800] text-[26px] sm:text-[38px] mb-[12px] leading-tight") VN.ITJobs Developer Portal &amp; AI Integration
-            p(class="text-white/80 text-[15px] sm:text-[18px] max-w-[760px] mx-auto") Tài liệu lập trình viên, OpenAPI Specification và Model Context Protocol (MCP) Server dành cho AI Agents.
+            p(class="text-white/80 text-[15px] sm:text-[18px] max-w-[760px] mx-auto") Tài liệu lập trình viên, OpenAPI Specification 3.1, Model Context Protocol (MCP) Server và Official CLI Tool dành cho AI Agents.
 
     //- Content Section
     div(class="py-[40px] sm:py-[60px] bg-white")
@@ -17,20 +17,68 @@ block main
             section
                 h2(class="font-[700] text-[22px] sm:text-[26px] text-[#121212] mb-[14px]") 1. Tổng quan hệ thống kết nối tự động
                 p(class="mb-[12px]")
-                    | VN.ITJobs cung cấp bộ giao diện lập trình ứng dụng (API) mở và các giao thức kết nối hiện đại nhất dành cho các kỹ sư phần mềm, hệ thống tích hợp và các trợ lý trí tuệ nhân tạo (Claude, ChatGPT, Gemini, v.v.).
-                div(class="grid sm:grid-cols-3 grid-cols-1 gap-[16px] my-[16px]")
-                    a(href="/openapi.json" target="_blank" class="p-[18px] bg-[#F8FAFC] border border-gray-200 rounded-[12px] hover:border-[#0088FF] transition block")
-                        div(class="font-[700] text-[17px] text-[#0088FF] mb-[6px]") 📄 OpenAPI 3.1 Spec
-                        div(class="text-[13px] text-gray-600") Tệp đặc tả máy đọc được chuẩn hóa toàn bộ endpoints.
-                    a(href="/mcp" class="p-[18px] bg-[#F8FAFC] border border-gray-200 rounded-[12px] hover:border-[#0088FF] transition block")
-                        div(class="font-[700] text-[17px] text-[#2E7D32] mb-[6px]") 🤖 Model Context Protocol
-                        div(class="text-[13px] text-gray-600") Live MCP Server với Streamable HTTP Transport và công cụ tìm việc IT.
-                    a(href="/llms.txt" target="_blank" class="p-[18px] bg-[#F8FAFC] border border-gray-200 rounded-[12px] hover:border-[#0088FF] transition block")
-                        div(class="font-[700] text-[17px] text-[#E65100] mb-[6px]") 📋 llms.txt &amp; Hướng dẫn Agent
-                        div(class="text-[13px] text-gray-600") Chỉ mục tổng quan ngữ cảnh tối ưu cho Large Language Models.
+                    | VN.ITJobs cung cấp bộ giao diện lập trình ứng dụng (API) mở, công cụ dòng lệnh (CLI Tool) và các giao thức kết nối hiện đại nhất dành cho các kỹ sư phần mềm, hệ thống tích hợp và các trợ lý trí tuệ nhân tạo (Claude, ChatGPT, Gemini, Cursor).
+                div(class="grid sm:grid-cols-4 grid-cols-2 gap-[14px] my-[16px]")
+                    a(href="/openapi.json" target="_blank" class="p-[16px] bg-[#F8FAFC] border border-gray-200 rounded-[12px] hover:border-[#0088FF] transition block text-center")
+                        div(class="font-[700] text-[16px] text-[#0088FF] mb-[4px]") 📄 OpenAPI 3.1
+                        div(class="text-[12px] text-gray-600") Schema máy đọc chuẩn hóa.
+                    a(href="/mcp" class="p-[16px] bg-[#F8FAFC] border border-gray-200 rounded-[12px] hover:border-[#0088FF] transition block text-center")
+                        div(class="font-[700] text-[16px] text-[#2E7D32] mb-[4px]") 🤖 Live MCP Server
+                        div(class="text-[12px] text-gray-600") Streamable HTTP &amp; 5 tools.
+                    a(href="/llms.txt" target="_blank" class="p-[16px] bg-[#F8FAFC] border border-gray-200 rounded-[12px] hover:border-[#0088FF] transition block text-center")
+                        div(class="font-[700] text-[16px] text-[#E65100] mb-[4px]") 📋 llms.txt
+                        div(class="text-[12px] text-gray-600") Chỉ mục ngữ cảnh Agent.
+                    div(class="p-[16px] bg-[#F8FAFC] border border-gray-200 rounded-[12px] text-center")
+                        div(class="font-[700] text-[16px] text-[#673AB7] mb-[4px]") 💻 Official CLI
+                        div(class="text-[12px] text-gray-600") npx vn-itjobs
 
             section
-                h2(class="font-[700] text-[22px] sm:text-[26px] text-[#121212] mb-[14px]") 2. Model Context Protocol (MCP) Server
+                h2(class="font-[700] text-[22px] sm:text-[26px] text-[#121212] mb-[14px]") 2. Official CLI Tool (vn-itjobs)
+                p(class="mb-[12px]")
+                    | Lập trình viên và AI Agent có thể truy vấn nhanh việc làm IT, tra cứu mức lương và kiểm tra trạng thái MCP trực tiếp từ terminal thông qua công cụ CLI chính thức:
+                div(class="p-[16px] bg-[#1E293B] text-[#93C5FD] font-mono text-[14px] rounded-[8px] overflow-x-auto space-y-[8px]")
+                    div # Cài đặt toàn cục qua npm:
+                    div(class="text-emerald-400") npm install -g vn-itjobs
+                    div # Hoặc chạy trực tiếp không cần cài đặt:
+                    div(class="text-emerald-400") npx vn-itjobs search "ReactJS" --city ha-noi
+                    div(class="text-emerald-400") npx vn-itjobs salary senior --skill golang --city ho-chi-minh
+                    div(class="text-emerald-400") npx vn-itjobs companies --limit 5 --json
+
+            section
+                h2(class="font-[700] text-[22px] sm:text-[26px] text-[#121212] mb-[14px]") 3. Chiến lược phân phiên bản &amp; Chính sách Deprecation (API Versioning &amp; Sunset Policy)
+                p(class="mb-[10px]")
+                    | Để đảm bảo tính tương thích lâu dài cho các AI Agent tự động, VN.ITJobs áp dụng chính sách quản lý phiên bản rõ ràng:
+                ul(class="list-disc pl-[24px] space-y-[6px] text-[15px]")
+                    li **Phiên bản URL:** Các endpoint chính thức được đánh phiên bản tiền tố <code>/api/v1/</code> (ví dụ: <code>/api/v1/search/suggestions</code>, <code>/api/v1/salary/calculate</code>).
+                    li **Phiên bản Header:** Client có thể gửi tiêu đề <code>API-Version: 1.0.0</code> hoặc <code>X-API-Version: 1.0.0</code>.
+                    li **Chính sách Sunset / Deprecation (RFC 8594):** Bất kỳ API nào có kế hoạch ngừng hỗ trợ sẽ được gắn tiêu đề <code>Deprecation: @&lt;timestamp&gt;</code> và <code>Sunset: &lt;HTTP-date&gt;</code> tối thiểu **180 ngày** trước ngày ngừng hoạt động thực tế.
+
+            section
+                h2(class="font-[700] text-[22px] sm:text-[26px] text-[#121212] mb-[14px]") 4. Tiêu chuẩn Giới hạn tần suất (Rate Limiting RFC Headers)
+                p(class="mb-[10px]")
+                    | Tất cả các yêu cầu REST API và MCP đều tự động trả về các tiêu đề chuẩn RFC (draft-7) giúp AI Agent tự điều tiết tốc độ gọi:
+                ul(class="list-disc pl-[24px] space-y-[6px] text-[15px]")
+                    li <code>RateLimit-Limit</code>: Số lượng yêu cầu tối đa cho phép trong khung thời gian (120 req/min).
+                    li <code>RateLimit-Remaining</code>: Số lượng yêu cầu còn lại trong khung thời gian hiện tại.
+                    li <code>RateLimit-Reset</code>: Số giây còn lại cho đến khi hạn mức được làm mới.
+                    li <code>Retry-After</code>: Trả về khi gặp mã lỗi 429 Too Many Requests để agent biết chính xác thời gian cần tạm dừng.
+
+            section
+                h2(class="font-[700] text-[22px] sm:text-[26px] text-[#121212] mb-[14px]") 5. Định dạng mã lỗi chuẩn hóa (RFC 9457 Problem Details)
+                p(class="mb-[10px]")
+                    | Các phản hồi lỗi 4xx và 5xx đều tuân thủ cấu trúc đối tượng có kiểu máy đọc được <code>application/problem+json</code>:
+                div(class="p-[16px] bg-[#1E293B] text-[#93C5FD] font-mono text-[13px] rounded-[8px] overflow-x-auto")
+                    | {<br>
+                    | &nbsp;&nbsp;"type": "https://tuyen-dung-it.vercel.app/docs/errors#bad-request",<br>
+                    | &nbsp;&nbsp;"title": "Bad Request",<br>
+                    | &nbsp;&nbsp;"status": 400,<br>
+                    | &nbsp;&nbsp;"detail": "Tham số tìm kiếm không hợp lệ.",<br>
+                    | &nbsp;&nbsp;"code": "INVALID_PARAMS",<br>
+                    | &nbsp;&nbsp;"timestamp": "2026-10-28T07:30:00Z"<br>
+                    | }
+
+            section
+                h2(class="font-[700] text-[22px] sm:text-[26px] text-[#121212] mb-[14px]") 6. Model Context Protocol (MCP) Server
                 p(class="mb-[12px]")
                     | Máy chủ MCP của VN.ITJobs hỗ trợ chuẩn giao thức **Streamable HTTP** (JSON-RPC 2.0 qua HTTP POST và Server-Sent Events) tại địa chỉ:
                 div(class="p-[16px] bg-[#1E293B] text-[#93C5FD] font-mono text-[14px] rounded-[8px] overflow-x-auto")
@@ -39,12 +87,12 @@ block main
                 ul(class="list-disc pl-[24px] space-y-[6px] text-[15px]")
                     li <code>search_jobs</code>: Tìm kiếm việc làm IT theo từ khóa, kỹ năng công nghệ, địa điểm và cấp bậc.
                     li <code>get_job_details</code>: Lấy chi tiết mô tả, yêu cầu và phúc lợi việc làm theo slug.
-                    li <code>calculate_salary</code>: Tra cứu mức lương trung vị và khoảng lương chuẩn thị trường IT Việt Nam.
+                    li <code>calculate_salary</code>: Tra cứu VN.ITJobs Salary Benchmarking trung vị và khoảng lương chuẩn thị trường IT Việt Nam.
                     li <code>list_companies</code>: Xem danh sách các công ty công nghệ hàng đầu đang tuyển dụng.
                     li <code>get_platform_info</code>: Thống kê số lượng việc làm mở và trạng thái hệ thống.
 
             section
-                h2(class="font-[700] text-[22px] sm:text-[26px] text-[#121212] mb-[14px]") 3. Markdown Content Negotiation (acceptmarkdown.com)
+                h2(class="font-[700] text-[22px] sm:text-[26px] text-[#121212] mb-[14px]") 7. Markdown Content Negotiation (acceptmarkdown.com)
                 p(class="mb-[12px]")
                     | Toàn bộ trang web công khai của VN.ITJobs (Trang chủ <code>/</code>, <code>/about</code>, <code>/contact</code>, <code>/privacy</code>, <code>/docs</code>) đều hỗ trợ cơ chế thương lượng nội dung Markdown.
                 p(class="mb-[8px]") Khi client gửi tiêu đề:
@@ -52,16 +100,3 @@ block main
                     | curl -sS -L -i -H "Accept: text/markdown" https://tuyen-dung-it.vercel.app/
                 p(class="mt-[12px]")
                     | Máy chủ phản hồi định dạng <code>Content-Type: text/markdown; charset=utf-8</code> kèm tiêu đề <code>Vary: Accept</code>, cho phép AI Agent đọc nội dung tinh gọn mà không tốn token phân tích cú pháp mã HTML.
-
-            section
-                h2(class="font-[700] text-[22px] sm:text-[26px] text-[#121212] mb-[14px]") 4. REST API Endpoints công khai
-                div(class="space-y-[14px]")
-                    div(class="p-[16px] bg-[#F8FAFC] border border-gray-200 rounded-[10px]")
-                        div(class="font-mono text-[14px] font-[700] text-[#0088FF]") GET /api/search/suggestions?q={keyword}
-                        div(class="text-[14px] text-gray-600 mt-[4px]") Gợi ý tìm kiếm autocomplete và sửa lỗi chính tả ("Có phải bạn muốn tìm...").
-                    div(class="p-[16px] bg-[#F8FAFC] border border-gray-200 rounded-[10px]")
-                        div(class="font-mono text-[14px] font-[700] text-[#0088FF]") GET /api/salary/calculate?position={pos}&amp;skill={skill}&amp;city={city}
-                        div(class="text-[14px] text-gray-600 mt-[4px]") Tính toán khoảng lương min, median, max dựa trên dữ liệu tuyển dụng thực tế.
-                    div(class="p-[16px] bg-[#F8FAFC] border border-gray-200 rounded-[10px]")
-                        div(class="font-mono text-[14px] font-[700] text-[#0088FF]") POST /api/feedback
-                        div(class="text-[14px] text-gray-600 mt-[4px]") Gửi phản hồi, báo lỗi hệ thống hoặc yêu cầu hỗ trợ.

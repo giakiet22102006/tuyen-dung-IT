@@ -22,6 +22,7 @@ const isSafeRedirect = require("../utils/sanitizeRedirect");
 router.get("/", asyncHandler(clientController.renderIndex));
 router.get("/search", asyncHandler(clientController.renderSearch));
 router.get("/api/search/suggestions", asyncHandler(clientController.getSearchSuggestions));
+router.get("/api/v1/search/suggestions", asyncHandler(clientController.getSearchSuggestions));
 router.get("/companies", asyncHandler(clientController.renderCompanyList));
 router.get("/companies/:slug", asyncHandler(clientController.renderCompanyDetails));
 
@@ -66,6 +67,8 @@ router.post("/.well-known/mcp", asyncHandler(mcpController.postMcp));
 
 router.get("/mcp", mcpController.getMcp);
 router.post("/mcp", asyncHandler(mcpController.postMcp));
+router.get("/api/v1/mcp", mcpController.getMcp);
+router.post("/api/v1/mcp", asyncHandler(mcpController.postMcp));
 router.post(
   "/companies/:id/follow",
   requireCandidate,
@@ -81,6 +84,7 @@ router.post(
 // Tra cứu lương IT (Salary Benchmark & Calculator)
 router.get("/salary", asyncHandler(salaryController.renderSalaryBenchmark));
 router.get("/api/salary/calculate", asyncHandler(salaryController.getSalaryApi));
+router.get("/api/v1/salary/calculate", asyncHandler(salaryController.getSalaryApi));
 
 // Đăng ký nhận thông báo việc làm mới (Job Alert)
 router.post("/job-alerts", doubleCsrfProtection, asyncHandler(jobAlertController.postSubscribeJobAlert));
@@ -97,6 +101,10 @@ router.post("/api/notifications/read-all", doubleCsrfProtection, asyncHandler(no
 
 router.post(
   "/api/feedback",
+  asyncHandler(clientController.postSubmitFeedback)
+);
+router.post(
+  "/api/v1/feedback",
   asyncHandler(clientController.postSubmitFeedback)
 );
 router.post(

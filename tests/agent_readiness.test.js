@@ -145,10 +145,15 @@ describe("Agent Readiness & Ora Audit Compliance Tests", () => {
       expect(res.text).toContain("<title>VN.ITJobs - Nền tảng tuyển dụng IT &amp; Việc làm Developer hàng đầu Việt Nam</title>");
       expect(res.text).toContain("VN.ITJobs - Nền tảng tuyển dụng IT &amp; Việc làm IT cho Developer hàng đầu Việt Nam");
     });
+
+    test("Salary benchmark page contains 'VN.ITJobs Salary Benchmarking' in title and H1", async () => {
+      const res = await request(app).get("/salary");
+      expect(res.text).toContain("VN.ITJobs Salary Benchmarking");
+    });
   });
 
   describe("6. JSON-LD structured data & 9. Organization schema completeness", () => {
-    test("Homepage contains valid JSON-LD graph with WebSite, EmploymentAgency/Organization, and SoftwareApplication", async () => {
+    test("Homepage contains valid JSON-LD graph with WebSite, Organization, and SoftwareApplication", async () => {
       const res = await request(app).get("/");
       const jsonLdMatch = res.text.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
       expect(jsonLdMatch).toBeTruthy();
@@ -161,7 +166,10 @@ describe("Agent Readiness & Ora Audit Compliance Tests", () => {
       expect(website).toBeDefined();
       expect(website.name).toBe("VN.ITJobs");
 
-      const org = jsonLd["@graph"].find((item) => item["@type"] === "EmploymentAgency");
+      const org = jsonLd["@graph"].find((item) => {
+        const types = Array.isArray(item["@type"]) ? item["@type"] : [item["@type"]];
+        return types.includes("Organization");
+      });
       expect(org).toBeDefined();
       expect(org.name).toBe("VN.ITJobs");
       expect(org.address).toBeDefined();
@@ -369,6 +377,49 @@ describe("Agent Readiness & Ora Audit Compliance Tests", () => {
 
       expect(resSearch.status).toBe(200);
       expect(resSearch.body.result.content[0].text).toContain("Senior Golang Cloud Engineer");
+    });
+  });
+
+  describe("13. Rate limit response headers & REST versioning", () => {
+    test("API endpoints return standard RateLimit headers and API-Version", async () => {
+      const res = await request(app).get("/api/search/suggestions?q=react");
+      expect(res.status).toBe(200);
+      expect(res.headers["api-version"]).toBe("1.0.0");
+      // express-rate-limit draft-7 or legacy headers
+      expect(res.headers["ratelimit-limit"] || res.headers["x-ratelimit-limit"]).toBeDefined();
+      expect(res.headers["ratelimit-remaining"] || res.headers["x-ratelimit-remaining"]).toBeDefined();
+    });
+
+    test("Versioned /api/v1 endpoints return 200", async () => {
+      const resSuggestions = await request(app).get("/api/v1/search/suggestions?q=react");
+      expect(resSuggestions.status).toBe(200);
+      expect(resSuggestions.body.suggestions).toBeDefined();
+
+      const resSalary = await request(app).get("/api/v1/salary/calculate?position=junior&skill=reactjs");
+      expect(resSalary.status).toBe(200);
+      expect(resSalary.body.success).toBe(true);
+    });
+
+    test("OpenAPI spec contains RFC 9457 ProblemDetails schema and typed error responses", async () => {
+      const res = await request(app).get("/openapi.json");
+      expect(res.status).toBe(200);
+      expect(res.body.components.schemas.ProblemDetails).toBeDefined();
+      expect(res.body.components.responses.RateLimitError).toBeDefined();
+      expect(res.body.components.responses.BadRequestError).toBeDefined();
+      expect(res.body.info.description).toContain("API Versioning Strategy");
+      expect(res.body.info.description).toContain("Deprecation Policy");
+    });
+
+    test("Official CLI binary executes and prints help/version", () => {
+      const { execSync } = require("child_process");
+      const outputVer = execSync("node bin/cli.js --version").toString();
+      expect(outputVer).toContain("vn-itjobs v1.0.0");
+
+      const outputHelp = execSync("node bin/cli.js --help").toString();
+      expect(outputHelp).toContain("VN.ITJobs CLI");
+      expect(outputHelp).toContain("search <keyword>");
+      expect(outputHelp).toContain("salary <position>");
+      expect(outputHelp).toContain("mcp");
     });
   });
 });

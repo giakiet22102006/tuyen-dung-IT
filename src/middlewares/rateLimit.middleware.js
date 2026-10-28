@@ -67,8 +67,30 @@ const otpRateLimiter = rateLimit({
   },
 });
 
+const apiRateLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 phút
+  max: isTest ? 1000 : 120, // 120 yêu cầu mỗi phút
+  standardHeaders: "draft-7", // RFC draft-7: RateLimit-Limit, RateLimit-Remaining, RateLimit-Reset
+  legacyHeaders: true, // X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset
+  validate: {
+    keyGeneratorIpFallback: false,
+  },
+  handler: (req, res) => {
+    res.setHeader("Retry-After", 60);
+    res.status(429).json({
+      type: "https://tuyen-dung-it.vercel.app/docs/errors#rate-limited",
+      title: "Too Many Requests",
+      status: 429,
+      detail: "Bạn đã vượt quá hạn mức yêu cầu API (Rate limit exceeded). Vui lòng thử lại sau.",
+      code: "RATE_LIMITED",
+      retryAfterSeconds: 60,
+    });
+  },
+});
+
 module.exports = {
   loginRateLimiter,
   adminLoginRateLimiter,
   otpRateLimiter,
+  apiRateLimiter,
 };

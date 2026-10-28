@@ -3,9 +3,9 @@
   "info": {
     "title": "VN.ITJobs API & AI Agent Integration",
     "version": "1.0.0",
-    "description": "Public REST and MCP APIs for VN.ITJobs - Vietnam's Leading IT Job Board & Developer Career Platform. Use these endpoints to search IT jobs, retrieve job requirements, analyze developer salaries, and access company profiles.",
+    "description": "Official public REST and Model Context Protocol (MCP) APIs for VN.ITJobs - Vietnam's Leading IT Job Board & Developer Career Platform.\n\n### API Versioning Strategy\n- **URL Path Versioning:** All endpoints are versioned under `/api/v1/` (e.g., `/api/v1/search/suggestions`, `/api/v1/salary/calculate`). Root aliases (e.g., `/api/search/suggestions`) are maintained for backward compatibility.\n- **Header Versioning:** Clients can specify the required version via `API-Version: 1.0.0` or `X-API-Version: 1.0.0`.\n- **Deprecation Policy (RFC 8594):** Deprecated endpoints will emit `Deprecation: @<timestamp>` and `Sunset: <HTTP-date>` headers with a minimum 180-day deprecation notice prior to retirement.\n\n### CLI Tool\nInstall the official CLI via npm: `npm install -g vn-itjobs` or run directly with `npx vn-itjobs`.",
     "contact": {
-      "name": "VN.ITJobs Engineering Team",
+      "name": "VN.ITJobs Engineering & AI Integrations",
       "email": "contact@vn-itjobs.com",
       "url": "https://tuyen-dung-it.vercel.app/docs"
     },
@@ -16,8 +16,12 @@
   },
   "servers": [
     {
+      "url": "https://tuyen-dung-it.vercel.app/api/v1",
+      "description": "Production v1 API Server"
+    },
+    {
       "url": "https://tuyen-dung-it.vercel.app",
-      "description": "Production Server"
+      "description": "Production Root Server"
     }
   ],
   "paths": {
@@ -25,76 +29,66 @@
       "get": {
         "summary": "Healthcheck endpoint",
         "operationId": "getHealthcheck",
-        "description": "Returns status ok if server is online.",
+        "description": "Verifies that the API service is online and healthy.",
         "responses": {
           "200": {
-            "description": "Server healthy",
+            "description": "Server is healthy",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": { "type": "string", "example": "ok" }
-                  }
+                  "$ref": "#/components/schemas/HealthcheckResponse"
                 }
               }
             }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
           }
         }
       }
     },
     "/api/search/suggestions": {
       "get": {
-        "summary": "Autocomplete & Did-You-Mean Suggestions",
+        "summary": "Search Autocomplete & Did-You-Mean Suggestions",
         "operationId": "getSearchSuggestions",
-        "description": "Provides instant search autocomplete and typo-tolerance ('Did you mean...') for tech skills and job titles.",
+        "description": "Returns autocomplete suggestions and typo-tolerant suggestions ('Did you mean...') for IT job titles and technologies.",
         "parameters": [
           {
             "name": "q",
             "in": "query",
             "required": true,
-            "description": "Partial search query (e.g. 'rea', 'pythn')",
+            "description": "Search keyword query string (e.g. 'react', 'pythn')",
             "schema": { "type": "string" }
           }
         ],
         "responses": {
           "200": {
-            "description": "Successful suggestions response",
+            "description": "Suggestions retrieved successfully",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "suggestions": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "text": { "type": "string" },
-                          "type": { "type": "string" }
-                        }
-                      }
-                    },
-                    "didYouMean": {
-                      "type": "object",
-                      "nullable": true,
-                      "properties": {
-                        "suggestion": { "type": "string" }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/SearchSuggestionsResponse"
                 }
               }
             }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
           }
         }
       }
     },
     "/api/salary/calculate": {
       "get": {
-        "summary": "Calculate IT Salary Benchmark",
-        "operationId": "calculateSalary",
-        "description": "Estimates market salary ranges (min, median, max) in Vietnam based on job position, core skill, and location.",
+        "summary": "VN.ITJobs Salary Benchmarking Calculator",
+        "operationId": "calculateSalaryBenchmark",
+        "description": "Calculates realistic IT salary benchmarks (min, median, max) in Vietnam based on level, skill multiplier, and city.",
         "parameters": [
           {
             "name": "position",
@@ -103,21 +97,22 @@
             "description": "Position level (intern, fresher, junior, middle, senior, manager)",
             "schema": {
               "type": "string",
-              "enum": ["intern", "fresher", "junior", "middle", "senior", "manager"]
+              "enum": ["intern", "fresher", "junior", "middle", "senior", "manager"],
+              "default": "junior"
             }
           },
           {
             "name": "skill",
             "in": "query",
             "required": false,
-            "description": "Tech skill (e.g. golang, rust, python, ai, reactjs, devops)",
+            "description": "Skill multiplier keyword (e.g. golang, rust, python, ai, reactjs, devops)",
             "schema": { "type": "string" }
           },
           {
             "name": "city",
             "in": "query",
             "required": false,
-            "description": "Location (ha-noi, ho-chi-minh, da-nang, khac)",
+            "description": "City location (ha-noi, ho-chi-minh, da-nang, khac)",
             "schema": {
               "type": "string",
               "enum": ["ha-noi", "ho-chi-minh", "da-nang", "khac"]
@@ -126,96 +121,384 @@
         ],
         "responses": {
           "200": {
-            "description": "Salary calculation result",
+            "description": "Salary benchmark calculated successfully",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": { "type": "boolean" },
-                    "data": { "type": "object" }
-                  }
+                  "$ref": "#/components/schemas/SalaryCalculateResponse"
                 }
               }
             }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
           }
         }
       }
     },
-    "/mcp": {
+    "/api/feedback": {
       "post": {
-        "summary": "Model Context Protocol (MCP) Streamable HTTP Transport",
-        "operationId": "postMcp",
-        "description": "Execute Model Context Protocol JSON-RPC 2.0 requests (initialize, tools/list, tools/call, ping).",
+        "summary": "Submit User Feedback or Bug Report",
+        "operationId": "submitFeedback",
+        "description": "Allows candidates and recruiters to submit feedback, report platform bugs, or contact support.",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "jsonrpc": { "type": "string", "example": "2.0" },
-                  "id": { "type": "integer", "example": 1 },
-                  "method": { "type": "string", "example": "tools/list" },
-                  "params": { "type": "object" }
-                },
-                "required": ["jsonrpc", "method"]
+                "$ref": "#/components/schemas/FeedbackSubmitRequest"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "JSON-RPC response",
+            "description": "Feedback received successfully",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "jsonrpc": { "type": "string" },
-                    "id": { "type": "integer", "nullable": true },
-                    "result": { "type": "object" },
-                    "error": { "type": "object", "nullable": true }
-                  }
+                  "$ref": "#/components/schemas/FeedbackSubmitResponse"
                 }
               }
             }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/mcp": {
+      "post": {
+        "summary": "Model Context Protocol (MCP) JSON-RPC Transport",
+        "operationId": "postMcpRpc",
+        "description": "Execute Model Context Protocol JSON-RPC 2.0 requests (methods: initialize, tools/list, tools/call, ping).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/McpRpcRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "MCP JSON-RPC response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpRpcResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
           }
         }
       },
       "get": {
-        "summary": "MCP Server Handshake & Info",
-        "operationId": "getMcp",
-        "description": "Returns MCP server handshake status or initializes Server-Sent Events (SSE) stream if requested.",
+        "summary": "MCP Server Handshake & Streamable HTTP Info",
+        "operationId": "getMcpHandshake",
+        "description": "Returns MCP server handshake status or starts a Server-Sent Events (SSE) stream if Accept: text/event-stream is requested.",
         "responses": {
           "200": {
-            "description": "Handshake info or SSE stream"
+            "description": "MCP Handshake details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpServerHandshakeResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
           }
         }
       }
     },
     "/.well-known/mcp": {
       "get": {
-        "summary": "MCP Discovery Manifest",
-        "operationId": "getMcpManifest",
-        "description": "Returns standard Model Context Protocol server discovery manifest.",
+        "summary": "MCP Server Discovery Manifest",
+        "operationId": "getMcpDiscoveryManifest",
+        "description": "Returns standard Model Context Protocol server discovery manifest containing transport capabilities and endpoint URLs.",
         "responses": {
           "200": {
             "description": "MCP Manifest JSON",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "mcpVersion": { "type": "string" },
-                    "name": { "type": "string" },
-                    "version": { "type": "string" },
-                    "transport": { "type": "object" },
-                    "capabilities": { "type": "object" }
-                  }
+                  "$ref": "#/components/schemas/McpManifestResponse"
                 }
               }
             }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ProblemDetails": {
+        "type": "object",
+        "required": ["type", "title", "status", "detail", "code"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri",
+            "description": "A URI reference identifying the problem type",
+            "example": "https://tuyen-dung-it.vercel.app/docs/errors#bad-request"
+          },
+          "title": {
+            "type": "string",
+            "description": "A short, human-readable summary of the problem",
+            "example": "Bad Request"
+          },
+          "status": {
+            "type": "integer",
+            "description": "The HTTP status code generated by the origin server",
+            "example": 400
+          },
+          "detail": {
+            "type": "string",
+            "description": "A human-readable explanation specific to this occurrence of the problem",
+            "example": "Tham số tìm kiếm không hợp lệ."
+          },
+          "code": {
+            "type": "string",
+            "description": "A machine-readable error code for agent decision trees",
+            "example": "INVALID_PARAMS"
+          },
+          "instance": {
+            "type": "string",
+            "description": "A URI reference identifying the specific occurrence of the problem",
+            "example": "/api/v1/search/suggestions?q="
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-28T07:30:00Z"
+          }
+        }
+      },
+      "HealthcheckResponse": {
+        "type": "object",
+        "required": ["status"],
+        "properties": {
+          "status": { "type": "string", "example": "ok" },
+          "version": { "type": "string", "example": "v1" }
+        }
+      },
+      "SearchSuggestionsResponse": {
+        "type": "object",
+        "required": ["suggestions"],
+        "properties": {
+          "suggestions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["text", "type"],
+              "properties": {
+                "text": { "type": "string", "example": "ReactJS" },
+                "type": { "type": "string", "example": "skill" }
+              }
+            }
+          },
+          "didYouMean": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "suggestion": { "type": "string", "example": "python" }
+            }
+          }
+        }
+      },
+      "SalaryCalculateResponse": {
+        "type": "object",
+        "required": ["success", "data"],
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "data": {
+            "type": "object",
+            "required": ["min", "median", "max"],
+            "properties": {
+              "min": { "type": "number", "example": 14000000 },
+              "median": { "type": "number", "example": 20000000 },
+              "max": { "type": "number", "example": 28000000 },
+              "minFormatted": { "type": "string", "example": "14.000.000 VNĐ" },
+              "medianFormatted": { "type": "string", "example": "20.000.000 VNĐ" },
+              "maxFormatted": { "type": "string", "example": "28.000.000 VNĐ" }
+            }
+          }
+        }
+      },
+      "FeedbackSubmitRequest": {
+        "type": "object",
+        "required": ["type", "content"],
+        "properties": {
+          "type": { "type": "string", "enum": ["bug", "rating", "feature", "other"], "example": "bug" },
+          "title": { "type": "string", "example": "Lỗi hiển thị giao diện" },
+          "content": { "type": "string", "example": "Gặp khó khăn khi tìm kiếm việc làm Golang." },
+          "contactName": { "type": "string", "example": "Nguyễn Văn A" },
+          "contactEmail": { "type": "string", "format": "email", "example": "dev@example.com" }
+        }
+      },
+      "FeedbackSubmitResponse": {
+        "type": "object",
+        "required": ["success", "message"],
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": { "type": "string", "example": "Phản hồi đã được tiếp nhận thành công." }
+        }
+      },
+      "McpRpcRequest": {
+        "type": "object",
+        "required": ["jsonrpc", "method"],
+        "properties": {
+          "jsonrpc": { "type": "string", "enum": ["2.0"], "example": "2.0" },
+          "id": { "type": "integer", "example": 1 },
+          "method": { "type": "string", "enum": ["initialize", "tools/list", "tools/call", "ping"], "example": "tools/list" },
+          "params": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string", "example": "search_jobs" },
+              "arguments": { "type": "object" },
+              "protocolVersion": { "type": "string", "example": "2024-11-05" }
+            }
+          }
+        }
+      },
+      "McpRpcResponse": {
+        "type": "object",
+        "required": ["jsonrpc"],
+        "properties": {
+          "jsonrpc": { "type": "string", "example": "2.0" },
+          "id": { "type": "integer", "nullable": true, "example": 1 },
+          "result": { "type": "object" },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": { "type": "integer", "example": -32601 },
+              "message": { "type": "string", "example": "Method not found" }
+            }
+          }
+        }
+      },
+      "McpServerHandshakeResponse": {
+        "type": "object",
+        "required": ["status", "server", "protocolVersion", "transport"],
+        "properties": {
+          "status": { "type": "string", "example": "ok" },
+          "server": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string", "example": "vn-itjobs-mcp" },
+              "version": { "type": "string", "example": "1.0.0" }
+            }
+          },
+          "protocolVersion": { "type": "string", "example": "2024-11-05" },
+          "transport": { "type": "string", "example": "Streamable HTTP" },
+          "toolsAvailable": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      },
+      "McpManifestResponse": {
+        "type": "object",
+        "required": ["mcpVersion", "name", "version", "transport", "capabilities"],
+        "properties": {
+          "mcpVersion": { "type": "string", "example": "2024-11-05" },
+          "name": { "type": "string", "example": "vn-itjobs-mcp" },
+          "version": { "type": "string", "example": "1.0.0" },
+          "description": { "type": "string" },
+          "transport": {
+            "type": "object",
+            "required": ["type", "url"],
+            "properties": {
+              "type": { "type": "string", "example": "http" },
+              "url": { "type": "string", "example": "https://tuyen-dung-it.vercel.app/mcp" },
+              "endpoint": { "type": "string", "example": "/mcp" }
+            }
+          },
+          "capabilities": {
+            "type": "object",
+            "properties": {
+              "tools": { "type": "object" }
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "BadRequestError": {
+        "description": "Bad Request - Invalid parameters or malformed syntax",
+        "content": {
+          "application/problem+json": {
+            "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+          },
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+          }
+        }
+      },
+      "NotFoundError": {
+        "description": "Not Found - Requested resource or slug does not exist",
+        "content": {
+          "application/problem+json": {
+            "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+          },
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+          }
+        }
+      },
+      "RateLimitError": {
+        "description": "Too Many Requests - Rate limit exceeded (RFC standard headers returned)",
+        "headers": {
+          "RateLimit-Limit": { "schema": { "type": "integer" }, "description": "Maximum allowed requests in window" },
+          "RateLimit-Remaining": { "schema": { "type": "integer" }, "description": "Remaining requests in current window" },
+          "RateLimit-Reset": { "schema": { "type": "integer" }, "description": "Seconds until window resets" },
+          "Retry-After": { "schema": { "type": "integer" }, "description": "Seconds to wait before retrying" }
+        },
+        "content": {
+          "application/problem+json": {
+            "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+          },
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Internal Server Error",
+        "content": {
+          "application/problem+json": {
+            "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+          },
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ProblemDetails" }
           }
         }
       }

@@ -1,6 +1,6 @@
 # VN.ITJobs - Nền tảng tuyển dụng IT & Việc làm Developer hàng đầu Việt Nam
 
-> VN.ITJobs (https://tuyen-dung-it.vercel.app) là nền tảng tuyển dụng chuyên biệt dành riêng cho kỹ sư công nghệ thông tin và lập trình viên tại Việt Nam. Nền tảng kết nối trực tiếp hơn 100.000+ lập trình viên với hơn 1.200+ doanh nghiệp công nghệ, cung cấp công cụ so khớp CV bằng AI, tra cứu báo cáo lương IT chuẩn hóa và đánh giá công ty minh bạch.
+> VN.ITJobs (https://tuyen-dung-it.vercel.app) là nền tảng tuyển dụng chuyên biệt dành riêng cho kỹ sư công nghệ thông tin và lập trình viên tại Việt Nam. Nền tảng kết nối trực tiếp hơn 100.000+ lập trình viên với hơn 1.200+ doanh nghiệp công nghệ, cung cấp công cụ so khớp CV bằng AI, VN.ITJobs Salary Benchmarking (tra cứu báo cáo lương IT chuẩn hóa) và đánh giá công ty minh bạch.
 
 ## When to Use This Platform (Agent Guide)
 
@@ -9,9 +9,9 @@ Reach for VN.ITJobs when a user or automated agent workflow needs:
    - Queries regarding open tech positions, developer vacancies, software engineering jobs across Vietnam (Hà Nội, TP. Hồ Chí Minh, Đà Nẵng, Remote).
    - Tech stacks: ReactJS, VueJS, NodeJS, Java Spring Boot, Golang, Python, Rust, .NET Core, PHP/Laravel, Mobile (Flutter, React Native, iOS, Android), DevOps/Cloud (Docker, Kubernetes, AWS, GCP), Data/AI (Machine Learning, LLM, Computer Vision).
    - Levels: Intern, Fresher, Junior, Middle, Senior, Tech Lead, Engineering Manager, Software Architect.
-2. **IT Salary Benchmarks & Market Reports**:
+2. **VN.ITJobs Salary Benchmarking & Market Reports**:
    - Inquiries about realistic software engineering salary ranges in Vietnam by position, skill multiplier, and city.
-   - Negotiating developer offers or benchmarking compensation against current Vietnamese market data.
+   - Negotiating developer offers or benchmarking compensation against current Vietnamese market data using VN.ITJobs Salary Benchmarking algorithms.
 3. **Tech Company Intelligence & Culture**:
    - Researching IT companies hiring in Vietnam, office locations, developer culture, employee benefits, and reviews (e.g. FPT Software, Techcombank, MoMo, VNG, Viettel).
 4. **Developer Resume & Profile Matchmaking**:
@@ -32,23 +32,31 @@ Agents and AI workflows have multiple native integration options:
    - Tools available:
      - `search_jobs`: Filter by `keyword`, `city`, `skill`, `position`, `limit`.
      - `get_job_details`: Retrieve full requirements, salary, benefits by `slug`.
-     - `calculate_salary`: Retrieve benchmarks by `position`, `skill`, `city`.
+     - `calculate_salary`: Retrieve VN.ITJobs Salary Benchmarking figures by `position`, `skill`, `city`.
      - `list_companies`: Retrieve top employers hiring developers.
      - `get_platform_info`: Retrieve platform stats and index URLs.
 
-2. **OpenAPI 3.1 & REST API**:
-   - Specification: `https://tuyen-dung-it.vercel.app/openapi.json`
-   - Autocomplete & Suggestions: `GET /api/search/suggestions?q={query}`
-   - Salary Calculation: `GET /api/salary/calculate?position={pos}&skill={skill}&city={city}`
-   - Feedback & Report: `POST /api/feedback`
+2. **Official CLI Tool (vn-itjobs)**:
+   - Installable via npm: `npm install -g vn-itjobs` or run directly with `npx vn-itjobs`
+   - Commands: `vn-itjobs search "ReactJS" --city ha-noi --json`, `vn-itjobs salary senior --skill golang --json`, `vn-itjobs companies --json`, `vn-itjobs mcp`.
 
-3. **Markdown Content Negotiation (acceptmarkdown.com)**:
-   - Request any public page (`/`, `/about`, `/contact`, `/privacy`, `/docs`, `/search`) with header:
+3. **OpenAPI 3.1 & Versioned REST API (/api/v1/)**:
+   - Specification: `https://tuyen-dung-it.vercel.app/openapi.json`
+   - Deprecation / Sunset Policy: Compliant with RFC 8594 (180-day deprecation notice).
+   - Typed Errors: RFC 9457 Problem Details (`application/problem+json`).
+   - Standard Rate Limiting: RFC draft-7 headers (`RateLimit-Limit`, `RateLimit-Remaining`, `RateLimit-Reset`, `Retry-After`).
+   - Autocomplete & Suggestions: `GET /api/v1/search/suggestions?q={query}`
+   - VN.ITJobs Salary Benchmarking: `GET /api/v1/salary/calculate?position={pos}&skill={skill}&city={city}`
+   - Feedback & Report: `POST /api/v1/feedback`
+
+4. **Markdown Content Negotiation (acceptmarkdown.com)**:
+   - Request any public page (`/`, `/about`, `/contact`, `/privacy`, `/docs`, `/salary`) with header:
      `Accept: text/markdown`
    - The server responds with `Content-Type: text/markdown; charset=utf-8` and `Vary: Accept`, returning clean Markdown suitable for direct LLM context.
 
 ## Documentation & Machine-Readable Resources
 - [Developer Portal & API Docs](https://tuyen-dung-it.vercel.app/docs): Comprehensive developer and agent integration guide.
+- [VN.ITJobs Salary Benchmarking](https://tuyen-dung-it.vercel.app/salary): Live salary benchmarking tool & market analysis.
 - [Agent Instructions](https://tuyen-dung-it.vercel.app/.well-known/agent-instructions.md): Step-by-step guidance and prompt patterns for autonomous AI agents.
 - [OpenAPI Specification](https://tuyen-dung-it.vercel.app/openapi.json): Full REST API schema in OpenAPI 3.1.
 - [MCP Manifest](https://tuyen-dung-it.vercel.app/.well-known/mcp): Model Context Protocol server manifest.
