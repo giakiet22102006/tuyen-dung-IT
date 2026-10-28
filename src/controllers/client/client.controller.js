@@ -15,17 +15,72 @@ const { generateItProfilePdf } = require("../../services/pdfGenerator.service");
 const { getCompanyMapData } = require("../../utils/googleMaps");
 const { chatWithSupportAssistant } = require("../../services/ai.service");
 
+const wantsMarkdown = (req) => {
+  const accept = req.get("accept") || "";
+  if (!accept.includes("text/markdown")) return false;
+  if (!accept.includes("text/html")) return true;
+  return req.accepts(["text/markdown", "text/html"]) === "text/markdown";
+};
+
 const renderIndex = async (req, res) => {
+  res.vary("Accept");
+
   const [totalPublicJobs, topEmployers, marqueeEmployers] = await Promise.all([
     getTotalPublicJobsCount(),
     getTopEmployers(9),
     getTopEmployers(16),
   ]);
 
+  if (wantsMarkdown(req)) {
+    res.setHeader("Content-Type", "text/markdown; charset=utf-8");
+    const employersList = (topEmployers || [])
+      .map((e) => `- [${e.companyName}](https://tuyen-dung-it.vercel.app/companies/${e.slug}) (${e.jobCount || 0} việc làm mở)`)
+      .join("\n");
+
+    return res.send(
+`# VN.ITJobs - Nền tảng tuyển dụng IT & Việc làm Developer hàng đầu Việt Nam
+
+> VN.ITJobs (https://tuyen-dung-it.vercel.app) là nền tảng tuyển dụng công nghệ thông tin chuyên biệt hàng đầu Việt Nam. Nền tảng kết nối trực tiếp hơn 100.000+ lập trình viên với hơn 1.200+ doanh nghiệp công nghệ, cung cấp công cụ so khớp CV bằng AI, tra cứu lương IT và đánh giá môi trường làm việc minh bạch.
+
+Hiện có **${totalPublicJobs}** việc làm IT đang mở tại Hà Nội, TP. Hồ Chí Minh, Đà Nẵng và Remote.
+
+## Nhà tuyển dụng công nghệ hàng đầu
+${employersList || "- FPT Software, Techcombank, MoMo, VNG, Viettel"}
+
+## Danh mục việc làm IT & Chuyên môn nổi bật
+- **Frontend & Web Development**: ReactJS, Next.js, VueJS, Angular, TypeScript.
+- **Backend & Cloud Architecture**: Node.js, Java Spring Boot, Golang, Python, Microservices, AWS, Docker, Kubernetes.
+- **Mobile Development**: Flutter, React Native, iOS Swift, Android Kotlin.
+- **Trí tuệ nhân tạo & Dữ liệu (AI / ML)**: Machine Learning, Deep Learning, LLM, Computer Vision, Data Engineering.
+- **DevOps, SRE & Cloud**: CI/CD, Terraform, AWS, Azure, GCP, An toàn thông tin.
+- **Quản lý dự án & QA/QC**: Automation Test, Manual Test, Scrum Master, Product Owner.
+
+## Dành cho AI Agents & Nhà phát triển
+- **Model Context Protocol (MCP) Server**: [https://tuyen-dung-it.vercel.app/mcp](https://tuyen-dung-it.vercel.app/mcp)
+- **MCP Manifest**: [https://tuyen-dung-it.vercel.app/.well-known/mcp](https://tuyen-dung-it.vercel.app/.well-known/mcp)
+- **Developer Documentation & Portal**: [https://tuyen-dung-it.vercel.app/docs](https://tuyen-dung-it.vercel.app/docs)
+- **OpenAPI 3.1 Spec**: [https://tuyen-dung-it.vercel.app/openapi.json](https://tuyen-dung-it.vercel.app/openapi.json)
+- **Agent Instructions (when to use)**: [https://tuyen-dung-it.vercel.app/.well-known/agent-instructions.md](https://tuyen-dung-it.vercel.app/.well-known/agent-instructions.md)
+- **LLM Context File**: [https://tuyen-dung-it.vercel.app/llms.txt](https://tuyen-dung-it.vercel.app/llms.txt)
+- **Sitemap**: [https://tuyen-dung-it.vercel.app/sitemap.xml](https://tuyen-dung-it.vercel.app/sitemap.xml)
+
+## Điều hướng chính
+- [Tìm kiếm việc làm IT](/search)
+- [Danh sách công ty IT](/companies)
+- [Tra cứu mức lương IT](/salary)
+- [Cẩm nang nghề nghiệp](/blog)
+- [Về chúng tôi](/about)
+- [Liên hệ ban quản trị](/contact)
+- [Chính sách bảo mật](/privacy)
+`
+    );
+  }
+
   const topSkills = (res.locals.menuData && res.locals.menuData.skills) || [];
 
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.render("pages/index", {
-    title: "Trang chủ - VN.ITJobs",
+    title: "VN.ITJobs - Nền tảng tuyển dụng IT & Việc làm Developer hàng đầu Việt Nam",
     totalPublicJobs,
     topEmployers,
     marqueeEmployers,
@@ -33,6 +88,132 @@ const renderIndex = async (req, res) => {
     cities: CITIES,
     selectedCity: "",
     keyword: "",
+  });
+};
+
+const renderAbout = (req, res) => {
+  res.vary("Accept");
+  if (wantsMarkdown(req)) {
+    res.setHeader("Content-Type", "text/markdown; charset=utf-8");
+    return res.send(
+`# Về chúng tôi - VN.ITJobs
+
+VN.ITJobs là nền tảng tuyển dụng công nghệ thông tin chuyên biệt và tiên phong tại Việt Nam, thành lập năm 2024.
+
+## Sứ mệnh & Tầm nhìn
+- Sứ mệnh: Giúp mọi lập trình viên tìm được công việc mơ ước với mức đãi ngộ xứng đáng, đồng thời hỗ trợ các doanh nghiệp công nghệ chiêu mộ đúng người, đúng thời điểm nhờ công nghệ trí tuệ nhân tạo (AI Matching) tiên tiến.
+- Tầm nhìn: Trở thành trung tâm kết nối nhân tài công nghệ số 1 Đông Nam Á, hỗ trợ chuyển đổi số quốc gia và nâng cao vị thế của kỹ sư lập trình Việt Nam.
+
+## Thông tin pháp lý & Trụ sở
+- Pháp nhân: Công ty Cổ phần Công nghệ VN.ITJobs Việt Nam (VN.ITJobs Technology JSC)
+- Giấy phép ĐKDN: Số 0109988776 do Sở Kế hoạch và Đầu tư TP. Hà Nội cấp.
+- Trụ sở chính: Tầng 12, Tòa nhà Keangnam Landmark 72, Đường Phạm Hùng, Phường Mễ Trì, Quận Nam Từ Liêm, TP. Hà Nội.
+- Chi nhánh TP.HCM: Tầng 6, Bitexco Financial Tower, Số 2 Hải Triều, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh.
+- Email: contact@vn-itjobs.com | Hotline: +84-24-3768-9999
+`
+    );
+  }
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.render("pages/about", {
+    title: "Về chúng tôi - VN.ITJobs | Nền tảng tuyển dụng IT hàng đầu Việt Nam",
+  });
+};
+
+const renderContact = (req, res) => {
+  res.vary("Accept");
+  if (wantsMarkdown(req)) {
+    res.setHeader("Content-Type", "text/markdown; charset=utf-8");
+    return res.send(
+`# Liên hệ Ban Quản Trị - VN.ITJobs
+
+## Thông tin văn phòng
+- Trụ sở Hà Nội: Tầng 12, Tòa nhà Keangnam Landmark 72, Đường Phạm Hùng, Phường Mễ Trì, Quận Nam Từ Liêm, TP. Hà Nội.
+- Hotline Miền Bắc: +84-24-3768-9999
+- Chi nhánh TP.HCM: Tầng 6, Bitexco Financial Tower, Số 2 Hải Triều, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh.
+- Hotline Miền Nam: +84-28-3829-8888
+
+## Kênh hỗ trợ chuyên biệt
+- Hỗ trợ Ứng viên: candidate-care@vn-itjobs.com
+- Hỗ trợ Doanh nghiệp tuyển dụng: employer@vn-itjobs.com
+- Hợp tác & Truyền thông: partnership@vn-itjobs.com
+- Giờ làm việc: Thứ Hai - Thứ Sáu: 08:30 - 18:00 (GMT+7)
+`
+    );
+  }
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.render("pages/contact", {
+    title: "Liên hệ - VN.ITJobs | Hỗ trợ Ứng viên & Nhà tuyển dụng công nghệ",
+  });
+};
+
+const renderPrivacy = (req, res) => {
+  res.vary("Accept");
+  if (wantsMarkdown(req)) {
+    res.setHeader("Content-Type", "text/markdown; charset=utf-8");
+    return res.send(
+`# Chính Sách Bảo Mật Thông Tin (Privacy Policy) - VN.ITJobs
+
+VN.ITJobs cam kết bảo vệ dữ liệu cá nhân của người dùng theo Nghị định 13/2023/NĐ-CP và Luật An toàn thông tin mạng Việt Nam.
+
+## 1. Dữ liệu thu thập
+- Ứng viên: Họ tên, email, số điện thoại, vị trí chuyên môn, kỹ năng, mức lương mong muốn, tệp CV đính kèm.
+- Nhà tuyển dụng: Tên doanh nghiệp, mã số thuế, địa chỉ, thông tin đại diện tuyển dụng, tin tuyển dụng.
+- Kỹ thuật: Địa chỉ IP, cookie phiên bảo mật, thiết bị truy cập.
+
+## 2. Mục đích sử dụng
+- Kết nối hồ sơ ứng viên với nhà tuyển dụng khi ứng viên chủ động nộp đơn.
+- Tự động phân tích và so khớp kỹ năng bằng AI (AI Matching Engine).
+- Gửi thông báo việc làm mới và mã bảo mật OTP.
+- Tổng hợp báo cáo thống kê lương IT ẩn danh.
+
+## 3. Quyền của người dùng
+- Người dùng có toàn quyền truy cập, chỉnh sửa, yêu cầu trích xuất hoặc xóa bỏ tài khoản và dữ liệu cá nhân bất cứ lúc nào qua email privacy@vn-itjobs.com.
+- Tuyệt đối không chia sẻ dữ liệu cho bên thứ ba vì mục đích quảng cáo khi chưa có sự đồng ý.
+
+## 4. Liên hệ bảo vệ dữ liệu
+- Công ty Cổ phần Công nghệ VN.ITJobs Việt Nam
+- Địa chỉ: Tầng 12, Tòa nhà Keangnam Landmark 72, Đường Phạm Hùng, Nam Từ Liêm, Hà Nội.
+- Hotline: +84-24-3768-9999 | Email: privacy@vn-itjobs.com
+`
+    );
+  }
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.render("pages/privacy", {
+    title: "Chính sách bảo mật thông tin - VN.ITJobs",
+  });
+};
+
+const renderDocs = (req, res) => {
+  res.vary("Accept");
+  if (wantsMarkdown(req)) {
+    res.setHeader("Content-Type", "text/markdown; charset=utf-8");
+    return res.send(
+`# VN.ITJobs Developer Portal & AI Integration
+
+Tài liệu lập trình viên, OpenAPI Specification và Model Context Protocol (MCP) Server cho AI Agents.
+
+## 1. Model Context Protocol (MCP) Server
+- Streamable HTTP Transport Endpoint: \`POST https://tuyen-dung-it.vercel.app/mcp\`
+- Protocol Version: 2024-11-05
+- Discovery Manifest: \`https://tuyen-dung-it.vercel.app/.well-known/mcp\`
+- Available Tools: \`search_jobs\`, \`get_job_details\`, \`calculate_salary\`, \`list_companies\`, \`get_platform_info\`.
+
+## 2. OpenAPI 3.1 Spec
+- URL: [https://tuyen-dung-it.vercel.app/openapi.json](https://tuyen-dung-it.vercel.app/openapi.json)
+
+## 3. Markdown Content Negotiation (acceptmarkdown.com)
+- Supply header \`Accept: text/markdown\` to any public page (\`/\`, \`/about\`, \`/contact\`, \`/privacy\`, \`/docs\`).
+
+## 4. REST Endpoints
+- Autocomplete: \`GET /api/search/suggestions?q={query}\`
+- Salary: \`GET /api/salary/calculate?position={pos}&skill={skill}&city={city}\`
+- Feedback: \`POST /api/feedback\`
+`
+    );
+  }
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.render("pages/docs", {
+    title: "Tài liệu Lập trình viên & Tích hợp AI Agent - VN.ITJobs Developer Portal",
   });
 };
 
@@ -479,4 +660,9 @@ module.exports = {
   renderJobDetails,
   postApplyJob,
   getSearchSuggestions,
+  renderAbout,
+  renderContact,
+  renderPrivacy,
+  renderDocs,
+  wantsMarkdown,
 };

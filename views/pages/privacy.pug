@@ -1,0 +1,51 @@
+extends ../layouts/default.pug
+
+block title
+    title Chính sách bảo mật thông tin - VN.ITJobs
+
+block main
+    //- Hero Header
+    div(class="bg-[#000065] py-[40px] sm:py-[60px] text-white text-center")
+        .contain
+            h1(class="font-[800] text-[26px] sm:text-[38px] mb-[12px] leading-tight") Chính Sách Bảo Mật Thông Tin (Privacy Policy)
+            p(class="text-white/80 text-[15px] sm:text-[18px] max-w-[760px] mx-auto") Cam kết bảo vệ quyền riêng tư, an toàn dữ liệu cá nhân của Ứng viên và Doanh nghiệp trên nền tảng VN.ITJobs.
+
+    //- Content Section
+    div(class="py-[40px] sm:py-[60px] bg-white")
+        div(class="max-w-[900px] mx-auto px-4 sm:px-6 leading-relaxed text-[#2D3748] text-[15px] sm:text-[16px] space-y-[32px]")
+            section
+                h2(class="font-[700] text-[22px] sm:text-[26px] text-[#121212] mb-[14px]") 1. Mục đích và phạm vi thu thập dữ liệu
+                p(class="mb-[12px]")
+                    | VN.ITJobs (sau đây gọi tắt là "Chúng tôi") luôn tôn trọng và cam kết bảo vệ tối đa dữ liệu riêng tư của người dùng theo Nghị định 13/2023/NĐ-CP về bảo vệ dữ liệu cá nhân và Luật An toàn thông tin mạng Việt Nam.
+                p(class="mb-[8px]") Khi bạn đăng ký và sử dụng dịch vụ trên VN.ITJobs, chúng tôi có thể thu thập các thông tin sau:
+                ul(class="list-disc pl-[24px] space-y-[6px]")
+                    li **Dành cho Ứng viên (Candidate):** Họ tên, địa chỉ email, số điện thoại, vị trí chuyên môn, cấp bậc, mức lương mong muốn, kỹ năng lập trình, lịch sử làm việc và nội dung tệp hồ sơ đính kèm (CV/Resume).
+                    li **Dành cho Nhà tuyển dụng (Employer):** Tên công ty, mã số thuế, địa chỉ trụ sở, thông tin người liên hệ, giấy phép kinh doanh (đối với tài khoản xác thực) và danh sách tin tuyển dụng.
+                    li **Thông tin tự động:** Địa chỉ IP, trình duyệt web, thời gian truy cập và nhật ký hoạt động thông qua cookie bảo mật cần thiết.
+
+            section
+                h2(class="font-[700] text-[22px] sm:text-[26px] text-[#121212] mb-[14px]") 2. Phạm vi và mục đích sử dụng thông tin
+                p(class="mb-[8px]") Mọi thông tin thu thập được chỉ sử dụng trong phạm vi cung cấp dịch vụ tuyển dụng IT:
+                ul(class="list-disc pl-[24px] space-y-[6px]")
+                    li Kết nối hồ sơ ứng viên với các cơ hội việc làm phù hợp và cho phép nhà tuyển dụng xem xét hồ sơ khi ứng viên chủ động nộp đơn (Apply).
+                    li Cung cấp tính năng so khớp thông minh AI Resume Matchmaker để đưa ra đề xuất kỹ năng và việc làm tối ưu.
+                    li Gửi thông báo việc làm mới (Job Alerts) và mã xác thực bảo mật OTP qua email.
+                    li Phân tích dữ liệu ẩn danh để phục vụ báo cáo thị trường lương công nghệ thông tin (Salary Benchmark).
+                    li Ngăn chặn gian lận, tấn công giả mạo (CSRF, brute-force) và bảo vệ an ninh hệ thống.
+
+            section
+                h2(class="font-[700] text-[22px] sm:text-[26px] text-[#121212] mb-[14px]") 3. Cam kết bảo mật và quyền kiểm soát của người dùng
+                p(class="mb-[12px]")
+                    | Chúng tôi áp dụng các tiêu chuẩn an toàn hàng đầu thế giới: mã hóa mật khẩu bằng bcrypt (10 rounds), xác thực hai yếu tố (2FA TOTP), mã hóa truyền tải HTTPS/TLS và lưu trữ tệp CV trong môi trường phân quyền nghiêm ngặt.
+                p(class="mb-[8px]") **Quyền của bạn đối với dữ liệu cá nhân:**
+                ul(class="list-disc pl-[24px] space-y-[6px]")
+                    li Bạn có toàn quyền truy cập, cập nhật hoặc sửa đổi thông tin cá nhân bất cứ lúc nào trong trang Quản lý hồ sơ.
+                    li Bạn có quyền yêu cầu trích xuất dữ liệu hoặc xóa vĩnh viễn tài khoản và toàn bộ hồ sơ CV khỏi máy chủ của VN.ITJobs bằng cách gửi yêu cầu tới email **privacy@vn-itjobs.com**.
+                    li Chúng tôi tuyệt đối không bán, cho thuê hoặc chia sẻ dữ liệu cá nhân của người dùng cho bất kỳ bên thứ ba nào vì mục đích quảng cáo thương mại khi chưa có sự đồng ý rõ ràng.
+
+            section
+                h2(class="font-[700] text-[22px] sm:text-[26px] text-[#121212] mb-[14px]") 4. Đơn vị thu thập và quản lý thông tin
+                p(class="mb-[6px]") **CÔNG TY CỔ PHẦN CÔNG NGHỆ VN.ITJOBS VIỆT NAM**
+                p(class="mb-[6px]") Địa chỉ: Tầng 12, Tòa nhà Keangnam Landmark 72, Đường Phạm Hùng, Phường Mễ Trì, Quận Nam Từ Liêm, TP. Hà Nội.
+                p(class="mb-[6px]") Hotline hỗ trợ bảo mật: +84-24-3768-9999
+                p(class="mb-[6px]") Email liên hệ Ban phụ trách bảo vệ dữ liệu: privacy@vn-itjobs.com

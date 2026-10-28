@@ -68,8 +68,17 @@ app.use(
 // Database connection middleware (cho serverless & standard)
 const { connectDB } = require("./config/db");
 app.use(async (req, res, next) => {
-  // Bỏ qua tài nguyên tĩnh
-  if (req.path.startsWith("/assets") || req.path.startsWith("/uploads") || req.path === "/favicon.ico") {
+  // Bỏ qua tài nguyên tĩnh & tệp định danh máy đọc
+  if (
+    req.path.startsWith("/assets") ||
+    req.path.startsWith("/uploads") ||
+    req.path === "/favicon.ico" ||
+    req.path === "/robots.txt" ||
+    req.path === "/llms.txt" ||
+    req.path === "/llms-full.txt" ||
+    req.path === "/openapi.json" ||
+    req.path.startsWith("/.well-known/")
+  ) {
     return next();
   }
   try {
@@ -140,7 +149,62 @@ app.get("/healthz", (req, res) => res.status(200).json({ status: "ok" }));
 
 // 404 handler
 app.use((req, res) => {
-  res.status(404).send("Trang không tồn tại (404)");
+  res.status(404);
+  res.vary("Accept");
+
+  const accept = req.get("accept") || "";
+
+  // Check if client explicitly requests Markdown or prefers Markdown over HTML
+  const wantsMarkdown =
+    accept.includes("text/markdown") &&
+    (!accept.includes("text/html") || req.accepts(["text/markdown", "text/html"]) === "text/markdown");
+
+  if (wantsMarkdown) {
+    res.setHeader("Content-Type", "text/markdown; charset=utf-8");
+    return res.send(
+`# 404 - Not Found
+
+The requested resource was not found on VN.ITJobs.
+Địa chỉ hoặc tài nguyên bạn yêu cầu không tồn tại trên hệ thống VN.ITJobs.
+
+Please refer to the following available resources:
+- AI Agent Discovery Index: [https://tuyen-dung-it.vercel.app/llms.txt](https://tuyen-dung-it.vercel.app/llms.txt)
+- Agent Instructions: [https://tuyen-dung-it.vercel.app/.well-known/agent-instructions.md](https://tuyen-dung-it.vercel.app/.well-known/agent-instructions.md)
+- Developer Portal & API Docs: [https://tuyen-dung-it.vercel.app/docs](https://tuyen-dung-it.vercel.app/docs)
+- OpenAPI Specification: [https://tuyen-dung-it.vercel.app/openapi.json](https://tuyen-dung-it.vercel.app/openapi.json)
+- Model Context Protocol (MCP) Server: [https://tuyen-dung-it.vercel.app/mcp](https://tuyen-dung-it.vercel.app/mcp)
+- XML Sitemap: [https://tuyen-dung-it.vercel.app/sitemap.xml](https://tuyen-dung-it.vercel.app/sitemap.xml)
+- Homepage: [https://tuyen-dung-it.vercel.app/](https://tuyen-dung-it.vercel.app/)
+`
+    );
+  }
+
+  if (req.xhr || accept.includes("application/json") || req.path.startsWith("/api/")) {
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+    return res.json({
+      success: false,
+      error: "NotFound",
+      message: "Tài nguyên hoặc đường dẫn yêu cầu không tồn tại (404 Not Found).",
+      links: {
+        homepage: "/",
+        docs: "/docs",
+        llms: "/llms.txt",
+        sitemap: "/sitemap.xml",
+      },
+    });
+  }
+
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.render("pages/404", {
+    title: "404 - Không tìm thấy trang | VN.ITJobs",
+  }, (err, html) => {
+    if (err) {
+      return res.send(
+        `<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><title>404 - Không tìm thấy trang | VN.ITJobs</title></head><body><h1>404 - Không tìm thấy trang</h1><p>Địa chỉ bạn yêu cầu không tồn tại trên hệ thống VN.ITJobs.</p><p><a href="/">Quay về Trang chủ</a> | <a href="/docs">Tài liệu API</a> | <a href="/llms.txt">llms.txt</a> | <a href="/sitemap.xml">Sitemap</a></p></body></html>`
+      );
+    }
+    return res.send(html);
+  });
 });
 
 // Error handler (CSRF & server errors)

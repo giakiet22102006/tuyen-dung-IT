@@ -1,0 +1,67 @@
+extends ../layouts/default.pug
+
+block title
+    title Tài liệu Lập trình viên & Tích hợp AI Agent - VN.ITJobs Developer Portal
+
+block main
+    //- Hero Header
+    div(class="bg-[#000065] py-[40px] sm:py-[60px] text-white text-center")
+        .contain
+            h1(class="font-[800] text-[26px] sm:text-[38px] mb-[12px] leading-tight") VN.ITJobs Developer Portal &amp; AI Integration
+            p(class="text-white/80 text-[15px] sm:text-[18px] max-w-[760px] mx-auto") Tài liệu lập trình viên, OpenAPI Specification và Model Context Protocol (MCP) Server dành cho AI Agents.
+
+    //- Content Section
+    div(class="py-[40px] sm:py-[60px] bg-white")
+        div(class="max-w-[1000px] mx-auto px-4 sm:px-6 leading-relaxed text-[#2D3748] text-[15px] sm:text-[16px] space-y-[36px]")
+            
+            section
+                h2(class="font-[700] text-[22px] sm:text-[26px] text-[#121212] mb-[14px]") 1. Tổng quan hệ thống kết nối tự động
+                p(class="mb-[12px]")
+                    | VN.ITJobs cung cấp bộ giao diện lập trình ứng dụng (API) mở và các giao thức kết nối hiện đại nhất dành cho các kỹ sư phần mềm, hệ thống tích hợp và các trợ lý trí tuệ nhân tạo (Claude, ChatGPT, Gemini, v.v.).
+                div(class="grid sm:grid-cols-3 grid-cols-1 gap-[16px] my-[16px]")
+                    a(href="/openapi.json" target="_blank" class="p-[18px] bg-[#F8FAFC] border border-gray-200 rounded-[12px] hover:border-[#0088FF] transition block")
+                        div(class="font-[700] text-[17px] text-[#0088FF] mb-[6px]") 📄 OpenAPI 3.1 Spec
+                        div(class="text-[13px] text-gray-600") Tệp đặc tả máy đọc được chuẩn hóa toàn bộ endpoints.
+                    a(href="/mcp" class="p-[18px] bg-[#F8FAFC] border border-gray-200 rounded-[12px] hover:border-[#0088FF] transition block")
+                        div(class="font-[700] text-[17px] text-[#2E7D32] mb-[6px]") 🤖 Model Context Protocol
+                        div(class="text-[13px] text-gray-600") Live MCP Server với Streamable HTTP Transport và công cụ tìm việc IT.
+                    a(href="/llms.txt" target="_blank" class="p-[18px] bg-[#F8FAFC] border border-gray-200 rounded-[12px] hover:border-[#0088FF] transition block")
+                        div(class="font-[700] text-[17px] text-[#E65100] mb-[6px]") 📋 llms.txt &amp; Hướng dẫn Agent
+                        div(class="text-[13px] text-gray-600") Chỉ mục tổng quan ngữ cảnh tối ưu cho Large Language Models.
+
+            section
+                h2(class="font-[700] text-[22px] sm:text-[26px] text-[#121212] mb-[14px]") 2. Model Context Protocol (MCP) Server
+                p(class="mb-[12px]")
+                    | Máy chủ MCP của VN.ITJobs hỗ trợ chuẩn giao thức **Streamable HTTP** (JSON-RPC 2.0 qua HTTP POST và Server-Sent Events) tại địa chỉ:
+                div(class="p-[16px] bg-[#1E293B] text-[#93C5FD] font-mono text-[14px] rounded-[8px] overflow-x-auto")
+                    | POST https://tuyen-dung-it.vercel.app/mcp
+                p(class="mt-[12px] mb-[8px]") **Danh sách công cụ (Tools) khả dụng cho AI Agent:**
+                ul(class="list-disc pl-[24px] space-y-[6px] text-[15px]")
+                    li <code>search_jobs</code>: Tìm kiếm việc làm IT theo từ khóa, kỹ năng công nghệ, địa điểm và cấp bậc.
+                    li <code>get_job_details</code>: Lấy chi tiết mô tả, yêu cầu và phúc lợi việc làm theo slug.
+                    li <code>calculate_salary</code>: Tra cứu mức lương trung vị và khoảng lương chuẩn thị trường IT Việt Nam.
+                    li <code>list_companies</code>: Xem danh sách các công ty công nghệ hàng đầu đang tuyển dụng.
+                    li <code>get_platform_info</code>: Thống kê số lượng việc làm mở và trạng thái hệ thống.
+
+            section
+                h2(class="font-[700] text-[22px] sm:text-[26px] text-[#121212] mb-[14px]") 3. Markdown Content Negotiation (acceptmarkdown.com)
+                p(class="mb-[12px]")
+                    | Toàn bộ trang web công khai của VN.ITJobs (Trang chủ <code>/</code>, <code>/about</code>, <code>/contact</code>, <code>/privacy</code>, <code>/docs</code>) đều hỗ trợ cơ chế thương lượng nội dung Markdown.
+                p(class="mb-[8px]") Khi client gửi tiêu đề:
+                div(class="p-[16px] bg-[#1E293B] text-[#93C5FD] font-mono text-[14px] rounded-[8px] overflow-x-auto")
+                    | curl -sS -L -i -H "Accept: text/markdown" https://tuyen-dung-it.vercel.app/
+                p(class="mt-[12px]")
+                    | Máy chủ phản hồi định dạng <code>Content-Type: text/markdown; charset=utf-8</code> kèm tiêu đề <code>Vary: Accept</code>, cho phép AI Agent đọc nội dung tinh gọn mà không tốn token phân tích cú pháp mã HTML.
+
+            section
+                h2(class="font-[700] text-[22px] sm:text-[26px] text-[#121212] mb-[14px]") 4. REST API Endpoints công khai
+                div(class="space-y-[14px]")
+                    div(class="p-[16px] bg-[#F8FAFC] border border-gray-200 rounded-[10px]")
+                        div(class="font-mono text-[14px] font-[700] text-[#0088FF]") GET /api/search/suggestions?q={keyword}
+                        div(class="text-[14px] text-gray-600 mt-[4px]") Gợi ý tìm kiếm autocomplete và sửa lỗi chính tả ("Có phải bạn muốn tìm...").
+                    div(class="p-[16px] bg-[#F8FAFC] border border-gray-200 rounded-[10px]")
+                        div(class="font-mono text-[14px] font-[700] text-[#0088FF]") GET /api/salary/calculate?position={pos}&amp;skill={skill}&amp;city={city}
+                        div(class="text-[14px] text-gray-600 mt-[4px]") Tính toán khoảng lương min, median, max dựa trên dữ liệu tuyển dụng thực tế.
+                    div(class="p-[16px] bg-[#F8FAFC] border border-gray-200 rounded-[10px]")
+                        div(class="font-mono text-[14px] font-[700] text-[#0088FF]") POST /api/feedback
+                        div(class="text-[14px] text-gray-600 mt-[4px]") Gửi phản hồi, báo lỗi hệ thống hoặc yêu cầu hỗ trợ.

@@ -1,0 +1,59 @@
+# VN.ITJobs - Nền tảng tuyển dụng IT & Việc làm Developer hàng đầu Việt Nam
+
+> VN.ITJobs (https://tuyen-dung-it.vercel.app) là nền tảng tuyển dụng chuyên biệt dành riêng cho kỹ sư công nghệ thông tin và lập trình viên tại Việt Nam. Nền tảng kết nối trực tiếp hơn 100.000+ lập trình viên với hơn 1.200+ doanh nghiệp công nghệ, cung cấp công cụ so khớp CV bằng AI, tra cứu báo cáo lương IT chuẩn hóa và đánh giá công ty minh bạch.
+
+## When to Use This Platform (Agent Guide)
+
+Reach for VN.ITJobs when a user or automated agent workflow needs:
+1. **IT Job Search in Vietnam**:
+   - Queries regarding open tech positions, developer vacancies, software engineering jobs across Vietnam (Hà Nội, TP. Hồ Chí Minh, Đà Nẵng, Remote).
+   - Tech stacks: ReactJS, VueJS, NodeJS, Java Spring Boot, Golang, Python, Rust, .NET Core, PHP/Laravel, Mobile (Flutter, React Native, iOS, Android), DevOps/Cloud (Docker, Kubernetes, AWS, GCP), Data/AI (Machine Learning, LLM, Computer Vision).
+   - Levels: Intern, Fresher, Junior, Middle, Senior, Tech Lead, Engineering Manager, Software Architect.
+2. **IT Salary Benchmarks & Market Reports**:
+   - Inquiries about realistic software engineering salary ranges in Vietnam by position, skill multiplier, and city.
+   - Negotiating developer offers or benchmarking compensation against current Vietnamese market data.
+3. **Tech Company Intelligence & Culture**:
+   - Researching IT companies hiring in Vietnam, office locations, developer culture, employee benefits, and reviews (e.g. FPT Software, Techcombank, MoMo, VNG, Viettel).
+4. **Developer Resume & Profile Matchmaking**:
+   - Assessing candidate skill match against active Vietnamese job openings, calculating match percentages and identifying missing competencies.
+
+### When NOT to Use
+- Do NOT use for general non-IT job roles (e.g., traditional sales, factory manufacturing, general accounting).
+- Do NOT use for jobs outside Vietnam without remote eligibility.
+
+## How an Agent Should Call Us
+
+Agents and AI workflows have multiple native integration options:
+
+1. **Model Context Protocol (MCP) Server (Recommended)**:
+   - Streamable HTTP Transport: `https://tuyen-dung-it.vercel.app/mcp`
+   - Manifest Discovery: `https://tuyen-dung-it.vercel.app/.well-known/mcp`
+   - Protocol Version: `2024-11-05`
+   - Tools available:
+     - `search_jobs`: Filter by `keyword`, `city`, `skill`, `position`, `limit`.
+     - `get_job_details`: Retrieve full requirements, salary, benefits by `slug`.
+     - `calculate_salary`: Retrieve benchmarks by `position`, `skill`, `city`.
+     - `list_companies`: Retrieve top employers hiring developers.
+     - `get_platform_info`: Retrieve platform stats and index URLs.
+
+2. **OpenAPI 3.1 & REST API**:
+   - Specification: `https://tuyen-dung-it.vercel.app/openapi.json`
+   - Autocomplete & Suggestions: `GET /api/search/suggestions?q={query}`
+   - Salary Calculation: `GET /api/salary/calculate?position={pos}&skill={skill}&city={city}`
+   - Feedback & Report: `POST /api/feedback`
+
+3. **Markdown Content Negotiation (acceptmarkdown.com)**:
+   - Request any public page (`/`, `/about`, `/contact`, `/privacy`, `/docs`, `/search`) with header:
+     `Accept: text/markdown`
+   - The server responds with `Content-Type: text/markdown; charset=utf-8` and `Vary: Accept`, returning clean Markdown suitable for direct LLM context.
+
+## Documentation & Machine-Readable Resources
+- [Developer Portal & API Docs](https://tuyen-dung-it.vercel.app/docs): Comprehensive developer and agent integration guide.
+- [Agent Instructions](https://tuyen-dung-it.vercel.app/.well-known/agent-instructions.md): Step-by-step guidance and prompt patterns for autonomous AI agents.
+- [OpenAPI Specification](https://tuyen-dung-it.vercel.app/openapi.json): Full REST API schema in OpenAPI 3.1.
+- [MCP Manifest](https://tuyen-dung-it.vercel.app/.well-known/mcp): Model Context Protocol server manifest.
+- [Full LLM Knowledge Base](https://tuyen-dung-it.vercel.app/llms-full.txt): Complete detailed text representation of the platform.
+- [XML Sitemap](https://tuyen-dung-it.vercel.app/sitemap.xml): Index of all public, crawlable site URLs.
+- [About VN.ITJobs](https://tuyen-dung-it.vercel.app/about): Company background, mission, leadership, legal information.
+- [Contact & Support](https://tuyen-dung-it.vercel.app/contact): Official contact channels, physical address, hotlines.
+- [Privacy Policy](https://tuyen-dung-it.vercel.app/privacy): Candidate resume privacy, data protection, security terms.

@@ -1,0 +1,224 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "VN.ITJobs API & AI Agent Integration",
+    "version": "1.0.0",
+    "description": "Public REST and MCP APIs for VN.ITJobs - Vietnam's Leading IT Job Board & Developer Career Platform. Use these endpoints to search IT jobs, retrieve job requirements, analyze developer salaries, and access company profiles.",
+    "contact": {
+      "name": "VN.ITJobs Engineering Team",
+      "email": "contact@vn-itjobs.com",
+      "url": "https://tuyen-dung-it.vercel.app/docs"
+    },
+    "license": {
+      "name": "Proprietary",
+      "url": "https://tuyen-dung-it.vercel.app/privacy"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://tuyen-dung-it.vercel.app",
+      "description": "Production Server"
+    }
+  ],
+  "paths": {
+    "/healthz": {
+      "get": {
+        "summary": "Healthcheck endpoint",
+        "operationId": "getHealthcheck",
+        "description": "Returns status ok if server is online.",
+        "responses": {
+          "200": {
+            "description": "Server healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "ok" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/search/suggestions": {
+      "get": {
+        "summary": "Autocomplete & Did-You-Mean Suggestions",
+        "operationId": "getSearchSuggestions",
+        "description": "Provides instant search autocomplete and typo-tolerance ('Did you mean...') for tech skills and job titles.",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "description": "Partial search query (e.g. 'rea', 'pythn')",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful suggestions response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "suggestions": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "text": { "type": "string" },
+                          "type": { "type": "string" }
+                        }
+                      }
+                    },
+                    "didYouMean": {
+                      "type": "object",
+                      "nullable": true,
+                      "properties": {
+                        "suggestion": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/salary/calculate": {
+      "get": {
+        "summary": "Calculate IT Salary Benchmark",
+        "operationId": "calculateSalary",
+        "description": "Estimates market salary ranges (min, median, max) in Vietnam based on job position, core skill, and location.",
+        "parameters": [
+          {
+            "name": "position",
+            "in": "query",
+            "required": false,
+            "description": "Position level (intern, fresher, junior, middle, senior, manager)",
+            "schema": {
+              "type": "string",
+              "enum": ["intern", "fresher", "junior", "middle", "senior", "manager"]
+            }
+          },
+          {
+            "name": "skill",
+            "in": "query",
+            "required": false,
+            "description": "Tech skill (e.g. golang, rust, python, ai, reactjs, devops)",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "city",
+            "in": "query",
+            "required": false,
+            "description": "Location (ha-noi, ho-chi-minh, da-nang, khac)",
+            "schema": {
+              "type": "string",
+              "enum": ["ha-noi", "ho-chi-minh", "da-nang", "khac"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Salary calculation result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": { "type": "object" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/mcp": {
+      "post": {
+        "summary": "Model Context Protocol (MCP) Streamable HTTP Transport",
+        "operationId": "postMcp",
+        "description": "Execute Model Context Protocol JSON-RPC 2.0 requests (initialize, tools/list, tools/call, ping).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "jsonrpc": { "type": "string", "example": "2.0" },
+                  "id": { "type": "integer", "example": 1 },
+                  "method": { "type": "string", "example": "tools/list" },
+                  "params": { "type": "object" }
+                },
+                "required": ["jsonrpc", "method"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON-RPC response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "jsonrpc": { "type": "string" },
+                    "id": { "type": "integer", "nullable": true },
+                    "result": { "type": "object" },
+                    "error": { "type": "object", "nullable": true }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "MCP Server Handshake & Info",
+        "operationId": "getMcp",
+        "description": "Returns MCP server handshake status or initializes Server-Sent Events (SSE) stream if requested.",
+        "responses": {
+          "200": {
+            "description": "Handshake info or SSE stream"
+          }
+        }
+      }
+    },
+    "/.well-known/mcp": {
+      "get": {
+        "summary": "MCP Discovery Manifest",
+        "operationId": "getMcpManifest",
+        "description": "Returns standard Model Context Protocol server discovery manifest.",
+        "responses": {
+          "200": {
+            "description": "MCP Manifest JSON",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mcpVersion": { "type": "string" },
+                    "name": { "type": "string" },
+                    "version": { "type": "string" },
+                    "transport": { "type": "object" },
+                    "capabilities": { "type": "object" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

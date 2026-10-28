@@ -4,6 +4,27 @@ html(lang="vi")
         meta(charset="UTF-8")
         meta(name="viewport", content="width=device-width, initial-scale=1.0")
         meta(name="csrf-token", content=csrfToken)
+        - const siteUrl = "https://tuyen-dung-it.vercel.app"
+        - const pageUrl = canonicalUrl || (siteUrl + (currentPath === "/" ? "" : (currentPath || "")))
+        - const pageTitle = title || "VN.ITJobs - Nền tảng tuyển dụng IT & Việc làm Developer hàng đầu Việt Nam"
+        - const pageDesc = metaDescription || "VN.ITJobs là nền tảng tuyển dụng IT hàng đầu Việt Nam, kết nối hơn 100.000+ lập trình viên với hàng nghìn việc làm công nghệ chất lượng cao tại Hà Nội, TP.HCM, Đà Nẵng và Remote."
+        - const pageImage = ogImage || (siteUrl + "/assets/images/og-image.png")
+        - const pageType = ogType || "website"
+        link(rel="canonical", href=pageUrl)
+        meta(name="description", content=pageDesc)
+        meta(property="og:site_name", content="VN.ITJobs")
+        meta(property="og:type", content=pageType)
+        meta(property="og:url", content=pageUrl)
+        meta(property="og:title", content=pageTitle)
+        meta(property="og:description", content=pageDesc)
+        meta(property="og:image", content=pageImage)
+        meta(property="og:image:width", content="1200")
+        meta(property="og:image:height", content="630")
+        meta(property="og:locale", content="vi_VN")
+        meta(name="twitter:card", content="summary_large_image")
+        meta(name="twitter:title", content=pageTitle)
+        meta(name="twitter:description", content=pageDesc)
+        meta(name="twitter:image", content=pageImage)
         link(rel="icon", type="image/svg+xml", href="/assets/images/favicon.svg")
         link(rel="alternate icon", href="/favicon.ico")
         link(rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin)
@@ -15,6 +36,81 @@ html(lang="vi")
         link(rel="stylesheet", href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css")
         link(rel="stylesheet", href="/assets/css/tailwind.css?v=2.6")
         link(rel="stylesheet", href="/assets/css/style.css?v=2.6")
+        script(type="application/ld+json").
+            {
+              "@context": "https://schema.org",
+              "@graph": [
+                {
+                  "@type": "WebSite",
+                  "@id": "https://tuyen-dung-it.vercel.app/#website",
+                  "url": "https://tuyen-dung-it.vercel.app",
+                  "name": "VN.ITJobs",
+                  "alternateName": ["VN ITJobs", "VN.ITJobs Tuyển dụng IT", "VN.ITJobs Developer Platform"],
+                  "description": "Nền tảng tuyển dụng IT và Việc làm Developer hàng đầu Việt Nam",
+                  "inLanguage": "vi-VN",
+                  "potentialAction": {
+                    "@type": "SearchAction",
+                    "target": {
+                      "@type": "EntryPoint",
+                      "urlTemplate": "https://tuyen-dung-it.vercel.app/search?keyword={search_term_string}"
+                    },
+                    "query-input": "required name=search_term_string"
+                  }
+                },
+                {
+                  "@type": "EmploymentAgency",
+                  "@id": "https://tuyen-dung-it.vercel.app/#organization",
+                  "name": "VN.ITJobs",
+                  "alternateName": "Công ty Cổ phần Công nghệ VN.ITJobs Việt Nam",
+                  "url": "https://tuyen-dung-it.vercel.app",
+                  "logo": {
+                    "@type": "ImageObject",
+                    "url": "https://tuyen-dung-it.vercel.app/assets/images/favicon.svg"
+                  },
+                  "image": "https://tuyen-dung-it.vercel.app/assets/images/og-image.png",
+                  "description": "Nền tảng tuyển dụng IT và kết nối nhân tài công nghệ hàng đầu Việt Nam, hỗ trợ tìm kiếm việc làm lập trình viên, tra cứu lương IT và AI Matchmaking.",
+                  "address": {
+                    "@type": "PostalAddress",
+                    "streetAddress": "Tầng 12, Tòa nhà Keangnam Landmark 72, Đường Phạm Hùng",
+                    "addressLocality": "Nam Từ Liêm",
+                    "addressRegion": "Hà Nội",
+                    "postalCode": "100000",
+                    "addressCountry": "VN"
+                  },
+                  "contactPoint": [
+                    {
+                      "@type": "ContactPoint",
+                      "telephone": "+84-24-3768-9999",
+                      "email": "contact@vn-itjobs.com",
+                      "contactType": "customer service",
+                      "areaServed": "VN",
+                      "availableLanguage": ["vi", "en"]
+                    }
+                  ],
+                  "sameAs": [
+                    "https://github.com",
+                    "https://www.linkedin.com"
+                  ]
+                },
+                {
+                  "@type": "SoftwareApplication",
+                  "@id": "https://tuyen-dung-it.vercel.app/#software",
+                  "name": "VN.ITJobs",
+                  "applicationCategory": "BusinessApplication",
+                  "operatingSystem": "Web",
+                  "url": "https://tuyen-dung-it.vercel.app",
+                  "description": "Nền tảng tìm kiếm việc làm lập trình viên, phân tích CV bằng AI và tra cứu lương công nghệ thông tin tại Việt Nam.",
+                  "offers": {
+                    "@type": "Offer",
+                    "price": "0",
+                    "priceCurrency": "VND"
+                  },
+                  "author": {
+                    "@id": "https://tuyen-dung-it.vercel.app/#organization"
+                  }
+                }
+              ]
+            }
         block title 
     body(class="min-h-screen flex flex-col bg-white text-[#121212]")
         //- Header

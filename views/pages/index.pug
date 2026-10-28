@@ -2,7 +2,7 @@ extends ../layouts/default.pug
 include ../mixins/company-card.pug
 
 block title 
-    title #{title || "Trang chủ - VN.ITJobs"}
+    title #{title || "VN.ITJobs - Nền tảng tuyển dụng IT & Việc làm Developer hàng đầu Việt Nam"}
 
 block main
     //- Section 1
@@ -13,10 +13,10 @@ block main
     include ../partials/hero-carousel.pug
     include ../partials/logo-marquee.pug
 
-    //- Section 2
-    div(class="py-[35px] sm:py-[60px]")
+    //- Section 2: Top Employers
+    section(class="py-[35px] sm:py-[60px] bg-white")
         .contain
-            h2(class="font-[700] sm:text-[28px] text-[22px] text-[#121212] text-center mb-[20px] sm:mb-[30px]") Nhà tuyển dụng hàng đầu
+            h2(class="font-[700] sm:text-[28px] text-[22px] text-[#121212] text-center mb-[20px] sm:mb-[30px]") Nhà tuyển dụng công nghệ hàng đầu
             div(class="grid lg:grid-cols-3 sm:grid-cols-2 grid-cols-1 sm:gap-x-[20px] gap-y-[16px] sm:gap-y-[20px] gap-x-[10px]")
                 if topEmployers && topEmployers.length > 0
                     each emp in topEmployers
@@ -24,3 +24,107 @@ block main
                 else
                     div(class="col-span-full text-center text-[#717171] py-[30px]") Chưa có nhà tuyển dụng nào.
     //- End Section 2
+
+    //- Section 3: Tech Job Categories
+    section(class="py-[40px] sm:py-[60px] bg-[#F8FAFC] border-t border-b border-gray-200")
+        .contain
+            h2(class="font-[700] sm:text-[28px] text-[22px] text-[#121212] text-center mb-[10px]") Danh mục việc làm IT &amp; Chuyên môn công nghệ nổi bật
+            p(class="text-gray-600 text-center max-w-[700px] mx-auto mb-[32px] text-[15px]") Khám phá hàng trăm cơ hội việc làm IT được phân loại chi tiết theo từng chuyên ngành kỹ thuật và ngôn ngữ lập trình phổ biến nhất.
+            div(class="grid lg:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-[20px]")
+                div(class="p-[24px] bg-white rounded-[12px] border border-gray-200 shadow-sm")
+                    h3(class="font-[700] text-[18px] text-[#000071] mb-[8px]") Frontend &amp; Web Development
+                    p(class="text-gray-600 text-[14px] leading-relaxed mb-[12px]") Phát triển giao diện người dùng hiện đại với ReactJS, Next.js, VueJS, Angular, TypeScript. Tối ưu trải nghiệm tương tác, hiệu năng kết xuất và tính tương thích trên mọi thiết bị.
+                    a(href="/search?skill=reactjs" class="text-[#0088FF] font-[600] text-[14px] hover:underline inline-flex items-center gap-[4px]") Xem việc làm Frontend &rarr;
+
+                div(class="p-[24px] bg-white rounded-[12px] border border-gray-200 shadow-sm")
+                    h3(class="font-[700] text-[18px] text-[#000071] mb-[8px]") Backend &amp; Cloud Architecture
+                    p(class="text-gray-600 text-[14px] leading-relaxed mb-[12px]") Xây dựng hệ thống phân tán, xử lý dữ liệu lớn với NodeJS, Java Spring Boot, Golang, Python, kiến trúc Microservices và cơ sở dữ liệu quan hệ lẫn NoSQL chịu tải cao.
+                    a(href="/search?skill=nodejs" class="text-[#0088FF] font-[600] text-[14px] hover:underline inline-flex items-center gap-[4px]") Xem việc làm Backend &rarr;
+
+                div(class="p-[24px] bg-white rounded-[12px] border border-gray-200 shadow-sm")
+                    h3(class="font-[700] text-[18px] text-[#000071] mb-[8px]") Mobile App Development
+                    p(class="text-gray-600 text-[14px] leading-relaxed mb-[12px]") Lập trình ứng dụng di động đa nền tảng với Flutter, React Native hoặc bản địa (iOS Swift, Android Kotlin). Tối ưu hóa bộ nhớ, trải nghiệm cảm ứng mượt mà và bảo mật thanh toán.
+                    a(href="/search?keyword=Mobile" class="text-[#0088FF] font-[600] text-[14px] hover:underline inline-flex items-center gap-[4px]") Xem việc làm Mobile &rarr;
+
+                div(class="p-[24px] bg-white rounded-[12px] border border-gray-200 shadow-sm")
+                    h3(class="font-[700] text-[18px] text-[#000071] mb-[8px]") Trí tuệ nhân tạo &amp; Dữ liệu (AI / ML)
+                    p(class="text-gray-600 text-[14px] leading-relaxed mb-[12px]") Nghiên cứu và triển khai mô hình học máy, học sâu, xử lý ngôn ngữ tự nhiên (NLP/LLM), Computer Vision và kiến trúc Data Lakehouse trên hạ tầng Cloud hiện đại.
+                    a(href="/search?keyword=AI" class="text-[#0088FF] font-[600] text-[14px] hover:underline inline-flex items-center gap-[4px]") Xem việc làm AI / Data &rarr;
+
+                div(class="p-[24px] bg-white rounded-[12px] border border-gray-200 shadow-sm")
+                    h3(class="font-[700] text-[18px] text-[#000071] mb-[8px]") DevOps, SRE &amp; Điện toán đám mây
+                    p(class="text-gray-600 text-[14px] leading-relaxed mb-[12px]") Thiết lập đường ống tự động hóa CI/CD, cơ sở hạ tầng dạng mã (Terraform), quản trị cụm Docker/Kubernetes và giám sát tính ổn định hệ thống trên AWS, GCP, Azure.
+                    a(href="/search?keyword=DevOps" class="text-[#0088FF] font-[600] text-[14px] hover:underline inline-flex items-center gap-[4px]") Xem việc làm DevOps &rarr;
+
+                div(class="p-[24px] bg-white rounded-[12px] border border-gray-200 shadow-sm")
+                    h3(class="font-[700] text-[18px] text-[#000071] mb-[8px]") Quản lý dự án, QA &amp; Kiểm thử
+                    p(class="text-gray-600 text-[14px] leading-relaxed mb-[12px]") Đảm bảo chất lượng phần mềm thông qua Automation Testing (Selenium, Playwright), Manual Testing, cùng vai trò điều phối tiến độ Agile/Scrum của Scrum Master và Product Owner.
+                    a(href="/search?keyword=QA" class="text-[#0088FF] font-[600] text-[14px] hover:underline inline-flex items-center gap-[4px]") Xem việc làm QA &amp; PM &rarr;
+
+    //- Section 4: Platform Features
+    section(class="py-[40px] sm:py-[60px] bg-white")
+        .contain
+            h2(class="font-[700] sm:text-[28px] text-[22px] text-[#121212] text-center mb-[10px]") Hệ sinh thái tính năng đột phá trên VN.ITJobs
+            p(class="text-gray-600 text-center max-w-[700px] mx-auto mb-[32px] text-[15px]") Ứng dụng công nghệ hàng đầu giúp rút ngắn khoảng cách giữa kỹ sư phần mềm tài năng và nhà tuyển dụng công nghệ uy tín.
+            div(class="grid sm:grid-cols-2 grid-cols-1 gap-[24px]")
+                div(class="flex gap-[16px] p-[20px] rounded-[12px] border border-gray-100 bg-[#F8FAFC]")
+                    div(class="w-[48px] h-[48px] rounded-[10px] bg-[#0088FF]/10 text-[#0088FF] flex items-center justify-center shrink-0 text-[20px]")
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    div
+                        h3(class="font-[700] text-[17px] text-[#121212] mb-[6px]") Trí tuệ nhân tạo so khớp CV (AI Matching Engine)
+                        p(class="text-gray-600 text-[14px] leading-relaxed") Tự động bóc tách kỹ năng từ hồ sơ PDF, so sánh mức độ tương thích với mô tả công việc (JD) và gợi ý lộ trình nâng cao kỹ năng nhằm gia tăng tỷ lệ trúng tuyển.
+
+                div(class="flex gap-[16px] p-[20px] rounded-[12px] border border-gray-100 bg-[#F8FAFC]")
+                    div(class="w-[48px] h-[48px] rounded-[10px] bg-[#2E7D32]/10 text-[#2E7D32] flex items-center justify-center shrink-0 text-[20px]")
+                        <i class="fa-solid fa-chart-line"></i>
+                    div
+                        h3(class="font-[700] text-[17px] text-[#121212] mb-[6px]") Tra cứu mức lương IT chuẩn thị trường 2026
+                        p(class="text-gray-600 text-[14px] leading-relaxed") Khảo sát và tổng hợp dữ liệu thu nhập thực tế từ hàng nghìn tin tuyển dụng IT tại Hà Nội, TP.HCM và Đà Nẵng, giúp lập trình viên tự tin đàm phán mức đãi ngộ xứng đáng.
+
+                div(class="flex gap-[16px] p-[20px] rounded-[12px] border border-gray-100 bg-[#F8FAFC]")
+                    div(class="w-[48px] h-[48px] rounded-[10px] bg-[#E65100]/10 text-[#E65100] flex items-center justify-center shrink-0 text-[20px]")
+                        <i class="fa-solid fa-comments"></i>
+                    div
+                        h3(class="font-[700] text-[17px] text-[#121212] mb-[6px]") Đánh giá văn hóa doanh nghiệp minh bạch
+                        p(class="text-gray-600 text-[14px] leading-relaxed") Cung cấp góc nhìn thực tế về môi trường làm việc, chế độ đãi ngộ, văn hóa OT và cơ hội phát triển sự nghiệp từ chính những kỹ sư phần mềm đã và đang làm việc tại doanh nghiệp.
+
+                div(class="flex gap-[16px] p-[20px] rounded-[12px] border border-gray-100 bg-[#F8FAFC]")
+                    div(class="w-[48px] h-[48px] rounded-[10px] bg-[#673AB7]/10 text-[#673AB7] flex items-center justify-center shrink-0 text-[20px]")
+                        <i class="fa-solid fa-robot"></i>
+                    div
+                        h3(class="font-[700] text-[17px] text-[#121212] mb-[6px]") Sẵn sàng tích hợp AI Agent &amp; MCP Protocol
+                        p(class="text-gray-600 text-[14px] leading-relaxed") Hỗ trợ đầy đủ Model Context Protocol (MCP) Streamable HTTP, OpenAPI 3.1 và cơ chế Markdown Content Negotiation (acceptmarkdown.com) giúp các trợ lý AI đọc và tìm việc mượt mà.
+
+    //- Section 5: About Platform & Mission
+    section(class="py-[40px] sm:py-[60px] bg-[#000055] text-white")
+        .contain
+            div(class="max-w-[850px] mx-auto text-center space-y-[16px]")
+                h2(class="font-[800] sm:text-[30px] text-[24px] leading-tight") Về nền tảng VN.ITJobs &amp; Sứ mệnh phát triển
+                p(class="text-white/85 text-[15px] sm:text-[16px] leading-relaxed")
+                    | VN.ITJobs ra đời với cam kết thúc đẩy thị trường lao động công nghệ số tại Việt Nam. Chúng tôi tin rằng mỗi lập trình viên xứng đáng có một lộ trình sự nghiệp rõ ràng và môi trường làm việc lý tưởng. Bằng việc kết hợp dữ liệu thị trường minh bạch và công nghệ phân tích thông minh, VN.ITJobs trở thành cầu nối vững chắc giữa nhân tài công nghệ và hơn 1.200+ công ty phần mềm, tập đoàn tài chính công nghệ hàng đầu.
+                div(class="pt-[8px] flex justify-center gap-[12px] flex-wrap")
+                    a(href="/about" class="px-[20px] py-[10px] bg-[#0088FF] hover:bg-[#0070d6] text-white font-[600] text-[14px] rounded-[8px] transition") Tìm hiểu thêm về chúng tôi
+                    a(href="/docs" class="px-[20px] py-[10px] bg-white/10 hover:bg-white/20 border border-white/20 text-white font-[600] text-[14px] rounded-[8px] transition") Tài liệu Lập trình viên &amp; API
+
+    //- Section 6: FAQ
+    section(class="py-[40px] sm:py-[60px] bg-white")
+        .contain
+            h2(class="font-[700] sm:text-[28px] text-[22px] text-[#121212] text-center mb-[10px]") Câu hỏi thường gặp dành cho Lập trình viên &amp; Nhà tuyển dụng
+            p(class="text-gray-600 text-center max-w-[700px] mx-auto mb-[32px] text-[15px]") Giải đáp các thắc mắc phổ biến về quy trình tìm việc, đăng tin tuyển dụng và quyền riêng tư dữ liệu trên hệ thống.
+            div(class="max-w-[850px] mx-auto space-y-[16px]")
+                div(class="p-[20px] bg-[#F8FAFC] rounded-[10px] border border-gray-200")
+                    h3(class="font-[700] text-[16px] sm:text-[17px] text-[#121212] mb-[6px]") 1. Lập trình viên có mất chi phí nào khi ứng tuyển trên VN.ITJobs không?
+                    p(class="text-gray-600 text-[14.5px] leading-relaxed") Hoàn toàn không. Nền tảng VN.ITJobs hoàn toàn miễn phí 100% đối với ứng viên tìm việc. Bạn có thể tra cứu việc làm, tạo hồ sơ IT Profile, so khớp CV bằng AI và ứng tuyển trực tiếp không giới hạn.
+
+                div(class="p-[20px] bg-[#F8FAFC] rounded-[10px] border border-gray-200")
+                    h3(class="font-[700] text-[16px] sm:text-[17px] text-[#121212] mb-[6px]") 2. Làm thế nào để doanh nghiệp đăng tin tuyển dụng IT chất lượng?
+                    p(class="text-gray-600 text-[14.5px] leading-relaxed") Doanh nghiệp chỉ cần đăng ký tài khoản Nhà tuyển dụng tại trang Đăng ký Doanh nghiệp, cung cấp thông tin công ty và chờ ban quản trị phê duyệt. Sau khi kích hoạt, bạn có thể đăng tin tuyển dụng không giới hạn và tiếp cận hơn 100.000+ lập trình viên tiềm năng.
+
+                div(class="p-[20px] bg-[#F8FAFC] rounded-[10px] border border-gray-200")
+                    h3(class="font-[700] text-[16px] sm:text-[17px] text-[#121212] mb-[6px]") 3. Thông tin hồ sơ CV và thông tin liên hệ được bảo mật như thế nào?
+                    p(class="text-gray-600 text-[14.5px] leading-relaxed") VN.ITJobs tuân thủ nghiêm ngặt Nghị định 13/2023/NĐ-CP về bảo vệ dữ liệu cá nhân. Hồ sơ CV của bạn chỉ được chuyển giao cho nhà tuyển dụng khi bạn chủ động nhấn nộp hồ sơ ứng tuyển vào vị trí việc làm cụ thể.
+
+                div(class="p-[20px] bg-[#F8FAFC] rounded-[10px] border border-gray-200")
+                    h3(class="font-[700] text-[16px] sm:text-[17px] text-[#121212] mb-[6px]") 4. Các trợ lý ảo AI có thể truy xuất dữ liệu việc làm trên VN.ITJobs không?
+                    p(class="text-gray-600 text-[14.5px] leading-relaxed") Có. Chúng tôi cung cấp máy chủ Model Context Protocol (MCP) tại endpoint /mcp, chuẩn tài liệu máy đọc được OpenAPI 3.1 tại /openapi.json và hỗ trợ thương lượng nội dung Markdown (Accept: text/markdown) trên tất cả các trang công khai.
+

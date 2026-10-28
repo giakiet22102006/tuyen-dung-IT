@@ -1,0 +1,15 @@
+extends ../layouts/default.pug
+
+block title
+    title 404 - Không tìm thấy trang | VN.ITJobs
+
+block main
+    div(class="py-[60px] sm:py-[100px] flex-1 flex items-center justify-center bg-gray-50")
+        div(class="max-w-[600px] mx-auto px-4 text-center")
+            div(class="font-[900] text-[72px] sm:text-[96px] text-[#0088FF] leading-none mb-[16px]") 404
+            h1(class="font-[800] text-[24px] sm:text-[32px] text-[#121212] mb-[12px]") Không tìm thấy trang yêu cầu
+            p(class="text-gray-600 text-[15px] sm:text-[16px] mb-[28px]") Địa chỉ URL bạn truy cập không tồn tại hoặc đã được chuyển sang địa chỉ mới trên hệ thống VN.ITJobs.
+            div(class="flex justify-center gap-[12px] flex-wrap")
+                a(href="/" class="px-[24px] py-[12px] bg-[#0088FF] hover:bg-[#0070d6] text-white font-[600] rounded-[8px] transition shadow-md") Quay về Trang chủ
+                a(href="/search" class="px-[24px] py-[12px] bg-white border border-gray-300 hover:border-gray-400 text-gray-800 font-[600] rounded-[8px] transition") Tìm việc làm IT
+                a(href="/docs" class="px-[24px] py-[12px] bg-white border border-gray-300 hover:border-gray-400 text-gray-800 font-[600] rounded-[8px] transition") Tài liệu API

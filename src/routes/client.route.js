@@ -1,5 +1,6 @@
 // src/routes/client.route.js
 const express = require("express");
+const path = require("path");
 const router = express.Router();
 const clientController = require("../controllers/client/client.controller");
 const salaryController = require("../controllers/client/salary.controller");
@@ -7,6 +8,8 @@ const jobAlertController = require("../controllers/client/jobAlert.controller");
 const candidateCompanyFollow = require("../controllers/candidate/candidateCompanyFollow.controller");
 const blogController = require("../controllers/client/blog.controller");
 const notificationController = require("../controllers/client/notification.controller");
+const sitemapController = require("../controllers/sitemap.controller");
+const mcpController = require("../controllers/mcp.controller");
 const asyncHandler = require("../utils/asyncHandler");
 const { Candidate, Employer, Admin } = require("../models");
 const { signUserToken, signAdminToken } = require("../services/auth.service");
@@ -21,6 +24,48 @@ router.get("/search", asyncHandler(clientController.renderSearch));
 router.get("/api/search/suggestions", asyncHandler(clientController.getSearchSuggestions));
 router.get("/companies", asyncHandler(clientController.renderCompanyList));
 router.get("/companies/:slug", asyncHandler(clientController.renderCompanyDetails));
+
+// Trust Anchor Pages (About, Contact, Privacy) & Developer Portal
+router.get("/about", asyncHandler(clientController.renderAbout));
+router.get("/contact", asyncHandler(clientController.renderContact));
+router.get("/privacy", asyncHandler(clientController.renderPrivacy));
+router.get("/docs", asyncHandler(clientController.renderDocs));
+
+// Machine-readable discovery & Agent resources
+router.get("/sitemap.xml", asyncHandler(sitemapController.renderSitemap));
+
+router.get("/robots.txt", (req, res) => {
+  res.type("text/plain");
+  res.sendFile(path.join(__dirname, "../../public/robots.txt"));
+});
+
+router.get("/llms.txt", (req, res) => {
+  res.type("text/plain; charset=utf-8");
+  res.sendFile(path.join(__dirname, "../../public/llms.txt"));
+});
+
+router.get("/llms-full.txt", (req, res) => {
+  res.type("text/plain; charset=utf-8");
+  res.sendFile(path.join(__dirname, "../../public/llms-full.txt"));
+});
+
+router.get("/.well-known/agent-instructions.md", (req, res) => {
+  res.type("text/markdown; charset=utf-8");
+  res.sendFile(path.join(__dirname, "../../public/.well-known/agent-instructions.md"));
+});
+
+router.get("/openapi.json", (req, res) => {
+  res.type("application/json; charset=utf-8");
+  res.sendFile(path.join(__dirname, "../../public/openapi.json"));
+});
+
+// Model Context Protocol (MCP) endpoints
+router.get("/.well-known/mcp", mcpController.getMcpManifest);
+router.get("/.well-known/mcp.json", mcpController.getMcpManifest);
+router.post("/.well-known/mcp", asyncHandler(mcpController.postMcp));
+
+router.get("/mcp", mcpController.getMcp);
+router.post("/mcp", asyncHandler(mcpController.postMcp));
 router.post(
   "/companies/:id/follow",
   requireCandidate,

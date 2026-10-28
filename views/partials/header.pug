@@ -57,7 +57,13 @@ header(class="bg-[#000071] py-[14px] sticky top-0 z-50 shadow-md")
                             span(class="bg-[#EA1E30] text-white text-[10px] font-bold px-[5px] py-[1px] rounded-full") HOT
 
                     li
-                        a(href="/blog" class="hover:text-[#9FDB7C] transition-colors") Cẩm Nang IT
+                        a(href="/blog" class="hover:text-[#9FDB7C] transition-colors") Cẩm Nang &amp; API
+                        <i class="fa-solid fa-angle-down text-[12px] opacity-80"></i>
+                        ul
+                            li: a(href="/blog") Cẩm Nang Nghề Nghiệp IT
+                            li: a(href="/docs") Tài liệu API &amp; AI Agents
+                            li: a(href="/about") Về chúng tôi (VN.ITJobs)
+                            li: a(href="/contact") Liên hệ ban quản trị
 
                     if !currentUser || role !== 'employer'
                         li

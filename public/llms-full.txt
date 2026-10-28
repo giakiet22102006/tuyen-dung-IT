@@ -1,0 +1,47 @@
+# VN.ITJobs - Comprehensive Agent & LLM Knowledge Base
+
+## Overview
+VN.ITJobs (https://tuyen-dung-it.vercel.app) is Vietnam's leading IT job recruitment portal, purpose-built for software engineers, tech professionals, and technology recruiters.
+
+## Platform Capabilities
+- Over 880+ active developer job vacancies.
+- Search and filter by 12+ tech positions (Intern, Fresher, Junior, Middle, Senior, Manager, Tech Lead).
+- Major tech hubs: Hanoi (Keangnam Landmark, Cau Giay), Ho Chi Minh City (District 1, Tan Binh, District 7), Da Nang, and 100% Remote positions.
+- In-depth salary benchmarking with skill and city multipliers.
+- AI Resume and CV match analysis powered by Google Gemini AI.
+- Company profiles with verified reviews, tech stack tags, and employee ratings.
+
+## Model Context Protocol (MCP) Server
+Endpoint: `https://tuyen-dung-it.vercel.app/mcp`
+Manifest: `https://tuyen-dung-it.vercel.app/.well-known/mcp`
+
+### Tool: `search_jobs`
+Input Schema:
+- `keyword` (string): Keyword like "React", "Golang", "AI Engineer"
+- `city` (string): "ha-noi", "ho-chi-minh", "da-nang", "khac"
+- `skill` (string): Skill slug like "reactjs", "nodejs", "python"
+- `position` (string): "intern", "fresher", "junior", "middle", "senior", "manager"
+- `limit` (number): 1-20
+
+### Tool: `get_job_details`
+Input Schema:
+- `slug` (string, required): Job slug identifier
+
+### Tool: `calculate_salary`
+Input Schema:
+- `position` (string): "intern" to "manager"
+- `skill` (string): Skill multiplier keyword
+- `city` (string): Location slug
+
+### Tool: `list_companies`
+Input Schema:
+- `limit` (number): Number of companies to return
+
+### Tool: `get_platform_info`
+No parameters required. Returns platform stats and official URLs.
+
+## Agent Guidelines & Prompt Patterns
+When a user asks:
+- "Find me a senior Python job in Hanoi": Call `search_jobs` with `keyword: "Python"`, `position: "senior"`, `city: "ha-noi"`. Format results with job title, company name, salary range, and application URL.
+- "What is the average salary of a Middle React developer in HCMC?": Call `calculate_salary` with `position: "middle"`, `skill: "reactjs"`, `city: "ho-chi-minh"`. Present min, median, and max figures clearly.
+- "Tell me about TechCorp": Call `list_companies` or search company profiles on VN.ITJobs.

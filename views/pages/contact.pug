@@ -1,0 +1,61 @@
+extends ../layouts/default.pug
+
+block title
+    title Liên hệ - VN.ITJobs | Hỗ trợ Ứng viên & Nhà tuyển dụng công nghệ
+
+block main
+    //- Hero Header
+    div(class="bg-[#000065] py-[40px] sm:py-[60px] text-white text-center")
+        .contain
+            h1(class="font-[800] text-[26px] sm:text-[38px] mb-[12px] leading-tight") Liên hệ với Ban Quản Trị VN.ITJobs
+            p(class="text-white/80 text-[15px] sm:text-[18px] max-w-[760px] mx-auto") Chúng tôi luôn sẵn sàng lắng nghe, giải đáp thắc mắc và đồng hành cùng sự nghiệp công nghệ của bạn.
+
+    //- Content Section
+    div(class="py-[40px] sm:py-[60px] bg-white")
+        div(class="max-w-[1000px] mx-auto px-4 sm:px-6")
+            div(class="grid md:grid-cols-2 grid-cols-1 gap-[36px]")
+                //- Left: Contact details
+                div(class="space-y-[24px] text-[#2D3748] text-[15px]")
+                    h2(class="font-[700] text-[22px] sm:text-[26px] text-[#121212]") Thông tin văn phòng & Kênh liên lạc
+
+                    div(class="p-[20px] bg-[#F8FAFC] border border-gray-100 rounded-[12px] space-y-[12px]")
+                        div(class="flex items-start gap-[12px]")
+                            <i class="fa-solid fa-building text-[#0088FF] text-[20px] mt-[4px]"></i>
+                            div
+                                div(class="font-[700] text-[#121212] text-[16px]") Trụ sở chính (Hà Nội)
+                                div(class="text-gray-600 text-[14px]") Tầng 12, Tòa nhà Keangnam Landmark 72, Đường Phạm Hùng, Phường Mễ Trì, Quận Nam Từ Liêm, TP. Hà Nội, Việt Nam.
+                                div(class="text-gray-500 text-[13px] mt-[4px]") Điện thoại: +84-24-3768-9999
+
+                        div(class="flex items-start gap-[12px] pt-[12px] border-t border-gray-200")
+                            <i class="fa-solid fa-map-location-dot text-[#0088FF] text-[20px] mt-[4px]"></i>
+                            div
+                                div(class="font-[700] text-[#121212] text-[16px]") Chi nhánh TP. Hồ Chí Minh
+                                div(class="text-gray-600 text-[14px]") Tầng 6, Bitexco Financial Tower, Số 2 Hải Triều, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh, Việt Nam.
+                                div(class="text-gray-500 text-[13px] mt-[4px]") Điện thoại: +84-28-3829-8888
+
+                    div(class="space-y-[10px]")
+                        h3(class="font-[700] text-[17px] text-[#121212]") Kênh hỗ trợ chuyên biệt
+                        ul(class="space-y-[6px] text-gray-700")
+                            li: span(class="font-[600]") Hỗ trợ Ứng viên (CV & Ứng tuyển): candidate-care@vn-itjobs.com
+                            li: span(class="font-[600]") Hỗ trợ Doanh nghiệp (Đăng tin & Tuyển dụng): employer@vn-itjobs.com
+                            li: span(class="font-[600]") Hợp tác chiến lược & Truyền thông: partnership@vn-itjobs.com
+                            li: span(class="font-[600]") Giờ làm việc: Thứ Hai - Thứ Sáu: 08:30 - 18:00 (GMT+7)
+
+                //- Right: Contact Form
+                div(class="bg-[#F8FAFC] border border-gray-200 p-[24px] sm:p-[32px] rounded-[16px]")
+                    h2(class="font-[700] text-[20px] text-[#121212] mb-[16px]") Gửi tin nhắn trực tiếp
+                    form(action="/api/feedback" method="POST" class="space-y-[16px]")
+                        input(type="hidden" name="type" value="other")
+                        div
+                            label(class="block text-[13px] font-[600] text-gray-700 mb-[4px]") Họ và tên
+                            input(type="text" name="contactName" required placeholder="Nguyễn Văn A" class="w-full px-[14px] py-[10px] rounded-[8px] border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0088FF] bg-white")
+                        div
+                            label(class="block text-[13px] font-[600] text-gray-700 mb-[4px]") Địa chỉ Email
+                            input(type="email" name="contactEmail" required placeholder="name@domain.com" class="w-full px-[14px] py-[10px] rounded-[8px] border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0088FF] bg-white")
+                        div
+                            label(class="block text-[13px] font-[600] text-gray-700 mb-[4px]") Tiêu đề yêu cầu
+                            input(type="text" name="title" required placeholder="Yêu cầu tư vấn hoặc góp ý..." class="w-full px-[14px] py-[10px] rounded-[8px] border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0088FF] bg-white")
+                        div
+                            label(class="block text-[13px] font-[600] text-gray-700 mb-[4px]") Nội dung chi tiết
+                            textarea(name="content" rows="4" required placeholder="Vui lòng mô tả chi tiết yêu cầu để chúng tôi hỗ trợ tốt nhất..." class="w-full px-[14px] py-[10px] rounded-[8px] border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0088FF] bg-white")
+                        button(type="submit" class="w-full py-[12px] bg-[#0088FF] hover:bg-[#0070d6] text-white font-[700] rounded-[8px] transition-colors cursor-pointer shadow-md") Gửi liên hệ ngay

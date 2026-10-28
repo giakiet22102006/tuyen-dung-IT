@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /candidate/
+Disallow: /employer/
+
+Sitemap: https://tuyen-dung-it.vercel.app/sitemap.xml
