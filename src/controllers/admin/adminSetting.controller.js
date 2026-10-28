@@ -72,6 +72,7 @@ async function postAboutSettings(req, res) {
   };
 
   await settings.save();
+  Setting.clearCache();
 
   await logAdminAction({
     adminId: req.admin ? req.admin._id : "system",

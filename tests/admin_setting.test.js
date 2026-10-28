@@ -198,5 +198,12 @@ describe("Admin About Settings Management & Dynamic /about Page", () => {
     expect(markdownRes.status).toBe(200);
     expect(markdownRes.text).toContain("# Hệ Sinh Thái Tuyển Dụng Công Nghệ VN.ITJobs 2026");
     expect(markdownRes.text).toContain("2.500+");
+
+    // Check Global Footer synchronization across all pages (e.g. /search)
+    const searchRes = await request(app).get("/search");
+    expect(searchRes.status).toBe(200);
+    expect(searchRes.text).toContain("Trụ sở: Tòa nhà FPT Cầu Giấy, Hà Nội");
+    expect(searchRes.text).toContain("Hotline: 1900 6868");
+    expect(searchRes.text).toContain("Email: support@vnitjobs.vn");
   });
 });

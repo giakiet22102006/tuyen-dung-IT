@@ -64,7 +64,14 @@ const settingSchema = new mongoose.Schema(
   }
 );
 
+let cachedSettings = null;
+
+settingSchema.statics.clearCache = function () {
+  cachedSettings = null;
+};
+
 settingSchema.statics.getSettings = async function () {
+  if (cachedSettings) return cachedSettings;
   let doc = await this.findOne({ key: "system_settings" });
   if (!doc) {
     try {
@@ -73,7 +80,8 @@ settingSchema.statics.getSettings = async function () {
       doc = await this.findOne({ key: "system_settings" });
     }
   }
-  return doc || { key: "system_settings", about: { ...defaultAbout } };
+  cachedSettings = doc || { key: "system_settings", about: { ...defaultAbout } };
+  return cachedSettings;
 };
 
 const Setting = mongoose.model("Setting", settingSchema);

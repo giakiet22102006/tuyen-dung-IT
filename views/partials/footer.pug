@@ -4,11 +4,11 @@ footer(class="site-footer bg-[#000065] py-[36px] mt-auto w-full text-white/90")
             div
                 div(class="font-[800] text-[24px] text-white mb-[8px]") VN.ITJobs
                 p(class="text-white/70 text-[13px] leading-relaxed mb-[12px]")
-                    | Nền tảng tuyển dụng IT và kết nối nhân tài công nghệ hàng đầu Việt Nam. Tích hợp AI Matching, tra cứu lương chuẩn xác và bảo mật tối đa.
+                    | #{(siteSetting && siteSetting.subtitle) || "Nền tảng tuyển dụng IT và kết nối nhân tài công nghệ hàng đầu Việt Nam. Tích hợp AI Matching, tra cứu lương chuẩn xác và bảo mật tối đa."}
                 div(class="text-[12px] text-white/60 space-y-[4px]")
-                    div Trụ sở: Tòa Keangnam Landmark 72, Hà Nội
-                    div Hotline: +84-24-3768-9999
-                    div Email: contact@vn-itjobs.com
+                    div Trụ sở: #{(siteSetting && siteSetting.headOffice) || "Tòa Keangnam Landmark 72, Hà Nội"}
+                    div Hotline: #{(siteSetting && siteSetting.hotline) || "+84-24-3768-9999"}
+                    div Email: #{(siteSetting && siteSetting.email) || "contact@vn-itjobs.com"}
 
             div
                 div(class="font-[700] text-white mb-[10px] text-[15px]") Khám phá cơ hội
@@ -35,4 +35,4 @@ footer(class="site-footer bg-[#000065] py-[36px] mt-auto w-full text-white/90")
                     li: a(href="/llms.txt" class="hover:text-white transition-colors" target="_blank") Hướng dẫn AI Agent (llms.txt)
 
         div(class="pt-[20px] border-t border-white/10 text-center text-[13px] text-white/60")
-            | Copyright © 2026 VN.ITJobs. Nền tảng tuyển dụng IT và Việc làm Developer hàng đầu Việt Nam. Giấy phép ĐKDN số 0109988776.
+            | Copyright © 2026 #{(siteSetting && siteSetting.companyName) || "VN.ITJobs"}. Nền tảng tuyển dụng IT và Việc làm Developer hàng đầu Việt Nam. #{(siteSetting && siteSetting.businessCode ? "Giấy phép ĐKDN " + siteSetting.businessCode : "Giấy phép ĐKDN số 0109988776.")}

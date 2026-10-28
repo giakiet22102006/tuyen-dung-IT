@@ -4,7 +4,7 @@ const { getMenuData } = require("../services/menu.service");
 const formatSalary = require("../utils/formatSalary");
 const labels = require("../utils/labels");
 const env = require("../config/env");
-const { SavedJob } = require("../models");
+const { SavedJob, Setting } = require("../models");
 
 async function localsMiddleware(req, res, next) {
   res.locals.currentUser = req.user || null;
@@ -60,6 +60,14 @@ async function localsMiddleware(req, res, next) {
     res.locals.menuData = await getMenuData();
   } catch (err) {
     res.locals.menuData = { skills: [], topEmployers: [], cities: [] };
+  }
+
+  // Cached site settings (About, contact, address in Footer)
+  try {
+    const settings = await Setting.getSettings();
+    res.locals.siteSetting = settings.about || {};
+  } catch (err) {
+    res.locals.siteSetting = {};
   }
 
   next();
