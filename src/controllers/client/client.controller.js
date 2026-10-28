@@ -9,7 +9,7 @@ const {
 } = require("../../services/job.service");
 const { getAutocompleteSuggestions } = require("../../services/fuzzySearch.service");
 const { CITIES, POSITIONS, WORKING_FORMS, BENEFITS, JOB_MODERATION, EMPLOYER_STATUS } = require("../../config/constants");
-const { Skill, Job, Application, Review, Employer, Feedback, Candidate, CompanyFollow } = require("../../models");
+const { Job, Application, Review, Employer, Feedback, Candidate, CompanyFollow } = require("../../models");
 const { uploadCV, saveCvBuffer } = require("../../services/storage.service");
 const { generateItProfilePdf } = require("../../services/pdfGenerator.service");
 const { getCompanyMapData } = require("../../utils/googleMaps");
@@ -218,7 +218,7 @@ Tài liệu lập trình viên, OpenAPI Specification và Model Context Protocol
 };
 
 const renderSearch = async (req, res) => {
-  const { city, keyword, skill, position, workingForm, benefit, company, page, exact } = req.query;
+  const { city, keyword, skill, position, workingForm, benefit, exact } = req.query;
 
   const [searchResult, totalPublicJobs] = await Promise.all([
     searchJobs(req.query),

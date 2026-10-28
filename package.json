@@ -18,6 +18,7 @@
     "export:sql": "node src/scripts/export-sql.js",
     "create-admin": "node src/scripts/create-admin.js",
     "benchmark": "node src/scripts/benchmark.js",
+    "generate:og": "node src/scripts/generate-og-image.js",
     "test": "jest --runInBand --detectOpenHandles --forceExit",
     "lint": "eslint .",
     "format": "prettier --write ."

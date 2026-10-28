@@ -1,6 +1,6 @@
 // src/services/salary.service.js
 const { Job } = require("../models");
-const { JOB_MODERATION, POSITIONS, CITIES } = require("../config/constants");
+const { JOB_MODERATION } = require("../config/constants");
 
 // Bảng dữ liệu chuẩn mức lương thị trường IT Việt Nam năm 2026 (Đơn vị: VNĐ/tháng)
 const SALARY_BENCHMARKS = {

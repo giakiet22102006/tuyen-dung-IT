@@ -147,7 +147,7 @@ function parseJsonFromLlm(text) {
 // =========================================================================
 function analyzeCvSuitability(cvText, job) {
   const text = (cvText || "").toLowerCase();
-  const jobTitle = job ? (job.title || "").toLowerCase() : "";
+  const _jobTitle = job ? (job.title || "").toLowerCase() : "";
   const jobSkills = job && Array.isArray(job.skills) ? job.skills : [];
 
   // 1. Nhận diện các ngành nghề ngoài CNTT
@@ -1045,7 +1045,7 @@ async function curateArticleFromSourceWithAi({ sourceUrl = "", rawContent = "", 
         }
 
         // Trích xuất hình ảnh dạng Markdown: ![alt](url)
-        const mdImgRegex = /!\[(.*?)\]\((https?:\/\/[^\s\)]+)\)/g;
+        const mdImgRegex = /!\[(.*?)\]\((https?:\/\/[^\s)]+)\)/g;
         let mdMatch;
         while ((mdMatch = mdImgRegex.exec(rawHtml)) !== null) {
           const alt = mdMatch[1] ? mdMatch[1].replace(/^Image\s*\d*:\s*/i, "").trim() : "";
@@ -1159,7 +1159,7 @@ async function curateArticleFromSourceWithAi({ sourceUrl = "", rawContent = "", 
       }
     }
     // Quét cú pháp Markdown ![alt](url)
-    const mdRegex = /!\[(.*?)\]\((https?:\/\/[^\s\)]+)\)/g;
+    const mdRegex = /!\[(.*?)\]\((https?:\/\/[^\s)]+)\)/g;
     let mdMatch;
     while ((mdMatch = mdRegex.exec(rawContent)) !== null) {
       const alt = mdMatch[1] ? mdMatch[1].trim() : "";
@@ -1247,7 +1247,7 @@ Vui lòng trả về DUY NHẤT định dạng JSON:
   "category": "Kinh Nghiệm Tuyển Dụng",
   "targetAudience": "${targetAudience}",
   "summary": "Tóm tắt...",
-  "content": "<h2>1. Đề mục lớn</h2><p>Phân tích chi tiết...</p><figure class=\"my-6 text-center\"><img src=\"...\" alt=\"...\" class=\"rounded-xl shadow-md mx-auto max-h-[480px] object-cover\" /><figcaption class=\"text-[13px] text-gray-500 italic mt-2\">Chú thích ảnh</figcaption></figure><h3>1.1. Chi tiết</h3><p>Nội dung...</p><ul><li><strong>Ý cốt lõi:</strong> Diễn giải...</li></ul><blockquote>Lời khuyên từ chuyên gia...</blockquote>",
+  "content": "<h2>1. Đề mục lớn</h2><p>Phân tích chi tiết...</p><figure class='my-6 text-center'><img src='...' alt='...' class='rounded-xl shadow-md mx-auto max-h-[480px] object-cover' /><figcaption class='text-[13px] text-gray-500 italic mt-2'>Chú thích ảnh</figcaption></figure><h3>1.1. Chi tiết</h3><p>Nội dung...</p><ul><li><strong>Ý cốt lõi:</strong> Diễn giải...</li></ul><blockquote>Lời khuyên từ chuyên gia...</blockquote>",
   "tags": ["Tag1", "Tag2", "Tag3"],
   "readingTime": 8,
   "sourceName": "${sourceName || "Nguồn tham khảo"}",

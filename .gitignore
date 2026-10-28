@@ -1,22 +1,51 @@
+# Dependencies
 node_modules/
+
+# Environment Variables & Secrets
 .env
+.env.local
+.env.*.local
+
+# Storage & Uploads (preserve .gitkeep)
 storage/private/cv/*
 !storage/private/cv/.gitkeep
 public/uploads/*
 !public/uploads/.gitkeep
-.DS_Store
-Thumbs.db
-.vercel
-.agents/
-.archify/
-skills-lock.json/
+
+# Generated Exports, Dumps & Office Documents
+*.sql
+*.doc
+*.docx
+~$*
+
+# Build & Deployment
+.vercel/
+dist/
+build/
+
+# Testing & Coverage
 coverage/
+.nyc_output/
+
+# Logs
+logs/
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-~$*
 
-.vercel
+# AI / Agents Artifacts (Local Workspace)
 .agents/
 .archify/
 skills-lock.json
+
+# OS & Editor Files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

@@ -1,7 +1,7 @@
 // src/services/job.service.js
 const NodeCache = require("node-cache");
-const { Job, Employer, Skill } = require("../models");
-const { EMPLOYER_STATUS, JOB_MODERATION, CITIES, POSITIONS, WORKING_FORMS } = require("../config/constants");
+const { Job, Employer } = require("../models");
+const { EMPLOYER_STATUS, JOB_MODERATION } = require("../config/constants");
 const normalizeVi = require("../utils/normalizeVi");
 const paginate = require("../utils/pagination");
 const { findDidYouMean, clearVocabCache } = require("./fuzzySearch.service");

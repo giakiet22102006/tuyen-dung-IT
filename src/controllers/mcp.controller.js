@@ -194,7 +194,7 @@ async function executeTool(name, args = {}) {
  * Xử lý yêu cầu JSON-RPC 2.0 cho MCP Protocol
  */
 async function handleJsonRpc(reqBody) {
-  const { jsonrpc, id, method, params } = reqBody;
+  const { id, method, params } = reqBody;
 
   if (method === "initialize") {
     return {

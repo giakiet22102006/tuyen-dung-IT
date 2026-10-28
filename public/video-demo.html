@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VN.ITJobs - The Next-Gen IT Recruitment Platform (Cinematic Product Launch)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --primary: #38bdf8;
+      --primary-glow: rgba(56, 189, 248, 0.5);
+      --accent-emerald: #10b981;
+      --accent-purple: #a855f7;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --bg-dark: #030712;
+      --surface-glass: rgba(15, 23, 42, 0.75);
+      --border-glass: rgba(255, 255, 255, 0.12);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+      perspective: 1000px;
+    }
+
+    /* Ambient Aurora Background Canvas */
+    #ambientCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.85;
+    }
+
+    /* Cinematic Theater Shell */
+    .theater-container {
+      position: relative;
+      z-index: 10;
+      width: 95vw;
+      max-width: 1440px;
+      margin: 20px auto;
+      border-radius: 24px;
+      background: rgba(8, 14, 26, 0.85);
+      backdrop-filter: blur(40px);
+      -webkit-backdrop-filter: blur(40px);
+      border: 1px solid var(--border-glass);
+      box-shadow: 
+        0 0 0 1px rgba(255, 255, 255, 0.05),
+        0 30px 100px -20px rgba(0, 0, 0, 0.9),
+        0 0 120px -30px rgba(56, 189, 248, 0.25);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* 16:9 Cinematic Stage */
+    .cinematic-stage {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
+      background: radial-gradient(circle at 50% 30%, rgba(30, 41, 59, 0.4) 0%, rgba(3, 7, 18, 0.95) 100%);
+    }
+
+    /* Top Brand & Status Header */
+    .stage-header {
+      position: absolute;
+      top: 24px;
+      left: 36px;
+      right: 36px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 40;
+    }
+
+    .brand-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(16px);
+      padding: 6px 16px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      letter-spacing: -0.2px;
+    }
+
+    .brand-logo-icon {
+      width: 22px;
+      height: 22px;
+      background: linear-gradient(135deg, #38bdf8, #2563eb);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 900;
+      color: white;
+      box-shadow: 0 0 12px var(--primary-glow);
+    }
+
+    .live-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #34d399;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .pulsing-dot {
+      width: 8px;
+      height: 8px;
+      background: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #10b981;
+      animation: pulseGlow 1.8s infinite;
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(0.7); opacity: 0.4; }
+    }
+
+    /* Scene Transitions & 3D Depth */
+    .scene-viewport {
+      position: absolute;
+      inset: 0;
+      padding: 80px 48px 120px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .scene {
+      position: absolute;
+      inset: 80px 54px 110px 54px;
+      opacity: 0;
+      visibility: hidden;
+      transform: scale(0.92) translateY(24px) rotateX(4deg);
+      filter: blur(8px);
+      transition: all 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform-style: preserve-3d;
+    }
+
+    .scene.active {
+      opacity: 1;
+      visibility: visible;
+      transform: scale(1) translateY(0) rotateX(0deg);
+      filter: blur(0px);
+    }
+
+    /* Apple-style Hero Typography */
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(56, 189, 248, 0.15), rgba(168, 85, 247, 0.15));
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: #38bdf8;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
+    }
+
+    .hero-headline {
+      font-size: 3.2rem;
+      font-weight: 900;
+      line-height: 1.15;
+      letter-spacing: -1.5px;
+      background: linear-gradient(135deg, #ffffff 40%, #94a3b8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 20px;
+    }
+
+    .hero-headline span.gradient-text {
+      background: linear-gradient(135deg, #38bdf8, #818cf8, #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subhead {
+      font-size: 1.15rem;
+      line-height: 1.65;
+      color: #94a3b8;
+      max-width: 680px;
+      font-weight: 400;
+    }
+
+    /* Product Showcase 2-Column Split */
+    .product-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 48px;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* 3D Glass Device Card */
+    .glass-card-3d {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      box-shadow: 
+        0 20px 60px -15px rgba(0, 0, 0, 0.8),
+        0 0 40px rgba(56, 189, 248, 0.1);
+      backdrop-filter: blur(24px);
+      overflow: hidden;
+      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+    }
+
+    .card-topbar {
+      background: rgba(30, 41, 59, 0.6);
+      padding: 12px 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .window-dots {
+      display: flex;
+      gap: 6px;
+    }
+    .w-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .w-dot.red { background: #ef4444; }
+    .w-dot.yellow { background: #f59e0b; }
+    .w-dot.green { background: #10b981; }
+
+    .card-content {
+      padding: 24px;
+    }
+
+    /* Circular SVG Gauge for AI Score */
+    .gauge-container {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin-bottom: 20px;
+    }
+
+    .gauge-svg-wrap {
+      position: relative;
+      width: 100px;
+      height: 100px;
+      flex-shrink: 0;
+    }
+
+    .gauge-circle-bg {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.1);
+      stroke-width: 8;
+    }
+
+    .gauge-circle-progress {
+      fill: none;
+      stroke: url(#emeraldGradient);
+      stroke-width: 8;
+      stroke-linecap: round;
+      stroke-dasharray: 251.2;
+      stroke-dashoffset: 251.2;
+      transition: stroke-dashoffset 1.8s cubic-bezier(0.16, 1, 0.3, 1);
+      transform: rotate(-90deg);
+      transform-origin: 50% 50%;
+    }
+
+    .gauge-number {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #34d399;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Subtitle Cinema Banner (Karaoke Glowing Text) */
+    .cinematic-subtitles {
+      position: absolute;
+      bottom: 24px;
+      left: 48px;
+      right: 48px;
+      background: rgba(3, 7, 18, 0.85);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 16px;
+      padding: 14px 28px;
+      text-align: center;
+      font-size: 1.15rem;
+      font-weight: 500;
+      line-height: 1.6;
+      color: #e2e8f0;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+      z-index: 50;
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.4s;
+    }
+
+    .cinematic-subtitles .highlight-word {
+      color: #38bdf8;
+      font-weight: 700;
+      text-shadow: 0 0 12px rgba(56, 189, 248, 0.6);
+    }
+
+    /* Sleek Floating Dock Controls */
+    .floating-dock {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(30px);
+      border-top: 1px solid var(--border-glass);
+      padding: 16px 36px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .timeline-scrubber {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 999px;
+      cursor: pointer;
+      position: relative;
+      transition: height 0.2s;
+    }
+    .timeline-scrubber:hover {
+      height: 10px;
+    }
+
+    .timeline-fill {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #38bdf8, #818cf8, #c084fc);
+      border-radius: 999px;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.8);
+      transition: width 0.1s linear;
+    }
+
+    .dock-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .dock-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #f8fafc;
+      padding: 8px 18px;
+      border-radius: 12px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .dock-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.25);
+      transform: translateY(-2px);
+    }
+
+    .dock-btn.primary-launch {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      border-color: #38bdf8;
+      box-shadow: 0 0 25px rgba(2, 132, 199, 0.5);
+    }
+    .dock-btn.primary-launch:hover {
+      box-shadow: 0 0 35px rgba(2, 132, 199, 0.8);
+    }
+
+    .dock-btn.record-btn {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(244, 63, 94, 0.2));
+      border: 1px solid rgba(244, 63, 94, 0.4);
+      color: #fda4af;
+    }
+    .dock-btn.record-btn:hover {
+      background: rgba(244, 63, 94, 0.3);
+      color: white;
+    }
+
+    /* Scene Index Selector Pills */
+    .scene-navigator {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .nav-pill {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+
+    .nav-pill:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+    }
+
+    .nav-pill.active {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: #38bdf8;
+      color: #38bdf8;
+      box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
+    }
+
+    /* Laser Scanner Beam on Sharp scene */
+    .laser-beam {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #38bdf8, #a855f7, transparent);
+      box-shadow: 0 0 15px #38bdf8;
+      animation: scanLaser 2.2s infinite ease-in-out;
+    }
+
+    @keyframes scanLaser {
+      0% { top: 10%; opacity: 0; }
+      50% { opacity: 1; }
+      100% { top: 90%; opacity: 0; }
+    }
+
+    /* Live Animated Terminal */
+    .terminal-body {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.84rem;
+      line-height: 1.6;
+      color: #94a3b8;
+    }
+    .cmd-line { margin-bottom: 6px; }
+    .cmd-green { color: #34d399; }
+    .cmd-cyan { color: #38bdf8; }
+    .cmd-amber { color: #fbbf24; }
+    .cmd-rose { color: #fb7185; }
+    .cmd-white { color: #f8fafc; font-weight: 600; }
+  </style>
+</head>
+<body>
+
+  <!-- Background Ambient Aurora -->
+  <canvas id="ambientCanvas"></canvas>
+
+  <!-- Theater Shell -->
+  <div class="theater-container" id="theaterContainer">
+    
+    <!-- 16:9 Cinematic Stage -->
+    <div class="cinematic-stage" id="cinematicStage">
+      
+      <!-- Top Branding -->
+      <div class="stage-header">
+        <div class="brand-pill">
+          <div class="brand-logo-icon">VN</div>
+          <span>VN.ITJobs • Architecture Showcase</span>
+        </div>
+        <div style="display: flex; gap: 12px; align-items: center;">
+          <div class="live-status">
+            <span class="pulsing-dot"></span>
+            <span>CINEMATIC LAUNCH</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scene Viewport -->
+      <div class="scene-viewport">
+
+        <!-- SCENE 0: Hero Intro -->
+        <div class="scene active" data-index="0" data-duration="20">
+          <div style="text-align: center; max-width: 960px;">
+            <div class="hero-badge">
+              <span>✨ KIẾN TRÚC & ĐỘT PHÁ CÔNG NGHỆ 2026</span>
+            </div>
+            <h1 class="hero-headline">
+              Kỷ Nguyên Mới Của Nền Tảng<br>
+              <span class="gradient-text">Tuyển Dụng IT Tốc Độ Cao</span>
+            </h1>
+            <p class="hero-subhead" style="margin: 0 auto 36px auto;">
+              Chào mừng bạn đến với buổi ra mắt giải pháp kỹ thuật của VN.ITJobs. Nền tảng được kiến trúc với SSR Express, MongoDB Compound Indexing, bộ máy AI Sàng lọc CV và chuẩn Model Context Protocol (MCP).
+            </p>
+            <div style="display: flex; justify-content: center; gap: 14px; flex-wrap: wrap;">
+              <div class="brand-pill" style="border-color: #38bdf8;">⚡ Phản hồi 0 - 5ms</div>
+              <div class="brand-pill" style="border-color: #34d399;">🛡️ Bảo mật Đa Tầng Zero-Trust</div>
+              <div class="brand-pill" style="border-color: #c084fc;">🤖 Google Gemini AI Ready</div>
+              <div class="brand-pill" style="border-color: #f59e0b;">🌐 Chuẩn Giao Thức MCP</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SCENE 1: AI CV Screening -->
+        <div class="scene" data-index="1" data-duration="28">
+          <div class="product-grid">
+            <div>
+              <div class="hero-badge" style="border-color: #34d399; color: #34d399;">
+                <span>01 • TRÍ TUỆ NHÂN TẠO THẾ HỆ MỚI</span>
+              </div>
+              <h2 class="hero-headline" style="font-size: 2.5rem;">
+                AI CV Screening &<br>
+                <span class="gradient-text" style="background: linear-gradient(135deg, #34d399, #38bdf8); -webkit-background-clip: text;">Intelligent Job Matching</span>
+              </h2>
+              <p class="hero-subhead" style="margin-bottom: 24px; font-size: 1.02rem;">
+                Tự động bóc tách PDF thô qua <code>pdf-parse</code>, đối soát với JD qua Gemini 3.5 Flash-Lite trong 28 giây. Nếu mất kết nối, hệ thống tự động fallback sang bộ máy Heuristic Scoring nội bộ.
+              </p>
+              <div style="background: rgba(16, 185, 129, 0.1); border: 1px dashed rgba(16, 185, 129, 0.35); padding: 14px 18px; border-radius: 12px; font-family: 'JetBrains Mono'; font-size: 0.88rem; color: #6ee7b7;">
+                Score = (Core Skills × 40%) + (Secondary × 20%) + (Exp × 20%) + (Projects × 20%)
+              </div>
+            </div>
+
+            <div>
+              <div class="glass-card-3d">
+                <div class="card-topbar">
+                  <div class="window-dots">
+                    <span class="w-dot red"></span>
+                    <span class="w-dot yellow"></span>
+                    <span class="w-dot green"></span>
+                  </div>
+                  <span style="font-size: 0.75rem; color: #64748b; font-family: 'JetBrains Mono';">AI Evaluation Engine • Live</span>
+                </div>
+                <div class="card-content">
+                  <div class="gauge-container">
+                    <div class="gauge-svg-wrap">
+                      <svg width="100" height="100" viewBox="0 0 100 100">
+                        <defs>
+                          <linearGradient id="emeraldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#34d399" />
+                            <stop offset="100%" stop-color="#38bdf8" />
+                          </linearGradient>
+                        </defs>
+                        <circle class="gauge-circle-bg" cx="50" cy="50" r="40" />
+                        <circle class="gauge-circle-progress" id="aiGaugeCircle" cx="50" cy="50" r="40" />
+                      </svg>
+                      <div class="gauge-number"><span id="aiScoreNumber">88</span><span style="font-size: 0.6rem; color: #94a3b8;">/100</span></div>
+                    </div>
+                    <div>
+                      <div style="font-size: 1.15rem; font-weight: 800; color: #f8fafc;">Lê Văn A • 4.5 Năm Exp</div>
+                      <div style="font-size: 0.82rem; color: #34d399; font-weight: 600; margin-top: 2px;">RẤT TƯƠNG THÍCH VỚI VỊ TRÍ SENIOR</div>
+                    </div>
+                  </div>
+
+                  <div style="margin-bottom: 14px;">
+                    <span style="font-size: 0.78rem; color: #94a3b8; font-weight: 600;">Kỹ năng đáp ứng xuất sắc:</span>
+                    <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px;">
+                      <span class="brand-pill" style="padding: 2px 10px; font-size: 0.75rem; background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: #10b981;">React 19</span>
+                      <span class="brand-pill" style="padding: 2px 10px; font-size: 0.75rem; background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: #10b981;">NodeJS</span>
+                      <span class="brand-pill" style="padding: 2px 10px; font-size: 0.75rem; background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: #10b981;">TypeScript</span>
+                      <span class="brand-pill" style="padding: 2px 10px; font-size: 0.75rem; background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: #10b981;">MongoDB</span>
+                    </div>
+                  </div>
+
+                  <div style="background: rgba(30, 41, 59, 0.6); padding: 12px 16px; border-radius: 10px; font-size: 0.82rem; color: #cbd5e1; border-left: 3px solid #38bdf8;">
+                    💡 <strong>Gợi ý phỏng vấn chuyên sâu:</strong> Yêu cầu ứng viên trình bày chiến lược chia nhỏ Component và kiểm soát Memory Leak trong Node.js Cluster.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SCENE 2: Fuzzy Search -->
+        <div class="scene" data-index="2" data-duration="28">
+          <div class="product-grid">
+            <div>
+              <div class="hero-badge" style="border-color: #38bdf8; color: #38bdf8;">
+                <span>02 • THUẬT TOÁN TÌM KIẾM THÔNG MINH</span>
+              </div>
+              <h2 class="hero-headline" style="font-size: 2.5rem;">
+                Fuzzy Search &<br>
+                <span class="gradient-text" style="background: linear-gradient(135deg, #38bdf8, #818cf8); -webkit-background-clip: text;">Damerau-Levenshtein</span>
+              </h2>
+              <p class="hero-subhead" style="margin-bottom: 24px; font-size: 1.02rem;">
+                Khử lỗi gõ sai chính tả và đảo vị trí phím. Toàn bộ từ điển IT được nạp động từ database vào RAM thông qua NodeCache, thời gian đối soát chỉ tốn chưa tới 1.5ms.
+              </p>
+              <div style="display: flex; gap: 12px;">
+                <div class="brand-pill" style="border-color: #38bdf8; color: #38bdf8;">⚡ Phản hồi 1.4ms</div>
+                <div class="brand-pill" style="border-color: #a855f7; color: #c084fc;">4 Phép biến đổi ký tự</div>
+              </div>
+            </div>
+
+            <div>
+              <div class="glass-card-3d">
+                <div class="card-topbar">
+                  <div class="window-dots">
+                    <span class="w-dot red"></span>
+                    <span class="w-dot yellow"></span>
+                    <span class="w-dot green"></span>
+                  </div>
+                  <span style="font-size: 0.75rem; color: #64748b; font-family: 'JetBrains Mono';">Search Typo Engine</span>
+                </div>
+                <div class="card-content">
+                  <div style="background: rgba(3, 7, 18, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 12px 18px; margin-bottom: 16px;">
+                    <div style="font-size: 0.75rem; color: #64748b;">Từ khóa người dùng gõ vào:</div>
+                    <div style="font-size: 1.25rem; font-family: 'JetBrains Mono'; color: #f43f5e; font-weight: 700; margin-top: 4px;">
+                      "reaactjss" <span style="font-size: 0.8rem; color: #94a3b8; font-weight: 400;">(sai 2 ký tự)</span>
+                    </div>
+                  </div>
+
+                  <div style="background: linear-gradient(135deg, rgba(2, 132, 199, 0.15), rgba(168, 85, 247, 0.15)); border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 12px; padding: 14px 18px; margin-bottom: 16px;">
+                    <div style="font-size: 0.82rem; color: #38bdf8; font-weight: 700;">✨ Tự động nhận diện ý định:</div>
+                    <div style="font-size: 1.1rem; color: #ffffff; font-weight: 700; margin-top: 4px;">
+                      Có phải bạn muốn tìm: <span style="color: #38bdf8; text-decoration: underline;">"reactjs"</span>?
+                    </div>
+                  </div>
+
+                  <div class="terminal-body" style="font-size: 0.78rem;">
+                    <div>• Chuẩn hóa: <code>normalizeVi("reaactjss")</code></div>
+                    <div>• Khoảng cách Damerau-Levenshtein: <span class="cmd-green">2 (≤ Ngưỡng cho phép)</span></div>
+                    <div>• Kết quả: Tìm thấy <span class="cmd-cyan">42 việc làm ReactJS phù hợp</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SCENE 3: TokenVersion & Security -->
+        <div class="scene" data-index="3" data-duration="28">
+          <div class="product-grid">
+            <div>
+              <div class="hero-badge" style="border-color: #f59e0b; color: #fbbf24;">
+                <span>03 • KIẾN TRÚC BẢO MẬT ZERO-TRUST</span>
+              </div>
+              <h2 class="hero-headline" style="font-size: 2.5rem;">
+                TokenVersion &<br>
+                <span class="gradient-text" style="background: linear-gradient(135deg, #fbbf24, #f43f5e); -webkit-background-clip: text;">Instant Session Invalidation</span>
+              </h2>
+              <p class="hero-subhead" style="margin-bottom: 24px; font-size: 1.02rem;">
+                Thu hồi token JWT ngay lập tức trên mọi thiết bị khi đổi mật khẩu hoặc bị khóa tài khoản mà không cần tốn chi phí hạ tầng cho Redis Blacklist.
+              </p>
+              <div style="background: rgba(245, 158, 11, 0.1); border: 1px dashed rgba(245, 158, 11, 0.35); padding: 14px 18px; border-radius: 12px; font-family: 'JetBrains Mono'; font-size: 0.88rem; color: #fde68a;">
+                user.tokenVersion += 1 ➔ Toàn bộ Cookie cũ bị vô hiệu hóa
+              </div>
+            </div>
+
+            <div>
+              <div class="glass-card-3d">
+                <div class="card-topbar">
+                  <div class="window-dots">
+                    <span class="w-dot red"></span>
+                    <span class="w-dot yellow"></span>
+                    <span class="w-dot green"></span>
+                  </div>
+                  <span style="font-size: 0.75rem; color: #64748b; font-family: 'JetBrains Mono';">Security Middleware Pipeline</span>
+                </div>
+                <div class="card-content">
+                  <div class="terminal-body">
+                    <div class="cmd-line"><span class="cmd-cyan">[Client]</span> Gửi JWT Cookie: <span class="cmd-amber">{ id: "6718...", tv: 0 }</span></div>
+                    <div class="cmd-line"><span class="cmd-rose">[Admin Action]</span> Khóa tài khoản ➔ <span class="cmd-green">tokenVersion: 1</span></div>
+                    <div class="cmd-line" style="margin-top: 10px;"><span class="cmd-cyan">[Auth Guard]</span> Kiểm tra: Cookie.tv (0) !== DB.tv (1)</div>
+                    <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.35); padding: 10px 14px; border-radius: 8px; margin-top: 10px;">
+                      <span class="cmd-rose" style="font-weight: 700;">⛔ 401 UNAUTHORIZED:</span><br>
+                      <span style="font-size: 0.78rem; color: #cbd5e1;">Phiên làm việc hết hạn. Token bị hủy lập tức, tự động chuyển về trang Đăng nhập.</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SCENE 4: Private CV & Sharp -->
+        <div class="scene" data-index="4" data-duration="28">
+          <div class="product-grid">
+            <div>
+              <div class="hero-badge" style="border-color: #a855f7; color: #c084fc;">
+                <span>04 • BẢO MẬT DỮ LIỆU & TỐI ƯU MEDIA</span>
+              </div>
+              <h2 class="hero-headline" style="font-size: 2.5rem;">
+                Private CV Streaming &<br>
+                <span class="gradient-text" style="background: linear-gradient(135deg, #c084fc, #38bdf8); -webkit-background-clip: text;">Sharp WebP Pipeline</span>
+              </h2>
+              <p class="hero-subhead" style="margin-bottom: 24px; font-size: 1.02rem;">
+                File CV nhạy cảm được lưu trữ ngoài thư mục web và chỉ phục vụ qua route stream có kiểm tra quyền sở hữu. Ảnh tải lên được nén chuẩn WebP và kiểm tra Magic Bytes chống mã độc.
+              </p>
+              <div style="display: flex; gap: 12px;">
+                <div class="brand-pill" style="border-color: #a855f7; color: #c084fc;">🔒 Private Storage</div>
+                <div class="brand-pill" style="border-color: #34d399; color: #34d399;">📉 Giảm 90% Dung Lượng Ảnh</div>
+              </div>
+            </div>
+
+            <div>
+              <div class="glass-card-3d" style="position: relative;">
+                <div class="laser-beam"></div>
+                <div class="card-topbar">
+                  <div class="window-dots">
+                    <span class="w-dot red"></span>
+                    <span class="w-dot yellow"></span>
+                    <span class="w-dot green"></span>
+                  </div>
+                  <span style="font-size: 0.75rem; color: #64748b; font-family: 'JetBrains Mono';">Media Sanitization Vault</span>
+                </div>
+                <div class="card-content">
+                  <div style="border-left: 3px solid #38bdf8; padding-left: 14px; margin-bottom: 16px;">
+                    <div style="font-size: 0.95rem; font-weight: 700; color: #38bdf8;">Private CV Route Authorization</div>
+                    <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 4px;">
+                      Path: <code>storage/private/cv/cv-a8f9...pdf</code><br>
+                      Chỉ cho phép ứng viên sở hữu hoặc công ty đăng tuyển truy cập.
+                    </div>
+                  </div>
+
+                  <div style="border-left: 3px solid #34d399; padding-left: 14px;">
+                    <div style="font-size: 0.95rem; font-weight: 700; color: #34d399;">Sharp WebP Sanitization Pipeline</div>
+                    <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 4px;">
+                      Kiểm tra Magic Bytes (%PDF / WebP) ➔ Loại bỏ mã độc polyglot.<br>
+                      Dung lượng giảm từ <strong style="color: #f43f5e;">2.8 MB</strong> xuống còn <strong style="color: #34d399;">35 KB</strong>.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SCENE 5: MCP & CLI -->
+        <div class="scene" data-index="5" data-duration="28">
+          <div class="product-grid">
+            <div>
+              <div class="hero-badge" style="border-color: #ec4899; color: #f472b6;">
+                <span>05 • AGENT-READY REVOLUTION</span>
+              </div>
+              <h2 class="hero-headline" style="font-size: 2.5rem;">
+                Model Context Protocol &<br>
+                <span class="gradient-text" style="background: linear-gradient(135deg, #f472b6, #fbbf24); -webkit-background-clip: text;">Developer CLI Suite</span>
+              </h2>
+              <p class="hero-subhead" style="margin-bottom: 24px; font-size: 1.02rem;">
+                Tích hợp chuẩn giao thức MCP và CLI tool độc quyền, biến VN.ITJobs thành nền tảng thân thiện hàng đầu cho các AI Agent (Cursor, Claude, Antigravity) giao tiếp theo thời gian thực.
+              </p>
+              <div style="display: flex; gap: 12px;">
+                <div class="brand-pill" style="border-color: #ec4899; color: #f472b6;">🤖 MCP Version 2024-11-05</div>
+                <div class="brand-pill" style="border-color: #38bdf8; color: #38bdf8;">💻 CLI Tool vn-itjobs</div>
+              </div>
+            </div>
+
+            <div>
+              <div class="glass-card-3d">
+                <div class="card-topbar">
+                  <div class="window-dots">
+                    <span class="w-dot red"></span>
+                    <span class="w-dot yellow"></span>
+                    <span class="w-dot green"></span>
+                  </div>
+                  <span style="font-size: 0.75rem; color: #64748b; font-family: 'JetBrains Mono';">Interactive CLI Terminal</span>
+                </div>
+                <div class="card-content" style="background: #020617;">
+                  <div class="terminal-body">
+                    <div class="cmd-line"><span class="cmd-green">$</span> <span class="cmd-white">vn-itjobs salary senior --skill golang --city ho-chi-minh</span></div>
+                    <div class="cmd-line" style="color: #60a5fa; margin-top: 4px;">📊 BÁO CÁO THỊ TRƯỜNG LƯƠNG IT CHUẨN THỰC TẾ</div>
+                    <div class="cmd-line">• Vị trí: <span class="cmd-green">Senior Golang Developer</span></div>
+                    <div class="cmd-line">• Dải lương phổ biến: <span class="cmd-amber">45.000.000 - 65.000.000 VNĐ</span></div>
+                    <div class="cmd-line" style="margin-top: 8px;"><span class="cmd-green">$</span> <span class="cmd-white">vn-itjobs mcp --json</span></div>
+                    <div class="cmd-line"><span class="cmd-cyan">✓ MCP Server: 4 Tools Ready (search_jobs, get_job_details...)</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SCENE 6: Benchmark & Finale -->
+        <div class="scene" data-index="6" data-duration="20">
+          <div style="text-align: center; max-width: 960px;">
+            <div class="hero-badge" style="border-color: #34d399; color: #34d399;">
+              <span>🏆 HIỆU NĂNG & TIÊU CHUẨN KỸ THUẬT</span>
+            </div>
+            <h2 class="hero-headline">
+              Tối Ưu Tuyệt Đối Trên 10.000 Việc Làm<br>
+              <span class="gradient-text">Zero COLLSCAN • 100% IXSCAN</span>
+            </h2>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 32px 0;">
+              <div class="glass-card-3d" style="padding: 24px;">
+                <div style="font-size: 2.8rem; font-weight: 900; color: #38bdf8; font-family: 'JetBrains Mono';">0 ms</div>
+                <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 6px;">Thời gian DB Lọc Đa Chiều</div>
+              </div>
+              <div class="glass-card-3d" style="padding: 24px;">
+                <div style="font-size: 2.8rem; font-weight: 900; color: #34d399; font-family: 'JetBrains Mono';">58 / 58</div>
+                <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 6px;">Kiểm Thử Tự Động Passed</div>
+              </div>
+              <div class="glass-card-3d" style="padding: 24px;">
+                <div style="font-size: 2.8rem; font-weight: 900; color: #fbbf24; font-family: 'JetBrains Mono';">ZERO</div>
+                <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 6px;">Table Scan (COLLSCAN)</div>
+              </div>
+            </div>
+            <p class="hero-subhead" style="margin: 0 auto;">
+              Cảm ơn bạn đã đồng hành cùng video ra mắt các giải pháp công nghệ của VN.ITJobs!
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Cinema Subtitles -->
+      <div class="cinematic-subtitles" id="subtitlesBox">
+        Đang tải trải nghiệm... Bấm "Phát Toàn Bộ" để bắt đầu chuyến tham quan công nghệ đỉnh cao.
+      </div>
+
+    </div>
+
+    <!-- Floating Dock Controls -->
+    <div class="floating-dock">
+      
+      <!-- Scrubber -->
+      <div class="timeline-scrubber" id="scrubberTrack">
+        <div class="timeline-fill" id="timelineProgress"></div>
+      </div>
+
+      <!-- Action Bar -->
+      <div class="dock-actions">
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <button class="dock-btn primary-launch" id="btnPlayPause">
+            <span id="playIcon">▶</span>
+            <span id="playText">Phát Toàn Bộ (Cinematic Mode)</span>
+          </button>
+          <button class="dock-btn" id="btnPrevScene">⏮ Phân đoạn trước</button>
+          <button class="dock-btn" id="btnNextScene">Phân đoạn sau ⏭</button>
+          <button class="dock-btn" id="btnVoiceToggle">
+            <span id="voiceIcon">🔊</span>
+            <span id="voiceText">Giọng đọc: BẬT</span>
+          </button>
+          <button class="dock-btn" id="btnMusicToggle">
+            <span>🎵</span>
+            <span id="musicText">Nhạc nền: BẬT</span>
+          </button>
+        </div>
+
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <button class="dock-btn record-btn" id="btnRecordVideo">
+            <span>🔴</span>
+            <span id="recordText">Ghi Hình & Xuất MP4/WebM</span>
+          </button>
+          <span style="font-family: 'JetBrains Mono'; font-size: 0.85rem; color: var(--text-muted);" id="timeDisplay">00:00 / 02:50</span>
+          <button class="dock-btn" id="btnFullscreen">⛶ Toàn màn hình</button>
+        </div>
+      </div>
+
+      <!-- Scene Navigator Pills -->
+      <div class="scene-navigator" id="sceneNav">
+        <button class="nav-pill active" data-scene="0">00. Giới thiệu</button>
+        <button class="nav-pill" data-scene="1">01. AI CV Screening</button>
+        <button class="nav-pill" data-scene="2">02. Fuzzy Search</button>
+        <button class="nav-pill" data-scene="3">03. TokenVersion</button>
+        <button class="nav-pill" data-scene="4">04. Private Storage</button>
+        <button class="nav-pill" data-scene="5">05. Giao thức MCP</button>
+        <button class="nav-pill" data-scene="6">06. Hiệu năng & Kết luận</button>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    // =========================================================================
+    // 1. Procedural Ambient Background Canvas Animation
+    // =========================================================================
+    const canvas = document.getElementById('ambientCanvas');
+    const ctx = canvas.getContext('2d');
+    let width, height;
+
+    function resizeCanvas() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    const particles = [];
+    for (let i = 0; i < 45; i++) {
+      particles.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        r: Math.random() * 2.5 + 1,
+        vx: (Math.random() - 0.5) * 0.4,
+        vy: (Math.random() - 0.5) * 0.4,
+        color: ['rgba(56, 189, 248, ', 'rgba(168, 85, 247, ', 'rgba(16, 185, 129, '][Math.floor(Math.random() * 3)],
+        alpha: Math.random() * 0.6 + 0.2
+      });
+    }
+
+    function renderAmbient() {
+      ctx.clearRect(0, 0, width, height);
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x < 0) p.x = width;
+        if (p.x > width) p.x = 0;
+        if (p.y < 0) p.y = height;
+        if (p.y > height) p.y = 0;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = p.color + p.alpha + ')';
+        ctx.fill();
+      });
+      requestAnimationFrame(renderAmbient);
+    }
+    renderAmbient();
+
+    // =========================================================================
+    // 2. Procedural Web Audio Ambient Music & Sound Effects
+    // =========================================================================
+    let audioCtx = null;
+    let musicGain = null;
+    let isMusicPlaying = false;
+    let musicOscs = [];
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        musicGain = audioCtx.createGain();
+        musicGain.gain.setValueAtTime(0.06, audioCtx.currentTime); // Subtle background
+        musicGain.connect(audioCtx.destination);
+      }
+    }
+
+    function playSoundWhoosh() {
+      if (!audioCtx) return;
+      try {
+        const osc = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(220, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.35);
+        g.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+        osc.connect(g);
+        g.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.35);
+      } catch (e) {}
+    }
+
+    function startAmbientSynth() {
+      if (!audioCtx) initAudio();
+      if (isMusicPlaying) return;
+      isMusicPlaying = true;
+
+      // Create a smooth ambient chord progression (Cmaj9 - Am7 - Fmaj7)
+      const freqs = [130.81, 164.81, 196.00, 246.94]; // C3, E3, G3, B3
+      musicOscs = freqs.map(f => {
+        const osc = audioCtx.createOscillator();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(f, audioCtx.currentTime);
+        osc.connect(musicGain);
+        osc.start();
+        return osc;
+      });
+    }
+
+    function stopAmbientSynth() {
+      if (!isMusicPlaying) return;
+      isMusicPlaying = false;
+      musicOscs.forEach(o => {
+        try { o.stop(); o.disconnect(); } catch(e) {}
+      });
+      musicOscs = [];
+    }
+
+    // =========================================================================
+    // 3. Cinematic Scenes Definition & Timings
+    // =========================================================================
+    const SCENES = [
+      {
+        index: 0,
+        title: "Giới thiệu",
+        duration: 20,
+        voiceover: "Chào mừng các bạn đến với video ra mắt kiến trúc công nghệ đột phá của nền tảng VN.ITJobs. Được xây dựng theo mô hình Server-Side Rendering với Express.js, MongoDB và Tailwind CSS, hệ thống đạt chuẩn bảo mật cao cấp, tối ưu hóa tốc độ tải trang vượt trội và tích hợp sâu trí tuệ nhân tạo thế hệ mới.",
+        subtitles: "Chào mừng các bạn đến với video ra mắt kiến trúc công nghệ đột phá của nền tảng <span class='highlight-word'>VN.ITJobs</span>."
+      },
+      {
+        index: 1,
+        title: "AI CV Screening",
+        duration: 28,
+        voiceover: "Đầu tiên là AI Sàng lọc CV và đối soát độ tương thích thông minh. Khi ứng viên nộp hồ sơ dạng PDF, hệ thống bóc tách văn bản thô qua pdf-parse và gửi prompt chuẩn hóa tới Gemini 3.5 Flash-Lite trong vòng 28 giây. Đặc biệt, nếu API mất kết nối hoặc chạm trần hạn ngạch, bộ máy Heuristic Scoring nội bộ sẽ tự động tiếp quản để chấm điểm bốn chiều mà không làm gián đoạn trải nghiệm.",
+        subtitles: "AI CV Screening: Bóc tách PDF, gọi <span class='highlight-word'>Gemini 3.5 Flash-Lite</span> chấm điểm 4 chiều, tự động chuyển sang <span class='highlight-word'>Heuristic Fallback</span> khi mất kết nối."
+      },
+      {
+        index: 2,
+        title: "Fuzzy Search Typo-Tolerance",
+        duration: 28,
+        voiceover: "Thứ hai là công nghệ Tìm kiếm mờ thông minh, khử lỗi gõ phím. Chúng tôi cài đặt thuật toán Damerau-Levenshtein với bốn phép biến đổi: thêm, xóa, thay thế và đảo vị trí hai ký tự kề nhau. Toàn bộ từ điển CNTT được nạp động từ database và lưu trong RAM với Node-Cache, cho phép đối soát và sửa lỗi chính tả chỉ trong 1.4 mili-giây.",
+        subtitles: "Fuzzy Search: Thuật toán <span class='highlight-word'>Damerau-Levenshtein</span> khử lỗi gõ sai phím và đảo ký tự, nạp từ điển IT động vào RAM phản hồi trong <span class='highlight-word'>1.4ms</span>."
+      },
+      {
+        index: 3,
+        title: "TokenVersion & CSRF Invalidation",
+        duration: 28,
+        voiceover: "Thứ ba là cơ chế thu hồi phiên đăng nhập tức thời TokenVersion. Để khắc phục điểm yếu không thể thu hồi của JWT stateless, chúng tôi tích hợp trường tokenVersion vào cơ sở dữ liệu và nhúng vào cookie HttpOnly. Khi người dùng đổi mật khẩu hoặc bị khóa tài khoản, server tăng version lên 1 đơn vị, ngay lập tức vô hiệu hóa phiên làm việc trên mọi thiết bị mà không cần tốn chi phí cho Redis.",
+        subtitles: "TokenVersion: Thu hồi tức thì phiên <span class='highlight-word'>JWT</span> trên toàn bộ thiết bị khi đổi mật khẩu hoặc khóa tài khoản mà không cần hạ tầng <span class='highlight-word'>Redis Blacklist</span>."
+      },
+      {
+        index: 4,
+        title: "Private Storage & Sharp",
+        duration: 28,
+        voiceover: "Thứ tư là giải pháp Lưu trữ CV riêng tư và đường ống xử lý ảnh chống mã độc. File CV được đổi tên băm ngẫu nhiên và lưu tại thư mục riêng biệt ngoài web root, chỉ phục vụ qua route stream sau khi xác thực quyền sở hữu hợp lệ. Đồng thời, toàn bộ ảnh tải lên đều được kiểm tra magic bytes thực tế và tái tạo lại định dạng WebP qua Sharp, giảm 90% dung lượng và loại bỏ mã độc nhúng.",
+        subtitles: "Private Storage: Stream CV có kiểm soát quyền sở hữu, cơ chế xóa 2 phía, kiểm tra <span class='highlight-word'>Magic Bytes</span> và chuẩn hóa <span class='highlight-word'>WebP qua Sharp</span>."
+      },
+      {
+        index: 5,
+        title: "MCP & CLI",
+        duration: 28,
+        voiceover: "Thứ năm là Cổng kết nối chuẩn Model Context Protocol và bộ công cụ CLI. Hệ thống cung cấp sẵn endpoint mcp, giúp các AI Agent hiện đại như Cursor, Claude hay Antigravity có thể gọi trực tiếp để tra cứu việc làm và tính toán biểu đồ lương IT theo thời gian thực. Bên cạnh đó, công cụ dòng lệnh vn-itjobs hỗ trợ xuất dữ liệu dạng JSON, sẵn sàng cho các tác vụ tự động hóa.",
+        subtitles: "MCP & CLI: Cổng kết nối chuẩn <span class='highlight-word'>Model Context Protocol</span> và công cụ dòng lệnh <span class='highlight-word'>vn-itjobs</span>, sẵn sàng cho kỷ nguyên AI Agent."
+      },
+      {
+        index: 6,
+        title: "Hiệu năng & Kết luận",
+        duration: 20,
+        voiceover: "Tổng kết lại, VN.ITJobs không chỉ sở hữu các tính năng thông minh mà còn được kiểm chuẩn nghiêm ngặt: vượt qua 100% 58 bài kiểm thử tự động, độ trễ truy vấn trên 10 nghìn việc làm chỉ từ 1 đến 5 mili-giây và hoàn toàn không có hiện tượng quét toàn bảng collscan. Cảm ơn các bạn đã theo dõi video!",
+        subtitles: "Tổng kết: <span class='highlight-word'>58/58 Tests Passed</span>, Zero COLLSCAN trên 10.000 việc làm, thời gian phản hồi từ 1 đến 5 mili-giây."
+      }
+    ];
+
+    let currentSceneIdx = 0;
+    let isPlaying = false;
+    let voiceEnabled = true;
+    let musicEnabled = true;
+    let timer = null;
+    let elapsedInScene = 0;
+    let synth = window.speechSynthesis;
+    let vietnameseVoice = null;
+
+    const totalDuration = SCENES.reduce((acc, s) => acc + s.duration, 0);
+
+    // Elements
+    const sceneEls = document.querySelectorAll('.scene');
+    const navPillEls = document.querySelectorAll('.nav-pill');
+    const subtitlesBox = document.getElementById('subtitlesBox');
+    const playPauseBtn = document.getElementById('btnPlayPause');
+    const playIcon = document.getElementById('playIcon');
+    const playText = document.getElementById('playText');
+    const prevBtn = document.getElementById('btnPrevScene');
+    const nextBtn = document.getElementById('btnNextScene');
+    const voiceToggleBtn = document.getElementById('btnVoiceToggle');
+    const voiceIcon = document.getElementById('voiceIcon');
+    const voiceText = document.getElementById('voiceText');
+    const musicToggleBtn = document.getElementById('btnMusicToggle');
+    const musicText = document.getElementById('musicText');
+    const recordBtn = document.getElementById('btnRecordVideo');
+    const recordText = document.getElementById('recordText');
+    const scrubberTrack = document.getElementById('scrubberTrack');
+    const timelineProgress = document.getElementById('timelineProgress');
+    const timeDisplay = document.getElementById('timeDisplay');
+    const fullscreenBtn = document.getElementById('btnFullscreen');
+    const theaterContainer = document.getElementById('theaterContainer');
+    const aiGaugeCircle = document.getElementById('aiGaugeCircle');
+
+    function formatTime(sec) {
+      const m = Math.floor(sec / 60);
+      const s = Math.floor(sec % 60);
+      return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+
+    // Load Voice
+    function loadVoices() {
+      if (!synth) return;
+      const voices = synth.getVoices();
+      vietnameseVoice = voices.find(v => v.lang === 'vi-VN' || v.lang.startsWith('vi')) || null;
+    }
+    if (synth) {
+      loadVoices();
+      if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = loadVoices;
+    }
+
+    // Switch Scene
+    function switchScene(idx, autoSpeak = true) {
+      currentSceneIdx = Math.max(0, Math.min(idx, SCENES.length - 1));
+      elapsedInScene = 0;
+
+      sceneEls.forEach((el, i) => {
+        el.classList.toggle('active', i === currentSceneIdx);
+      });
+
+      navPillEls.forEach((pill, i) => {
+        pill.classList.toggle('active', i === currentSceneIdx);
+      });
+
+      const sc = SCENES[currentSceneIdx];
+      subtitlesBox.innerHTML = sc.subtitles;
+      updateTimeline();
+      playSoundWhoosh();
+
+      // Trigger scene-specific animations
+      if (currentSceneIdx === 1 && aiGaugeCircle) {
+        // Animate circular gauge to 88%
+        // circumference = 2 * pi * 40 ≈ 251.2 -> offset = 251.2 * (1 - 0.88) ≈ 30.14
+        aiGaugeCircle.style.strokeDashoffset = '30.14';
+      } else if (aiGaugeCircle) {
+        aiGaugeCircle.style.strokeDashoffset = '251.2';
+      }
+
+      if (synth) synth.cancel();
+
+      if (autoSpeak && voiceEnabled && isPlaying) {
+        speakNarration(sc.voiceover);
+      }
+    }
+
+    function speakNarration(text) {
+      if (!synth || !voiceEnabled) return;
+      synth.cancel();
+
+      const utter = new SpeechSynthesisUtterance(text);
+      if (vietnameseVoice) utter.voice = vietnameseVoice;
+      utter.rate = 1.05;
+      utter.pitch = 1.0;
+      synth.speak(utter);
+    }
+
+    function getCumulativeElapsed() {
+      let sum = 0;
+      for (let i = 0; i < currentSceneIdx; i++) sum += SCENES[i].duration;
+      return sum + elapsedInScene;
+    }
+
+    function updateTimeline() {
+      const cur = getCumulativeElapsed();
+      const pct = Math.min(100, (cur / totalDuration) * 100);
+      timelineProgress.style.width = pct + '%';
+      timeDisplay.textContent = `${formatTime(cur)} / ${formatTime(totalDuration)}`;
+    }
+
+    function clockTick() {
+      if (!isPlaying) return;
+      elapsedInScene += 0.5;
+      updateTimeline();
+
+      const sc = SCENES[currentSceneIdx];
+      if (elapsedInScene >= sc.duration) {
+        if (currentSceneIdx < SCENES.length - 1) {
+          switchScene(currentSceneIdx + 1, true);
+        } else {
+          pauseDemo();
+          elapsedInScene = sc.duration;
+          updateTimeline();
+        }
+      }
+    }
+
+    function playDemo() {
+      isPlaying = true;
+      initAudio();
+      if (musicEnabled) startAmbientSynth();
+
+      playIcon.textContent = '⏸';
+      playText.textContent = 'Tạm dừng';
+
+      if (!timer) timer = setInterval(clockTick, 500);
+
+      const sc = SCENES[currentSceneIdx];
+      if (voiceEnabled) speakNarration(sc.voiceover);
+    }
+
+    function pauseDemo() {
+      isPlaying = false;
+      stopAmbientSynth();
+
+      playIcon.textContent = '▶';
+      playText.textContent = 'Tiếp tục phát';
+
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+      if (synth) synth.cancel();
+    }
+
+    // Event Handlers
+    playPauseBtn.addEventListener('click', () => {
+      if (isPlaying) pauseDemo();
+      else playDemo();
+    });
+
+    prevBtn.addEventListener('click', () => {
+      if (currentSceneIdx > 0) switchScene(currentSceneIdx - 1, isPlaying);
+    });
+
+    nextBtn.addEventListener('click', () => {
+      if (currentSceneIdx < SCENES.length - 1) switchScene(currentSceneIdx + 1, isPlaying);
+    });
+
+    voiceToggleBtn.addEventListener('click', () => {
+      voiceEnabled = !voiceEnabled;
+      if (voiceEnabled) {
+        voiceIcon.textContent = '🔊';
+        voiceText.textContent = 'Giọng đọc: BẬT';
+        if (isPlaying) speakNarration(SCENES[currentSceneIdx].voiceover);
+      } else {
+        voiceIcon.textContent = '🔇';
+        voiceText.textContent = 'Giọng đọc: TẮT';
+        if (synth) synth.cancel();
+      }
+    });
+
+    musicToggleBtn.addEventListener('click', () => {
+      musicEnabled = !musicEnabled;
+      if (musicEnabled) {
+        musicText.textContent = 'Nhạc nền: BẬT';
+        if (isPlaying) startAmbientSynth();
+      } else {
+        musicText.textContent = 'Nhạc nền: TẮT';
+        stopAmbientSynth();
+      }
+    });
+
+    navPillEls.forEach(pill => {
+      pill.addEventListener('click', () => {
+        const idx = parseInt(pill.dataset.scene, 10);
+        switchScene(idx, isPlaying);
+      });
+    });
+
+    // Scrubber click
+    scrubberTrack.addEventListener('click', (e) => {
+      const rect = scrubberTrack.getBoundingClientRect();
+      const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      const targetTime = pct * totalDuration;
+
+      let acc = 0;
+      for (let i = 0; i < SCENES.length; i++) {
+        if (targetTime <= acc + SCENES[i].duration || i === SCENES.length - 1) {
+          currentSceneIdx = i;
+          elapsedInScene = targetTime - acc;
+          switchScene(currentSceneIdx, isPlaying);
+          break;
+        }
+        acc += SCENES[i].duration;
+      }
+    });
+
+    // Fullscreen
+    fullscreenBtn.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        theaterContainer.requestFullscreen().catch(err => {
+          alert('Không thể vào chế độ toàn màn hình: ' + err.message);
+        });
+      } else {
+        document.exitFullscreen();
+      }
+    });
+
+    // =========================================================================
+    // 4. One-Click In-Browser Video Recording & Export (MediaRecorder API)
+    // =========================================================================
+    let mediaRecorder = null;
+    let recordedChunks = [];
+
+    recordBtn.addEventListener('click', async () => {
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+        recordBtn.style.background = '';
+        recordText.textContent = 'Ghi Hình & Xuất MP4/WebM';
+        return;
+      }
+
+      try {
+        const stream = await navigator.mediaDevices.getDisplayMedia({
+          video: { frameRate: 60, width: 1920, height: 1080 },
+          audio: true
+        });
+
+        recordedChunks = [];
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9' });
+
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data.size > 0) recordedChunks.push(e.data);
+        };
+
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(recordedChunks, { type: 'video/webm' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `VN-ITJobs-Product-Launch-${Date.now()}.webm`;
+          a.click();
+          URL.revokeObjectURL(url);
+          stream.getTracks().forEach(track => track.stop());
+          recordBtn.style.background = '';
+          recordText.textContent = 'Ghi Hình & Xuất MP4/WebM';
+        };
+
+        mediaRecorder.start();
+        recordBtn.style.background = 'rgba(239, 68, 68, 0.8)';
+        recordText.textContent = 'Đang Ghi... Bấm Dừng Để Tải';
+
+        // Auto restart from scene 0 and play with voice
+        switchScene(0, false);
+        playDemo();
+
+      } catch (err) {
+        alert('Lưu ý: Bạn có thể chọn tab hiện tại hoặc toàn màn hình để bắt đầu ghi hình video!');
+      }
+    });
+
+    // Init Scene 0
+    switchScene(0, false);
+  </script>
+</body>
+</html>

@@ -49,7 +49,7 @@ const svg = `
 `;
 
 async function main() {
-  const dest = path.join(__dirname, "../public/assets/images/og-image.png");
+  const dest = path.join(__dirname, "../../public/assets/images/og-image.png");
   await sharp(Buffer.from(svg)).png().toFile(dest);
   console.log("Successfully generated:", dest);
 }

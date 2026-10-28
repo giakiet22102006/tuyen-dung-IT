@@ -4,7 +4,10 @@
 [![Express](https://img.shields.io/badge/Express-4.21-lightgrey.svg)](https://expressjs.com/)
 [![TailwindCSS v4](https://img.shields.io/badge/TailwindCSS-v4.3-blue.svg)](https://tailwindcss.com/)
 [![MongoDB & Mongoose](https://img.shields.io/badge/Mongoose-8.13-brightgreen.svg)](https://mongoosejs.com/)
-[![Test Coverage](https://img.shields.io/badge/Tests-58%20Passed%20(100%25)-success.svg)]()
+[![CI Pipeline](https://img.shields.io/badge/CI-Passing-brightgreen.svg)]()
+[![Test Coverage](https://img.shields.io/badge/Tests-151%20Passed%20(100%25)-success.svg)]()
+[![Code Style](https://img.shields.io/badge/Code%20Style-ESLint%20%7C%20Prettier-blueviolet.svg)]()
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 **VN.ITJobs** là ứng dụng web tuyển dụng công nghệ thông tin toàn diện và bảo mật cao, được xây dựng theo kiến trúc **Server-Side Rendering (SSR)** với **Express.js**, **Pug Template Engine**, **Tailwind CSS v4** và **MongoDB/Mongoose**. Hệ thống tích hợp đầy đủ phân hệ Công khai, cổng thông tin Ứng viên, cổng Nhà tuyển dụng và cổng Quản trị Admin chuyên biệt.
 
@@ -40,44 +43,41 @@ Dự án tuân thủ nghiêm ngặt nguyên tắc **Zero Redesign**: giữ nguy�
 
 ```text
 vn-itjobs/
+├── .github/
+│   ├── workflows/ci.yml        # CI Pipeline tự động kiểm thử và kiểm tra cú pháp
+│   ├── ISSUE_TEMPLATE/         # Biểu mẫu báo lỗi và đề xuất tính năng
+│   └── pull_request_template.md# Quy chuẩn Pull Request cho đội ngũ
+├── docs/                       # Tài liệu đặc tả kỹ thuật & kiến trúc
+│   ├── SPECIFICATIONS.md       # Báo cáo đặc tả hệ thống và nghiệp vụ
+│   ├── DECISIONS.md            # Architectural Decision Records (ADR)
+│   └── PERFORMANCE.md          # Kết quả benchmark và chiến lược tối ưu
+├── bin/                        # CLI công cụ dòng lệnh (vn-itjobs)
 ├── public/
-│   ├── assets/
-│   │   ├── css/tailwind.css        # File CSS compiled từ Tailwind v4 CLI
-│   │   ├── images/                 # Ảnh nền, icon, demo tĩnh
-│   │   └── js/main.js              # JavaScript điều hướng phân trang
-│   └── uploads/                    # Thư mục lưu trữ ảnh công khai (WebP)
-│       ├── avatars/                # Avatar ứng viên
-│       ├── logos/                  # Logo công ty
-│       └── jobs/                   # Ảnh bài đăng tuyển dụng
+│   ├── assets/                 # CSS/JS/Images tĩnh
+│   ├── uploads/                # File tải lên công khai (Avatar, Logo, Banner)
+│   ├── openapi.json            # OpenAPI 3.1 Specification cho API
+│   └── llms.txt                # Agent Context & System Prompt Spec
 ├── storage/
-│   └── private/
-│       └── cv/                     # Thư mục lưu trữ file PDF CV bảo mật (ngoài tầm web)
+│   └── private/cv/             # File CV ứng viên (bảo mật, stream có thẩm quyền)
 ├── src/
-│   ├── app.js                      # Cấu hình Express app & middlewares
-│   ├── server.js                   # Điểm khởi động HTTP Server
-│   ├── config/                     # Cấu hình ENV, Database, Hằng số Enum
-│   ├── controllers/
-│   │   ├── client/                 # Controllers trang chủ, tìm kiếm, công ty, chi tiết job
-│   │   ├── candidate/              # Controllers Auth, Profile, Ứng tuyển của Ứng viên
-│   │   ├── employer/               # Controllers Auth, Công ty, Việc làm, Quản lý CV
-│   │   └── admin/                  # Controllers Quản trị Admin, Dashboard, Khóa/Duyệt, Logs
-│   ├── middlewares/                # Auth, CSRF, Upload, RateLimit, Locals, Flash
-│   ├── models/                     # Mongoose Models & Index Definitions
-│   ├── routes/                     # Định tuyến Express (client, candidate, employer, admin)
-│   ├── services/                   # Business logic (Auth, Job, Menu, Storage, Audit)
-│   ├── styles/input.css            # File nguồn Tailwind CSS v4
-│   ├── utils/                      # Helpers: slugify, normalizeVi, formatSalary, pagination
-│   └── scripts/                    # Scripts: seed.js, create-admin.js, benchmark.js
-├── tests/                          # Bộ kiểm thử tự động Jest & Supertest (6 test suites)
-├── views/                          # Giao diện Pug SSR
-│   ├── layouts/                    # Layout: default.pug (Client) & admin.pug (Admin)
-│   ├── pages/                      # Các trang Client, Candidate, Employer
-│   ├── admin/                      # Toàn bộ view của cổng Quản trị Admin
-│   ├── partials/                   # Header, Footer, Flash alerts
-│   └── mixins/                     # Card việc làm, Card công ty
-├── PERFORMANCE.md                  # Báo cáo kiểm chuẩn hiệu năng trên 10.000 bản ghi
-├── DECISIONS.md                    # Nhật ký quyết định kiến trúc dự án
-└── README.md                       # Tài liệu hướng dẫn dự án
+│   ├── app.js                  # Cấu hình Express app & bảo mật middlewares
+│   ├── server.js               # Điểm khởi động HTTP Server
+│   ├── config/                 # Cấu hình ENV, Database, Hằng số Enum
+│   ├── controllers/            # Tầng Controller (client, candidate, employer, admin, ai, mcp)
+│   ├── middlewares/            # Auth, CSRF, Upload, RateLimit, Locals, Flash
+│   ├── models/                 # Mongoose ODM Models & Indexes
+│   ├── routes/                 # Express Router phân hệ
+│   ├── services/               # Business Logic & Third-party Integrations
+│   ├── utils/                  # Helpers & Tiện ích dùng chung
+│   └── scripts/                # Seed, benchmark, export, tạo tài khoản
+├── tests/                      # 17 test suites với 151 test cases tự động (Jest + Supertest)
+├── views/                      # Template Pug SSR giao diện responsive
+│   ├── layouts/                # Base layouts (default & admin)
+│   ├── pages/                  # Các màn hình Client, Candidate, Employer
+│   ├── admin/                  # Cổng Quản trị Admin
+│   ├── partials/               # Header, Footer, Flash alerts, Chatbot
+│   └── mixins/                 # Reusable component mixins
+└── README.md                   # Tài liệu tổng quan dự án
 ```
 
 ---
@@ -180,13 +180,15 @@ Cổng Quản trị Admin tại: `http://localhost:3000/admin`
 | `npm run seed -- --big`| Nạp bộ dữ liệu thử tải lớn: 10.000 tin tuyển dụng |
 | `npm run benchmark` | Chạy kịch bản đo lường hiệu năng truy vấn, chứng minh Zero COLLSCAN |
 | `npm run create-admin`| Script tương tác tạo tài khoản Superadmin an toàn |
-| `npm test` | Chạy toàn bộ 58 bài kiểm thử tự động với Jest & Supertest |
+| `npm test` | Chạy toàn bộ 151 bài kiểm thử tự động với Jest & Supertest |
+| `npm run lint` | Kiểm tra cú pháp và chất lượng mã nguồn với ESLint (0 errors) |
+| `npm run format` | Tự động định dạng mã nguồn theo chuẩn Prettier |
 
 ---
 
 ## 6. Kết Quả Kiểm Chuẩn & Đảm Bảo Chất Lượng
 
-- **Kiểm thử tự động (Unit & Integration Tests):** 100% vượt qua 58 test cases trên 6 bộ kiểm thử (`auth`, `utils`, `public`, `employer`, `application`, `admin`).
+- **Kiểm thử tự động (Unit & Integration Tests):** 100% vượt qua 151 test cases trên 17 bộ kiểm thử toàn diện.
 - **Zero N+1 Query:** Toàn bộ các thao tác đếm số việc làm và đếm số CV ở trang danh sách đều được tối ưu hóa qua 1 lệnh aggregation duy nhất.
-- **Tốc độ truy vấn trên 10.000 bản ghi:** Xem chi tiết tại [**PERFORMANCE.md**](./PERFORMANCE.md) (Thời gian phản hồi truy vấn từ $1 - 5\text{ms}$, 100% sử dụng IXSCAN, ZERO COLLSCAN).
-- **Quyết định kiến trúc:** Xem chi tiết tại [**DECISIONS.md**](./DECISIONS.md).
+- **Tốc độ truy vấn trên 10.000 bản ghi:** Xem chi tiết tại [**PERFORMANCE.md**](./docs/PERFORMANCE.md) (Thời gian phản hồi truy vấn từ $1 - 5\text{ms}$, 100% sử dụng IXSCAN, ZERO COLLSCAN).
+- **Quyết định kiến trúc & Đặc tả:** Xem chi tiết tại [**DECISIONS.md**](./docs/DECISIONS.md) và [**SPECIFICATIONS.md**](./docs/SPECIFICATIONS.md).

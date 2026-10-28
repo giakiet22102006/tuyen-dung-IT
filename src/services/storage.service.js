@@ -3,7 +3,6 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const sharp = require("sharp");
-const env = require("../config/env");
 
 const isVercel = Boolean(process.env.VERCEL);
 const BASE_UPLOAD_DIR = isVercel ? "/tmp/uploads" : path.join(__dirname, "../../public/uploads");

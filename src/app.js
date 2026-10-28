@@ -216,7 +216,7 @@ Please refer to the following available resources:
 });
 
 // Error handler (CSRF & server errors)
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
   if (err.code === "EBADCSRFTOKEN" || err.message?.includes("csrf")) {
     if (req.xhr || req.headers.accept?.includes("json") || req.path.startsWith("/api")) {
       return res.status(403).json({ success: false, message: "Mã bảo mật (CSRF) không hợp lệ hoặc đã hết hạn." });

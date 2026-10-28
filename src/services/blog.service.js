@@ -200,7 +200,7 @@ async function ensureSeedArticles() {
 function normalizeCategory(cat) {
   if (!cat || typeof cat !== "string") return ARTICLE_CATEGORIES.CAREER_ROADMAP;
   const trimmed = cat.trim();
-  for (const [key, val] of Object.entries(ARTICLE_CATEGORIES)) {
+  for (const val of Object.values(ARTICLE_CATEGORIES)) {
     if (trimmed === val || trimmed.toLowerCase() === val.toLowerCase()) return val;
   }
   for (const [val, label] of Object.entries(ARTICLE_CATEGORY_LABELS)) {

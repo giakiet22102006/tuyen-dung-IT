@@ -1,6 +1,6 @@
 // src/controllers/employer/employerCv.controller.js
 const fs = require("fs");
-const { Application, Job, Employer } = require("../../models");
+const { Application, Job } = require("../../models");
 const { APPLICATION_STATUS } = require("../../config/constants");
 const { getCVPath, deleteCV } = require("../../services/storage.service");
 const { sendInterviewInvitationEmail, sendRejectionEmail } = require("../../services/mail.service");

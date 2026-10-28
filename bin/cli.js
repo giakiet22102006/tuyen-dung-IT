@@ -60,8 +60,6 @@ async function handleSearch() {
   const position = getFlag("--position") || "";
   const limit = getFlag("--limit") || "10";
 
-  const params = new URLSearchParams({ keyword, city, skill, position, limit });
-
   try {
     const res = await fetch(`${BASE_URL}/mcp`, {
       method: "POST",

@@ -1,7 +1,6 @@
 // src/controllers/employer/employerOps.controller.js
 const bcrypt = require("bcryptjs");
 const { Job, Application, Employer } = require("../../models");
-const { APPLICATION_STATUS } = require("../../config/constants");
 
 /**
  * Báo cáo & Phân tích tuyển dụng (Recruitment Analytics Dashboard)

@@ -1,0 +1,47 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test & Lint (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x, 22.x]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build CSS assets
+        run: npm run build:css
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run Automated Test Suites
+        run: npm test
+        env:
+          NODE_ENV: test
+          JWT_SECRET: test-jwt-secret-ci-pipeline-1234567890
+          COOKIE_SECRET: test-cookie-secret-ci-pipeline-1234567890
+          SESSION_SECRET: test-session-secret-ci-pipeline-1234567890

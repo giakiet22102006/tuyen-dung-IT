@@ -1,7 +1,7 @@
 // src/services/menu.service.js
 const NodeCache = require("node-cache");
-const { Skill, Employer, Job } = require("../models");
-const { CITIES, EMPLOYER_STATUS, JOB_MODERATION } = require("../config/constants");
+const { Skill, Employer } = require("../models");
+const { CITIES, EMPLOYER_STATUS } = require("../config/constants");
 
 // Cache TTL 1800 giây (30 phút)
 const menuCache = new NodeCache({ stdTTL: 1800, checkperiod: 120 });

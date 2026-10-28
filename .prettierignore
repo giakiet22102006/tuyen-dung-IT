@@ -1,0 +1,12 @@
+node_modules/
+package-lock.json
+public/assets/
+.vercel/
+coverage/
+dist/
+build/
+.agents/
+.archify/
+*.sql
+*.doc
+*.docx
