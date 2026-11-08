@@ -98,6 +98,7 @@ footer.site-footer {
     font-size: 16px;
 }
 
+/* Menu Navigation & Diagonal Hover Bridge (Chống hụt chuột khi rê chéo) */
 .menu ul li ul {
     background-color: #000065;
     position: absolute;
@@ -108,7 +109,19 @@ footer.site-footer {
     gap: 0;
     display: none;
     z-index: 60;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    border-radius: 0 0 10px 10px;
+    box-shadow: 0 14px 30px -5px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+/* Diagonal Hover Bridge Cấp 1 -> Cấp 2: Vùng đệm vô hình phía trên dropdown */
+.menu ul li ul::before {
+    content: "";
+    position: absolute;
+    top: -14px;
+    left: 0;
+    width: 100%;
+    height: 14px;
+    background: transparent;
 }
 
 .menu ul li:hover > ul {
@@ -119,9 +132,15 @@ footer.site-footer {
     padding: 10px 16px;
     justify-content: space-between;
     position: relative;
+    transition: background-color 0.15s ease;
 }
+
 .menu ul li ul li:hover {
     background-color: #000096;
+}
+
+.menu ul li ul li:hover > a {
+    color: #60A5FA;
 }
 
 .menu ul li ul li ul {
@@ -129,7 +148,19 @@ footer.site-footer {
     top: 0;
     left: 100%;
     z-index: 70;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    border-radius: 0 10px 10px 10px;
+    box-shadow: 0 14px 30px -5px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+/* Diagonal Hover Bridge Cấp 2 -> Cấp 3: Vùng đệm vô hình bên trái dropdown con */
+.menu ul li ul li ul::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -14px;
+    width: 14px;
+    height: 100%;
+    background: transparent;
 }
 
 /* User Profile Dropdown Menu - Override generic .menu rules */
@@ -140,10 +171,20 @@ footer.site-footer {
     left: auto !important;
     right: 0 !important;
     padding: 8px 0 !important;
-    border-radius: 8px !important;
+    border-radius: 10px !important;
     background-color: #000065 !important;
-    box-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.15) !important;
+    box-shadow: 0 14px 35px -5px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.15) !important;
     border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+.menu ul li ul.user-dropdown-menu::before {
+    content: "";
+    position: absolute;
+    top: -14px;
+    left: 0;
+    width: 100%;
+    height: 14px;
+    background: transparent;
 }
 
 .menu ul li ul.user-dropdown-menu li {
@@ -156,9 +197,13 @@ footer.site-footer {
     box-sizing: border-box !important;
 }
 
+.menu ul li ul.user-dropdown-menu li:hover {
+    background-color: #000085 !important;
+}
+
 .menu ul li ul.user-dropdown-menu li a,
 .menu ul li ul.user-dropdown-menu li button {
-    font-size: 14.5px !important;
+    font-size: 14px !important;
     font-weight: 500 !important;
     color: #FFFFFF !important;
     white-space: nowrap !important;
@@ -167,11 +212,12 @@ footer.site-footer {
     gap: 8px !important;
     width: 100% !important;
     text-decoration: none !important;
+    transition: color 0.15s ease !important;
 }
 
 .menu ul li ul.user-dropdown-menu li a:hover,
 .menu ul li ul.user-dropdown-menu li button:hover {
-    color: #9FDB7C !important;
+    color: #60A5FA !important;
 }
 /* End Menu */
 

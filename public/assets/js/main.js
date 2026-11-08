@@ -1,4 +1,74 @@
 // public/assets/js/main.js
+
+/**
+ * =========================================================================
+ * TOAST NOTIFICATION SYSTEM (Hệ thống thông báo Toast Popup nhẹ nhàng)
+ * =========================================================================
+ */
+window.showToast = function (message, type = "success", duration = 3500) {
+  let container = document.getElementById("itj-toast-container");
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "itj-toast-container";
+    container.className =
+      "fixed top-5 right-5 z-[99999] flex flex-col gap-2.5 pointer-events-none max-w-[calc(100vw-32px)] w-[360px]";
+    document.body.appendChild(container);
+  }
+
+  const toast = document.createElement("div");
+  toast.className =
+    "pointer-events-auto flex items-start gap-3 p-3.5 sm:p-4 rounded-xl border shadow-xl backdrop-blur-md bg-white/95 text-slate-800 transition-all duration-300 transform translate-x-full opacity-0";
+
+  let iconHtml = '<i class="fa-solid fa-circle-check text-emerald-500 text-[18px] shrink-0 mt-0.5"></i>';
+  let borderClass = "border-emerald-200/90 shadow-emerald-500/10";
+
+  if (type === "info") {
+    iconHtml = '<i class="fa-solid fa-circle-info text-blue-500 text-[18px] shrink-0 mt-0.5"></i>';
+    borderClass = "border-blue-200/90 shadow-blue-500/10";
+  } else if (type === "warning") {
+    iconHtml = '<i class="fa-solid fa-triangle-exclamation text-amber-500 text-[18px] shrink-0 mt-0.5"></i>';
+    borderClass = "border-amber-200/90 shadow-amber-500/10";
+  } else if (type === "error") {
+    iconHtml = '<i class="fa-solid fa-circle-xmark text-rose-500 text-[18px] shrink-0 mt-0.5"></i>';
+    borderClass = "border-rose-200/90 shadow-rose-500/10";
+  }
+
+  toast.className += ` ${borderClass}`;
+  toast.innerHTML = `
+    ${iconHtml}
+    <div class="flex-1 text-[13.5px] sm:text-[14px] font-[500] leading-snug break-words">
+      ${message}
+    </div>
+    <button type="button" class="text-gray-400 hover:text-gray-700 p-0.5 ml-1 cursor-pointer transition-colors" aria-label="Đóng">
+      <i class="fa-solid fa-xmark text-[14px]"></i>
+    </button>
+  `;
+
+  const closeBtn = toast.querySelector("button");
+  function dismiss() {
+    toast.classList.add("translate-x-full", "opacity-0");
+    setTimeout(() => {
+      if (toast.parentElement) toast.parentElement.removeChild(toast);
+    }, 300);
+  }
+
+  if (closeBtn) {
+    closeBtn.addEventListener("click", dismiss);
+  }
+
+  container.appendChild(toast);
+
+  // Trigger animation vào
+  requestAnimationFrame(() => {
+    toast.classList.remove("translate-x-full", "opacity-0");
+    toast.classList.add("translate-x-0", "opacity-100");
+  });
+
+  const timer = setTimeout(dismiss, duration);
+  toast.addEventListener("mouseenter", () => clearTimeout(timer));
+  toast.addEventListener("mouseleave", () => setTimeout(dismiss, 1500));
+};
+
 document.addEventListener("DOMContentLoaded", () => {
   // 1. Đồng bộ phân trang (pagination-select)
   const paginationSelects = document.querySelectorAll(".pagination-select");
@@ -82,9 +152,14 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         if (res.status === 401 || res.status === 403) {
-          if (confirm("Bạn cần đăng nhập tài khoản Ứng viên để lưu việc làm. Chuyển đến trang Đăng nhập ngay?")) {
-            window.location.href = `/candidate/login?next=${encodeURIComponent(window.location.pathname)}`;
+          if (typeof window.showToast === "function") {
+            window.showToast("Bạn cần đăng nhập tài khoản Ứng viên để lưu việc làm.", "warning");
           }
+          setTimeout(() => {
+            if (confirm("Chuyển đến trang Đăng nhập để lưu việc làm này?")) {
+              window.location.href = `/candidate/login?next=${encodeURIComponent(window.location.pathname)}`;
+            }
+          }, 300);
           return;
         }
 
@@ -101,6 +176,9 @@ document.addEventListener("DOMContentLoaded", () => {
               textSpan.textContent = "Đã lưu";
               textSpan.className = "hidden sm:inline text-red-600";
             }
+            if (typeof window.showToast === "function") {
+              window.showToast("⭐ Đã lưu việc làm vào danh sách yêu thích của bạn!", "success");
+            }
           } else {
             if (icon) {
               icon.className = "fa-regular fa-bookmark text-[14px]";
@@ -109,9 +187,16 @@ document.addEventListener("DOMContentLoaded", () => {
               textSpan.textContent = "Lưu tin";
               textSpan.className = "hidden sm:inline";
             }
+            if (typeof window.showToast === "function") {
+              window.showToast("Đã xóa việc làm khỏi danh sách đã lưu.", "info");
+            }
           }
         } else {
-          alert(data.message || "Không thể thực hiện thao tác lúc này.");
+          if (typeof window.showToast === "function") {
+            window.showToast(data.message || "Không thể thực hiện thao tác lúc này.", "error");
+          } else {
+            alert(data.message || "Không thể thực hiện thao tác lúc này.");
+          }
         }
       } catch (err) {
         console.error("Lỗi khi lưu việc làm:", err);
@@ -595,4 +680,165 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   });
+
+  // 14. Quản lý Quick-Apply Modal (Modal Ứng tuyển nhanh mượt mà)
+  window.initQuickApplyModal = function () {
+    const modal = document.getElementById("modalQuickApply");
+    const container = document.getElementById("modalQuickApplyContainer");
+    const openBtns = document.querySelectorAll(".btn-open-quick-apply");
+    const closeBtn = document.getElementById("btnCloseQuickApply");
+    const form = document.getElementById("formQuickApply");
+    const submitBtn = document.getElementById("btnSubmitQuickApply");
+
+    if (!modal) return;
+
+    function openModal() {
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+      document.body.style.overflow = "hidden";
+      requestAnimationFrame(() => {
+        if (container) {
+          container.classList.remove("scale-95", "opacity-0");
+          container.classList.add("scale-100", "opacity-100");
+        }
+      });
+    }
+
+    function closeModal() {
+      if (container) {
+        container.classList.remove("scale-100", "opacity-100");
+        container.classList.add("scale-95", "opacity-0");
+      }
+      setTimeout(() => {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+        document.body.style.overflow = "";
+      }, 200);
+    }
+
+    openBtns.forEach((btn) => btn.addEventListener("click", openModal));
+    if (closeBtn) closeBtn.addEventListener("click", closeModal);
+
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !modal.classList.contains("hidden")) {
+        closeModal();
+      }
+    });
+
+    // Xử lý kéo thả & upload CV trực quan
+    const dropzone = document.getElementById("dropzoneCvQuickApply");
+    const cvInput = document.getElementById("quickApplyCvInput");
+    const filePreview = document.getElementById("quickApplyFilePreview");
+    const fileNameSpan = document.getElementById("quickApplyFileName");
+    const fileSizeSpan = document.getElementById("quickApplyFileSize");
+    const dropzonePrompt = document.getElementById("dropzonePrompt");
+
+    function formatFileSize(bytes) {
+      if (bytes < 1024) return bytes + " B";
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+      return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+    }
+
+    function handleFile(file) {
+      if (!file) return;
+      if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+        if (typeof window.showToast === "function") {
+          window.showToast("Hệ thống chỉ chấp nhận file CV ở định dạng PDF.", "warning");
+        } else {
+          alert("Hệ thống chỉ chấp nhận file CV ở định dạng PDF.");
+        }
+        if (cvInput) cvInput.value = "";
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        if (typeof window.showToast === "function") {
+          window.showToast("Kích thước file PDF không được vượt quá 5MB.", "error");
+        } else {
+          alert("Kích thước file PDF không được vượt quá 5MB.");
+        }
+        if (cvInput) cvInput.value = "";
+        return;
+      }
+
+      if (dropzonePrompt) dropzonePrompt.classList.add("hidden");
+      if (filePreview) filePreview.classList.remove("hidden");
+      if (fileNameSpan) fileNameSpan.textContent = file.name;
+      if (fileSizeSpan) fileSizeSpan.textContent = formatFileSize(file.size);
+    }
+
+    if (cvInput) {
+      cvInput.addEventListener("change", (e) => {
+        if (e.target.files && e.target.files[0]) {
+          handleFile(e.target.files[0]);
+        }
+      });
+    }
+
+    if (dropzone) {
+      ["dragenter", "dragover"].forEach((evt) => {
+        dropzone.addEventListener(evt, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropzone.classList.add("border-[#0088FF]", "bg-blue-50/50");
+        });
+      });
+      ["dragleave", "drop"].forEach((evt) => {
+        dropzone.addEventListener(evt, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropzone.classList.remove("border-[#0088FF]", "bg-blue-50/50");
+        });
+      });
+      dropzone.addEventListener("drop", (e) => {
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+          const file = e.dataTransfer.files[0];
+          if (cvInput) {
+            cvInput.files = e.dataTransfer.files;
+          }
+          handleFile(file);
+        }
+      });
+    }
+
+    // Toggle Apply Method trong Modal
+    const radioFile = document.getElementById("quickApplyTypeFile");
+    const radioProfile = document.getElementById("quickApplyTypeProfile");
+    const boxUploadCv = document.getElementById("boxQuickUploadCv");
+    const boxItProfile = document.getElementById("boxQuickItProfile");
+
+    function updateMethod() {
+      if (radioProfile && radioProfile.checked) {
+        if (boxUploadCv) boxUploadCv.classList.add("hidden");
+        if (boxItProfile) boxItProfile.classList.remove("hidden");
+        if (cvInput) cvInput.removeAttribute("required");
+      } else {
+        if (boxUploadCv) boxUploadCv.classList.remove("hidden");
+        if (boxItProfile) boxItProfile.classList.add("hidden");
+        if (cvInput) cvInput.setAttribute("required", "required");
+      }
+    }
+
+    if (radioFile) radioFile.addEventListener("change", updateMethod);
+    if (radioProfile) radioProfile.addEventListener("change", updateMethod);
+
+    // Form submit loading
+    if (form && submitBtn) {
+      form.addEventListener("submit", () => {
+        submitBtn.disabled = true;
+        submitBtn.classList.add("opacity-75", "cursor-not-allowed");
+        submitBtn.innerHTML = `
+          <i class="fa-solid fa-circle-notch fa-spin mr-2"></i>
+          <span>Đang gửi hồ sơ ứng tuyển...</span>
+        `;
+      });
+    }
+  };
+
+  if (typeof window.initQuickApplyModal === "function") {
+    window.initQuickApplyModal();
+  }
 });

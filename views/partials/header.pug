@@ -1,11 +1,14 @@
 header(class="bg-[#000071] py-[14px] sticky top-0 z-50 shadow-md")
     div(class="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8")
         div(class="flex justify-between items-center gap-4 xl:gap-8")
-            a(href="/" class="font-[800] sm:text-[26px] text-[20px] text-white tracking-tight shrink-0 hover:opacity-95 transition-opacity") VN.ITJobs
+            a(href="/" class="font-[800] sm:text-[26px] text-[20px] text-white tracking-tight shrink-0 hover:opacity-95 transition-opacity flex items-center gap-[8px]")
+                span(class="w-[30px] h-[30px] rounded-[8px] bg-gradient-to-tr from-[#0088FF] to-[#60A5FA] flex items-center justify-center text-white text-[15px] shadow-sm")
+                    <i class="fa-solid fa-code"></i>
+                span VN.ITJobs
             nav(class="menu lg:block hidden")
                 ul(class="flex items-center gap-[20px] xl:gap-[30px]")
                     li
-                        a(href="/search" class="hover:text-[#9FDB7C] transition-colors") Việc Làm IT 
+                        a(href="/search" class="hover:text-[#60A5FA] transition-colors") Việc Làm IT 
                         <i class="fa-solid fa-angle-down text-[12px] opacity-80"></i>
                         ul 
                             li 
@@ -38,7 +41,7 @@ header(class="bg-[#000071] py-[14px] sticky top-0 z-50 shadow-md")
                                             li: a(href="/search?city=" + c.value) #{c.label}
 
                     li
-                        a(href="/companies" class="hover:text-[#9FDB7C] transition-colors") Top Công Ty IT 
+                        a(href="/companies" class="hover:text-[#60A5FA] transition-colors") Top Công Ty IT 
                         <i class="fa-solid fa-angle-down text-[12px] opacity-80"></i>
                         ul 
                             if menuData && menuData.topEmployers && menuData.topEmployers.length > 0
@@ -51,13 +54,13 @@ header(class="bg-[#000071] py-[14px] sticky top-0 z-50 shadow-md")
                                 li: a(href="/companies") MoMo
 
                     li
-                        a(href="/salary" class="flex items-center gap-[6px] text-[#9FDB7C] hover:text-white transition-colors")
+                        a(href="/salary" class="flex items-center gap-[6px] text-[#93C5FD] hover:text-white transition-colors")
                             i(class="fa-solid fa-calculator text-[14px]")
                             span Tra Cứu Lương
-                            span(class="bg-[#EA1E30] text-white text-[10px] font-bold px-[5px] py-[1px] rounded-full") HOT
+                            span(class="bg-[#EA1E30] text-white text-[10px] font-bold px-[5px] py-[1px] rounded-full shadow-xs") HOT
 
                     li
-                        a(href="/blog" class="hover:text-[#9FDB7C] transition-colors") Cẩm Nang &amp; API
+                        a(href="/blog" class="hover:text-[#60A5FA] transition-colors") Cẩm Nang &amp; API
                         <i class="fa-solid fa-angle-down text-[12px] opacity-80"></i>
                         ul
                             li: a(href="/blog") Cẩm Nang Nghề Nghiệp IT
@@ -67,7 +70,7 @@ header(class="bg-[#000071] py-[14px] sticky top-0 z-50 shadow-md")
 
                     if !currentUser || role !== 'employer'
                         li
-                            a(href="/employer/login" class="hover:text-[#9FDB7C] transition-colors") Nhà Tuyển Dụng 
+                            a(href="/employer/login" class="hover:text-[#60A5FA] transition-colors") Nhà Tuyển Dụng 
                             <i class="fa-solid fa-angle-down text-[12px] opacity-80"></i>
                             ul 
                                 li 
@@ -100,13 +103,13 @@ header(class="bg-[#000071] py-[14px] sticky top-0 z-50 shadow-md")
                         ul
                             li(class="relative py-[5px]")
                                 div(class="flex items-center gap-[8px] bg-white/10 hover:bg-white/15 px-[10px] py-[6px] rounded-[6px] text-white font-[600] sm:text-[15px] text-[12px] cursor-pointer transition")
-                                    <i class="fa-solid fa-circle-user text-[18px] text-[#9FDB7C]"></i>
+                                    <i class="fa-solid fa-circle-user text-[18px] text-[#60A5FA]"></i>
                                     span(class="max-w-[140px] sm:max-w-[220px] truncate") #{role === 'employer' ? (currentUser.currentMember ? `${currentUser.companyName} (${currentUser.currentMember.fullName})` : currentUser.companyName) : currentUser.fullName}
                                     <i class="fa-solid fa-angle-down text-[11px] opacity-80"></i>
                                 ul(class="user-dropdown-menu")
                                     if role === 'candidate'
                                         li: a(href="/candidate/profile" class="block w-full whitespace-nowrap") <i class="fa-solid fa-user mr-[6px]"></i> Thông tin cá nhân
-                                        li: a(href="/candidate/it-profile" class="block w-full text-[#9FDB7C] whitespace-nowrap") <i class="fa-solid fa-file-code mr-[6px]"></i> Hồ sơ IT Profile
+                                        li: a(href="/candidate/it-profile" class="block w-full text-[#60A5FA] whitespace-nowrap") <i class="fa-solid fa-file-code mr-[6px]"></i> Hồ sơ IT Profile
                                         li: a(href="/candidate/saved-jobs" class="block w-full whitespace-nowrap") <i class="fa-solid fa-bookmark mr-[6px]"></i> Việc làm đã lưu
                                         li: a(href="/candidate/followed-companies" class="block w-full whitespace-nowrap") <i class="fa-solid fa-heart mr-[6px]"></i> Công ty theo dõi
                                         li: a(href="/candidate/job-alerts" class="block w-full whitespace-nowrap") <i class="fa-solid fa-bell mr-[6px]"></i> Thông báo việc làm
@@ -119,8 +122,8 @@ header(class="bg-[#000071] py-[14px] sticky top-0 z-50 shadow-md")
                                     else if role === 'employer'
                                         li: a(href="/employer/company-profile" class="block w-full whitespace-nowrap") <i class="fa-solid fa-building mr-[6px]"></i> Thông tin công ty
                                         li: a(href="/employer/jobs" class="block w-full whitespace-nowrap") <i class="fa-solid fa-briefcase mr-[6px]"></i> Quản lý công việc
-                                        li: a(href="/employer/pipeline" class="block w-full text-[#9FDB7C] whitespace-nowrap") <i class="fa-solid fa-table-columns mr-[6px]"></i> Hiring Pipeline (Kanban)
-                                        li: a(href="/employer/candidates" class="block w-full text-[#60A5FA] whitespace-nowrap font-[600]") <i class="fa-solid fa-users-viewfinder mr-[6px]"></i> Săn Ứng Viên IT (Talent)
+                                        li: a(href="/employer/pipeline" class="block w-full text-[#60A5FA] whitespace-nowrap") <i class="fa-solid fa-table-columns mr-[6px]"></i> Hiring Pipeline (Kanban)
+                                        li: a(href="/employer/candidates" class="block w-full text-[#93C5FD] whitespace-nowrap font-[600]") <i class="fa-solid fa-users-viewfinder mr-[6px]"></i> Săn Ứng Viên IT (Talent)
                                         li: a(href="/employer/cvs" class="block w-full whitespace-nowrap") <i class="fa-solid fa-id-card mr-[6px]"></i> Quản lý CV
                                         li: a(href="/employer/analytics" class="block w-full whitespace-nowrap") <i class="fa-solid fa-chart-line mr-[6px]"></i> Báo cáo tuyển dụng
                                         li: a(href="/employer/team" class="block w-full whitespace-nowrap") <i class="fa-solid fa-user-group mr-[6px]"></i> Nhóm tuyển dụng (HR)
@@ -131,65 +134,88 @@ header(class="bg-[#000071] py-[14px] sticky top-0 z-50 shadow-md")
                                                 button(type="submit" class="text-left w-full text-white cursor-pointer font-[500] text-[14.5px] whitespace-nowrap flex items-center gap-[6px]") <i class="fa-solid fa-right-from-bracket mr-[6px]"></i> Đăng xuất
             else
                 div(class="font-[600] sm:text-[15px] text-[12px] text-white flex gap-[8px] items-center shrink-0")
-                    a(href="/candidate/login" class="hover:text-[#9FDB7C] px-[10px] py-[6px] rounded hover:bg-white/10 transition") Đăng Nhập
+                    a(href="/candidate/login" class="hover:text-[#60A5FA] px-[10px] py-[6px] rounded hover:bg-white/10 transition") Đăng Nhập
                     span(class="opacity-40") |
                     a(href="/candidate/signup" class="bg-[#0088FF] hover:bg-[#0077E6] text-white px-[12px] py-[6px] rounded-[6px] font-[600] transition shadow-sm") Đăng Ký
             
-            button(id="mobileMenuBtn" class="lg:hidden text-white text-[24px] ml-[10px] p-[6px] rounded hover:bg-white/10 cursor-pointer focus:outline-none transition-colors" aria-label="Toggle mobile menu")
+            button(id="mobileMenuBtn" class="lg:hidden text-white text-[22px] ml-[10px] p-[6px] rounded hover:bg-white/10 cursor-pointer focus:outline-none transition-colors" aria-label="Toggle mobile menu")
                 <i class="fa-solid fa-bars"></i>
 
-        //- Mobile Navigation Menu (Drawer/Accordion xổ xuống trên mobile)
-        div(id="mobileNav" class="hidden lg:hidden mt-[15px] pt-[15px] border-t border-[#1E1E8E] text-white transition-all")
-            ul(class="flex flex-col gap-[10px] font-[500] text-[15px]")
-                li
-                    a(href="/search" class="flex items-center gap-[10px] py-[8px] px-[10px] rounded hover:bg-white/10 transition") <i class="fa-solid fa-briefcase text-[16px] text-[#0088FF]"></i> Việc Làm IT
-                li
-                    a(href="/companies" class="flex items-center gap-[10px] py-[8px] px-[10px] rounded hover:bg-white/10 transition") <i class="fa-solid fa-building text-[16px] text-[#0088FF]"></i> Top Công Ty IT
-                li
-                    a(href="/salary" class="flex items-center gap-[10px] py-[8px] px-[10px] rounded hover:bg-white/10 transition text-[#9FDB7C]") <i class="fa-solid fa-calculator text-[16px] text-[#9FDB7C]"></i> Tra Cứu Lương IT <span class="bg-[#EA1E30] text-white text-[10px] font-bold px-[5px] py-[1px] rounded-full ml-auto">HOT</span>
-                li
-                    a(href="/blog" class="flex items-center gap-[10px] py-[8px] px-[10px] rounded hover:bg-white/10 transition") <i class="fa-solid fa-book-open text-[16px] text-[#0088FF]"></i> Cẩm Nang IT
-                
-                //- Kỹ năng hot tìm nhanh trên mobile
-                li(class="py-[4px]")
-                    div(class="text-[12px] font-[600] text-[#A6A6A6] uppercase px-[10px] mb-[6px]") Tìm nhanh theo kỹ năng
-                    div(class="flex flex-wrap gap-[6px] px-[10px]")
-                        each sk in ['ReactJS', 'NodeJS', 'Python', 'Java', 'DevOps', 'Golang']
-                            a(href=`/search?skill=${sk.toLowerCase()}` class="bg-white/10 hover:bg-white/20 text-white text-[12px] py-[4px] px-[10px] rounded-[14px]") #{sk}
+        //- Mobile Navigation Menu (Dàn phẳng hiện đại dạng Quick-Filter 1 chạm)
+        div(id="mobileNav" class="hidden lg:hidden mt-[15px] pt-[15px] border-t border-white/15 text-white transition-all space-y-[16px]")
+            //- Core Links
+            div(class="grid grid-cols-2 gap-[8px]")
+                a(href="/search" class="flex items-center gap-[8px] p-[10px] rounded-[8px] bg-white/10 hover:bg-white/15 text-[14px] font-[600] transition")
+                    <i class="fa-solid fa-briefcase text-[#60A5FA]"></i>
+                    span Việc Làm IT
+                a(href="/companies" class="flex items-center gap-[8px] p-[10px] rounded-[8px] bg-white/10 hover:bg-white/15 text-[14px] font-[600] transition")
+                    <i class="fa-solid fa-building text-[#60A5FA]"></i>
+                    span Top Công Ty
+                a(href="/salary" class="flex items-center justify-between p-[10px] rounded-[8px] bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/30 text-[14px] font-[600] text-[#93C5FD] transition")
+                    span(class="flex items-center gap-[8px]")
+                        <i class="fa-solid fa-calculator text-[#60A5FA]"></i>
+                        span Tra Cứu Lương
+                    span(class="bg-[#EA1E30] text-white text-[10px] font-bold px-[5px] py-[1px] rounded-full") HOT
+                a(href="/blog" class="flex items-center gap-[8px] p-[10px] rounded-[8px] bg-white/10 hover:bg-white/15 text-[14px] font-[600] transition")
+                    <i class="fa-solid fa-book-open text-[#60A5FA]"></i>
+                    span Cẩm Nang IT
 
-                if currentUser
-                    li(class="border-t border-[#1E1E8E] pt-[12px] mt-[4px]")
-                        div(class="font-[600] text-[#0088FF] text-[14px] mb-[6px] px-[10px]") <i class="fa-solid fa-circle-user mr-[6px]"></i> #{role === 'employer' ? (currentUser.currentMember ? `${currentUser.companyName} (${currentUser.currentMember.fullName})` : currentUser.companyName) : currentUser.fullName}
-                    if role === 'candidate'
-                        li: a(href="/candidate/profile" class="block py-[6px] px-[10px] rounded hover:bg-white/10") <i class="fa-solid fa-user mr-[8px] text-[14px]"></i> Thông tin cá nhân
-                        li: a(href="/candidate/it-profile" class="block py-[6px] px-[10px] rounded hover:bg-white/10 text-[#9FDB7C]") <i class="fa-solid fa-file-code mr-[8px] text-[14px]"></i> Hồ sơ IT Profile
-                        li: a(href="/candidate/saved-jobs" class="block py-[6px] px-[10px] rounded hover:bg-white/10") <i class="fa-solid fa-bookmark mr-[8px] text-[14px]"></i> Việc làm đã lưu
-                        li: a(href="/candidate/followed-companies" class="block py-[6px] px-[10px] rounded hover:bg-white/10") <i class="fa-solid fa-heart mr-[8px] text-[14px]"></i> Công ty theo dõi
-                        li: a(href="/candidate/job-alerts" class="block py-[6px] px-[10px] rounded hover:bg-white/10") <i class="fa-solid fa-bell mr-[8px] text-[14px]"></i> Thông báo việc làm
-                        li: a(href="/candidate/applied-jobs" class="block py-[6px] px-[10px] rounded hover:bg-white/10") <i class="fa-solid fa-file-lines mr-[8px] text-[14px]"></i> CV đã gửi
-                        li: a(href="/candidate/change-password" class="block py-[6px] px-[10px] rounded hover:bg-white/10") <i class="fa-solid fa-key mr-[8px] text-[14px]"></i> Đổi mật khẩu
-                        li
-                            form(action="/candidate/logout" method="POST" class="px-[10px] mt-[4px]")
+            //- Quick Filter Pills: Kỹ năng Hot (1 chạm)
+            div(class="p-[12px] bg-white/5 rounded-[12px] border border-white/10")
+                div(class="flex items-center justify-between mb-[8px]")
+                    span(class="text-[12px] font-[700] text-[#93C5FD] uppercase tracking-wide flex items-center gap-[6px]")
+                        <i class="fa-solid fa-tags text-[11px]"></i>
+                        span Kỹ năng tuyển dụng hot
+                    a(href="/search" class="text-[11px] text-white/70 hover:text-white underline") Xem tất cả
+                div(class="flex flex-wrap gap-[6px]")
+                    each sk in ['ReactJS', 'NodeJS', 'Python', 'Golang', 'Java', 'DevOps', 'AI Engineer', 'Flutter', 'TypeScript']
+                        a(href=`/search?skill=${sk.toLowerCase().replace(/[^a-z0-9]/g, '')}` class="bg-white/15 hover:bg-[#0088FF] text-white text-[12px] font-[500] py-[4px] px-[10px] rounded-full transition-all active:scale-95 border border-white/10") #{sk}
+
+            //- Quick Filter Pills: Địa điểm làm việc (1 chạm)
+            div(class="p-[12px] bg-white/5 rounded-[12px] border border-white/10")
+                span(class="text-[12px] font-[700] text-[#93C5FD] uppercase tracking-wide block mb-[8px] flex items-center gap-[6px]")
+                    <i class="fa-solid fa-location-dot text-[11px]"></i>
+                    span Khu vực làm việc
+                div(class="flex flex-wrap gap-[6px]")
+                    a(href="/search?city=ha-noi" class="bg-white/15 hover:bg-[#0088FF] text-white text-[12px] font-[500] py-[4px] px-[10px] rounded-full transition-all active:scale-95 border border-white/10") Hà Nội
+                    a(href="/search?city=ho-chi-minh" class="bg-white/15 hover:bg-[#0088FF] text-white text-[12px] font-[500] py-[4px] px-[10px] rounded-full transition-all active:scale-95 border border-white/10") TP. Hồ Chí Minh
+                    a(href="/search?city=da-nang" class="bg-white/15 hover:bg-[#0088FF] text-white text-[12px] font-[500] py-[4px] px-[10px] rounded-full transition-all active:scale-95 border border-white/10") Đà Nẵng
+                    a(href="/search?workingForm=remote" class="bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-200 text-[12px] font-[600] py-[4px] px-[10px] rounded-full transition-all active:scale-95 border border-emerald-400/30") 🌐 Làm từ xa (Remote)
+
+            //- User Area
+            if currentUser
+                div(class="border-t border-white/15 pt-[14px]")
+                    div(class="font-[600] text-[#93C5FD] text-[14px] mb-[8px] px-[4px] flex items-center gap-[8px]")
+                        <i class="fa-solid fa-circle-user text-[18px]"></i>
+                        span #{role === 'employer' ? (currentUser.currentMember ? `${currentUser.companyName} (${currentUser.currentMember.fullName})` : currentUser.companyName) : currentUser.fullName}
+                    div(class="grid grid-cols-2 gap-[6px]")
+                        if role === 'candidate'
+                            a(href="/candidate/profile" class="py-[7px] px-[10px] rounded-[6px] bg-white/10 text-[13px] hover:bg-white/20") <i class="fa-solid fa-user mr-[6px] text-[#60A5FA]"></i> Cá nhân
+                            a(href="/candidate/it-profile" class="py-[7px] px-[10px] rounded-[6px] bg-blue-500/20 text-[#93C5FD] text-[13px] font-[600] hover:bg-blue-500/30") <i class="fa-solid fa-file-code mr-[6px]"></i> IT Profile
+                            a(href="/candidate/saved-jobs" class="py-[7px] px-[10px] rounded-[6px] bg-white/10 text-[13px] hover:bg-white/20") <i class="fa-solid fa-bookmark mr-[6px] text-rose-400"></i> Việc đã lưu
+                            a(href="/candidate/applied-jobs" class="py-[7px] px-[10px] rounded-[6px] bg-white/10 text-[13px] hover:bg-white/20") <i class="fa-solid fa-file-lines mr-[6px] text-[#60A5FA]"></i> CV đã gửi
+                            form(action="/candidate/logout" method="POST" class="col-span-2 m-0 mt-[4px]")
                                 input(type="hidden" name="_csrf" value=csrfToken)
-                                button(type="submit" class="text-left text-[#FF4D4F] hover:underline font-[500] text-[14px] cursor-pointer py-[4px]") <i class="fa-solid fa-right-from-bracket mr-[8px]"></i> Đăng xuất
-                    else if role === 'employer'
-                        li: a(href="/employer/company-profile" class="block py-[6px] px-[10px] rounded hover:bg-white/10") <i class="fa-solid fa-building-user mr-[8px] text-[14px]"></i> Thông tin công ty
-                        li: a(href="/employer/jobs" class="block py-[6px] px-[10px] rounded hover:bg-white/10") <i class="fa-solid fa-list-check mr-[8px] text-[14px]"></i> Quản lý việc làm
-                        li: a(href="/employer/pipeline" class="block py-[6px] px-[10px] rounded hover:bg-white/10 text-[#9FDB7C]") <i class="fa-solid fa-table-columns mr-[8px] text-[14px]"></i> Hiring Pipeline (Kanban)
-                        li: a(href="/employer/cvs" class="block py-[6px] px-[10px] rounded hover:bg-white/10") <i class="fa-solid fa-address-card mr-[8px] text-[14px]"></i> Quản lý CV
-                        li: a(href="/employer/change-password" class="block py-[6px] px-[10px] rounded hover:bg-white/10") <i class="fa-solid fa-key mr-[8px] text-[14px]"></i> Đổi mật khẩu
-                        li
-                            form(action="/employer/logout" method="POST" class="px-[10px] mt-[4px]")
+                                button(type="submit" class="w-full py-[8px] px-[10px] rounded-[6px] bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 text-[13px] font-[600] text-center cursor-pointer")
+                                    <i class="fa-solid fa-right-from-bracket mr-[6px]"></i> Đăng xuất
+                        else if role === 'employer'
+                            a(href="/employer/company-profile" class="py-[7px] px-[10px] rounded-[6px] bg-white/10 text-[13px] hover:bg-white/20") <i class="fa-solid fa-building mr-[6px] text-[#60A5FA]"></i> Công ty
+                            a(href="/employer/jobs" class="py-[7px] px-[10px] rounded-[6px] bg-white/10 text-[13px] hover:bg-white/20") <i class="fa-solid fa-briefcase mr-[6px] text-[#60A5FA]"></i> Việc làm
+                            a(href="/employer/pipeline" class="py-[7px] px-[10px] rounded-[6px] bg-blue-500/20 text-[#93C5FD] text-[13px] font-[600] hover:bg-blue-500/30") <i class="fa-solid fa-table-columns mr-[6px]"></i> Pipeline
+                            a(href="/employer/cvs" class="py-[7px] px-[10px] rounded-[6px] bg-white/10 text-[13px] hover:bg-white/20") <i class="fa-solid fa-id-card mr-[6px] text-[#60A5FA]"></i> Hồ sơ CV
+                            form(action="/employer/logout" method="POST" class="col-span-2 m-0 mt-[4px]")
                                 input(type="hidden" name="_csrf" value=csrfToken)
-                                button(type="submit" class="text-left text-[#FF4D4F] hover:underline font-[500] text-[14px] cursor-pointer py-[4px]") <i class="fa-solid fa-right-from-bracket mr-[8px]"></i> Đăng xuất
-                else
-                    li(class="border-t border-[#1E1E8E] pt-[12px] mt-[4px] px-[10px]")
-                        div(class="font-[600] text-[#A6A6A6] text-[12px] uppercase mb-[8px]") Dành cho Ứng viên
-                        div(class="grid grid-cols-2 gap-[10px]")
-                            a(href="/candidate/login" class="bg-[#0088FF] text-white py-[8px] px-[12px] rounded-[4px] text-[13px] font-[600] text-center") Đăng nhập
-                            a(href="/candidate/signup" class="border border-white/60 text-white py-[8px] px-[12px] rounded-[4px] text-[13px] font-[600] text-center") Đăng ký
-                    li(class="pt-[8px] px-[10px]")
-                        div(class="font-[600] text-[#A6A6A6] text-[12px] uppercase mb-[8px]") Dành cho Nhà tuyển dụng
-                        div(class="grid grid-cols-2 gap-[10px]")
-                            a(href="/employer/login" class="bg-[#121212] border border-[#414042] text-white py-[8px] px-[12px] rounded-[4px] text-[13px] font-[600] text-center") Đăng nhập NTD
-                            a(href="/employer/signup" class="border border-[#414042] text-white py-[8px] px-[12px] rounded-[4px] text-[13px] font-[600] text-center") Đăng ký NTD
+                                button(type="submit" class="w-full py-[8px] px-[10px] rounded-[6px] bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 text-[13px] font-[600] text-center cursor-pointer")
+                                    <i class="fa-solid fa-right-from-bracket mr-[6px]"></i> Đăng xuất
+            else
+                div(class="border-t border-white/15 pt-[14px] space-y-[10px]")
+                    div
+                        span(class="text-[11px] font-[700] text-[#93C5FD] uppercase tracking-wide block mb-[6px]") Dành cho Ứng viên
+                        div(class="grid grid-cols-2 gap-[8px]")
+                            a(href="/candidate/login" class="bg-[#0088FF] hover:bg-[#0070d6] text-white py-[9px] px-[12px] rounded-[8px] text-[13px] font-[600] text-center shadow-xs") Đăng nhập
+                            a(href="/candidate/signup" class="border border-white/40 hover:bg-white/10 text-white py-[9px] px-[12px] rounded-[8px] text-[13px] font-[600] text-center") Đăng ký
+                    div
+                        span(class="text-[11px] font-[700] text-gray-300 uppercase tracking-wide block mb-[6px]") Dành cho Nhà tuyển dụng
+                        div(class="grid grid-cols-2 gap-[8px]")
+                            a(href="/employer/login" class="bg-white/10 border border-white/20 hover:bg-white/20 text-white py-[9px] px-[12px] rounded-[8px] text-[13px] font-[600] text-center") Đăng nhập NTD
+                            a(href="/employer/signup" class="bg-emerald-600/30 border border-emerald-400/40 hover:bg-emerald-600/50 text-emerald-200 py-[9px] px-[12px] rounded-[8px] text-[13px] font-[600] text-center") Đăng ký NTD

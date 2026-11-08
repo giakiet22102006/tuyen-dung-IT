@@ -4,66 +4,117 @@ block title
     title Đăng ký (Nhà tuyển dụng)
 
 block main
-    //- Đăng ký
-    div(class="py-[30px] sm:py-[60px]")
+    //- Đăng ký (Nhà tuyển dụng) - Modern Split-Screen Layout
+    div(class="py-[30px] sm:py-[50px] lg:py-[60px]")
         .contain 
-            div(class="border border-[#DEDEDE] rounded-[8px] py-[30px] sm:py-[50px] px-[16px] sm:px-[30px] max-w-[602px] w-full mx-auto bg-white shadow-xs")
-                h1(class="font-[700] text-[20px] sm:text-[22px] text-center") Đăng ký (Nhà tuyển dụng)
+            div(class="max-w-[1040px] w-full mx-auto bg-white rounded-[16px] shadow-xl border border-gray-200/80 overflow-hidden grid grid-cols-1 lg:grid-cols-12")
+                //- Panel Trái: Giới thiệu thương hiệu & Giải pháp Doanh nghiệp (Desktop)
+                div(class="hidden lg:flex lg:col-span-5 flex-col justify-between p-[40px] bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#000071] text-white relative overflow-hidden")
+                    //- Hiệu ứng ánh sáng nền
+                    div(class="absolute -top-[60px] -right-[60px] w-[200px] h-[200px] rounded-full bg-blue-500/20 blur-2xl pointer-events-none")
+                    div(class="absolute -bottom-[80px] -left-[80px] w-[220px] h-[220px] rounded-full bg-indigo-500/15 blur-2xl pointer-events-none")
 
-                if flash && flash.error
-                    div(class="mt-[15px] p-[12px] bg-[#FFEBEE] border border-[#FFCDD2] text-[#C62828] rounded-[4px] text-[14px]") #{flash.error}
+                    div(class="relative z-10")
+                        div(class="flex items-center gap-[10px] mb-[28px]")
+                            span(class="w-[36px] h-[36px] rounded-[10px] bg-gradient-to-tr from-[#0088FF] to-[#60A5FA] flex items-center justify-center text-white text-[18px] shadow-sm")
+                                <i class="fa-solid fa-building"></i>
+                            span(class="font-[800] text-[22px] tracking-tight text-white") VN.ITJobs for Employers
 
-                form(action="/employer/signup" method="POST" class="mt-[20px]") 
-                    input(type="hidden" name="_csrf" value=csrfToken)
+                        h2(class="font-[800] text-[24px] leading-snug mb-[12px]")
+                            | Gia nhập mạng lưới 5.000+ Nhà tuyển dụng hàng đầu
+                        p(class="text-[13.5px] text-slate-300 leading-relaxed")
+                            | Tạo tài khoản doanh nghiệp để bắt đầu đăng tin tuyển dụng không giới hạn, sử dụng AI viết JD tự động và tiếp cận ứng viên tiềm năng ngay hôm nay.
 
-                    div(class="")
-                        label(for="companyName" class="font-[500] text-[14px]") Tên công ty *
-                        input(type="text" id="companyName" name="companyName" value=(old && old.companyName ? old.companyName : "") required class="border border-[#DEDEDE] rounded-[4px] py-[11px] px-[20px] mt-[5px] mb-[15px] block w-full") 
-                        if errors && errors.companyName
-                            div(class="text-[#FF0000] text-[13px] mt-[-10px] mb-[10px]") #{errors.companyName}
+                        //- Quyền lợi doanh nghiệp
+                        div(class="mt-[32px] space-y-[14px]")
+                            div(class="flex items-start gap-[12px]")
+                                div(class="w-[28px] h-[28px] rounded-full bg-blue-500/20 text-[#60A5FA] flex items-center justify-center text-[13px] shrink-0 mt-0.5")
+                                    <i class="fa-solid fa-check"></i>
+                                p(class="text-[13px] text-slate-200")
+                                    strong(class="text-white") AI Soạn thảo JD:
+                                    |  Tạo mô tả công việc chuẩn chỉnh, thu hút trong 5 giây.
 
-                    div(class="")
-                        label(for="email" class="font-[500] text-[14px]") Email *  
-                        input(type="email" id="email" name="email" value=(old && old.email ? old.email : "") required class="border border-[#DEDEDE] rounded-[4px] py-[11px] px-[20px] mt-[5px] mb-[15px] block w-full") 
-                        if errors && errors.email
-                            div(class="text-[#FF0000] text-[13px] mt-[-10px] mb-[10px]") #{errors.email}
+                            div(class="flex items-start gap-[12px]")
+                                div(class="w-[28px] h-[28px] rounded-full bg-blue-500/20 text-[#60A5FA] flex items-center justify-center text-[13px] shrink-0 mt-0.5")
+                                    <i class="fa-solid fa-check"></i>
+                                p(class="text-[13px] text-slate-200")
+                                    strong(class="text-white") Quản lý CV thông minh:
+                                    |  Tìm kiếm, phân loại và lưu trữ hồ sơ tập trung, bảo mật.
 
-                    div(class="mb-[15px]")
-                        label(for="password" class="font-[500] text-[14px] text-[#121212] block") Mật khẩu *
-                        div(class="relative mt-[5px]")
-                            input(type="password" id="password" name="password" required placeholder="Tối thiểu 8 ký tự, có chữ và số" class="border border-[#DEDEDE] rounded-[4px] py-[11px] pl-[16px] pr-[44px] block w-full focus:outline-none focus:border-[#0088FF] transition-colors") 
-                            button(type="button" class="btn-toggle-password absolute right-[12px] top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 p-[4px] cursor-pointer transition-colors" data-target="password" title="Ẩn/Hiện mật khẩu" aria-label="Ẩn/Hiện mật khẩu")
-                                <i class="fa-regular fa-eye-slash text-[16px]"></i>
-                        if errors && errors.password
-                            div(class="text-[#FF0000] text-[13px] mt-[4px]") #{errors.password}
+                            div(class="flex items-start gap-[12px]")
+                                div(class="w-[28px] h-[28px] rounded-full bg-blue-500/20 text-[#60A5FA] flex items-center justify-center text-[13px] shrink-0 mt-0.5")
+                                    <i class="fa-solid fa-check"></i>
+                                p(class="text-[13px] text-slate-200")
+                                    strong(class="text-white") Branding Doanh nghiệp:
+                                    |  Trang hồ sơ công ty chuẩn SEO &amp; bản đồ vị trí văn phòng.
 
-                    div(class="mb-[20px]")
-                        label(for="confirmPassword" class="font-[500] text-[14px] text-[#121212] block") Nhập lại mật khẩu *
-                        div(class="relative mt-[5px]")
-                            input(type="password" id="confirmPassword" name="confirmPassword" required placeholder="Nhập lại mật khẩu vừa nhập" class="border border-[#DEDEDE] rounded-[4px] py-[11px] pl-[16px] pr-[44px] block w-full focus:outline-none focus:border-[#0088FF] transition-colors") 
-                            button(type="button" class="btn-toggle-password absolute right-[12px] top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 p-[4px] cursor-pointer transition-colors" data-target="confirmPassword" title="Ẩn/Hiện mật khẩu" aria-label="Ẩn/Hiện mật khẩu")
-                                <i class="fa-regular fa-eye-slash text-[16px]"></i>
-                        div(id="confirmPasswordClientError" class="text-[#FF0000] text-[13px] mt-[4px] hidden") Mật khẩu nhập lại không khớp
-                        if errors && errors.confirmPassword
-                            div(class="text-[#FF0000] text-[13px] mt-[4px]") #{errors.confirmPassword}
+                    div(class="relative z-10 pt-[24px] border-t border-slate-700 text-[12px] text-slate-400 flex items-center justify-between")
+                        span © 2026 VN.ITJobs Enterprise
+                        span Phê duyệt nhanh chóng
 
-                    div(class="") 
-                        button(type="submit" class="bg-[#0088FF] py-[14px] rounded-[4px] font-[700] text-[16px] text-white text-center w-full cursor-pointer") Đăng ký
+                //- Panel Phải: Form Đăng ký
+                div(class="lg:col-span-7 p-[24px] sm:p-[40px] md:p-[48px] flex flex-col justify-center")
+                    div(class="max-w-[460px] w-full mx-auto")
+                        h1(class="font-[800] text-[24px] sm:text-[26px] text-slate-900 tracking-tight") Đăng ký Nhà tuyển dụng
+                        p(class="text-[14px] text-slate-500 mt-[4px]") Bắt đầu chiến dịch tìm kiếm nhân tài công nghệ cho công ty bạn
 
-                //- Đăng ký công ty nhanh với Google
-                div(class="my-[20px] flex items-center gap-[10px]")
-                    div(class="flex-1 h-[1px] bg-[#E5E7EB]")
-                    span(class="text-[13px] text-[#6B7280] font-[500]") hoặc
-                    div(class="flex-1 h-[1px] bg-[#E5E7EB]")
+                        if flash && flash.error
+                            div(class="mt-[15px] p-[12px] bg-[#FFEBEE] border border-[#FFCDD2] text-[#C62828] rounded-[6px] text-[13.5px] flex items-center gap-[8px]")
+                                <i class="fa-solid fa-circle-exclamation"></i>
+                                span #{flash.error}
 
-                a(href="/employer/auth/google" class="flex items-center justify-center gap-[10px] w-full py-[12px] px-[20px] border border-[#D1D5DB] hover:bg-gray-50 rounded-[4px] font-[600] text-[14px] text-[#374151] transition-colors")
-                    svg(class="w-[18px] h-[18px]" viewBox="0 0 24 24")
-                        path(fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z")
-                        path(fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z")
-                        path(fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z")
-                        path(fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z")
-                    span Đăng ký nhanh với Google
+                        //- Đăng ký công ty nhanh với Google
+                        div(class="mt-[20px]")
+                            a(href="/employer/auth/google" class="flex items-center justify-center gap-[10px] w-full py-[11px] px-[20px] border border-gray-300 hover:border-gray-400 hover:bg-gray-50 rounded-[8px] font-[600] text-[14px] text-slate-700 transition-all shadow-2xs")
+                                svg(class="w-[18px] h-[18px]" viewBox="0 0 24 24")
+                                    path(fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z")
+                                    path(fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z")
+                                    path(fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z")
+                                    path(fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z")
+                                span Đăng ký công ty với Google
 
-                div(class="mt-[15px] text-center font-[400] text-[14px] text-[#414042]") Đã có tài khoản Nhà tuyển dụng? 
-                    a(href="/employer/login" class="text-[#0088FF] font-[600] ml-[4px]") Đăng nhập ngay
-    //- Hết Đăng kí
+                        div(class="my-[18px] flex items-center gap-[10px]")
+                            div(class="flex-1 h-[1px] bg-gray-200")
+                            span(class="text-[12.5px] text-gray-400 font-[500]") hoặc tạo tài khoản bằng email
+                            div(class="flex-1 h-[1px] bg-gray-200")
+
+                        form(action="/employer/signup" method="POST" class="space-y-[14px]") 
+                            input(type="hidden" name="_csrf" value=csrfToken)
+
+                            div
+                                label(for="companyName" class="font-[600] text-[13.5px] text-slate-800 block mb-[6px]") Tên công ty / Doanh nghiệp *
+                                input(type="text" id="companyName" name="companyName" value=(old && old.companyName ? old.companyName : "") required placeholder="Công ty TNHH Công nghệ ABC" class="border border-gray-300 rounded-[8px] py-[10px] px-[16px] text-[14px] text-slate-900 block w-full focus:outline-none focus:border-[#0088FF] focus:ring-2 focus:ring-blue-100 transition-all") 
+                                if errors && errors.companyName
+                                    div(class="text-[#FF0000] text-[12.5px] mt-[4px]") #{errors.companyName}
+
+                            div
+                                label(for="email" class="font-[600] text-[13.5px] text-slate-800 block mb-[6px]") Email công ty *  
+                                input(type="email" id="email" name="email" value=(old && old.email ? old.email : "") required placeholder="hr@company.com" class="border border-gray-300 rounded-[8px] py-[10px] px-[16px] text-[14px] text-slate-900 block w-full focus:outline-none focus:border-[#0088FF] focus:ring-2 focus:ring-blue-100 transition-all") 
+                                if errors && errors.email
+                                    div(class="text-[#FF0000] text-[12.5px] mt-[4px]") #{errors.email}
+
+                            div
+                                label(for="password" class="font-[600] text-[13.5px] text-slate-800 block mb-[6px]") Mật khẩu *
+                                div(class="relative")
+                                    input(type="password" id="password" name="password" required placeholder="Tối thiểu 8 ký tự, có chữ và số" class="border border-gray-300 rounded-[8px] py-[10px] pl-[16px] pr-[44px] text-[14px] text-slate-900 block w-full focus:outline-none focus:border-[#0088FF] focus:ring-2 focus:ring-blue-100 transition-all") 
+                                    button(type="button" class="btn-toggle-password absolute right-[12px] top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 p-[4px] cursor-pointer transition-colors" data-target="password" title="Ẩn/Hiện mật khẩu" aria-label="Ẩn/Hiện mật khẩu")
+                                        <i class="fa-regular fa-eye-slash text-[16px]"></i>
+                                if errors && errors.password
+                                    div(class="text-[#FF0000] text-[12.5px] mt-[4px]") #{errors.password}
+
+                            div
+                                label(for="confirmPassword" class="font-[600] text-[13.5px] text-slate-800 block mb-[6px]") Nhập lại mật khẩu *
+                                div(class="relative")
+                                    input(type="password" id="confirmPassword" name="confirmPassword" required placeholder="Nhập lại chính xác mật khẩu" class="border border-gray-300 rounded-[8px] py-[10px] pl-[16px] pr-[44px] text-[14px] text-slate-900 block w-full focus:outline-none focus:border-[#0088FF] focus:ring-2 focus:ring-blue-100 transition-all") 
+                                    button(type="button" class="btn-toggle-password absolute right-[12px] top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 p-[4px] cursor-pointer transition-colors" data-target="confirmPassword" title="Ẩn/Hiện mật khẩu" aria-label="Ẩn/Hiện mật khẩu")
+                                        <i class="fa-regular fa-eye-slash text-[16px]"></i>
+                                div(id="confirmPasswordClientError" class="text-[#FF0000] text-[12.5px] mt-[4px] hidden") Mật khẩu nhập lại không khớp
+                                if errors && errors.confirmPassword
+                                    div(class="text-[#FF0000] text-[12.5px] mt-[4px]") #{errors.confirmPassword}
+
+                            div(class="pt-[6px]") 
+                                button(type="submit" class="bg-[#0088FF] hover:bg-[#0070d6] py-[12px] px-[20px] rounded-[8px] font-[700] text-[15px] sm:text-[16px] text-white text-center w-full cursor-pointer shadow-sm hover:shadow-md transition-all") Tạo tài khoản Nhà tuyển dụng
+
+                        div(class="mt-[20px] text-center font-[400] text-[14px] text-slate-600") Đã có tài khoản Nhà tuyển dụng? 
+                            a(href="/employer/login" class="text-[#0088FF] font-[600] hover:underline ml-[4px]") Đăng nhập ngay
+    //- Hết Đăng ký
