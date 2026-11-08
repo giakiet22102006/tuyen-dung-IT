@@ -78,53 +78,40 @@ block main
                             div(class="job-description-content") !{formatJobDescription(job.description)}
                     //- Hết Mô tả chi tiết
 
-                    //- Form ứng tuyển
-                    div(id="boxApply" class="border border-[#DEDEDE] rounded-[8px] p-[20px] mt-[20px]")
-                        h2(class="font-[700] text-[20px] text-black mb-[20px]") Ứng tuyển ngay
-
+                    //- Kêu gọi Ứng tuyển ở đáy trang (Bottom Apply Action Card)
+                    div(id="boxApply" class="rounded-[12px] p-[20px] sm:p-[28px] mt-[20px] bg-gradient-to-r from-blue-50/80 via-indigo-50/50 to-white border border-blue-100/90 shadow-xs")
                         if flash && flash.error
-                            div(class="mb-[15px] p-[12px] bg-[#FFEBEE] border border-[#FFCDD2] text-[#C62828] rounded-[4px] text-[14px]") #{flash.error}
+                            div(class="mb-[15px] p-[12px] bg-[#FFEBEE] border border-[#FFCDD2] text-[#C62828] rounded-[6px] text-[13.5px] flex items-center gap-[8px]")
+                                <i class="fa-solid fa-circle-exclamation"></i>
+                                span #{flash.error}
                         if flash && flash.success
-                            div(class="mb-[15px] p-[12px] bg-[#E8F5E9] border border-[#A5D6A7] text-[#2E7D32] rounded-[4px] text-[14px]") #{flash.success}
+                            div(class="mb-[15px] p-[12px] bg-[#E8F5E9] border border-[#A5D6A7] text-[#2E7D32] rounded-[6px] text-[13.5px] flex items-center gap-[8px]")
+                                <i class="fa-solid fa-circle-check"></i>
+                                span #{flash.success}
 
-                        form(action="/jobs/" + job.slug + "/apply" method="POST" enctype="multipart/form-data" class="grid gap-[15px]")
-                            input(type="hidden" name="_csrf" value=csrfToken)
+                        div(class="flex flex-col md:flex-row items-start md:items-center justify-between gap-[20px]")
+                            div(class="max-w-[480px]")
+                                span(class="inline-flex items-center gap-[6px] text-[12px] font-[700] text-[#0088FF] uppercase tracking-wide mb-[4px]")
+                                    <i class="fa-solid fa-fire text-[#EA1E30]"></i> Đang tuyển dụng tích cực
+                                h3(class="font-[800] text-[18px] sm:text-[20px] text-slate-900 leading-snug")
+                                    | Bạn thấy công việc này phù hợp với mình?
+                                p(class="text-[13px] sm:text-[14px] text-slate-600 mt-[4px]")
+                                    | Đừng bỏ lỡ cơ hội gia nhập #{company ? company.companyName : "Doanh nghiệp"} với mức lương #{formatSalary(job.salaryMin, job.salaryMax)}.
 
-                            div(class="")
-                                label(for="applyFullName" class="font-[500] text-[14px]") Họ tên *
-                                input(type="text" id="applyFullName" name="fullName" value=(currentUser ? currentUser.fullName : "") required class="border border-[#DEDEDE] rounded-[4px] px-[20px] py-[12px] font-[500] text-[14px] text-black block w-full mt-[5px]")
-
-                            div(class="")
-                                label(for="applyEmail" class="font-[500] text-[14px]") Email *
-                                input(type="email" id="applyEmail" name="email" value=(currentUser ? currentUser.email : "") required class="border border-[#DEDEDE] rounded-[4px] px-[20px] py-[12px] font-[500] text-[14px] text-black block w-full mt-[5px]")
-
-                            div(class="")
-                                label(for="applyPhone" class="font-[500] text-[14px]") Số điện thoại *
-                                input(type="text" id="applyPhone" name="phone" value=(currentUser ? currentUser.phone : "") required class="border border-[#DEDEDE] rounded-[4px] px-[20px] py-[12px] font-[500] text-[14px] text-black block w-full mt-[5px]")
-
-                            div(class="p-[14px] bg-gray-50 border border-gray-200 rounded-[8px]")
-                                label(class="font-[600] text-[13px] text-gray-700 block mb-[8px]") Phương thức nộp CV:
-                                div(class="grid sm:grid-cols-2 grid-cols-1 gap-[10px]")
-                                    label(class="flex items-center gap-[8px] p-[10px] bg-white border border-gray-300 rounded-[6px] cursor-pointer hover:border-[#0088FF]")
-                                        input(type="radio" name="applyType" value="file" checked id="applyTypeFile" class="cursor-pointer")
-                                        span(class="text-[13px] font-[500] text-gray-800") 📄 Tải lên file PDF từ máy
-
-                                    label(class="flex items-center gap-[8px] p-[10px] bg-white border border-gray-300 rounded-[6px] cursor-pointer hover:border-[#0088FF]")
-                                        input(type="radio" name="applyType" value="it_profile" id="applyTypeProfile" class="cursor-pointer")
-                                        span(class="text-[13px] font-[600] text-emerald-700") ⚡ IT Profile Trực Tuyến (1-Click)
-
-                            div(id="boxUploadCvFile" class="")
-                                label(for="applyCv" class="font-[500] text-[14px]") File CV dạng PDF (tối đa 5MB) *
-                                input(type="file" id="applyCv" name="cv" accept="application/pdf" required class="border border-[#DEDEDE] rounded-[4px] px-[20px] py-[12px] font-[500] text-[14px] text-black block w-full mt-[5px]")
-
-                            div(id="boxItProfileNotice" class="hidden p-[12px] bg-emerald-50 border border-emerald-200 rounded-[6px] text-[13px] text-emerald-900")
-                                <i class="fa-solid fa-circle-check text-emerald-600 mr-[4px]"></i>
-                                span Hệ thống sẽ tự động tổng hợp từ <strong>Hồ sơ IT Profile</strong> của bạn thành bản CV chuẩn gửi tới Nhà tuyển dụng.
-                                a(href="/candidate/it-profile" target="_blank" class="block mt-[4px] text-[#0088FF] font-[600] underline") Cập nhật / Xem lại IT Profile trước khi nộp →
-
-                            div(class="")
-                                button(type="submit" class="bg-[#0088FF] p-[14px] rounded-[4px] w-full font-[700] text-[16px] text-white text-center cursor-pointer") Gửi CV ứng tuyển
-                    //- Hết Form ứng tuyển
+                            div(class="flex items-center gap-[10px] w-full md:w-auto shrink-0")
+                                button(type="button" class="btn-open-quick-apply flex-1 md:flex-none bg-[#0088FF] hover:bg-[#0070d6] text-white font-[700] text-[14px] sm:text-[15px] py-[12px] px-[24px] rounded-[8px] cursor-pointer shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-[8px]")
+                                    <i class="fa-solid fa-paper-plane text-[14px]"></i>
+                                    <span>Ứng tuyển ngay</span>
+                                button(type="button" class="btn-bookmark-job px-[16px] py-[12px] rounded-[8px] border border-gray-300 hover:border-red-400 bg-white hover:bg-red-50 text-gray-700 hover:text-red-500 font-[600] text-[13.5px] cursor-pointer shadow-2xs transition-all flex items-center justify-center gap-[6px]" data-job-id=job._id title="Lưu việc làm này")
+                                    if savedJobIds && savedJobIds.has(job._id.toString())
+                                        <i class="fa-solid fa-bookmark text-red-500 text-[15px]"></i>
+                                        <span class="hidden sm:inline text-red-600">Đã lưu</span>
+                                    else
+                                        <i class="fa-regular fa-bookmark text-[15px]"></i>
+                                        <span class="hidden sm:inline">Lưu tin</span>
+                                button(type="button" class="btn-share-job px-[14px] py-[12px] rounded-[8px] border border-gray-300 hover:border-blue-400 bg-white hover:bg-blue-50 text-gray-700 hover:text-[#0088FF] font-[600] text-[13.5px] cursor-pointer shadow-2xs transition-all flex items-center justify-center gap-[6px]" title="Sao chép link việc làm")
+                                    <i class="fa-solid fa-share-nodes text-[15px]"></i>
+                    //- Hết Kêu gọi Ứng tuyển ở đáy trang
 
                 div(class="") 
                     //- Thông tin công ty
@@ -260,7 +247,7 @@ block main
                         div(class="pt-[4px]")
                             button(type="submit" id="btnSubmitQuickApply" class="w-full bg-[#0088FF] hover:bg-[#0070d6] text-white font-[700] py-[13px] px-[20px] rounded-[8px] text-[15px] sm:text-[16px] cursor-pointer shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-[8px]")
                                 <i class="fa-solid fa-paper-plane text-[15px]"></i>
-                                <span>Gửi hồ sơ ứng tuyển</span>
+                                <span>Gửi CV ứng tuyển</span>
 
         //- ==========================================
         //- MODAL 1: AI SO KHỚP CV & KHOẢNG TRỐNG KỸ NĂNG
@@ -366,27 +353,24 @@ block main
                 if (window.initAiCvMatch) window.initAiCvMatch("#{job._id}");
                 if (window.initAiInterviewPrep) window.initAiInterviewPrep("#{job._id}");
 
-                // Toggle Apply Method (Upload PDF vs IT Profile)
-                var radioFile = document.getElementById("applyTypeFile");
-                var radioProfile = document.getElementById("applyTypeProfile");
-                var boxFile = document.getElementById("boxUploadCvFile");
-                var boxNotice = document.getElementById("boxItProfileNotice");
-                var applyCvInput = document.getElementById("applyCv");
-
-                function updateApplyType() {
-                    if (radioProfile && radioProfile.checked) {
-                        if (boxFile) boxFile.classList.add("hidden");
-                        if (boxNotice) boxNotice.classList.remove("hidden");
-                        if (applyCvInput) applyCvInput.removeAttribute("required");
-                    } else {
-                        if (boxFile) boxFile.classList.remove("hidden");
-                        if (boxNotice) boxNotice.classList.add("hidden");
-                        if (applyCvInput) applyCvInput.setAttribute("required", "required");
-                    }
-                }
-
-                if (radioFile) radioFile.addEventListener("change", updateApplyType);
-                if (radioProfile) radioProfile.addEventListener("change", updateApplyType);
+                // Xử lý sao chép link việc làm nhanh
+                document.querySelectorAll(".btn-share-job").forEach(function(btn) {
+                    btn.addEventListener("click", function(e) {
+                        e.preventDefault();
+                        var shareUrl = window.location.href.split("#")[0];
+                        if (navigator.clipboard && navigator.clipboard.writeText) {
+                            navigator.clipboard.writeText(shareUrl).then(function() {
+                                if (window.showToast) {
+                                    window.showToast("🔗 Đã sao chép liên kết việc làm vào bộ nhớ tạm!", "success");
+                                } else {
+                                    alert("Đã sao chép liên kết việc làm!");
+                                }
+                            }).catch(function() {
+                                if (window.showToast) window.showToast("Không thể sao chép liên kết.", "error");
+                            });
+                        }
+                    });
+                });
             }
             if (document.readyState === "loading") {
                 document.addEventListener("DOMContentLoaded", runInit);
