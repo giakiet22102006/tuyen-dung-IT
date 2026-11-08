@@ -2,7 +2,9 @@ footer(class="site-footer bg-[#000065] py-[36px] mt-auto w-full text-white/90")
     .contain 
         div(class="grid md:grid-cols-4 sm:grid-cols-2 grid-cols-1 gap-[24px] mb-[28px] text-[14px]")
             div
-                div(class="font-[800] text-[24px] text-white mb-[8px]") VN.ITJobs
+                a(href="/" class="inline-flex items-center gap-[10px] mb-[10px] hover:opacity-95 transition-opacity")
+                    img(src="/assets/images/logo.svg?v=20261108" alt="VN.ITJobs Logo" class="w-[28px] h-[28px] rounded-[8px] shadow-sm object-contain")
+                    span(class="font-[800] text-[24px] text-white") VN.ITJobs
                 p(class="text-white/70 text-[13px] leading-relaxed mb-[12px]")
                     | #{(siteSetting && siteSetting.subtitle) || "Nền tảng tuyển dụng IT và kết nối nhân tài công nghệ hàng đầu Việt Nam. Tích hợp AI Matching, tra cứu lương chuẩn xác và bảo mật tối đa."}
                 div(class="text-[12px] text-white/60 space-y-[4px]")
