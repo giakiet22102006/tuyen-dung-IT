@@ -17,8 +17,18 @@ block main
                     div(class="col-span-full py-[40px] text-center text-[#717171] text-[16px]") Chưa có thông tin công ty nào.
 
             if pagination && pagination.totalPages > 1
-                div(class="mt-[30px]")
-                    select(class="pagination-select border border-[#DEDEDE] rounded-[8px] px-[18px] py-[12px] font-[400] text-[16px] text-[#414042] cursor-pointer") 
-                        - for (let i = 1; i <= pagination.totalPages; i++)
-                            option(value=i selected=(pagination.currentPage === i)) Trang #{i}
+                nav(class="mt-[36px] flex items-center justify-center gap-[8px] flex-wrap" aria-label="Phân trang")
+                    if pagination.currentPage > 1
+                        a(href=`?page=${pagination.currentPage - 1}` class="px-[14px] py-[8px] rounded-[8px] border border-[#DEDEDE] bg-white hover:border-[#0088FF] hover:text-[#0088FF] text-[#414042] text-[14px] font-[500] transition-colors")
+                            i(class="fa-solid fa-chevron-left text-[12px] mr-[4px]")
+                            | Trước
+                    - for (let i = 1; i <= pagination.totalPages; i++)
+                        if i === pagination.currentPage
+                            span(class="px-[14px] py-[8px] rounded-[8px] bg-[#0088FF] text-white text-[14px] font-[700] shadow-xs" aria-current="page") #{i}
+                        else
+                            a(href=`?page=${i}` class="px-[14px] py-[8px] rounded-[8px] border border-[#DEDEDE] bg-white hover:border-[#0088FF] hover:text-[#0088FF] text-[#414042] text-[14px] font-[500] transition-colors") #{i}
+                    if pagination.currentPage < pagination.totalPages
+                        a(href=`?page=${pagination.currentPage + 1}` class="px-[14px] py-[8px] rounded-[8px] border border-[#DEDEDE] bg-white hover:border-[#0088FF] hover:text-[#0088FF] text-[#414042] text-[14px] font-[500] transition-colors")
+                            | Sau
+                            i(class="fa-solid fa-chevron-right text-[12px] ml-[4px]")
     //- Hết Danh sách công ty

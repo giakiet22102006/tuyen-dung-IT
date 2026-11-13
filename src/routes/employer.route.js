@@ -50,6 +50,7 @@ router.get("/company-profile", requireEmployer, asyncHandler(employerJob.renderC
 router.post("/company-profile", requireEmployer, uploadLogoMiddleware, doubleCsrfProtection, asyncHandler(employerJob.postCompanyProfile));
 
 // Quản lý việc làm
+router.get("/post-job", (req, res) => res.redirect("/employer/jobs/create"));
 router.get("/jobs", requireEmployer, asyncHandler(employerJob.renderManageJobs));
 router.get("/jobs/create", requireEmployer, employerJob.renderCreateJob);
 router.post("/jobs/create", requireEmployer, uploadJobImagesMiddleware, doubleCsrfProtection, asyncHandler(employerJob.postCreateJob));

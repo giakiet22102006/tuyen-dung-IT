@@ -172,8 +172,11 @@ async function getVocabulary() {
           vocabSet.add(normTitle);
           displayMap.set(normTitle, j.title);
 
-          // Tách các từ đơn trong tiêu đề
-          const words = normTitle.split(/\s+/).filter((w) => w.length > 2);
+          // Tách các từ đơn trong tiêu đề (loại bỏ dấu ngoặc, dấu phẩy thừa)
+          const words = normTitle
+            .split(/[\s,()[\]{}:;"'|/]+/)
+            .map((w) => w.replace(/^[.-]+|[.-]+$/g, ""))
+            .filter((w) => w.length > 2);
           words.forEach((w) => vocabSet.add(w));
         }
         if (Array.isArray(j.skills)) {
