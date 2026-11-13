@@ -1,8 +1,8 @@
-header(class="bg-[#000071] py-[14px] sticky top-0 z-50 shadow-md")
-    div(class="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8")
-        div(class="flex justify-between items-center gap-4 xl:gap-8")
-            a(href="/" class="font-[800] sm:text-[26px] text-[20px] text-white tracking-tight shrink-0 hover:opacity-95 transition-opacity flex items-center gap-[10px]")
-                img(src="/assets/images/logo.svg?v=20261108" alt="VN.ITJobs Logo" class="w-[32px] h-[32px] rounded-[8px] shadow-sm object-contain")
+header(class="bg-[#000071] py-[12px] sm:py-[14px] sticky top-0 z-50 shadow-md w-full max-w-full")
+    div(class="w-full max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8")
+        div(class="flex justify-between items-center gap-2 sm:gap-4 xl:gap-8")
+            a(href="/" class="font-[800] text-[17px] sm:text-[26px] text-white tracking-tight shrink-0 hover:opacity-95 transition-opacity flex items-center gap-[6px] sm:gap-[10px]")
+                img(src="/assets/images/logo.svg?v=20261108" alt="VN.ITJobs Logo" class="w-[26px] h-[26px] sm:w-[32px] sm:h-[32px] rounded-[8px] shadow-sm object-contain")
                 span VN.ITJobs
             nav(class="menu lg:block hidden")
                 ul(class="flex items-center gap-[20px] xl:gap-[30px]")
@@ -132,12 +132,12 @@ header(class="bg-[#000071] py-[14px] sticky top-0 z-50 shadow-md")
                                                 input(type="hidden" name="_csrf" value=csrfToken)
                                                 button(type="submit" class="text-left w-full text-white cursor-pointer font-[500] text-[14.5px] whitespace-nowrap flex items-center gap-[6px]") <i class="fa-solid fa-right-from-bracket mr-[6px]"></i> Đăng xuất
             else
-                div(class="font-[600] sm:text-[15px] text-[12px] text-white flex gap-[8px] items-center shrink-0")
-                    a(href="/candidate/login" class="hover:text-[#60A5FA] px-[10px] py-[6px] rounded hover:bg-white/10 transition") Đăng Nhập
-                    span(class="opacity-40") |
-                    a(href="/candidate/signup" class="bg-[#0088FF] hover:bg-[#0077E6] text-white px-[12px] py-[6px] rounded-[6px] font-[600] transition shadow-sm") Đăng Ký
+                div(class="font-[600] text-[11.5px] sm:text-[15px] text-white flex gap-[4px] sm:gap-[8px] items-center shrink-0")
+                    a(href="/candidate/login" class="hover:text-[#60A5FA] px-[6px] sm:px-[10px] py-[5px] sm:py-[6px] rounded hover:bg-white/10 transition whitespace-nowrap") Đăng Nhập
+                    span(class="opacity-40 hidden sm:inline") |
+                    a(href="/candidate/signup" class="bg-[#0088FF] hover:bg-[#0077E6] text-white px-[8px] sm:px-[12px] py-[5px] sm:py-[6px] rounded-[6px] font-[600] transition shadow-sm whitespace-nowrap") Đăng Ký
             
-            button(id="mobileMenuBtn" class="lg:hidden text-white text-[22px] ml-[10px] p-[6px] rounded hover:bg-white/10 cursor-pointer focus:outline-none transition-colors" aria-label="Toggle mobile menu")
+            button(id="mobileMenuBtn" class="lg:hidden text-white text-[20px] sm:text-[22px] ml-[2px] sm:ml-[10px] p-[6px] rounded hover:bg-white/10 cursor-pointer focus:outline-none transition-colors shrink-0" aria-label="Toggle mobile menu")
                 <i class="fa-solid fa-bars"></i>
 
         //- Mobile Navigation Menu (Dàn phẳng hiện đại dạng Quick-Filter 1 chạm)

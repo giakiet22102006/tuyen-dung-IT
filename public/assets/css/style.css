@@ -455,6 +455,12 @@ footer.site-footer {
   will-change: transform;
 }
 
+.marquee-container {
+  max-width: 100%;
+  overflow: hidden;
+  contain: layout paint;
+}
+
 .marquee-container:hover .animate-marquee {
   animation-play-state: paused;
 }
