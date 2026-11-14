@@ -9,6 +9,47 @@ services:
       - mongo_data:/data/db
     environment:
       MONGO_INITDB_DATABASE: vn_itjobs
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vn_itjobs_app
+    restart: unless-stopped
+    stop_grace_period: 15s
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      TRUST_PROXY: ${TRUST_PROXY:-false}
+      MONGODB_URI: ${DOCKER_MONGODB_URI:-mongodb://mongodb:27017/vn_itjobs}
+      COOKIE_SECRET: ${COOKIE_SECRET:-docker_local_dev_cookie_secret_change_in_prod_32c}
+      JWT_SECRET: ${JWT_SECRET:-docker_local_dev_jwt_secret_change_in_prod_32c}
+      ADMIN_JWT_SECRET: ${ADMIN_JWT_SECRET:-docker_local_dev_admin_jwt_secret_change_prod_32c}
+      ADMIN_PATH: ${ADMIN_PATH:-admin}
+      EMPLOYER_REQUIRE_APPROVAL: ${EMPLOYER_REQUIRE_APPROVAL:-true}
+      STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
+    volumes:
+      - app_uploads:/app/public/uploads
+      - app_private_cv:/app/storage/private/cv
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
 
 volumes:
   mongo_data:
+  app_uploads:
+  app_private_cv:

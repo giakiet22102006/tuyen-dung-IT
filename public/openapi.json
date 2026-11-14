@@ -27,12 +27,12 @@
   "paths": {
     "/healthz": {
       "get": {
-        "summary": "Healthcheck endpoint",
+        "summary": "Liveness healthcheck endpoint",
         "operationId": "getHealthcheck",
-        "description": "Verifies that the API service is online and healthy.",
+        "description": "Verifies that the API process is alive and not shutting down.",
         "responses": {
           "200": {
-            "description": "Server is healthy",
+            "description": "Server is alive",
             "content": {
               "application/json": {
                 "schema": {
@@ -41,8 +41,44 @@
               }
             }
           },
-          "500": {
-            "$ref": "#/components/responses/InternalServerError"
+          "503": {
+            "description": "Server is shutting down",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthcheckResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Readiness healthcheck endpoint",
+        "operationId": "getReadinessHealthcheck",
+        "description": "Verifies that the API service and MongoDB database connection are ready to serve traffic.",
+        "responses": {
+          "200": {
+            "description": "Service and database are ready",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service is degraded or shutting down",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -306,8 +342,23 @@
         "type": "object",
         "required": ["status"],
         "properties": {
+          "status": { "type": "string", "example": "ok" }
+        }
+      },
+      "ReadinessResponse": {
+        "type": "object",
+        "required": ["status", "uptime", "timestamp", "checks"],
+        "properties": {
           "status": { "type": "string", "example": "ok" },
-          "version": { "type": "string", "example": "v1" }
+          "uptime": { "type": "integer", "example": 120 },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "checks": {
+            "type": "object",
+            "required": ["database"],
+            "properties": {
+              "database": { "type": "string", "example": "connected" }
+            }
+          }
         }
       },
       "SearchSuggestionsResponse": {

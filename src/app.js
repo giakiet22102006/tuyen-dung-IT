@@ -1,5 +1,6 @@
 const express = require("express");
 const path = require("path");
+const mongoose = require("mongoose");
 const compression = require("compression");
 const cookieParser = require("cookie-parser");
 const helmet = require("helmet");
@@ -17,6 +18,14 @@ const adminRoutes = require("./routes/admin.route");
 const aiRoutes = require("./routes/ai.route");
 
 const app = express();
+app.locals.isShuttingDown = false;
+
+const DB_READY_STATES = {
+  0: "disconnected",
+  1: "connected",
+  2: "connecting",
+  3: "disconnecting",
+};
 
 // Trust proxy if configured
 if (env.TRUST_PROXY) {
@@ -65,6 +74,34 @@ app.use(
     level: 6,
   })
 );
+
+// Healthcheck endpoints đặt TRƯỚC DB/auth middleware để probe luôn trả JSON nhanh,
+// không bị chặn bởi HTML 500 error page khi MongoDB mất kết nối.
+// - /healthz: Liveness probe (process sống & chưa bước vào graceful shutdown)
+// - /health:  Readiness probe (kiểm tra cả trạng thái kết nối MongoDB + draining)
+app.get("/healthz", (req, res) => {
+  if (req.app.locals.isShuttingDown) {
+    return res.status(503).json({ status: "shutting_down" });
+  }
+  return res.status(200).json({ status: "ok" });
+});
+
+app.get("/health", (req, res) => {
+  const dbState = mongoose.connection.readyState;
+  const dbLabel = DB_READY_STATES[dbState] || "unknown";
+  const shuttingDown = Boolean(req.app.locals.isShuttingDown);
+  const isReady = !shuttingDown && dbState === 1;
+
+  const status = shuttingDown ? "shutting_down" : isReady ? "ok" : "degraded";
+  return res.status(isReady ? 200 : 503).json({
+    status,
+    uptime: Math.floor(process.uptime()),
+    timestamp: new Date().toISOString(),
+    checks: {
+      database: dbLabel,
+    },
+  });
+});
 
 // Database connection middleware (cho serverless & standard)
 const { connectDB } = require("./config/db");
@@ -151,9 +188,6 @@ app.use("/candidate", candidateRoutes);
 app.use("/employer", employerRoutes);
 app.use("/" + env.ADMIN_PATH, adminRoutes);
 app.use("/api/ai", aiRoutes);
-
-// Healthcheck
-app.get("/healthz", (req, res) => res.status(200).json({ status: "ok" }));
 
 // 404 handler
 app.use((req, res) => {

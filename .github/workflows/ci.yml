@@ -42,6 +42,74 @@ jobs:
         run: npm test
         env:
           NODE_ENV: test
+          MONGODB_URI: mongodb://127.0.0.1:27017/vn_itjobs_test
           JWT_SECRET: test-jwt-secret-ci-pipeline-1234567890
+          ADMIN_JWT_SECRET: test-admin-jwt-secret-ci-pipeline-123456
           COOKIE_SECRET: test-cookie-secret-ci-pipeline-1234567890
-          SESSION_SECRET: test-session-secret-ci-pipeline-1234567890
+
+  docker:
+    name: Docker Build & Container Smoke Test
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: vn-itjobs:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Smoke test container startup, /healthz, /health & graceful SIGTERM
+        run: |
+          docker network create ci-net
+          docker run -d --name ci-mongo --network ci-net mongo:7.0
+          trap 'docker rm -f ci-smoke ci-mongo >/dev/null 2>&1 || true; docker network rm ci-net >/dev/null 2>&1 || true' EXIT
+
+          for i in $(seq 1 20); do
+            if docker exec ci-mongo mongosh --quiet --eval "db.adminCommand('ping').ok" >/dev/null 2>&1; then
+              echo "MongoDB ready"
+              break
+            fi
+            sleep 1
+            if [ "$i" -eq 20 ]; then
+              docker logs ci-mongo
+              exit 1
+            fi
+          done
+
+          docker run -d --name ci-smoke --network ci-net -p 3000:3000 \
+            -e NODE_ENV=production \
+            -e MONGODB_URI=mongodb://ci-mongo:27017/vn_itjobs_ci \
+            -e COOKIE_SECRET=ci_smoke_cookie_secret_at_least_32_characters \
+            -e JWT_SECRET=ci_smoke_jwt_secret_at_least_32_characters_ok \
+            -e ADMIN_JWT_SECRET=ci_smoke_admin_jwt_secret_at_least_32_chars \
+            vn-itjobs:ci
+
+          for i in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:3000/healthz && curl -fsS http://127.0.0.1:3000/health; then
+              echo ""
+              echo "Container /healthz & /health OK"
+              break
+            fi
+            sleep 1
+            if [ "$i" -eq 20 ]; then
+              docker logs ci-smoke
+              exit 1
+            fi
+          done
+
+          docker stop -t 10 ci-smoke
+          EXIT_CODE=$(docker inspect -f '{{.State.ExitCode}}' ci-smoke)
+          echo "Container exit code after SIGTERM: $EXIT_CODE"
+          docker logs ci-smoke
+          test "$EXIT_CODE" -eq 0

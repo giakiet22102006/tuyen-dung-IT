@@ -1,0 +1,45 @@
+# Git & CI
+.git
+.gitignore
+.github
+
+# Dependencies (re-installed cleanly inside container)
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment & Secrets (NEVER bake into image layers)
+.env
+.env.*
+!.env.example
+
+# Tests, Docs & Local Tooling
+tests
+docs
+coverage
+.nyc_output
+logs
+*.log
+.vercel
+.agents
+.archify
+.vscode
+.idea
+skills-lock.json
+*.sql
+*.doc
+*.docx
+.DS_Store
+Thumbs.db
+
+# Runtime uploads/storage (keep directory placeholders only)
+storage/private/cv/*
+!storage/private/cv/.gitkeep
+public/uploads/*
+!public/uploads/.gitkeep
+
+# Docker definitions
+Dockerfile
+docker-compose.yml
+.dockerignore
