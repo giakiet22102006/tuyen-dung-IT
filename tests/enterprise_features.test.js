@@ -1,7 +1,7 @@
 // tests/enterprise_features.test.js
 const mongoose = require("mongoose");
-const { connectDB, closeDB } = require("../src/config/db");
-const { Candidate, Employer, Job, Application, Notification } = require("../src/models");
+const { MongoMemoryServer } = require("mongodb-memory-server");
+const { Candidate, Employer, Job, Application } = require("../src/models");
 const {
   createNotification,
   getNotifications,
@@ -12,25 +12,22 @@ const {
 const { generateIcsEvent } = require("../src/utils/calendar");
 
 describe("Enterprise Feature Expansion Tests", () => {
+  let mongoServer;
   let candidate;
   let employer;
   let job;
   let application;
 
   beforeAll(async () => {
-    await connectDB();
+    mongoServer = await MongoMemoryServer.create();
+    await mongoose.connect(mongoServer.getUri());
   });
 
   afterAll(async () => {
-    // Dọn dẹp dữ liệu test
-    if (candidate) await Candidate.findByIdAndDelete(candidate._id);
-    if (employer) await Employer.findByIdAndDelete(employer._id);
-    if (job) await Job.findByIdAndDelete(job._id);
-    if (application) await Application.findByIdAndDelete(application._id);
-    await Notification.deleteMany({
-      recipientId: { $in: [candidate?._id, employer?._id].filter(Boolean) },
-    });
-    await closeDB();
+    await mongoose.connection.close();
+    if (mongoServer) {
+      await mongoServer.stop();
+    }
   });
 
   test("1. In-App Notification System: Tạo, Đếm số lượng chưa đọc, Đánh dấu đã đọc", async () => {
