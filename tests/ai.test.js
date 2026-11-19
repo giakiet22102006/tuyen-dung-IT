@@ -59,6 +59,7 @@ describe("Hệ thống Trí Tuệ Nhân Tạo (VN.ITJobs AI Suite)", () => {
     expect(result.matchScore).toBeLessThanOrEqual(100);
     expect(Array.isArray(result.matchedSkills)).toBe(true);
     expect(Array.isArray(result.advice)).toBe(true);
+    expect(result.improvements).toBeUndefined();
   });
 
   test("Feature 2: generateInterviewPrep - Sinh câu hỏi phỏng vấn theo vị trí", async () => {

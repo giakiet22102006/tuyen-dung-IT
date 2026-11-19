@@ -306,8 +306,10 @@ YÊU CẦU ĐẦU RA: Trả về duy nhất một chuỗi JSON hợp lệ theo �
       parsed.missingSkills = suitability.missingJobSkills;
       parsed.summary = `Hồ sơ của bạn thuộc chuyên môn ${suitability.detectedNonItDomain}, hoàn toàn không có kỹ năng lập trình hay kinh nghiệm CNTT đáp ứng vị trí ${jobTitle} (Độ phù hợp: ${parsed.matchScore}%).`;
     }
-    parsed.advice = parsed.advice || parsed.improvements || [];
-    parsed.improvements = parsed.advice;
+    parsed.advice = Array.isArray(parsed.advice)
+      ? parsed.advice
+      : (Array.isArray(parsed.improvements) ? parsed.improvements : []);
+    delete parsed.improvements;
     return parsed;
   }
 
@@ -327,7 +329,6 @@ YÊU CẦU ĐẦU RA: Trả về duy nhất một chuỗi JSON hợp lệ theo �
         "Có các kỹ năng mềm cơ bản như làm việc nhóm và giao tiếp"
       ],
       advice: adviceList,
-      improvements: adviceList,
       summary: `Hồ sơ của bạn thuộc lĩnh vực ${suitability.detectedNonItDomain}, hoàn toàn không có kỹ năng lập trình hay kinh nghiệm CNTT phù hợp với vị trí ${jobTitle} (Độ phù hợp: ${suitability.calculatedScore}%).`
     };
   }
@@ -349,7 +350,6 @@ YÊU CẦU ĐẦU RA: Trả về duy nhất một chuỗi JSON hợp lệ theo �
       "Kinh nghiệm làm việc được trình bày rõ ràng"
     ],
     advice: adviceList,
-    improvements: adviceList,
     summary: `Hồ sơ của bạn đạt mức độ tương thích ${suitability.calculatedScore}% so với yêu cầu của vị trí ${jobTitle}.`
   };
 }

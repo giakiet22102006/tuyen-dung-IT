@@ -126,7 +126,7 @@ window.initAiCvMatch = function (jobId) {
     }
 
     if (adviceEl) {
-      const list = match.advice || match.improvements || [];
+      const list = Array.isArray(match.advice) ? match.advice : [];
       adviceEl.innerHTML = list
         .map(adv => `<li class="flex items-start gap-2 text-sm text-gray-700"><i class="fa-solid fa-lightbulb text-amber-500 mt-1 shrink-0"></i> <span>${adv}</span></li>`)
         .join('');

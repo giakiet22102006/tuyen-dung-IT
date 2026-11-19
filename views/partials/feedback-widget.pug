@@ -198,6 +198,12 @@ script.
 
         function formatInlineMarkdown(escapedLine) {
             return escapedLine
+                .replace(/\[([^\]]+)\]\(((?:https?:\/\/|\/)[^\s)]+)\)/g, function (_m, label, url) {
+                    var safeUrl = url.replace(/"/g, "&quot;");
+                    var isExternal = /^https?:\/\//i.test(url);
+                    var targetAttr = isExternal ? ' target="_blank" rel="noopener noreferrer"' : "";
+                    return '<a href="' + safeUrl + '"' + targetAttr + ' class="text-[#0066CC] hover:underline font-[600]">' + label + "</a>";
+                })
                 .replace(/`([^`\n]+?)`/g, '<code class="px-[4px] py-[1px] rounded bg-slate-100 text-[#0055B3] font-mono text-[11.5px]">$1</code>')
                 .replace(/\*\*([^*\n]+?)\*\*/g, '<strong class="font-[700] text-slate-900">$1</strong>')
                 .replace(/(^|[^*])\*([^*\n]+?)\*(?!\*)/g, '$1<em>$2</em>');
@@ -207,47 +213,108 @@ script.
             var escaped = escapeHtml(text || "");
             var lines = escaped.split(/\r?\n/);
             var html = [];
-            var listType = null;
+            var inOl = false;
+            var olLiOpen = false;
+            var inSubUl = false;
+            var inUl = false;
 
-            function closeList() {
-                if (listType === "ul") html.push("</ul>");
-                else if (listType === "ol") html.push("</ol>");
-                listType = null;
+            function closeSubUl() {
+                if (inSubUl) {
+                    html.push("</ul>");
+                    inSubUl = false;
+                }
+            }
+
+            function closeOl() {
+                closeSubUl();
+                if (olLiOpen) {
+                    html.push("</li>");
+                    olLiOpen = false;
+                }
+                if (inOl) {
+                    html.push("</ol>");
+                    inOl = false;
+                }
+            }
+
+            function closeUl() {
+                if (inUl) {
+                    html.push("</ul>");
+                    inUl = false;
+                }
+            }
+
+            function closeAllLists() {
+                closeOl();
+                closeUl();
+            }
+
+            function peekNextNonEmpty(startIdx) {
+                for (var j = startIdx + 1; j < lines.length; j++) {
+                    var trimmed = lines[j].trim();
+                    if (trimmed) return trimmed;
+                }
+                return "";
             }
 
             for (var i = 0; i < lines.length; i++) {
                 var line = lines[i].trim();
                 if (!line) {
-                    closeList();
+                    var nextLine = peekNextNonEmpty(i);
+                    if (inOl && (/^\d+\.\s+/.test(nextLine) || /^(?:\*|-|•)\s+/.test(nextLine))) {
+                        // Giữ nguyên <ol> khi có dòng trống giữa các mục hoặc trước bullet lồng
+                        continue;
+                    }
+                    if (inUl && /^(?:\*|-|•)\s+/.test(nextLine)) {
+                        continue;
+                    }
+                    closeAllLists();
                     if (html.length > 0 && html[html.length - 1] !== '<div class="h-[6px]"></div>') {
                         html.push('<div class="h-[6px]"></div>');
                     }
                     continue;
                 }
 
+                var olMatch = line.match(/^(\d+)\.\s+(.*)$/);
+                if (olMatch) {
+                    closeUl();
+                    closeSubUl();
+                    if (olLiOpen) {
+                        html.push("</li>");
+                        olLiOpen = false;
+                    }
+                    if (!inOl) {
+                        var startNum = parseInt(olMatch[1], 10);
+                        var startAttr = startNum > 1 ? ' start="' + startNum + '"' : "";
+                        html.push('<ol' + startAttr + ' class="list-decimal pl-[18px] my-[4px] space-y-[4px]">');
+                        inOl = true;
+                    }
+                    html.push("<li>" + formatInlineMarkdown(olMatch[2]));
+                    olLiOpen = true;
+                    continue;
+                }
+
                 var ulMatch = line.match(/^(?:\*|-|•)\s+(.*)$/);
                 if (ulMatch) {
-                    if (listType !== "ul") {
-                        closeList();
-                        html.push('<ul class="list-disc pl-[18px] my-[4px] space-y-[3px]">');
-                        listType = "ul";
+                    if (inOl && olLiOpen) {
+                        // Bullet lồng bên trong mục <li> của <ol> để không reset số thứ tự
+                        if (!inSubUl) {
+                            html.push('<ul class="list-disc pl-[16px] mt-[3px] mb-[2px] space-y-[2px]">');
+                            inSubUl = true;
+                        }
+                        html.push("<li>" + formatInlineMarkdown(ulMatch[1]) + "</li>");
+                    } else {
+                        closeOl();
+                        if (!inUl) {
+                            html.push('<ul class="list-disc pl-[18px] my-[4px] space-y-[3px]">');
+                            inUl = true;
+                        }
+                        html.push("<li>" + formatInlineMarkdown(ulMatch[1]) + "</li>");
                     }
-                    html.push("<li>" + formatInlineMarkdown(ulMatch[1]) + "</li>");
                     continue;
                 }
 
-                var olMatch = line.match(/^\d+\.\s+(.*)$/);
-                if (olMatch) {
-                    if (listType !== "ol") {
-                        closeList();
-                        html.push('<ol class="list-decimal pl-[18px] my-[4px] space-y-[3px]">');
-                        listType = "ol";
-                    }
-                    html.push("<li>" + formatInlineMarkdown(olMatch[1]) + "</li>");
-                    continue;
-                }
-
-                closeList();
+                closeAllLists();
 
                 var headingMatch = line.match(/^#{1,3}\s+(.*)$/);
                 if (headingMatch) {
@@ -258,7 +325,7 @@ script.
                 html.push('<p class="my-[2px]">' + formatInlineMarkdown(line) + "</p>");
             }
 
-            closeList();
+            closeAllLists();
             return html.join("");
         }
 
