@@ -500,7 +500,7 @@ const postChatAssistant = async (req, res) => {
       }
     }
 
-    const { message, history } = req.body;
+    const { message, history, pageContext } = req.body;
     if (!message || typeof message !== "string" || !message.trim()) {
       return res.status(400).json({ success: false, message: "Vui lòng nhập nội dung câu hỏi." });
     }
@@ -513,11 +513,30 @@ const postChatAssistant = async (req, res) => {
         }))
       : [];
 
+    let safePageContext = null;
+    if (pageContext && typeof pageContext === "object") {
+      const rawQuery = pageContext.query && typeof pageContext.query === "object" ? pageContext.query : {};
+      const allowedQueryKeys = ["keyword", "city", "position", "workingForm", "benefit", "skill"];
+      const safeQuery = {};
+      for (const k of allowedQueryKeys) {
+        if (rawQuery[k] !== undefined && rawQuery[k] !== null && String(rawQuery[k]).trim() !== "") {
+          safeQuery[k] = String(rawQuery[k]).trim().slice(0, 100);
+        }
+      }
+      safePageContext = {
+        pathname: typeof pageContext.pathname === "string" ? pageContext.pathname.slice(0, 200) : "",
+        activeJobSlug: typeof pageContext.activeJobSlug === "string" ? pageContext.activeJobSlug.trim().slice(0, 160) : "",
+        activeCompanySlug: typeof pageContext.activeCompanySlug === "string" ? pageContext.activeCompanySlug.trim().slice(0, 160) : "",
+        query: safeQuery,
+      };
+    }
+
     const reply = await chatWithSupportAssistant({
       message: cleanMessage,
       history: safeHistory,
       userRole: req.role || "guest",
       userName: req.user ? (req.user.fullName || req.user.companyName) : "",
+      pageContext: safePageContext,
     });
 
     return res.json({

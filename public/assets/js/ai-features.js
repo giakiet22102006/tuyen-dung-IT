@@ -534,10 +534,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // Đóng modal bằng phím ESC
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
-      document.querySelectorAll('.fixed.inset-0.z-50.flex').forEach((m) => {
+      document.querySelectorAll('#modalAiCvMatch.flex, #modalAiInterview.flex, #modalAiMarketInsights.flex, .fixed.inset-0.z-50.flex').forEach((m) => {
         m.classList.add('hidden');
         m.classList.remove('flex');
-        m.style.display = 'none';
+        if (m.id === 'modalAiMarketInsights') {
+          m.style.display = 'none';
+        }
       });
     }
   });

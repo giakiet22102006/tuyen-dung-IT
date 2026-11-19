@@ -1,15 +1,15 @@
 //- views/partials/feedback-widget.pug
 //- Floating Button
-div(class="fixed bottom-[20px] right-[20px] sm:bottom-[24px] sm:right-[24px] z-50" style="position: fixed; bottom: 24px; right: 24px; z-index: 999999;")
-    button(type="button" id="btnOpenFeedbackWidget" class="group flex items-center gap-[8px] bg-gradient-to-r from-[#000071] to-[#0088FF] hover:from-[#000055] hover:to-[#0070D2] text-white py-[10px] px-[16px] rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all cursor-pointer font-[600] text-[13px] border border-white/20" title="Trợ lý AI, Báo cáo sự cố hoặc đánh giá chất lượng web")
-        span(class="w-[22px] h-[22px] rounded-full bg-white/20 flex items-center justify-center text-[12px] group-hover:rotate-12 transition-transform")
+div(class="fixed bottom-[16px] right-[16px] z-[9000]")
+    button(type="button" id="btnOpenFeedbackWidget" class="group flex items-center gap-[8px] bg-gradient-to-r from-[#000071] to-[#0088FF] hover:from-[#000055] hover:to-[#0070D2] text-white py-[8px] px-[14px] rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all cursor-pointer font-[600] text-[12.5px] border border-white/20" title="Trợ lý AI, Báo cáo sự cố hoặc đánh giá chất lượng web")
+        span(class="w-[20px] h-[20px] rounded-full bg-white/20 flex items-center justify-center text-[11px] group-hover:rotate-12 transition-transform")
             <i class="fa-solid fa-comments"></i>
         span(class="hidden sm:inline") Hỗ Trợ & Trợ Lý AI
         span(class="sm:hidden") Trợ lý AI
 
 //- Floating Support & Feedback Dialog
-div(id="modalFeedbackWidget" class="fixed inset-0 z-50 hidden items-center justify-center sm:items-end sm:justify-end sm:p-[24px] bg-black/50 sm:bg-transparent backdrop-blur-xs sm:backdrop-blur-none" style="z-index: 1000000;")
-    div(class="bg-white rounded-[16px] shadow-2xl border border-gray-200 w-[94vw] max-w-[420px] overflow-hidden animate-fadeIn sm:mb-[60px] flex flex-col")
+div(id="modalFeedbackWidget" class="fixed inset-0 z-[9010] hidden items-center justify-center sm:items-end sm:justify-end p-[12px] sm:p-[16px] bg-black/50 sm:bg-transparent backdrop-blur-xs sm:backdrop-blur-none")
+    div(class="bg-white rounded-[16px] shadow-2xl border border-gray-200 w-full max-w-[420px] max-h-[85vh] overflow-hidden animate-fadeIn sm:mb-[52px] flex flex-col")
         //- Header
         div(class="p-[14px] bg-gradient-to-r from-[#000071] to-[#0088FF] text-white flex items-center justify-between shadow-xs")
             div(class="flex items-center gap-[10px]")
@@ -33,18 +33,18 @@ div(id="modalFeedbackWidget" class="fixed inset-0 z-50 hidden items-center justi
                 <i class="fa-solid fa-star text-amber-500 mr-[4px]"></i> Đánh giá
 
         //- 1. KHUNG CHATBOX TRỢ LÝ AI
-        div(id="chatboxContainer" class="flex flex-col")
+        div(id="chatboxContainer" class="flex flex-col flex-1 min-h-0")
             //- Vùng hiển thị tin nhắn
-            div(id="chatMessages" class="p-[12px] space-y-[10px] overflow-y-auto max-h-[330px] min-h-[250px] text-[13px] bg-slate-50/70 select-text")
+            div(id="chatMessages" class="p-[12px] space-y-[10px] overflow-y-auto max-h-[280px] sm:max-h-[320px] min-h-[200px] text-[13px] bg-slate-50/70 select-text")
                 //- Dynamic messages go here
 
             //- Vùng gợi ý câu hỏi nhanh (Quick Prompts)
-            div(id="chatQuickChips" class="px-[10px] py-[6px] bg-white border-t border-slate-100 flex items-center gap-[6px] overflow-x-auto text-[11px] whitespace-nowrap scrollbar-none")
+            div(id="chatQuickChips" class="px-[10px] py-[8px] bg-white border-t border-slate-100 flex flex-wrap items-center gap-[6px] text-[11px]")
                 span(class="text-gray-400 font-[500] shrink-0") <i class="fa-regular fa-lightbulb text-amber-500 mr-[2px]"></i> Gợi ý:
-                button(type="button" class="quick-chip-btn bg-slate-100 hover:bg-blue-50 hover:text-[#0088FF] border border-slate-200 hover:border-blue-200 text-gray-700 px-[8px] py-[3px] rounded-full transition-all cursor-pointer") Cách tạo CV IT chuẩn
-                button(type="button" class="quick-chip-btn bg-slate-100 hover:bg-blue-50 hover:text-[#0088FF] border border-slate-200 hover:border-blue-200 text-gray-700 px-[8px] py-[3px] rounded-full transition-all cursor-pointer") Tìm việc lương cao
-                button(type="button" class="quick-chip-btn bg-slate-100 hover:bg-blue-50 hover:text-[#0088FF] border border-slate-200 hover:border-blue-200 text-gray-700 px-[8px] py-[3px] rounded-full transition-all cursor-pointer") Đăng tin tuyển dụng
-                button(type="button" id="quickChipSwitchBug" class="bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 px-[8px] py-[3px] rounded-full transition-all cursor-pointer") <i class="fa-solid fa-bug text-red-500 mr-[2px]"></i> Báo lỗi web
+                button(type="button" class="quick-chip-btn whitespace-nowrap bg-slate-100 hover:bg-blue-50 hover:text-[#0088FF] border border-slate-200 hover:border-blue-200 text-gray-700 px-[9px] py-[4px] rounded-full transition-all cursor-pointer") Cách tạo CV IT chuẩn
+                button(type="button" class="quick-chip-btn whitespace-nowrap bg-slate-100 hover:bg-blue-50 hover:text-[#0088FF] border border-slate-200 hover:border-blue-200 text-gray-700 px-[9px] py-[4px] rounded-full transition-all cursor-pointer") Tìm việc lương cao
+                button(type="button" class="quick-chip-btn whitespace-nowrap bg-slate-100 hover:bg-blue-50 hover:text-[#0088FF] border border-slate-200 hover:border-blue-200 text-gray-700 px-[9px] py-[4px] rounded-full transition-all cursor-pointer") Đăng tin tuyển dụng
+                button(type="button" id="quickChipSwitchBug" class="whitespace-nowrap bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 px-[9px] py-[4px] rounded-full transition-all cursor-pointer") <i class="fa-solid fa-bug text-red-500 mr-[2px]"></i> Báo lỗi web
 
             //- Ô nhập tin nhắn
             form(id="formChatAssistant" class="p-[10px] bg-white border-t border-gray-200 flex items-center gap-[6px]")
@@ -196,12 +196,70 @@ script.
             return div.innerHTML;
         }
 
+        function formatInlineMarkdown(escapedLine) {
+            return escapedLine
+                .replace(/`([^`\n]+?)`/g, '<code class="px-[4px] py-[1px] rounded bg-slate-100 text-[#0055B3] font-mono text-[11.5px]">$1</code>')
+                .replace(/\*\*([^*\n]+?)\*\*/g, '<strong class="font-[700] text-slate-900">$1</strong>')
+                .replace(/(^|[^*])\*([^*\n]+?)\*(?!\*)/g, '$1<em>$2</em>');
+        }
+
         function formatMarkdown(text) {
-            var escaped = escapeHtml(text);
-            escaped = escaped.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-            escaped = escaped.replace(/\*(.*?)\*/g, "<em>$1</em>");
-            escaped = escaped.replace(/\n/g, "<br/>");
-            return escaped;
+            var escaped = escapeHtml(text || "");
+            var lines = escaped.split(/\r?\n/);
+            var html = [];
+            var listType = null;
+
+            function closeList() {
+                if (listType === "ul") html.push("</ul>");
+                else if (listType === "ol") html.push("</ol>");
+                listType = null;
+            }
+
+            for (var i = 0; i < lines.length; i++) {
+                var line = lines[i].trim();
+                if (!line) {
+                    closeList();
+                    if (html.length > 0 && html[html.length - 1] !== '<div class="h-[6px]"></div>') {
+                        html.push('<div class="h-[6px]"></div>');
+                    }
+                    continue;
+                }
+
+                var ulMatch = line.match(/^(?:\*|-|•)\s+(.*)$/);
+                if (ulMatch) {
+                    if (listType !== "ul") {
+                        closeList();
+                        html.push('<ul class="list-disc pl-[18px] my-[4px] space-y-[3px]">');
+                        listType = "ul";
+                    }
+                    html.push("<li>" + formatInlineMarkdown(ulMatch[1]) + "</li>");
+                    continue;
+                }
+
+                var olMatch = line.match(/^\d+\.\s+(.*)$/);
+                if (olMatch) {
+                    if (listType !== "ol") {
+                        closeList();
+                        html.push('<ol class="list-decimal pl-[18px] my-[4px] space-y-[3px]">');
+                        listType = "ol";
+                    }
+                    html.push("<li>" + formatInlineMarkdown(olMatch[1]) + "</li>");
+                    continue;
+                }
+
+                closeList();
+
+                var headingMatch = line.match(/^#{1,3}\s+(.*)$/);
+                if (headingMatch) {
+                    html.push('<div class="font-[700] text-slate-900 mt-[6px] mb-[2px]">' + formatInlineMarkdown(headingMatch[1]) + "</div>");
+                    continue;
+                }
+
+                html.push('<p class="my-[2px]">' + formatInlineMarkdown(line) + "</p>");
+            }
+
+            closeList();
+            return html.join("");
         }
 
         function scrollChatToBottom() {
@@ -278,6 +336,24 @@ script.
             chatHistory.push({ role: "assistant", text: greeting });
         }
 
+        function getCurrentPageContext() {
+            var pathname = window.location.pathname || "/";
+            var jobMatch = pathname.match(/^\/jobs\/([^\/?#]+)/);
+            var companyMatch = pathname.match(/^\/companies\/([^\/?#]+)/);
+            var params = new URLSearchParams(window.location.search || "");
+            var query = {};
+            ["keyword", "city", "position", "workingForm", "benefit", "skill"].forEach(function(k) {
+                var val = params.get(k);
+                if (val) query[k] = val;
+            });
+            return {
+                pathname: pathname,
+                activeJobSlug: jobMatch ? decodeURIComponent(jobMatch[1]) : "",
+                activeCompanySlug: companyMatch ? decodeURIComponent(companyMatch[1]) : "",
+                query: query
+            };
+        }
+
         // Handle Send Chat
         async function sendUserMessage(msgText) {
             var text = (msgText || "").trim();
@@ -285,6 +361,10 @@ script.
 
             renderMessage("user", text);
             chatHistory.push({ role: "user", text: text });
+            try {
+                if (chatHistory.length > 12) chatHistory = chatHistory.slice(-12);
+                sessionStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(chatHistory));
+            } catch(e) {}
             chatInput.value = "";
             chatInput.focus();
 
@@ -305,7 +385,8 @@ script.
                     },
                     body: JSON.stringify({
                         message: text,
-                        history: chatHistory.slice(-6)
+                        history: chatHistory.slice(-6),
+                        pageContext: getCurrentPageContext()
                     })
                 });
 

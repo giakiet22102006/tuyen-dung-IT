@@ -159,13 +159,13 @@ block main
                                             span Chỉ đường
                                             <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
                                     div(class="text-[12px] text-gray-600 mb-[8px] truncate") #{mapData.fullAddress}
-                                    div(class="w-full h-[180px] rounded-[6px] overflow-hidden border border-gray-200 bg-gray-50")
+                                    div(class="w-full h-[180px] rounded-[6px] overflow-hidden border border-gray-200 bg-gray-100 relative z-0 isolate")
                                         iframe(
                                             width="100%"
                                             height="100%"
                                             style="border:0;"
-                                            loading="lazy"
                                             referrerpolicy="no-referrer-when-downgrade"
+                                            allowfullscreen=""
                                             src=mapData.embedUrl
                                             title="Bản đồ vị trí làm việc"
                                         )
@@ -174,7 +174,7 @@ block main
         //- ==========================================
         //- MODAL 0: QUICK-APPLY MODAL (ỨNG TUYỂN NHANH ĐẲNG CẤP)
         //- ==========================================
-        div(id="modalQuickApply" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-xs p-[16px] overflow-y-auto")
+        div(id="modalQuickApply" class="fixed inset-0 z-[10000] hidden items-center justify-center bg-slate-900/60 backdrop-blur-xs p-[16px] overflow-y-auto")
             div(id="modalQuickApplyContainer" class="bg-white rounded-[16px] shadow-2xl max-w-[600px] w-full my-auto flex flex-col overflow-hidden border border-gray-100 transition-all transform duration-200 scale-95 opacity-0")
                 //- Header modal
                 div(class="p-[20px] sm:p-[24px] border-b border-gray-100 bg-gradient-to-r from-blue-50/70 via-indigo-50/40 to-white relative")
@@ -252,7 +252,7 @@ block main
         //- ==========================================
         //- MODAL 1: AI SO KHỚP CV & KHOẢNG TRỐNG KỸ NĂNG
         //- ==========================================
-        div(id="modalAiCvMatch" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-xs p-[16px]")
+        div(id="modalAiCvMatch" class="fixed inset-0 z-[10000] hidden items-center justify-center bg-black/60 backdrop-blur-xs p-[16px]")
             div(class="bg-white rounded-[12px] shadow-2xl max-w-[650px] w-full max-h-[90vh] flex flex-col overflow-hidden animate-fadeIn")
                 //- Modal Header
                 div(class="p-[20px] border-b border-[#E5E7EB] flex items-center justify-between bg-gradient-to-r from-emerald-50 to-teal-50")
@@ -323,7 +323,7 @@ block main
         //- ==========================================
         //- MODAL 2: AI LUYỆN PHỎNG VẤN
         //- ==========================================
-        div(id="modalAiInterview" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-xs p-[16px]")
+        div(id="modalAiInterview" class="fixed inset-0 z-[10000] hidden items-center justify-center bg-black/60 backdrop-blur-xs p-[16px]")
             div(class="bg-white rounded-[12px] shadow-2xl max-w-[750px] w-full max-h-[90vh] flex flex-col overflow-hidden animate-fadeIn")
                 //- Modal Header
                 div(class="p-[20px] border-b border-[#E5E7EB] flex items-center justify-between bg-gradient-to-r from-indigo-50 to-blue-50")

@@ -6,7 +6,7 @@ const defaultAbout = {
   subtitle:
     "Sứ mệnh kết nối tinh hoa công nghệ Việt Nam với các cơ hội nghề nghiệp bứt phá toàn cầu.",
   overviewParagraph1:
-    "Được thành lập từ năm 2024, **VN.ITJobs** tự hào là nền tảng tuyển dụng công nghệ thông tin chuyên biệt và tiên phong tại Việt Nam. Chúng tôi xây dựng một hệ sinh thái việc làm số minh bạch, nơi các kỹ sư phần mềm, kiến trúc sư hệ thống, chuyên gia AI, DevOps và an toàn thông tin có thể tiếp cận những cơ hội nghề nghiệp xứng tầm.",
+    "Được thành lập từ năm 2024, VN.ITJobs tự hào là nền tảng tuyển dụng công nghệ thông tin chuyên biệt và tiên phong tại Việt Nam. Chúng tôi xây dựng một hệ sinh thái việc làm số minh bạch, nơi các kỹ sư phần mềm, kiến trúc sư hệ thống, chuyên gia AI, DevOps và an toàn thông tin có thể tiếp cận những cơ hội nghề nghiệp xứng tầm.",
   overviewParagraph2:
     "Khác biệt với các nền tảng tuyển dụng chung chung, VN.ITJobs tập trung sâu vào đặc thù ngành công nghệ với hệ thống phân loại hơn 50+ kỹ năng lập trình (ReactJS, NodeJS, Golang, Python, AI/LLM, Cloud Kubernetes) cùng bộ lọc mức lương thực tế và đánh giá văn hóa doanh nghiệp chuẩn xác.",
   vision:

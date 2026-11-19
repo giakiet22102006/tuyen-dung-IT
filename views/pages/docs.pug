@@ -49,9 +49,9 @@ block main
                 p(class="mb-[10px]")
                     | Để đảm bảo tính tương thích lâu dài cho các AI Agent tự động, VN.ITJobs áp dụng chính sách quản lý phiên bản rõ ràng:
                 ul(class="list-disc pl-[24px] space-y-[6px] text-[15px]")
-                    li **Phiên bản URL:** Các endpoint chính thức được đánh phiên bản tiền tố <code>/api/v1/</code> (ví dụ: <code>/api/v1/search/suggestions</code>, <code>/api/v1/salary/calculate</code>).
-                    li **Phiên bản Header:** Client có thể gửi tiêu đề <code>API-Version: 1.0.0</code> hoặc <code>X-API-Version: 1.0.0</code>.
-                    li **Chính sách Sunset / Deprecation (RFC 8594):** Bất kỳ API nào có kế hoạch ngừng hỗ trợ sẽ được gắn tiêu đề <code>Deprecation: @&lt;timestamp&gt;</code> và <code>Sunset: &lt;HTTP-date&gt;</code> tối thiểu **180 ngày** trước ngày ngừng hoạt động thực tế.
+                    li #[strong Phiên bản URL:] Các endpoint chính thức được đánh phiên bản tiền tố <code>/api/v1/</code> (ví dụ: <code>/api/v1/search/suggestions</code>, <code>/api/v1/salary/calculate</code>).
+                    li #[strong Phiên bản Header:] Client có thể gửi tiêu đề <code>API-Version: 1.0.0</code> hoặc <code>X-API-Version: 1.0.0</code>.
+                    li #[strong Chính sách Sunset / Deprecation (RFC 8594):] Bất kỳ API nào có kế hoạch ngừng hỗ trợ sẽ được gắn tiêu đề <code>Deprecation: @&lt;timestamp&gt;</code> và <code>Sunset: &lt;HTTP-date&gt;</code> tối thiểu #[strong 180 ngày] trước ngày ngừng hoạt động thực tế.
 
             section
                 h2(class="font-[700] text-[22px] sm:text-[26px] text-[#121212] mb-[14px]") 4. Tiêu chuẩn Giới hạn tần suất (Rate Limiting RFC Headers)
@@ -80,10 +80,10 @@ block main
             section
                 h2(class="font-[700] text-[22px] sm:text-[26px] text-[#121212] mb-[14px]") 6. Model Context Protocol (MCP) Server
                 p(class="mb-[12px]")
-                    | Máy chủ MCP của VN.ITJobs hỗ trợ chuẩn giao thức **Streamable HTTP** (JSON-RPC 2.0 qua HTTP POST và Server-Sent Events) tại địa chỉ:
+                    | Máy chủ MCP của VN.ITJobs hỗ trợ chuẩn giao thức #[strong Streamable HTTP] (JSON-RPC 2.0 qua HTTP POST và Server-Sent Events) tại địa chỉ:
                 div(class="p-[16px] bg-[#1E293B] text-[#93C5FD] font-mono text-[14px] rounded-[8px] overflow-x-auto")
                     | POST https://tuyen-dung-it.vercel.app/mcp
-                p(class="mt-[12px] mb-[8px]") **Danh sách công cụ (Tools) khả dụng cho AI Agent:**
+                p(class="mt-[12px] mb-[8px] font-[700] text-gray-900") Danh sách công cụ (Tools) khả dụng cho AI Agent:
                 ul(class="list-disc pl-[24px] space-y-[6px] text-[15px]")
                     li <code>search_jobs</code>: Tìm kiếm việc làm IT theo từ khóa, kỹ năng công nghệ, địa điểm và cấp bậc.
                     li <code>get_job_details</code>: Lấy chi tiết mô tả, yêu cầu và phúc lợi việc làm theo slug.

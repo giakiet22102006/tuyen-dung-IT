@@ -33,7 +33,8 @@ const SAMPLE_SKILLS = [
   "Golang", "C#", ".NET Core", "PHP", "Laravel", "Flutter", "React Native", "iOS (Swift)",
   "Android (Kotlin)", "Docker", "Kubernetes", "AWS", "GCP", "Azure", "CI/CD",
   "PostgreSQL", "MySQL", "MongoDB", "Redis", "Elasticsearch", "GraphQL", "REST API",
-  "Kafka", "RabbitMQ", "Microservices", "Unit Test", "Jest", "Git", "Linux"
+  "Kafka", "RabbitMQ", "Microservices", "Unit Test", "Jest", "Git", "Linux",
+  "Machine Learning", "Deep Learning", "PyTorch", "TensorFlow", "NLP", "LLM", "Data Science", "SQL"
 ];
 
 // Danh sách Công ty mẫu thực tế
@@ -150,23 +151,23 @@ const SAMPLE_COMPANIES = [
   }
 ];
 
-// Danh sách Tiêu đề công việc mẫu
-const JOB_TITLES = [
-  "Frontend Engineer (ReactJS, NextJS)",
-  "Senior Backend Developer (NodeJS, Express)",
-  "Fullstack Developer (ReactJS, NodeJS)",
-  "Java Backend Engineer (Spring Boot, Microservices)",
-  "DevOps Engineer (AWS, Docker, K8s)",
-  "Mobile Developer (Flutter, Dart)",
-  "iOS Engineer (Swift)",
-  "Android Engineer (Kotlin)",
-  "Python Data Engineer",
-  "Senior Golang Engineer",
-  "Automation QA/QC Engineer",
-  "Lead Frontend Architect",
-  "Software Engineer (.NET Core, C#)",
-  "Cloud Solutions Architect (GCP/AWS)",
-  "Data Scientist / AI Engineer"
+// Danh sách Tiêu đề công việc mẫu kèm nhóm kỹ năng tương ứng
+const JOB_TEMPLATES = [
+  { title: "Frontend Engineer (ReactJS, NextJS)", skills: ["ReactJS", "NextJS", "TypeScript", "TailwindCSS"] },
+  { title: "Senior Backend Developer (NodeJS, Express)", skills: ["NodeJS", "TypeScript", "PostgreSQL", "Redis"] },
+  { title: "Fullstack Developer (ReactJS, NodeJS)", skills: ["ReactJS", "NodeJS", "TypeScript", "MongoDB"] },
+  { title: "Java Backend Engineer (Spring Boot, Microservices)", skills: ["Java", "Spring Boot", "Microservices", "Kafka"] },
+  { title: "DevOps Engineer (AWS, Docker, K8s)", skills: ["AWS", "Docker", "Kubernetes", "CI/CD"] },
+  { title: "Mobile Developer (Flutter, Dart)", skills: ["Flutter", "REST API", "Git"] },
+  { title: "iOS Engineer (Swift)", skills: ["iOS (Swift)", "REST API", "Git"] },
+  { title: "Android Engineer (Kotlin)", skills: ["Android (Kotlin)", "REST API", "Git"] },
+  { title: "Python Data Engineer", skills: ["Python", "SQL", "PostgreSQL", "Docker"] },
+  { title: "Senior Golang Engineer", skills: ["Golang", "PostgreSQL", "Docker", "Microservices"] },
+  { title: "Automation QA/QC Engineer", skills: ["Unit Test", "Jest", "JavaScript", "CI/CD"] },
+  { title: "Lead Frontend Architect", skills: ["ReactJS", "NextJS", "TypeScript", "GraphQL"] },
+  { title: "Software Engineer (.NET Core, C#)", skills: ["C#", ".NET Core", "PostgreSQL", "Docker"] },
+  { title: "Cloud Solutions Architect (GCP/AWS)", skills: ["AWS", "GCP", "Kubernetes", "Docker"] },
+  { title: "Data Scientist / AI Engineer", skills: ["Python", "Machine Learning", "Deep Learning", "PyTorch", "TensorFlow"] },
 ];
 
 const SAMPLE_NAMES = [
@@ -203,13 +204,23 @@ async function seedData() {
   // Hash mật khẩu dùng chung cho seed (tiết kiệm CPU)
   const defaultPassword = await bcrypt.hash("12345678aA", 12);
 
-  // 2. Nạp Employers
+  // 2. Nạp Employers (chống trùng tên công ty ở chế độ chuẩn)
   console.log("👉 Đang nạp danh sách Nhà tuyển dụng...");
+  const uniqueCompanies = [];
+  const seenCompanyKeys = new Set();
+  for (const company of SAMPLE_COMPANIES) {
+    const key = normalizeVi(company.name);
+    if (!seenCompanyKeys.has(key)) {
+      seenCompanyKeys.add(key);
+      uniqueCompanies.push(company);
+    }
+  }
+
   const employersToCreate = [];
-  const employerCount = isBigMode ? 500 : SAMPLE_COMPANIES.length;
+  const employerCount = isBigMode ? 500 : uniqueCompanies.length;
 
   for (let i = 0; i < employerCount; i++) {
-    const base = SAMPLE_COMPANIES[i % SAMPLE_COMPANIES.length];
+    const base = uniqueCompanies[i % uniqueCompanies.length];
     const companyName = isBigMode ? `${base.name} #${i + 1}` : base.name;
     const slug = slugify(companyName, true);
     const email = `employer${i + 1}@${slugify(base.name)}.vn`;
@@ -277,21 +288,20 @@ async function seedData() {
     { url: "/assets/images/demo/demo3.png", key: "" },
   ];
 
+  const skillMap = new Map(skills.map((sk) => [sk.name, sk]));
+
   for (let i = 0; i < jobCount; i++) {
     const employer = employers[i % employers.length];
-    const title = JOB_TITLES[i % JOB_TITLES.length];
+    const template = JOB_TEMPLATES[i % JOB_TEMPLATES.length];
+    const title = template.title;
     const position = positionKeys[i % positionKeys.length];
     const workingForm = workingFormKeys[i % workingFormKeys.length];
 
-    // Chọn 2-4 kỹ năng ngẫu nhiên
-    const jobSkills = [];
-    const skillCount = 2 + (i % 3);
-    for (let s = 0; s < skillCount; s++) {
-      const sk = skills[(i * 3 + s) % skills.length];
-      if (!jobSkills.some((item) => item.slug === sk.slug)) {
-        jobSkills.push({ name: sk.name, slug: sk.slug });
-      }
-    }
+    // Gán kỹ năng khớp chính xác với chuyên môn công việc
+    const jobSkills = template.skills
+      .map((name) => skillMap.get(name))
+      .filter(Boolean)
+      .map((sk) => ({ name: sk.name, slug: sk.slug }));
 
     const minSal = 800 + (i % 10) * 200;
     const maxSal = minSal + 500 + (i % 5) * 200;
