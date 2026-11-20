@@ -80,7 +80,7 @@ describe("Agent Readiness & Ora Audit Compliance Tests", () => {
 
       expect(res.status).toBe(200);
       expect(res.text).toContain("<h1");
-      expect(res.text).toContain("VN.ITJobs - Nền tảng tuyển dụng IT &amp; Việc làm IT cho Developer hàng đầu Việt Nam");
+      expect(res.text).toContain("VN.ITJobs - Nền tảng tuyển dụng IT &amp; Việc làm cho Developer tại Việt Nam");
       expect(res.text).toContain("<h2");
       expect(res.text).toContain("<h3");
 
@@ -143,7 +143,7 @@ describe("Agent Readiness & Ora Audit Compliance Tests", () => {
     test("Homepage contains brand name and main product terms in title and H1", async () => {
       const res = await request(app).get("/");
       expect(res.text).toContain("<title>VN.ITJobs - Nền tảng tuyển dụng IT &amp; Việc làm Developer hàng đầu Việt Nam</title>");
-      expect(res.text).toContain("VN.ITJobs - Nền tảng tuyển dụng IT &amp; Việc làm IT cho Developer hàng đầu Việt Nam");
+      expect(res.text).toContain("VN.ITJobs - Nền tảng tuyển dụng IT &amp; Việc làm cho Developer tại Việt Nam");
     });
 
     test("Salary benchmark page contains 'VN.ITJobs Salary Benchmarking' in title and H1", async () => {

@@ -35,64 +35,53 @@ block main
                     a(href=`/search?keyword=${encodeURIComponent(didYouMean)}&city=${selectedCity || ''}&position=${selectedPosition || ''}&workingForm=${selectedWorkingForm || ''}` class="font-[700] text-[#0088FF] hover:underline text-[14px]") #{didYouMean}
                     span(class="text-[#717171] text-[13px]") ?
 
-            h2(class="font-[700] text-[20px] sm:text-[28px] text-[#121212] mb-[20px] sm:mb-[30px]") !{searchTitle || "Danh sách việc làm"}
-            div(class="rounded-[8px] bg-white p-[12px] sm:py-[10px] sm:px-[20px] flex flex-col sm:flex-row gap-[10px] sm:gap-[12px] shadow-sm")
-                select(id="filterPosition" class="filter-select w-full sm:w-auto border border-[#DEDEDE] rounded-[20px] py-[8px] px-[16px] font-[400] text-[14px] sm:text-[16px] text-[#414042] cursor-pointer bg-white") 
-                    option(value="") Cấp bậc
-                    if positions && positions.length > 0
-                        each p in positions
-                            option(value=p.value selected=(selectedPosition === p.value)) #{p.label}
-                    else
-                        option(value="intern") Intern
-                        option(value="fresher") Fresher
-                        option(value="junior") Junior
-                        option(value="middle") Middle
-                        option(value="senior") Senior
-                        option(value="manager") Manager
+            h2(class="font-[600] text-[20px] sm:text-[26px] text-[#121212] mb-[20px] sm:mb-[24px] tabular-nums") !{searchTitle || "Danh sách việc làm"}
+            div(class="rounded-[8px] bg-[#F8FAFC] border border-[#E2E8F0] p-[12px] sm:py-[12px] sm:px-[16px] flex flex-col sm:flex-row gap-[10px] sm:gap-[12px]")
+                div(class="relative w-full sm:w-auto")
+                    select(id="filterPosition" aria-label="Lọc theo cấp bậc" class="filter-select w-full sm:w-auto border border-[#CBD5E1] rounded-[20px] py-[8px] pl-[16px] pr-[36px] font-[400] text-[14px] sm:text-[15px] text-[#334155] cursor-pointer bg-white appearance-none") 
+                        option(value="") Cấp bậc
+                        if positions && positions.length > 0
+                            each p in positions
+                                option(value=p.value selected=(selectedPosition === p.value)) #{p.label}
+                        else
+                            option(value="intern") Intern
+                            option(value="fresher") Fresher
+                            option(value="junior") Junior
+                            option(value="middle") Middle
+                            option(value="senior") Senior
+                            option(value="manager") Manager
+                    <i class="fa-solid fa-chevron-down text-[11px] text-gray-500 pointer-events-none absolute right-[14px] top-1/2 -translate-y-1/2"></i>
 
-                select(id="filterWorkingForm" class="filter-select w-full sm:w-auto border border-[#DEDEDE] rounded-[20px] py-[8px] px-[16px] font-[400] text-[14px] sm:text-[16px] text-[#414042] cursor-pointer bg-white")
-                    option(value="") Hình thức làm việc 
-                    if workingForms && workingForms.length > 0
-                        each w in workingForms
-                            option(value=w.value selected=(selectedWorkingForm === w.value)) #{w.label}
-                    else
-                        option(value="office") Tại văn phòng
-                        option(value="remote") Từ xa
-                        option(value="flexible") Linh hoạt
+                div(class="relative w-full sm:w-auto")
+                    select(id="filterWorkingForm" aria-label="Lọc theo hình thức làm việc" class="filter-select w-full sm:w-auto border border-[#CBD5E1] rounded-[20px] py-[8px] pl-[16px] pr-[36px] font-[400] text-[14px] sm:text-[15px] text-[#334155] cursor-pointer bg-white appearance-none")
+                        option(value="") Hình thức làm việc 
+                        if workingForms && workingForms.length > 0
+                            each w in workingForms
+                                option(value=w.value selected=(selectedWorkingForm === w.value)) #{w.label}
+                        else
+                            option(value="office") Tại văn phòng
+                            option(value="remote") Từ xa
+                            option(value="flexible") Linh hoạt
+                    <i class="fa-solid fa-chevron-down text-[11px] text-gray-500 pointer-events-none absolute right-[14px] top-1/2 -translate-y-1/2"></i>
 
-                select(id="filterBenefit" class="filter-select w-full sm:w-auto border border-[#DEDEDE] rounded-[20px] py-[8px] px-[16px] font-[400] text-[14px] sm:text-[16px] text-[#414042] cursor-pointer bg-white")
-                    option(value="") 🎁 Đãi ngộ IT
-                    if benefits && benefits.length > 0
-                        each b in benefits
-                            option(value=b.value selected=(selectedBenefit === b.value)) #{b.label}
+                div(class="relative w-full sm:w-auto")
+                    select(id="filterBenefit" aria-label="Lọc theo đãi ngộ IT" class="filter-select w-full sm:w-auto border border-[#CBD5E1] rounded-[20px] py-[8px] pl-[16px] pr-[36px] font-[400] text-[14px] sm:text-[15px] text-[#334155] cursor-pointer bg-white appearance-none")
+                        option(value="") Đãi ngộ IT
+                        if benefits && benefits.length > 0
+                            each b in benefits
+                                option(value=b.value selected=(selectedBenefit === b.value)) #{b.label}
+                    <i class="fa-solid fa-chevron-down text-[11px] text-gray-500 pointer-events-none absolute right-[14px] top-1/2 -translate-y-1/2"></i>
 
             //- Quick IT Perks Filter Pills
             div(class="mt-[12px] flex items-center gap-[6px] flex-wrap")
-                span(class="text-[12px] font-[600] text-gray-500 mr-[4px]") Đãi ngộ hot:
+                span(class="text-[12px] font-[500] text-gray-600 mr-[4px]") Đãi ngộ phổ biến:
                 each b in (benefits || [])
                     - var isBenActive = (selectedBenefit === b.value)
-                    a(href=`/search?keyword=${encodeURIComponent(keyword || '')}&city=${selectedCity || ''}&position=${selectedPosition || ''}&workingForm=${selectedWorkingForm || ''}&benefit=${isBenActive ? '' : b.value}` class=`inline-flex items-center gap-[4px] px-[10px] py-[4px] rounded-full text-[12px] font-[500] transition-colors border ${isBenActive ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs' : 'bg-white text-gray-700 border-gray-200 hover:border-emerald-400 hover:text-emerald-700'}`)
+                    a(href=`/search?keyword=${encodeURIComponent(keyword || '')}&city=${selectedCity || ''}&position=${selectedPosition || ''}&workingForm=${selectedWorkingForm || ''}&benefit=${isBenActive ? '' : b.value}` class=`inline-flex items-center gap-[4px] px-[10px] py-[4px] rounded-full text-[12px] font-[500] transition-colors border ${isBenActive ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-gray-700 border-gray-200 hover:border-emerald-400 hover:text-emerald-700'}`)
                         <i class="#{b.icon} text-[11px]"></i>
                         span #{b.shortLabel || b.label}
 
-            //- Banner Đăng ký Job Alert theo tiêu chí tìm kiếm
-            div(class="mt-[16px] bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-[8px] p-[14px] sm:p-[16px] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-[12px]")
-                div(class="flex items-center gap-[10px]")
-                    div(class="w-[36px] h-[36px] rounded-full bg-[#0088FF] text-white flex items-center justify-center shrink-0")
-                        i(class="fa-regular fa-bell text-[16px]")
-                    div
-                        div(class="font-[700] text-[14px] text-gray-800") Chưa tìm thấy công việc ưng ý?
-                        div(class="text-[12px] text-gray-600") Đăng ký nhận email ngay khi có việc làm mới phù hợp với <strong>#{keyword || 'tiêu chí này'}</strong>
-                form(action="/job-alerts" method="POST" class="flex items-center gap-[6px] w-full sm:w-auto")
-                    input(type="hidden" name="_csrf" value=csrfToken)
-                    input(type="hidden" name="keyword" value=(keyword || ''))
-                    input(type="hidden" name="city" value=(selectedCity || ''))
-                    input(type="hidden" name="position" value=(selectedPosition || ''))
-                    input(type="email" name="email" value=(currentUser ? currentUser.email : '') required placeholder="Nhập email nhận việc..." class="bg-white border border-gray-300 rounded-[6px] py-[6px] px-[10px] text-[13px] flex-1 sm:w-[220px] focus:outline-none focus:border-[#0088FF]")
-                    button(type="submit" class="bg-[#0088FF] hover:bg-[#0070D2] text-white font-[600] text-[12px] sm:text-[13px] py-[7px] px-[14px] rounded-[6px] transition cursor-pointer shrink-0")
-                        | Nhận thông báo
-
-            div(class="my-[30px] grid lg:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-[20px]") 
+            div(class="my-[28px] grid lg:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-[20px]") 
                 if jobs && jobs.length > 0
                     each job in jobs
                         +jobCard(job)
@@ -103,15 +92,34 @@ block main
                         if didYouMean
                             p(class="text-[#414042] text-[15px] mt-[4px]")
                                 span Có phải bạn muốn tìm: 
-                                a(href=`/search?keyword=${encodeURIComponent(didYouMean)}&city=${selectedCity || ''}` class="text-[#0088FF] font-[700] underline hover:text-[#0066cc]") #{didYouMean}
+                                a(href=`/search?keyword=${encodeURIComponent(didYouMean)}&city=${selectedCity || ''}` class="text-[#0088FF] font-[600] underline hover:text-[#0066cc]") #{didYouMean}
                                 span ?
                         p(class="text-[#717171] text-[14px] mt-[10px]") Thử kiểm tra lại lỗi chính tả hoặc bấm chọn các kỹ năng phổ biến bên dưới:
                         div(class="flex justify-center gap-[8px] mt-[16px] flex-wrap")
                             each sk in ['Frontend', 'Backend', 'Fullstack', 'Java', 'ReactJS', 'Python', 'NodeJS', 'DevOps', 'Golang']
                                 a(href=`/search?keyword=${encodeURIComponent(sk)}` class="bg-white border border-[#DEDEDE] hover:border-[#0088FF] text-[#414042] hover:text-[#0088FF] py-[6px] px-[14px] rounded-[16px] text-[13px] font-[500] transition-colors") #{sk}
 
+            //- Banner Đăng ký Job Alert theo tiêu chí tìm kiếm
+            div(class="mb-[24px] bg-[#F8FAFC] border border-[#E2E8F0] rounded-[8px] p-[16px] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-[12px]")
+                div(class="flex items-center gap-[12px]")
+                    div(class="w-[36px] h-[36px] rounded-full bg-[#0088FF] text-white flex items-center justify-center shrink-0")
+                        i(class="fa-regular fa-bell text-[15px]")
+                    div
+                        div(class="font-[600] text-[14px] text-[#1E293B]") Chưa tìm thấy công việc ưng ý?
+                        div(class="text-[12.5px] text-[#475569]") Đăng ký nhận email ngay khi có việc làm mới phù hợp với <strong>#{keyword || 'tiêu chí này'}</strong>
+                form(action="/job-alerts" method="POST" class="flex items-center gap-[8px] w-full sm:w-auto")
+                    input(type="hidden" name="_csrf" value=csrfToken)
+                    input(type="hidden" name="keyword" value=(keyword || ''))
+                    input(type="hidden" name="city" value=(selectedCity || ''))
+                    input(type="hidden" name="position" value=(selectedPosition || ''))
+                    input(type="email" name="email" value=(currentUser ? currentUser.email : '') required placeholder="Nhập email nhận việc..." class="bg-white border border-[#CBD5E1] rounded-[6px] py-[8px] px-[12px] text-[13px] flex-1 sm:w-[220px] focus-visible:outline-none focus-visible:border-[#0088FF]")
+                    button(type="submit" class="bg-[#0088FF] hover:bg-[#0070D2] text-white font-[600] text-[13px] py-[8px] px-[14px] rounded-[6px] transition-colors cursor-pointer shrink-0")
+                        | Nhận thông báo
+
             if pagination && pagination.totalPages > 1
-                select(class="pagination-select border border-[#DEDEDE] bg-white rounded-[8px] py-[12px] px-[18px] font-[400] text-[16px] text-[#414042] cursor-pointer") 
-                    - for (let i = 1; i <= pagination.totalPages; i++)
-                        option(value=i selected=(pagination.currentPage === i)) Trang #{i}
+                div(class="relative inline-block")
+                    select(aria-label="Chọn trang" class="pagination-select border border-[#CBD5E1] bg-white rounded-[8px] py-[10px] pl-[16px] pr-[38px] font-[500] text-[15px] text-[#334155] cursor-pointer appearance-none tabular-nums") 
+                        - for (let i = 1; i <= pagination.totalPages; i++)
+                            option(value=i selected=(pagination.currentPage === i)) Trang #{i}
+                    <i class="fa-solid fa-chevron-down text-[11px] text-gray-500 pointer-events-none absolute right-[14px] top-1/2 -translate-y-1/2"></i>
     //- Hết kết quả tìm kiếm

@@ -1,174 +1,158 @@
 //- views/partials/hero-carousel.pug
-div(class="py-[16px] sm:py-[22px] bg-[#000055]")
+div(class="py-[16px] sm:py-[24px] bg-[#000055]")
     div(class="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8")
-        div(id="heroCarousel" class="relative overflow-hidden rounded-[16px] sm:rounded-[20px] shadow-2xl border border-white/15 select-none")
+        div(id="heroCarousel" class="relative overflow-hidden rounded-[12px] sm:rounded-[16px] border border-white/15 bg-[#081542] select-none")
             
             //- Slide 1: AI Smart Matching
-            div(class="hero-carousel-slide active bg-gradient-to-r from-[#000055] via-[#000080] to-[#0A2668] px-[40px] sm:px-[76px] lg:px-[90px] py-[28px] sm:py-[40px] lg:py-[48px] text-white")
+            div(class="hero-carousel-slide active bg-[#081542] px-[44px] sm:px-[72px] lg:px-[88px] py-[28px] sm:py-[40px] lg:py-[44px] text-white")
                 div(class="grid grid-cols-1 lg:grid-cols-12 gap-[24px] lg:gap-[32px] items-center relative z-10")
-                    div(class="lg:col-span-7 slide-content-left")
-                        div(class="inline-flex items-center gap-[6px] px-[12px] py-[4px] rounded-full bg-[#0088FF]/20 border border-[#0088FF]/40 text-[#60A5FA] text-[11px] sm:text-[12px] font-[700] uppercase tracking-wider mb-[12px]")
-                            <i class="fa-solid fa-wand-magic-sparkles text-[12px]"></i>
-                            span Đột phá Công nghệ AI 2026
-                        h2(class="font-[800] text-[22px] sm:text-[30px] lg:text-[36px] leading-tight mb-[12px] text-white tracking-tight")
-                            | Sự Nghiệp IT Bứt Phá 
+                    div(class="lg:col-span-7 slide-content-left min-w-0")
+                        h2(class="font-[600] text-[22px] sm:text-[30px] lg:text-[34px] leading-tight mb-[12px] text-white")
+                            | Sự nghiệp IT bứt phá 
                             br(class="hidden sm:inline")
-                            span(class="text-transparent bg-clip-text bg-gradient-to-r from-[#60A5FA] via-[#9FDB7C] to-[#34D399]") Cùng Trí Tuệ Nhân Tạo
-                        p(class="text-white/80 text-[13.5px] sm:text-[15.5px] max-w-[560px] mb-[22px] leading-relaxed")
-                            | Tự động phân tích CV, so khớp kỹ năng thực tế với mô tả công việc (JD) và gợi ý cơ hội việc làm IT chuẩn xác nhất cho trình độ của bạn.
+                            span(class="text-[#93C5FD]") cùng công nghệ AI
+                        p(class="text-white/80 text-[14px] sm:text-[15.5px] max-w-[540px] mb-[20px] leading-relaxed font-[400]")
+                            | Tự động phân tích CV, so khớp kỹ năng thực tế với mô tả công việc (JD) và gợi ý cơ hội việc làm IT phù hợp với trình độ của bạn.
                         div(class="flex items-center gap-[12px] flex-wrap")
-                            a(href="/candidate/it-profile" class="inline-flex items-center gap-[8px] bg-gradient-to-r from-[#0088FF] to-[#0066CC] hover:from-[#0077E6] hover:to-[#0055B3] text-white font-[700] text-[14px] sm:text-[15px] px-[20px] sm:px-[24px] py-[11px] sm:py-[12px] rounded-[8px] shadow-lg hover:shadow-xl transition-all cursor-pointer")
+                            a(href="/candidate/it-profile" class="inline-flex items-center gap-[8px] bg-[#0088FF] hover:bg-[#0070D6] text-white font-[600] text-[14px] sm:text-[15px] px-[20px] py-[10px] sm:py-[12px] rounded-[8px] transition-colors cursor-pointer")
                                 <i class="fa-solid fa-file-code"></i>
                                 span Tạo Hồ Sơ IT Profile
                                 <i class="fa-solid fa-arrow-right text-[12px]"></i>
-                            a(href="/search" class="inline-flex items-center gap-[8px] bg-white/10 hover:bg-white/20 border border-white/20 text-white font-[600] text-[14px] sm:text-[15px] px-[18px] sm:px-[20px] py-[11px] sm:py-[12px] rounded-[8px] transition-all")
+                            a(href="/search" class="inline-flex items-center gap-[8px] bg-white/10 hover:bg-white/15 border border-white/20 text-white font-[500] text-[14px] sm:text-[15px] px-[18px] py-[10px] sm:py-[12px] rounded-[8px] transition-colors")
                                 <i class="fa-solid fa-magnifying-glass text-[12px]"></i>
-                                span Tìm Việc Theo Kỹ Năng
+                                span Tìm việc theo kỹ năng
                     
                     div(class="lg:col-span-5 slide-content-right")
-                        div(class="relative max-w-[340px] mx-auto")
-                            div(class="bg-white/10 backdrop-blur-md border border-white/20 p-[20px] rounded-[16px] shadow-2xl animate-float")
-                                div(class="flex items-center justify-between pb-[12px] border-b border-white/10 mb-[14px]")
-                                    div(class="flex items-center gap-[8px]")
-                                        div(class="w-[10px] h-[10px] rounded-full bg-emerald-400 animate-ping")
-                                        span(class="font-[700] text-[13px] text-emerald-300") AI Matching Engine
-                                    span(class="text-[11px] bg-white/15 px-[8px] py-[2px] rounded font-[600]") v3.8 Flash
-                                
-                                div(class="flex items-center justify-between mb-[12px]")
-                                    span(class="text-[13px] text-white/80") Độ tương thích CV:
-                                    span(class="text-[20px] font-[800] text-[#9FDB7C]") 98% Match
-                                
-                                div(class="w-full bg-white/20 h-[8px] rounded-full overflow-hidden mb-[16px]")
-                                    div(class="bg-gradient-to-r from-[#0088FF] to-[#9FDB7C] h-full rounded-full w-[98%]")
-                                
-                                div(class="space-y-[8px]")
-                                    div(class="text-[12px] text-white/70 font-[600] uppercase tracking-wider") Kỹ năng khớp hoàn hảo:
-                                    div(class="flex flex-wrap gap-[6px]")
-                                        span(class="bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 text-[12px] font-[600] px-[8px] py-[2px] rounded-full") ✓ ReactJS
-                                        span(class="bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 text-[12px] font-[600] px-[8px] py-[2px] rounded-full") ✓ NodeJS
-                                        span(class="bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 text-[12px] font-[600] px-[8px] py-[2px] rounded-full") ✓ Docker
-                                        span(class="bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 text-[12px] font-[600] px-[8px] py-[2px] rounded-full") ✓ TypeScript
+                        div(class="max-w-[340px] mx-auto bg-[#0D1E54] border border-white/15 p-[20px] rounded-[12px]")
+                            div(class="flex items-center justify-between pb-[12px] border-b border-white/10 mb-[14px]")
+                                div(class="flex items-center gap-[8px]")
+                                    span(class="w-[8px] h-[8px] rounded-full bg-emerald-400 inline-block")
+                                    span(class="font-[600] text-[13px] text-emerald-300") AI Matching Engine
+                                span(class="text-[11px] text-white/75 bg-white/10 px-[8px] py-[2px] rounded font-[500]") v3.8 Flash
+                            
+                            div(class="flex items-center justify-between mb-[10px]")
+                                span(class="text-[13px] text-white/80") Độ tương thích CV:
+                                span(class="text-[18px] font-[600] text-[#9FDB7C] tabular-nums") 98% Match
+                            
+                            div(class="w-full bg-white/15 h-[6px] rounded-full overflow-hidden mb-[16px]")
+                                div(class="bg-[#0088FF] h-full rounded-full w-[98%]")
+                            
+                            div(class="space-y-[8px]")
+                                div(class="text-[12px] text-white/75 font-[500]") Kỹ năng đáp ứng:
+                                div(class="flex flex-wrap gap-[6px]")
+                                    each skillName in ['ReactJS', 'NodeJS', 'Docker', 'TypeScript']
+                                        span(class="inline-flex items-center gap-[4px] bg-white/10 border border-white/15 text-emerald-200 text-[12px] font-[500] px-[8px] py-[2px] rounded-full")
+                                            <i class="fa-solid fa-check text-[10px]"></i>
+                                            span #{skillName}
 
             //- Slide 2: Salary Benchmark
-            div(class="hero-carousel-slide bg-gradient-to-r from-[#031433] via-[#0A2658] to-[#013872] px-[40px] sm:px-[76px] lg:px-[90px] py-[28px] sm:py-[40px] lg:py-[48px] text-white")
+            div(class="hero-carousel-slide bg-[#081542] px-[44px] sm:px-[72px] lg:px-[88px] py-[28px] sm:py-[40px] lg:py-[44px] text-white")
                 div(class="grid grid-cols-1 lg:grid-cols-12 gap-[24px] lg:gap-[32px] items-center relative z-10")
-                    div(class="lg:col-span-7 slide-content-left")
-                        div(class="inline-flex items-center gap-[6px] px-[12px] py-[4px] rounded-full bg-[#EA1E30]/20 border border-[#EA1E30]/40 text-[#FCA5A5] text-[11px] sm:text-[12px] font-[700] uppercase tracking-wider mb-[12px]")
-                            <i class="fa-solid fa-calculator text-[12px]"></i>
-                            span Báo Cáo Lương IT 2026
-                            span(class="bg-[#EA1E30] text-white text-[10px] px-[6px] py-[1px] rounded-full font-[800] ml-[4px]") HOT
-                        h2(class="font-[800] text-[22px] sm:text-[30px] lg:text-[36px] leading-tight mb-[12px] text-white tracking-tight")
-                            | Tra Cứu Mức Lương IT 
+                    div(class="lg:col-span-7 slide-content-left min-w-0")
+                        h2(class="font-[600] text-[22px] sm:text-[30px] lg:text-[34px] leading-tight mb-[12px] text-white")
+                            | Tra cứu mức lương IT 
                             br(class="hidden sm:inline")
-                            span(class="text-transparent bg-clip-text bg-gradient-to-r from-[#9FDB7C] via-[#34D399] to-[#60A5FA]") Chuẩn Thị Trường Toàn Quốc
-                        p(class="text-white/80 text-[13.5px] sm:text-[15.5px] max-w-[560px] mb-[22px] leading-relaxed")
-                            | Khảo sát mức thu nhập minh bạch theo vị trí, cấp bậc (Junior - Middle - Senior - Lead) và từng công nghệ cốt lõi với dải lương lên tới 80 Triệu VNĐ.
+                            span(class="text-[#93C5FD]") theo thị trường Việt Nam
+                        p(class="text-white/80 text-[14px] sm:text-[15.5px] max-w-[540px] mb-[20px] leading-relaxed font-[400]")
+                            | Tham khảo dữ liệu thu nhập theo vị trí, cấp bậc (Junior - Middle - Senior - Lead) và từng công nghệ cốt lõi trên hệ thống.
                         div(class="flex items-center gap-[12px] flex-wrap")
-                            a(href="/salary" class="inline-flex items-center gap-[8px] bg-gradient-to-r from-[#9FDB7C] to-[#22C55E] hover:from-[#88C965] hover:to-[#16A34A] text-[#000065] font-[800] text-[14px] sm:text-[15px] px-[20px] sm:px-[24px] py-[11px] sm:py-[12px] rounded-[8px] shadow-lg hover:shadow-xl transition-all cursor-pointer")
+                            a(href="/salary" class="inline-flex items-center gap-[8px] bg-[#0088FF] hover:bg-[#0070D6] text-white font-[600] text-[14px] sm:text-[15px] px-[20px] py-[10px] sm:py-[12px] rounded-[8px] transition-colors cursor-pointer")
                                 <i class="fa-solid fa-magnifying-glass-chart"></i>
-                                span Tra Cứu Lương Ngay
+                                span Tra cứu lương ngay
                                 <i class="fa-solid fa-arrow-right text-[12px]"></i>
-                            a(href="/companies" class="inline-flex items-center gap-[8px] bg-white/10 hover:bg-white/20 border border-white/20 text-white font-[600] text-[14px] sm:text-[15px] px-[18px] sm:px-[20px] py-[11px] sm:py-[12px] rounded-[8px] transition-all")
+                            a(href="/companies" class="inline-flex items-center gap-[8px] bg-white/10 hover:bg-white/15 border border-white/20 text-white font-[500] text-[14px] sm:text-[15px] px-[18px] py-[10px] sm:py-[12px] rounded-[8px] transition-colors")
                                 <i class="fa-solid fa-building text-[12px]"></i>
-                                span Xem Công Ty Đãi Ngộ Cao
+                                span Xem danh sách công ty
                     
                     div(class="lg:col-span-5 slide-content-right")
-                        div(class="relative max-w-[340px] mx-auto")
-                            div(class="bg-white/10 backdrop-blur-md border border-white/20 p-[20px] rounded-[16px] shadow-2xl animate-float")
-                                div(class="flex items-center justify-between pb-[10px] border-b border-white/10 mb-[12px]")
-                                    span(class="font-[700] text-[13px] text-[#9FDB7C] flex items-center gap-[6px]")
-                                        <i class="fa-solid fa-chart-simple"></i> Dải Lương Phổ Biến 2026
-                                    span(class="text-[11px] text-white/60") Cập nhật hôm nay
+                        div(class="max-w-[340px] mx-auto bg-[#0D1E54] border border-white/15 p-[20px] rounded-[12px]")
+                            div(class="flex items-center justify-between pb-[10px] border-b border-white/10 mb-[12px]")
+                                span(class="font-[600] text-[13px] text-[#93C5FD] flex items-center gap-[6px]")
+                                    <i class="fa-solid fa-chart-simple"></i> Dải lương tham khảo 2026
+                                span(class="text-[11px] text-white/60") VNĐ / tháng
+                            
+                            div(class="space-y-[12px]")
+                                div
+                                    div(class="flex justify-between text-[12px] mb-[4px]")
+                                        span(class="font-[500] text-white") AI / Machine Learning
+                                        span(class="font-[600] text-[#9FDB7C] tabular-nums") 45 - 85 Triệu
+                                    div(class="w-full bg-white/15 h-[6px] rounded-full overflow-hidden")
+                                        div(class="bg-[#0088FF] h-full rounded-full w-[90%]")
                                 
-                                div(class="space-y-[12px]")
-                                    div
-                                        div(class="flex justify-between text-[12px] mb-[4px]")
-                                            span(class="font-[600] text-white") AI / Machine Learning
-                                            span(class="font-[700] text-[#9FDB7C]") 45 - 85 Triệu
-                                        div(class="w-full bg-white/20 h-[6px] rounded-full overflow-hidden")
-                                            div(class="bg-[#9FDB7C] h-full rounded-full w-[90%]")
-                                    
-                                    div
-                                        div(class="flex justify-between text-[12px] mb-[4px]")
-                                            span(class="font-[600] text-white") Senior Golang / Backend
-                                            span(class="font-[700] text-[#9FDB7C]") 40 - 70 Triệu
-                                        div(class="w-full bg-white/20 h-[6px] rounded-full overflow-hidden")
-                                            div(class="bg-[#60A5FA] h-full rounded-full w-[80%]")
+                                div
+                                    div(class="flex justify-between text-[12px] mb-[4px]")
+                                        span(class="font-[500] text-white") Senior Golang / Backend
+                                        span(class="font-[600] text-[#9FDB7C] tabular-nums") 40 - 70 Triệu
+                                    div(class="w-full bg-white/15 h-[6px] rounded-full overflow-hidden")
+                                        div(class="bg-[#60A5FA] h-full rounded-full w-[80%]")
 
-                                    div
-                                        div(class="flex justify-between text-[12px] mb-[4px]")
-                                            span(class="font-[600] text-white") Fullstack React & Node
-                                            span(class="font-[700] text-[#9FDB7C]") 25 - 50 Triệu
-                                        div(class="w-full bg-white/20 h-[6px] rounded-full overflow-hidden")
-                                            div(class="bg-[#F59E0B] h-full rounded-full w-[65%]")
+                                div
+                                    div(class="flex justify-between text-[12px] mb-[4px]")
+                                        span(class="font-[500] text-white") Fullstack React &amp; Node
+                                        span(class="font-[600] text-[#9FDB7C] tabular-nums") 25 - 50 Triệu
+                                    div(class="w-full bg-white/15 h-[6px] rounded-full overflow-hidden")
+                                        div(class="bg-[#93C5FD] h-full rounded-full w-[65%]")
 
-            //- Slide 3: Top Employers & Tech Unicorns
-            div(class="hero-carousel-slide bg-gradient-to-r from-[#02102A] via-[#06214E] to-[#01356F] px-[40px] sm:px-[76px] lg:px-[90px] py-[28px] sm:py-[40px] lg:py-[48px] text-white")
+            //- Slide 3: Top Employers
+            div(class="hero-carousel-slide bg-[#081542] px-[44px] sm:px-[72px] lg:px-[88px] py-[28px] sm:py-[40px] lg:py-[44px] text-white")
                 div(class="grid grid-cols-1 lg:grid-cols-12 gap-[24px] lg:gap-[32px] items-center relative z-10")
-                    div(class="lg:col-span-7 slide-content-left")
-                        div(class="inline-flex items-center gap-[6px] px-[12px] py-[4px] rounded-full bg-[#10B981]/20 border border-[#10B981]/40 text-[#6EE7B7] text-[11px] sm:text-[12px] font-[700] uppercase tracking-wider mb-[12px]")
-                            <i class="fa-solid fa-medal text-[12px]"></i>
-                            span Môi Trường Làm Việc Đẳng Cấp
-                        h2(class="font-[800] text-[22px] sm:text-[30px] lg:text-[36px] leading-tight mb-[12px] text-white tracking-tight")
-                            | Gia Nhập 350+ Doanh Nghiệp 
+                    div(class="lg:col-span-7 slide-content-left min-w-0")
+                        h2(class="font-[600] text-[22px] sm:text-[30px] lg:text-[34px] leading-tight mb-[12px] text-white")
+                            | Kết nối trực tiếp với 
                             br(class="hidden sm:inline")
-                            span(class="text-transparent bg-clip-text bg-gradient-to-r from-[#FDE047] via-[#F59E0B] to-[#F97316]") Công Nghệ & Tech Unicorn
-                        p(class="text-white/80 text-[13.5px] sm:text-[15.5px] max-w-[560px] mb-[22px] leading-relaxed")
-                            | Khám phá văn hóa làm việc linh hoạt Remote / Hybrid, chế độ đãi ngộ vượt trội, trang thiết bị Macbook xịn và dự án quy mô toàn cầu.
+                            span(class="text-[#93C5FD]") doanh nghiệp công nghệ
+                        p(class="text-white/80 text-[14px] sm:text-[15.5px] max-w-[540px] mb-[20px] leading-relaxed font-[400]")
+                            | Khám phá môi trường làm việc linh hoạt Remote / Hybrid, chế độ đãi ngộ rõ ràng và các dự án phần mềm quy mô lớn.
                         div(class="flex items-center gap-[12px] flex-wrap")
-                            a(href="/companies" class="inline-flex items-center gap-[8px] bg-gradient-to-r from-[#0088FF] to-[#0066CC] hover:from-[#0077E6] hover:to-[#0055B3] text-white font-[700] text-[14px] sm:text-[15px] px-[20px] sm:px-[24px] py-[11px] sm:py-[12px] rounded-[8px] shadow-lg hover:shadow-xl transition-all cursor-pointer")
+                            a(href="/companies" class="inline-flex items-center gap-[8px] bg-[#0088FF] hover:bg-[#0070D6] text-white font-[600] text-[14px] sm:text-[15px] px-[20px] py-[10px] sm:py-[12px] rounded-[8px] transition-colors cursor-pointer")
                                 <i class="fa-solid fa-building"></i>
-                                span Khám Phá Công Ty
+                                span Khám phá công ty
                                 <i class="fa-solid fa-arrow-right text-[12px]"></i>
-                            a(href="/search" class="inline-flex items-center gap-[8px] bg-white/10 hover:bg-white/20 border border-white/20 text-white font-[600] text-[14px] sm:text-[15px] px-[18px] sm:px-[20px] py-[11px] sm:py-[12px] rounded-[8px] transition-all")
-                                <i class="fa-solid fa-fire text-[#EA1E30] text-[12px]"></i>
-                                span Việc Làm Tuyển Gấp
+                            a(href="/search" class="inline-flex items-center gap-[8px] bg-white/10 hover:bg-white/15 border border-white/20 text-white font-[500] text-[14px] sm:text-[15px] px-[18px] py-[10px] sm:py-[12px] rounded-[8px] transition-colors")
+                                <i class="fa-solid fa-briefcase text-[12px]"></i>
+                                span Việc làm đang tuyển
                     
                     div(class="lg:col-span-5 slide-content-right")
-                        div(class="relative max-w-[340px] mx-auto")
-                            div(class="bg-white/10 backdrop-blur-md border border-white/20 p-[20px] rounded-[16px] shadow-2xl animate-float space-y-[10px]")
-                                if topEmployers && topEmployers.length >= 3
-                                    each emp in topEmployers.slice(0, 3)
-                                        a(href=`/companies/${emp.slug}` class="flex items-center gap-[12px] bg-white/10 hover:bg-white/20 p-[10px] rounded-[10px] transition-colors block text-white")
-                                            div(class="w-[40px] h-[40px] rounded-[8px] bg-white p-[3px] flex items-center justify-center shrink-0 overflow-hidden shadow-sm")
-                                                if emp.logo && emp.logo.url
-                                                    img(src=emp.logo.url alt=emp.companyName class="w-full h-full object-contain" onerror="this.onerror=null; this.src='/assets/images/demo/image1.png';")
-                                                else
-                                                    div(class="w-full h-full rounded-[6px] bg-gradient-to-br from-[#0088FF] to-[#0055B3] text-white flex items-center justify-center font-[800] text-[14px]") #{emp.companyName ? emp.companyName.charAt(0).toUpperCase() : 'IT'}
-                                            div(class="flex-1 min-w-0")
-                                                div(class="font-[700] text-[13px] text-white truncate") #{emp.companyName}
-                                                div(class="text-[11px] text-white/70 truncate") #{emp.jobCount > 0 ? (emp.jobCount + ' vị trí đang tuyển') : (emp.companyModel || (labels ? labels.getCityLabel(emp.city) : emp.city) || 'Đang mở tuyển')}
-                                            span(class="text-[11px] bg-emerald-500/30 text-emerald-300 font-[600] px-[6px] py-[1px] rounded") Hot
-                                else
-                                    div(class="flex items-center gap-[12px] bg-white/10 p-[10px] rounded-[10px]")
-                                        div(class="w-[40px] h-[40px] rounded-[8px] bg-[#F26F21] text-white flex items-center justify-center font-[800] text-[16px] shrink-0") FPT
+                        div(class="max-w-[340px] mx-auto bg-[#0D1E54] border border-white/15 p-[16px] rounded-[12px] divide-y divide-white/10")
+                            if topEmployers && topEmployers.length >= 3
+                                each emp in topEmployers.slice(0, 3)
+                                    - const isLgLogo = emp.logo && emp.logo.url && emp.logo.url.includes('/assets/images/demo/image1.png') && (!emp.companyName || !emp.companyName.toLowerCase().includes('lg'))
+                                    - const hasValidLogo = emp.logo && emp.logo.url && !isLgLogo
+                                    a(href=`/companies/${emp.slug}` class="flex items-center gap-[12px] py-[10px] first:pt-0 last:pb-0 hover:text-[#93C5FD] transition-colors text-white")
+                                        div(class="w-[38px] h-[38px] rounded-[8px] bg-white p-[3px] flex items-center justify-center shrink-0 overflow-hidden")
+                                            if hasValidLogo
+                                                img(src=emp.logo.url alt=emp.companyName class="w-full h-full object-contain")
+                                            else
+                                                div(class="w-full h-full rounded-[6px] bg-[#0088FF] text-white flex items-center justify-center font-[600] text-[13px]") #{emp.companyName ? emp.companyName.charAt(0).toUpperCase() : 'IT'}
                                         div(class="flex-1 min-w-0")
-                                            div(class="font-[700] text-[13px] text-white truncate") FPT Software
-                                            div(class="text-[11px] text-white/70") 50+ vị trí đang tuyển
-                                        span(class="text-[11px] bg-emerald-500/30 text-emerald-300 font-[600] px-[6px] py-[1px] rounded") Hot
-                                    
-                                    div(class="flex items-center gap-[12px] bg-white/10 p-[10px] rounded-[10px]")
-                                        div(class="w-[40px] h-[40px] rounded-[8px] bg-[#A50064] text-white flex items-center justify-center font-[800] text-[16px] shrink-0") MoMo
-                                        div(class="flex-1 min-w-0")
-                                            div(class="font-[700] text-[13px] text-white truncate") MoMo Fintech
-                                            div(class="text-[11px] text-white/70") 30+ vị trí đang tuyển
-                                        span(class="text-[11px] bg-emerald-500/30 text-emerald-300 font-[600] px-[6px] py-[1px] rounded") Hot
+                                            div(class="font-[600] text-[13px] text-white truncate") #{emp.companyName}
+                                            div(class="text-[11px] text-white/70 truncate tabular-nums") #{emp.jobCount > 0 ? (emp.jobCount + ' vị trí đang tuyển') : (emp.companyModel || (labels ? labels.getCityLabel(emp.city) : emp.city) || 'Đang mở tuyển')}
+                                        <i class="fa-solid fa-chevron-right text-[11px] text-white/50"></i>
+                            else
+                                div(class="flex items-center gap-[12px] py-[10px] first:pt-0")
+                                    div(class="w-[38px] h-[38px] rounded-[8px] bg-[#0088FF] text-white flex items-center justify-center font-[600] text-[13px] shrink-0") FPT
+                                    div(class="flex-1 min-w-0")
+                                        div(class="font-[600] text-[13px] text-white truncate") FPT Software
+                                        div(class="text-[11px] text-white/70") Outsourcing &amp; Dịch vụ
+                                div(class="flex items-center gap-[12px] py-[10px]")
+                                    div(class="w-[38px] h-[38px] rounded-[8px] bg-[#0088FF] text-white flex items-center justify-center font-[600] text-[13px] shrink-0") MM
+                                    div(class="flex-1 min-w-0")
+                                        div(class="font-[600] text-[13px] text-white truncate") MoMo Fintech
+                                        div(class="text-[11px] text-white/70") Sản phẩm (Fintech)
+                                div(class="flex items-center gap-[12px] py-[10px] last:pb-0")
+                                    div(class="w-[38px] h-[38px] rounded-[8px] bg-[#0088FF] text-white flex items-center justify-center font-[600] text-[13px] shrink-0") TCB
+                                    div(class="flex-1 min-w-0")
+                                        div(class="font-[600] text-[13px] text-white truncate") Techcombank
+                                        div(class="text-[11px] text-white/70") Ngân hàng số
 
-                                    div(class="flex items-center gap-[12px] bg-white/10 p-[10px] rounded-[10px]")
-                                        div(class="w-[40px] h-[40px] rounded-[8px] bg-[#ED1C24] text-white flex items-center justify-center font-[800] text-[16px] shrink-0") TCB
-                                        div(class="flex-1 min-w-0")
-                                            div(class="font-[700] text-[13px] text-white truncate") Techcombank
-                                            div(class="text-[11px] text-white/70") 40+ vị trí Cloud / AI
-                                        span(class="text-[11px] bg-emerald-500/30 text-emerald-300 font-[600] px-[6px] py-[1px] rounded") Hot
+            //- Nút chuyển Slide Trước / Sau
+            button(type="button" id="carouselPrevBtn" class="carousel-nav-btn prev-btn absolute left-[10px] sm:left-[16px] top-1/2 -translate-y-1/2 w-[36px] sm:w-[40px] h-[36px] sm:h-[40px] rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center border border-white/20 hover:border-white/40 transition-colors cursor-pointer z-20" aria-label="Slide trước")
+                <i class="fa-solid fa-chevron-left text-[13px] sm:text-[14px] text-white"></i>
+            button(type="button" id="carouselNextBtn" class="carousel-nav-btn next-btn absolute right-[10px] sm:right-[16px] top-1/2 -translate-y-1/2 w-[36px] sm:w-[40px] h-[36px] sm:h-[40px] rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center border border-white/20 hover:border-white/40 transition-colors cursor-pointer z-20" aria-label="Slide tiếp theo")
+                <i class="fa-solid fa-chevron-right text-[13px] sm:text-[14px] text-white"></i>
 
-            //- Nút chuyển Slide Trước / Sau (Thiết kế Kính mờ Pha lê, không che chữ)
-            button(type="button" id="carouselPrevBtn" class="carousel-nav-btn prev-btn absolute left-[10px] sm:left-[20px] top-1/2 -translate-y-1/2 w-[36px] sm:w-[46px] h-[36px] sm:h-[46px] rounded-full bg-white/10 hover:bg-white/25 active:scale-90 backdrop-blur-md text-white flex items-center justify-center border border-white/25 hover:border-white/60 transition-all duration-300 cursor-pointer shadow-[0_4px_16px_rgba(0,0,0,0.3)] hover:shadow-[0_0_20px_rgba(0,136,255,0.45)] z-20 group" aria-label="Slide trước")
-                <i class="fa-solid fa-chevron-left text-[14px] sm:text-[16px] text-white transition-transform duration-300 group-hover:-translate-x-[2px]"></i>
-            button(type="button" id="carouselNextBtn" class="carousel-nav-btn next-btn absolute right-[10px] sm:right-[20px] top-1/2 -translate-y-1/2 w-[36px] sm:w-[46px] h-[36px] sm:h-[46px] rounded-full bg-white/10 hover:bg-white/25 active:scale-90 backdrop-blur-md text-white flex items-center justify-center border border-white/25 hover:border-white/60 transition-all duration-300 cursor-pointer shadow-[0_4px_16px_rgba(0,0,0,0.3)] hover:shadow-[0_0_20px_rgba(0,136,255,0.45)] z-20 group" aria-label="Slide tiếp theo")
-                <i class="fa-solid fa-chevron-right text-[14px] sm:text-[16px] text-white transition-transform duration-300 group-hover:translate-x-[2px]"></i>
-
-            //- Chấm tròn chỉ báo (Pagination Dots trong Dock kính mờ cao cấp)
-            div(id="carouselDots" class="absolute bottom-[12px] sm:bottom-[16px] left-1/2 -translate-x-1/2 flex items-center gap-[8px] z-20 px-[12px] py-[6px] rounded-full bg-black/30 backdrop-blur-md border border-white/15 shadow-sm")
-                button(type="button" class="carousel-dot active w-[24px] h-[8px] rounded-full bg-white transition-all cursor-pointer" data-index="0" aria-label="Slide 1")
-                button(type="button" class="carousel-dot w-[8px] h-[8px] rounded-full bg-white/40 hover:bg-white/80 transition-all cursor-pointer" data-index="1" aria-label="Slide 2")
-                button(type="button" class="carousel-dot w-[8px] h-[8px] rounded-full bg-white/40 hover:bg-white/80 transition-all cursor-pointer" data-index="2" aria-label="Slide 3")
+            //- Chấm tròn chỉ báo (Pagination Dots)
+            div(id="carouselDots" class="absolute bottom-[12px] sm:bottom-[14px] left-1/2 -translate-x-1/2 flex items-center gap-[8px] z-20 px-[10px] py-[5px] rounded-full bg-black/30 border border-white/15")
+                button(type="button" class="carousel-dot active w-[24px] h-[8px] rounded-full bg-white transition-colors cursor-pointer" data-index="0" aria-label="Slide 1")
+                button(type="button" class="carousel-dot w-[8px] h-[8px] rounded-full bg-white/40 hover:bg-white/80 transition-colors cursor-pointer" data-index="1" aria-label="Slide 2")
+                button(type="button" class="carousel-dot w-[8px] h-[8px] rounded-full bg-white/40 hover:bg-white/80 transition-colors cursor-pointer" data-index="2" aria-label="Slide 3")

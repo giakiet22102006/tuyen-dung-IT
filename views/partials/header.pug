@@ -137,11 +137,11 @@ header(class="bg-[#000071] py-[12px] sm:py-[14px] sticky top-0 z-50 shadow-md w-
                     span(class="opacity-40 hidden sm:inline") |
                     a(href="/candidate/signup" class="bg-[#0088FF] hover:bg-[#0077E6] text-white px-[8px] sm:px-[12px] py-[5px] sm:py-[6px] rounded-[6px] font-[600] transition shadow-sm whitespace-nowrap") Đăng Ký
             
-            button(id="mobileMenuBtn" class="xl:hidden text-white text-[20px] sm:text-[22px] ml-[2px] sm:ml-[10px] p-[6px] rounded hover:bg-white/10 cursor-pointer focus:outline-none transition-colors shrink-0" aria-label="Toggle mobile menu")
+            button(id="mobileMenuBtn" class="xl:hidden text-white text-[20px] sm:text-[22px] ml-[2px] sm:ml-[10px] p-[6px] rounded hover:bg-white/10 cursor-pointer focus-visible:ring-2 focus-visible:ring-[#0088FF] transition-colors shrink-0" aria-label="Toggle mobile menu")
                 <i class="fa-solid fa-bars"></i>
 
         //- Mobile Navigation Menu (Dàn phẳng hiện đại dạng Quick-Filter 1 chạm)
-        div(id="mobileNav" class="hidden xl:hidden mt-[15px] pt-[15px] border-t border-white/15 text-white transition-all space-y-[16px]")
+        div(id="mobileNav" class="hidden xl:hidden mt-[15px] pt-[15px] border-t border-white/15 text-white transition-opacity space-y-[16px]")
             //- Core Links
             div(class="grid grid-cols-2 gap-[8px]")
                 a(href="/search" class="flex items-center gap-[8px] p-[10px] rounded-[8px] bg-white/10 hover:bg-white/15 text-[14px] font-[600] transition")
@@ -162,24 +162,26 @@ header(class="bg-[#000071] py-[12px] sm:py-[14px] sticky top-0 z-50 shadow-md w-
             //- Quick Filter Pills: Kỹ năng Hot (1 chạm)
             div(class="p-[12px] bg-white/5 rounded-[12px] border border-white/10")
                 div(class="flex items-center justify-between mb-[8px]")
-                    span(class="text-[12px] font-[700] text-[#93C5FD] uppercase tracking-wide flex items-center gap-[6px]")
+                    span(class="text-[12px] font-[600] text-[#93C5FD] flex items-center gap-[6px]")
                         <i class="fa-solid fa-tags text-[11px]"></i>
-                        span Kỹ năng tuyển dụng hot
+                        span Kỹ năng tuyển dụng phổ biến
                     a(href="/search" class="text-[11px] text-white/70 hover:text-white underline") Xem tất cả
                 div(class="flex flex-wrap gap-[6px]")
                     each sk in ['ReactJS', 'NodeJS', 'Python', 'Golang', 'Java', 'DevOps', 'AI Engineer', 'Flutter', 'TypeScript']
-                        a(href=`/search?skill=${sk.toLowerCase().replace(/[^a-z0-9]/g, '')}` class="bg-white/15 hover:bg-[#0088FF] text-white text-[12px] font-[500] py-[4px] px-[10px] rounded-full transition-all active:scale-95 border border-white/10") #{sk}
+                        a(href=`/search?skill=${sk.toLowerCase().replace(/[^a-z0-9]/g, '')}` class="bg-white/15 hover:bg-[#0088FF] text-white text-[12px] font-[500] py-[4px] px-[10px] rounded-full transition-colors border border-white/10") #{sk}
 
             //- Quick Filter Pills: Địa điểm làm việc (1 chạm)
             div(class="p-[12px] bg-white/5 rounded-[12px] border border-white/10")
-                span(class="text-[12px] font-[700] text-[#93C5FD] uppercase tracking-wide block mb-[8px] flex items-center gap-[6px]")
+                span(class="text-[12px] font-[600] text-[#93C5FD] block mb-[8px] flex items-center gap-[6px]")
                     <i class="fa-solid fa-location-dot text-[11px]"></i>
                     span Khu vực làm việc
                 div(class="flex flex-wrap gap-[6px]")
-                    a(href="/search?city=ha-noi" class="bg-white/15 hover:bg-[#0088FF] text-white text-[12px] font-[500] py-[4px] px-[10px] rounded-full transition-all active:scale-95 border border-white/10") Hà Nội
-                    a(href="/search?city=ho-chi-minh" class="bg-white/15 hover:bg-[#0088FF] text-white text-[12px] font-[500] py-[4px] px-[10px] rounded-full transition-all active:scale-95 border border-white/10") TP. Hồ Chí Minh
-                    a(href="/search?city=da-nang" class="bg-white/15 hover:bg-[#0088FF] text-white text-[12px] font-[500] py-[4px] px-[10px] rounded-full transition-all active:scale-95 border border-white/10") Đà Nẵng
-                    a(href="/search?workingForm=remote" class="bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-200 text-[12px] font-[600] py-[4px] px-[10px] rounded-full transition-all active:scale-95 border border-emerald-400/30") 🌐 Làm từ xa (Remote)
+                    a(href="/search?city=ha-noi" class="bg-white/15 hover:bg-[#0088FF] text-white text-[12px] font-[500] py-[4px] px-[10px] rounded-full transition-colors border border-white/10") Hà Nội
+                    a(href="/search?city=ho-chi-minh" class="bg-white/15 hover:bg-[#0088FF] text-white text-[12px] font-[500] py-[4px] px-[10px] rounded-full transition-colors border border-white/10") TP. Hồ Chí Minh
+                    a(href="/search?city=da-nang" class="bg-white/15 hover:bg-[#0088FF] text-white text-[12px] font-[500] py-[4px] px-[10px] rounded-full transition-colors border border-white/10") Đà Nẵng
+                    a(href="/search?workingForm=remote" class="inline-flex items-center gap-[4px] bg-emerald-500/20 hover:bg-emerald-500/35 text-emerald-200 text-[12px] font-[500] py-[4px] px-[10px] rounded-full transition-colors border border-emerald-400/30")
+                        <i class="fa-solid fa-globe text-[11px]"></i>
+                        span Làm từ xa (Remote)
 
             //- User Area
             if currentUser
@@ -209,12 +211,12 @@ header(class="bg-[#000071] py-[12px] sm:py-[14px] sticky top-0 z-50 shadow-md w-
             else
                 div(class="border-t border-white/15 pt-[14px] space-y-[10px]")
                     div
-                        span(class="text-[11px] font-[700] text-[#93C5FD] uppercase tracking-wide block mb-[6px]") Dành cho Ứng viên
+                        span(class="text-[12px] font-[600] text-[#93C5FD] block mb-[6px]") Dành cho Ứng viên
                         div(class="grid grid-cols-2 gap-[8px]")
-                            a(href="/candidate/login" class="bg-[#0088FF] hover:bg-[#0070d6] text-white py-[9px] px-[12px] rounded-[8px] text-[13px] font-[600] text-center shadow-xs") Đăng nhập
+                            a(href="/candidate/login" class="bg-[#0088FF] hover:bg-[#0070d6] text-white py-[9px] px-[12px] rounded-[8px] text-[13px] font-[600] text-center") Đăng nhập
                             a(href="/candidate/signup" class="border border-white/40 hover:bg-white/10 text-white py-[9px] px-[12px] rounded-[8px] text-[13px] font-[600] text-center") Đăng ký
                     div
-                        span(class="text-[11px] font-[700] text-gray-300 uppercase tracking-wide block mb-[6px]") Dành cho Nhà tuyển dụng
+                        span(class="text-[12px] font-[600] text-gray-300 block mb-[6px]") Dành cho Nhà tuyển dụng
                         div(class="grid grid-cols-2 gap-[8px]")
                             a(href="/employer/login" class="bg-white/10 border border-white/20 hover:bg-white/20 text-white py-[9px] px-[12px] rounded-[8px] text-[13px] font-[600] text-center") Đăng nhập NTD
                             a(href="/employer/signup" class="bg-emerald-600/30 border border-emerald-400/40 hover:bg-emerald-600/50 text-emerald-200 py-[9px] px-[12px] rounded-[8px] text-[13px] font-[600] text-center") Đăng ký NTD

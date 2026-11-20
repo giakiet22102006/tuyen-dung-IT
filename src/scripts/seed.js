@@ -70,7 +70,7 @@ const SAMPLE_COMPANIES = [
     time: "Thứ 2 - Thứ 6",
     ot: "Linh hoạt",
     desc: "<p>Kỳ lân công nghệ đầu tiên tại Việt Nam, sở hữu hệ sinh thái Zalo, Zing, VNG Games và ZaloPay phục vụ hàng chục triệu người dùng.</p>",
-    logo: "/assets/images/demo/image1.png"
+    logo: ""
   },
   {
     name: "MoMo (M-Service)",
@@ -81,7 +81,7 @@ const SAMPLE_COMPANIES = [
     time: "Thứ 2 - Thứ 6",
     ot: "Không có OT",
     desc: "<p>Siêu ứng dụng tài chính số 1 Việt Nam, mang đến trải nghiệm thanh toán và tài chính thông minh cho hơn 30 triệu người dùng.</p>",
-    logo: "/assets/images/demo/demo4.png"
+    logo: ""
   },
   {
     name: "Techcombank",
@@ -92,7 +92,7 @@ const SAMPLE_COMPANIES = [
     time: "Thứ 2 - Thứ 6",
     ot: "Không có OT",
     desc: "<p>Khối Công nghệ & Dữ liệu Techcombank đang tiên phong dẫn dắt quá trình chuyển đổi số ngân hàng với kiến trúc Cloud-first hiện đại.</p>",
-    logo: "/assets/images/demo/image1.png"
+    logo: ""
   },
   {
     name: "One Mount Group",
@@ -103,7 +103,7 @@ const SAMPLE_COMPANIES = [
     time: "Thứ 2 - Thứ 6",
     ot: "Linh hoạt",
     desc: "<p>Xây dựng hệ sinh thái số tin cậy và tiện lợi lớn nhất Việt Nam qua các sản phẩm VinShop, VinID, OneHousing.</p>",
-    logo: "/assets/images/demo/demo4.png"
+    logo: ""
   },
   {
     name: "Shopee Việt Nam",
@@ -114,7 +114,7 @@ const SAMPLE_COMPANIES = [
     time: "Thứ 2 - Thứ 6",
     ot: "Có OT",
     desc: "<p>Sàn thương mại điện tử hàng đầu Đông Nam Á và Đài Loan, cung cấp nền tảng giao dịch trực tuyến tiện lợi và bảo mật.</p>",
-    logo: "/assets/images/demo/image1.png"
+    logo: ""
   },
   {
     name: "Viettel Solutions",
@@ -125,7 +125,7 @@ const SAMPLE_COMPANIES = [
     time: "Thứ 2 - Thứ 6",
     ot: "Linh hoạt",
     desc: "<p>Thành viên của Tập đoàn Viettel, tiên phong xây dựng Chính phủ điện tử, thành phố thông minh và các giải pháp số cho doanh nghiệp.</p>",
-    logo: "/assets/images/demo/demo4.png"
+    logo: ""
   },
   {
     name: "Enclave IT",
@@ -136,7 +136,7 @@ const SAMPLE_COMPANIES = [
     time: "Thứ 2 - Thứ 6",
     ot: "Không có OT",
     desc: "<p>Công ty gia công phần mềm hàng đầu miền Trung, hợp tác lâu năm với các đối tác công nghệ tại Hoa Kỳ và Châu Âu.</p>",
-    logo: "/assets/images/demo/image1.png"
+    logo: ""
   },
   {
     name: "KMS Technology",
@@ -147,7 +147,7 @@ const SAMPLE_COMPANIES = [
     time: "Thứ 2 - Thứ 6",
     ot: "Không có OT",
     desc: "<p>Tập đoàn dịch vụ phần mềm quốc tế được bình chọn là một trong những nơi làm việc tốt nhất Việt Nam nhiều năm liên tiếp.</p>",
-    logo: "/assets/images/demo/demo4.png"
+    logo: ""
   }
 ];
 

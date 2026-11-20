@@ -49,7 +49,7 @@ describe("Phase 3: Public Pages Integration Tests", () => {
     const res = await request(app).get("/");
     expect(res.status).toBe(200);
     expect(res.text).toContain("Công ty Test Public");
-    expect(res.text).toContain("Việc làm IT cho Developer");
+    expect(res.text).toContain("Việc làm cho Developer");
   });
 
   test("GET /search - Tìm kiếm theo keyword trả về job khớp", async () => {

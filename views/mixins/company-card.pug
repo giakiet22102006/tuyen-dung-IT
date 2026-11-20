@@ -1,12 +1,18 @@
 mixin companyCard(company)
-    div(class="card-item hover:shadow-md transition-shadow")
-        img(src="/assets/images/bg-card.png" class="inner-bg")
+    - const compLogoUrl = (company.logo && company.logo.url) ? company.logo.url : ""
+    - const isLgMismatch = compLogoUrl.includes('/assets/images/demo/image1.png') && (!company.companyName || !company.companyName.toLowerCase().includes('lg'))
+    - const hasValidLogo = compLogoUrl && !isLgMismatch
+    div(class="card-item hover:border-[#0088FF] transition-colors overflow-hidden")
         a(href="/companies/" + company.slug class="inner-box block") 
-            div(class="pt-[24px] sm:pt-[32px] pb-[16px] sm:pb-[24px] px-[12px] sm:px-[16px]")
-                div(class="inner-img w-[110px] sm:w-[150px]")
-                    img(src=(company.logo && company.logo.url) ? company.logo.url : "/assets/images/demo/image1.png" alt=company.companyName)
-                h3(class="font-[700] text-[16px] sm:text-[18px] text-[#121212] text-center line-clamp-[2]") #{company.companyName}
-            div(class="bg-[#F7F7F7] py-[10px] sm:py-[12px] px-[12px] sm:px-[16px] flex items-center justify-between flex-row gap-[8px]")
+            div(class="pt-[24px] sm:pt-[28px] pb-[16px] sm:pb-[20px] px-[12px] sm:px-[16px]")
+                div(class="inner-img w-[100px] sm:w-[132px] border border-[#E2E8F0] flex items-center justify-center overflow-hidden" style="box-shadow: none;")
+                    if hasValidLogo
+                        img(src=compLogoUrl alt=company.companyName)
+                    else
+                        div(class="w-full h-full flex items-center justify-center bg-[#EFF6FF] text-[#000065] font-[600] text-[28px] sm:text-[32px]")
+                            | #{company.companyName ? company.companyName.charAt(0).toUpperCase() : "IT"}
+                h3(class="font-[600] text-[16px] sm:text-[18px] text-[#121212] text-center line-clamp-[2]") #{company.companyName}
+            div(class="bg-[#F8FAFC] border-t border-[#E2E8F0] py-[10px] sm:py-[12px] px-[12px] sm:px-[16px] flex items-center justify-between flex-row gap-[8px]")
                 div(class="font-[400] text-[12px] sm:text-[14px] text-[#414042] truncate max-w-[140px]") #{labels.getCityLabel(company.city)}
-                div(class="font-[500] text-[12px] sm:text-[14px] text-[#121212] shrink-0") 
-                    <i class="fa-solid fa-user-tie text-[14px] sm:text-[16px] mr-[4px] text-[#000096]"></i> #{company.jobCount || 0} Việc làm
+                div(class="font-[500] text-[12px] sm:text-[14px] text-[#121212] shrink-0 tabular-nums") 
+                    <i class="fa-solid fa-user-tie text-[13px] sm:text-[15px] mr-[4px] text-[#000096]"></i> #{company.jobCount || 0} Việc làm
