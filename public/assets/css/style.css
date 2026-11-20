@@ -316,10 +316,14 @@ textarea:focus-visible,
 }
 
 select.appearance-none {
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  background-image: none;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  background-image: none !important;
+}
+
+select.appearance-none::-ms-expand {
+  display: none;
 }
 
 #mobileNav {

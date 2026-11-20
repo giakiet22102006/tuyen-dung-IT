@@ -36,9 +36,12 @@ block main
                                 <i class="fa-solid fa-comments"></i>
                                 span Luyện Phỏng Vấn Với AI
 
-                        if job.images && job.images.length > 0
+                        - const jobCompName = (company ? company.companyName : (job.employerId ? job.employerId.companyName : "")) || ""
+                        - const isLgCompany = jobCompName.toLowerCase().includes("lg")
+                        - const displayJobImages = (job.images || []).filter(imgItem => isLgCompany || !/\/assets\/images\/demo\/demo[123]\.png/.test(imgItem.url || ""))
+                        if displayJobImages.length > 0
                             div(class="grid grid-cols-3 gap-[10px] sm:gap-[16px] mt-[20px]") 
-                                each imgItem, idx in job.images.slice(0, 3)
+                                each imgItem, idx in displayJobImages.slice(0, 3)
                                     img(src=imgItem.url alt=(job.title + " - Ảnh " + (idx + 1)) class="rounded-[4px] w-full h-[90px] sm:h-[160px] md:h-[180px] object-cover")
 
                         div(class="mt-[20px]")

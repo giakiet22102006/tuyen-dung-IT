@@ -319,7 +319,7 @@ async function seedData() {
       position,
       workingForm,
       skills: jobSkills,
-      images: sampleImages,
+      images: employer.companyName && employer.companyName.toLowerCase().includes("lg") ? sampleImages : [],
       description: `<p>Tuyển dụng vị trí <strong>${title}</strong> tại <strong>${employer.companyName}</strong>.</p><p>Yêu cầu thành thạo các kỹ năng: ${skillText}. Môi trường làm việc năng động, chuyên nghiệp với chế độ đãi ngộ hấp dẫn.</p>`,
       city: employer.city,
       address: employer.address,
