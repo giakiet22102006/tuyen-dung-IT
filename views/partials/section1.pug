@@ -8,7 +8,7 @@ div(class="bg-[#000065] py-[28px] sm:py-[40px]")
                 | Cơ hội việc làm IT tại Hà Nội, TP.HCM, Đà Nẵng và Remote. Tích hợp AI Matching so khớp CV, tra cứu lương thị trường và kết nối trực tiếp với nhà tuyển dụng công nghệ.
         form(action="/search" method="GET" class="grid grid-cols-1 md:grid-cols-[220px_minmax(0,1fr)_180px] gap-[10px] sm:gap-[12px] relative" id="headerSearchForm")
             div(class="relative w-full")
-                select(name="city" aria-label="Chọn thành phố" class="w-full h-[48px] sm:h-[52px] rounded-[6px] bg-white bg-none font-[500] text-[15px] sm:text-[16px] pl-[16px] pr-[38px] py-0 leading-[48px] sm:leading-[52px] text-[#121212] border border-transparent cursor-pointer appearance-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0088FF]")
+                select(name="city" aria-label="Chọn thành phố" class="w-full h-[48px] sm:h-[52px] rounded-[6px] bg-white font-[500] text-[15px] sm:text-[16px] px-[14px] py-0 leading-[48px] sm:leading-[52px] text-[#121212] border border-transparent cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0088FF]")
                     option(value="") Tất cả thành phố
                     if cities && cities.length > 0
                         each c in cities
@@ -18,7 +18,6 @@ div(class="bg-[#000065] py-[28px] sm:py-[40px]")
                         option(value="da-nang" selected=(selectedCity === 'da-nang')) Đà Nẵng
                         option(value="ho-chi-minh" selected=(selectedCity === 'ho-chi-minh')) TP. Hồ Chí Minh
                         option(value="khac" selected=(selectedCity === 'khac')) Khác
-                <i class="fa-solid fa-chevron-down text-[12px] text-gray-500 pointer-events-none absolute right-[14px] top-1/2 -translate-y-1/2"></i>
 
             div(class="w-full min-w-0 relative")
                 input(type="text" name="keyword" id="searchKeywordInput" value=(keyword || "") placeholder="Tìm việc IT (React, Node...)" autocomplete="off" class="w-full h-[48px] sm:h-[52px] rounded-[6px] bg-white font-[500] text-[15px] sm:text-[16px] px-[16px] text-[#121212] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0088FF]")

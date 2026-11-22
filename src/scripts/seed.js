@@ -23,6 +23,10 @@ const {
 } = require("../config/constants");
 const slugify = require("../utils/slugify");
 const normalizeVi = require("../utils/normalizeVi");
+const {
+  JOB_TEMPLATES,
+  SALARY_RANGES_BY_POSITION,
+} = require("../constants/seed-templates");
 
 const isBigMode = process.argv.includes("--big");
 
@@ -151,34 +155,7 @@ const SAMPLE_COMPANIES = [
   }
 ];
 
-// Danh sách Tiêu đề công việc mẫu kèm nhóm kỹ năng tương ứng và cấp bậc phù hợp
-const JOB_TEMPLATES = [
-  { title: "Frontend Engineer (ReactJS, NextJS)", skills: ["ReactJS", "NextJS", "TypeScript", "TailwindCSS"], positions: ["intern", "fresher", "junior", "middle"] },
-  { title: "Backend Developer (NodeJS, Express)", skills: ["NodeJS", "TypeScript", "PostgreSQL", "Redis"], positions: ["fresher", "junior", "middle", "senior"] },
-  { title: "Fullstack Developer (ReactJS, NodeJS)", skills: ["ReactJS", "NodeJS", "TypeScript", "MongoDB"], positions: ["junior", "middle", "senior"] },
-  { title: "Java Backend Engineer (Spring Boot, Microservices)", skills: ["Java", "Spring Boot", "Microservices", "Kafka"], positions: ["junior", "middle", "senior"] },
-  { title: "DevOps Engineer (AWS, Docker, K8s)", skills: ["AWS", "Docker", "Kubernetes", "CI/CD"], positions: ["junior", "middle", "senior"] },
-  { title: "Mobile Developer (Flutter, Dart)", skills: ["Flutter", "REST API", "Git"], positions: ["intern", "fresher", "junior", "middle"] },
-  { title: "iOS Engineer (Swift)", skills: ["iOS (Swift)", "REST API", "Git"], positions: ["fresher", "junior", "middle"] },
-  { title: "Android Engineer (Kotlin)", skills: ["Android (Kotlin)", "REST API", "Git"], positions: ["fresher", "junior", "middle"] },
-  { title: "Python Data Engineer", skills: ["Python", "SQL", "PostgreSQL", "Docker"], positions: ["fresher", "junior", "middle"] },
-  { title: "Senior Golang Engineer", skills: ["Golang", "PostgreSQL", "Docker", "Microservices"], positions: ["senior", "manager"] },
-  { title: "Automation QA/QC Engineer", skills: ["Unit Test", "Jest", "JavaScript", "CI/CD"], positions: ["intern", "fresher", "junior", "middle"] },
-  { title: "Lead Frontend Architect", skills: ["ReactJS", "NextJS", "TypeScript", "GraphQL"], positions: ["manager"] },
-  { title: "Software Engineer (.NET Core, C#)", skills: ["C#", ".NET Core", "PostgreSQL", "Docker"], positions: ["fresher", "junior", "middle", "senior"] },
-  { title: "Cloud Solutions Architect (GCP/AWS)", skills: ["AWS", "GCP", "Kubernetes", "Docker"], positions: ["senior", "manager"] },
-  { title: "Data Scientist / AI Engineer", skills: ["Python", "Machine Learning", "Deep Learning", "PyTorch", "TensorFlow"], positions: ["junior", "middle", "senior"] },
-];
-
-// Khung lương USD thực tế theo từng cấp bậc tại thị trường IT Việt Nam
-const SALARY_RANGES_BY_POSITION = {
-  intern: { minBase: 250, minStep: 50, spread: 200 },
-  fresher: { minBase: 450, minStep: 100, spread: 350 },
-  junior: { minBase: 750, minStep: 150, spread: 450 },
-  middle: { minBase: 1300, minStep: 200, spread: 700 },
-  senior: { minBase: 2200, minStep: 300, spread: 1000 },
-  manager: { minBase: 3200, minStep: 400, spread: 1500 },
-};
+// JOB_TEMPLATES & SALARY_RANGES_BY_POSITION imported from ../constants/seed-templates
 
 const SAMPLE_NAMES = [
   "Nguyễn Văn An", "Trần Thị Mai", "Lê Hoàng Long", "Phạm Minh Đức",

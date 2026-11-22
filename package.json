@@ -15,6 +15,7 @@
     "build:css": "tailwindcss -i ./src/styles/input.css -o ./public/assets/css/tailwind.css --minify",
     "watch:css": "tailwindcss -i ./src/styles/input.css -o ./public/assets/css/tailwind.css --watch",
     "seed": "node src/scripts/seed.js",
+    "db:sync-seed": "node src/scripts/sync-seed-data.js",
     "export:sql": "node src/scripts/export-sql.js",
     "create-admin": "node src/scripts/create-admin.js",
     "benchmark": "node src/scripts/benchmark.js",

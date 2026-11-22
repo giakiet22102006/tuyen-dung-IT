@@ -1,7 +1,8 @@
 mixin companyCard(company)
     - const compLogoUrl = (company.logo && company.logo.url) ? company.logo.url : ""
+    - const isDemo4 = compLogoUrl.includes('/assets/images/demo/demo4.png')
     - const isLgMismatch = compLogoUrl.includes('/assets/images/demo/image1.png') && (!company.companyName || !company.companyName.toLowerCase().includes('lg'))
-    - const hasValidLogo = compLogoUrl && !isLgMismatch
+    - const hasValidLogo = compLogoUrl && !isDemo4 && !isLgMismatch
     div(class="card-item hover:border-[#0088FF] transition-colors overflow-hidden")
         a(href="/companies/" + company.slug class="inner-box block") 
             div(class="pt-[24px] sm:pt-[28px] pb-[16px] sm:pb-[20px] px-[12px] sm:px-[16px]")

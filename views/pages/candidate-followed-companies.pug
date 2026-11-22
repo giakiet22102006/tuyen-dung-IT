@@ -23,7 +23,14 @@ block main
                         div(class="bg-white rounded-[12px] p-[20px] shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition" id=`company-card-${company._id}`)
                             div
                                 div(class="flex items-center gap-[14px] mb-[14px]")
-                                    img(src=(company.logo && company.logo.url) ? company.logo.url : "/assets/images/demo/demo4.png" alt=company.companyName class="w-[60px] h-[60px] object-contain rounded-[8px] border border-gray-200 p-[4px] bg-white")
+                                    - const compLogoUrl = (company.logo && company.logo.url) ? company.logo.url : ""
+                                    - const isDemo4 = compLogoUrl.includes('/assets/images/demo/demo4.png')
+                                    - const isLgMismatch = compLogoUrl.includes('/assets/images/demo/image1.png') && (!company.companyName || !company.companyName.toLowerCase().includes('lg'))
+                                    if compLogoUrl && !isDemo4 && !isLgMismatch
+                                        img(src=compLogoUrl alt=company.companyName class="w-[60px] h-[60px] object-contain rounded-[8px] border border-gray-200 p-[4px] bg-white")
+                                    else
+                                        div(class="w-[60px] h-[60px] rounded-[8px] border border-gray-200 bg-[#EFF6FF] text-[#000065] font-[700] text-[22px] flex items-center justify-center shrink-0")
+                                            | #{company.companyName ? company.companyName.charAt(0).toUpperCase() : "IT"}
                                     div(class="min-w-0 flex-1")
                                         h2(class="font-[700] text-[16px] text-gray-900 leading-snug truncate hover:text-[#0088FF]")
                                             a(href=`/companies/${company.slug}`) #{company.companyName}

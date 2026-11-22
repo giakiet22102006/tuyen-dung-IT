@@ -1,8 +1,9 @@
 mixin jobCard(job)
     - const empName = job.employerId ? job.employerId.companyName : ""
     - const empLogoUrl = (job.employerId && job.employerId.logo && job.employerId.logo.url) ? job.employerId.logo.url : ""
+    - const isDemo4 = empLogoUrl.includes('/assets/images/demo/demo4.png')
     - const isLgMismatch = empLogoUrl.includes('/assets/images/demo/image1.png') && (!empName || !empName.toLowerCase().includes('lg'))
-    - const hasValidLogo = empLogoUrl && !isLgMismatch
+    - const hasValidLogo = empLogoUrl && !isDemo4 && !isLgMismatch
     div(class="card-item hover:border-[#0088FF] transition-colors relative")
         button(type="button" class="btn-bookmark-job absolute top-[12px] right-[12px] z-10 w-[32px] h-[32px] rounded-full flex items-center justify-center bg-white hover:bg-slate-50 border border-[#E2E8F0] text-gray-400 hover:text-red-500 cursor-pointer transition-colors" data-job-id=job._id title="Lưu việc làm")
             if savedJobIds && savedJobIds.has(job._id.toString())
