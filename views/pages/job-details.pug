@@ -121,7 +121,8 @@ block main
                     if company
                         - const compLogoUrl = (company.logo && company.logo.url) ? company.logo.url : ""
                         - const isLgMismatch = compLogoUrl.includes('/assets/images/demo/image1.png') && (!company.companyName || !company.companyName.toLowerCase().includes('lg'))
-                        - const hasValidLogo = compLogoUrl && !isLgMismatch
+                        - const isDemo4 = compLogoUrl.includes('/assets/images/demo/demo4.png')
+                        - const hasValidLogo = compLogoUrl && !isLgMismatch && !isDemo4
                         div(class="p-[20px] border border-[#E2E8F0] rounded-[8px] bg-white")
                             div(class="flex gap-[12px] mb-[20px]")
                                 if hasValidLogo
@@ -135,31 +136,31 @@ block main
                                         span Xem công ty
                                         <i class="fa-solid fa-arrow-right-long text-[13px]"></i>
 
-                            div(class="")
+                            div(class="space-y-[10px]")
                                 if company.email
-                                    div(class="flex justify-between mb-[10px]")
-                                        div(class="font-[400] text-[16px] text-[#A6A6A6]") Email liên hệ
-                                        a(href="mailto:" + company.email class="font-[400] text-[16px] text-[#0088FF] hover:underline") #{company.email}
+                                    div(class="flex items-start justify-between gap-[12px]")
+                                        div(class="font-[400] text-[15px] text-[#A6A6A6] whitespace-nowrap shrink-0") Email liên hệ
+                                        a(href="mailto:" + company.email class="font-[400] text-[15px] text-[#0088FF] hover:underline text-right break-all min-w-0") #{company.email}
                                 if company.phone
-                                    div(class="flex justify-between mb-[10px]")
-                                        div(class="font-[400] text-[16px] text-[#A6A6A6]") Số điện thoại
-                                        a(href="tel:" + company.phone class="font-[400] text-[16px] text-[#121212] hover:text-[#0088FF]") #{company.phone}
+                                    div(class="flex items-start justify-between gap-[12px]")
+                                        div(class="font-[400] text-[15px] text-[#A6A6A6] whitespace-nowrap shrink-0") Số điện thoại
+                                        a(href="tel:" + company.phone class="font-[400] text-[15px] text-[#121212] hover:text-[#0088FF] text-right whitespace-nowrap") #{company.phone}
                                 if company.website
-                                    div(class="flex justify-between mb-[10px]")
-                                        div(class="font-[400] text-[16px] text-[#A6A6A6]") Website
-                                        a(href=company.website target="_blank" rel="noopener noreferrer" class="font-[400] text-[16px] text-[#0088FF] hover:underline") #{company.website}
-                                div(class="flex justify-between mb-[10px]")
-                                    div(class="font-[400] text-[16px] text-[#A6A6A6]") Mô hình công ty
-                                    div(class="font-[400] text-[16px] text-[#121212]") #{company.companyModel || "Sản phẩm & Dịch vụ"}
-                                div(class="flex justify-between mb-[10px]")
-                                    div(class="font-[400] text-[16px] text-[#A6A6A6]") Quy mô công ty
-                                    div(class="font-[400] text-[16px] text-[#121212]") #{company.companySize || "100 - 500 nhân viên"}
-                                div(class="flex justify-between mb-[10px]")
-                                    div(class="font-[400] text-[16px] text-[#A6A6A6]") Thời gian làm việc
-                                    div(class="font-[400] text-[16px] text-[#121212]") #{company.workingTime || "Thứ 2 - Thứ 6"}
-                                div(class="flex justify-between")
-                                    div(class="font-[400] text-[16px] text-[#A6A6A6]") Làm việc ngoài giờ
-                                    div(class="font-[400] text-[16px] text-[#121212]") #{company.overtime || "Không có OT"}
+                                    div(class="flex items-start justify-between gap-[12px]")
+                                        div(class="font-[400] text-[15px] text-[#A6A6A6] whitespace-nowrap shrink-0") Website
+                                        a(href=company.website target="_blank" rel="noopener noreferrer" class="font-[400] text-[15px] text-[#0088FF] hover:underline text-right truncate min-w-0") #{company.website}
+                                div(class="flex items-start justify-between gap-[12px]")
+                                    div(class="font-[400] text-[15px] text-[#A6A6A6] whitespace-nowrap shrink-0") Mô hình công ty
+                                    div(class="font-[400] text-[15px] text-[#121212] text-right") #{company.companyModel || "Sản phẩm & Dịch vụ"}
+                                div(class="flex items-start justify-between gap-[12px]")
+                                    div(class="font-[400] text-[15px] text-[#A6A6A6] whitespace-nowrap shrink-0") Quy mô công ty
+                                    div(class="font-[400] text-[15px] text-[#121212] text-right") #{company.companySize || "100 - 500 nhân viên"}
+                                div(class="flex items-start justify-between gap-[12px]")
+                                    div(class="font-[400] text-[15px] text-[#A6A6A6] whitespace-nowrap shrink-0") Thời gian làm việc
+                                    div(class="font-[400] text-[15px] text-[#121212] text-right") #{company.workingTime || "Thứ 2 - Thứ 6"}
+                                div(class="flex items-start justify-between gap-[12px]")
+                                    div(class="font-[400] text-[15px] text-[#A6A6A6] whitespace-nowrap shrink-0") Làm việc ngoài giờ
+                                    div(class="font-[400] text-[15px] text-[#121212] text-right") #{company.overtime || "Không có OT"}
 
                             if mapData && mapData.embedUrl
                                 div(class="mt-[16px] pt-[16px] border-t border-gray-100")
@@ -184,9 +185,45 @@ block main
                     //- Hết Thông tin công ty
 
         //- ==========================================
-        //- MODAL 0: QUICK-APPLY MODAL (ỨNG TUYỂN NHANH ĐẲNG CẤP)
+        //- MODAL 0, 1, 2: Render ở root (block modals) để không bị Google Maps iframe đè
         //- ==========================================
-        div(id="modalQuickApply" class="fixed inset-0 z-[10000] hidden items-center justify-center bg-slate-900/60 p-[16px] overflow-y-auto")
+
+    script.
+        (function() {
+            function runInit() {
+                if (window.initQuickApplyModal) window.initQuickApplyModal();
+                if (window.initAiCvMatch) window.initAiCvMatch("#{job._id}");
+                if (window.initAiInterviewPrep) window.initAiInterviewPrep("#{job._id}");
+
+                // Xử lý sao chép link việc làm nhanh
+                document.querySelectorAll(".btn-share-job").forEach(function(btn) {
+                    btn.addEventListener("click", function(e) {
+                        e.preventDefault();
+                        var shareUrl = window.location.href.split("#")[0];
+                        if (navigator.clipboard && navigator.clipboard.writeText) {
+                            navigator.clipboard.writeText(shareUrl).then(function() {
+                                if (window.showToast) {
+                                    window.showToast("Đã sao chép liên kết việc làm vào bộ nhớ tạm.", "success");
+                                } else {
+                                    alert("Đã sao chép liên kết việc làm!");
+                                }
+                            }).catch(function() {
+                                if (window.showToast) window.showToast("Không thể sao chép liên kết.", "error");
+                            });
+                        }
+                    });
+                });
+            }
+            if (document.readyState === "loading") {
+                document.addEventListener("DOMContentLoaded", runInit);
+            } else {
+                runInit();
+            }
+        })();
+
+block modals
+        //- MODAL 0: QUICK-APPLY MODAL (ỨNG TUYỂN NHANH ĐẲNG CẤP)
+        div(id="modalQuickApply" class="fixed inset-0 z-[9999] hidden items-center justify-center bg-slate-900/60 p-[16px] overflow-y-auto")
             div(id="modalQuickApplyContainer" class="bg-white rounded-[12px] shadow-xl max-w-[600px] w-full my-auto flex flex-col overflow-hidden border border-gray-200 transition-[transform,opacity] duration-200 scale-95 opacity-0")
                 //- Header modal
                 div(class="p-[20px] sm:p-[24px] border-b border-[#E2E8F0] bg-[#F8FAFC] relative")
@@ -266,7 +303,7 @@ block main
         //- ==========================================
         //- MODAL 1: AI SO KHỚP CV & KHOẢNG TRỐNG KỸ NĂNG
         //- ==========================================
-        div(id="modalAiCvMatch" class="fixed inset-0 z-[10000] hidden items-center justify-center bg-black/60 p-[16px]")
+        div(id="modalAiCvMatch" class="fixed inset-0 z-[9999] hidden items-center justify-center bg-black/60 p-[16px]")
             div(class="bg-white rounded-[12px] shadow-xl max-w-[650px] w-full max-h-[90vh] flex flex-col overflow-hidden border border-gray-200")
                 //- Modal Header
                 div(class="p-[20px] border-b border-[#E5E7EB] flex items-center justify-between bg-[#F8FAFC]")
@@ -285,7 +322,19 @@ block main
                     form(id="formAiCvMatch" class="space-y-[16px]")
                         div
                             label(class="block font-[600] text-[14px] text-gray-800 mb-[6px]") Cách 1: Tải lên file CV PDF của bạn
-                            input(type="file" id="aiCvFileInput" accept="application/pdf" class="border border-dashed border-[#D1D5DB] rounded-[8px] p-[12px] sm:p-[16px] w-full text-[14px] text-gray-600 bg-gray-50 hover:bg-gray-100 cursor-pointer")
+                            div(id="dropzoneAiCvMatch" class="border-2 border-dashed border-gray-300 hover:border-emerald-500 bg-slate-50/60 hover:bg-emerald-50/40 rounded-[12px] p-[20px] text-center cursor-pointer transition-colors relative")
+                                input(type="file" id="aiCvFileInput" accept="application/pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10")
+                                div(id="aiDropzonePrompt" class="space-y-[4px]")
+                                    div(class="w-[44px] h-[44px] mx-auto rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-[20px] mb-[8px]")
+                                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                                    p(class="text-[14px] font-[600] text-slate-800") Kéo thả file PDF vào đây hoặc <span class="text-emerald-600 underline underline-offset-2">bấm duyệt file</span>
+                                    p(class="text-[12px] text-slate-500") Chấp nhận duy nhất file PDF (Dung lượng &le; 5MB)
+                                div(id="aiCvFilePreview" class="hidden flex items-center justify-center gap-[10px] p-[10px] bg-emerald-50 border border-emerald-200 rounded-[8px]")
+                                    <i class="fa-solid fa-file-pdf text-emerald-600 text-[24px]"></i>
+                                    div(class="text-left")
+                                        p(id="aiCvFileName" class="text-[13.5px] font-[600] text-emerald-950 truncate max-w-[260px] sm:max-w-[340px]") CV.pdf
+                                        p(id="aiCvFileSize" class="text-[11.5px] text-emerald-700") 0 KB
+                                    span(class="ml-auto text-[12px] font-[600] text-emerald-700 bg-white px-[8px] py-[3px] rounded-full border border-emerald-300") Đã chọn
                         
                         div(class="text-center text-[12px] text-gray-400 font-[600]") — HOẶC —
 
@@ -337,7 +386,7 @@ block main
         //- ==========================================
         //- MODAL 2: AI LUYỆN PHỎNG VẤN
         //- ==========================================
-        div(id="modalAiInterview" class="fixed inset-0 z-[10000] hidden items-center justify-center bg-black/60 p-[16px]")
+        div(id="modalAiInterview" class="fixed inset-0 z-[9999] hidden items-center justify-center bg-black/60 p-[16px]")
             div(class="bg-white rounded-[12px] shadow-xl max-w-[750px] w-full max-h-[90vh] flex flex-col overflow-hidden border border-gray-200")
                 //- Modal Header
                 div(class="p-[20px] border-b border-[#E5E7EB] flex items-center justify-between bg-[#F8FAFC]")
@@ -359,37 +408,4 @@ block main
                         p(class="text-[13px] text-gray-500 max-w-[360px] mx-auto") Phân tích chuyên môn kỹ thuật và tình huống phù hợp với cấp bậc #{labels.getPositionLabel(job.position)}.
 
                     div(id="aiInterviewQuestions" class="space-y-[16px]")
-
-    script.
-        (function() {
-            function runInit() {
-                if (window.initQuickApplyModal) window.initQuickApplyModal();
-                if (window.initAiCvMatch) window.initAiCvMatch("#{job._id}");
-                if (window.initAiInterviewPrep) window.initAiInterviewPrep("#{job._id}");
-
-                // Xử lý sao chép link việc làm nhanh
-                document.querySelectorAll(".btn-share-job").forEach(function(btn) {
-                    btn.addEventListener("click", function(e) {
-                        e.preventDefault();
-                        var shareUrl = window.location.href.split("#")[0];
-                        if (navigator.clipboard && navigator.clipboard.writeText) {
-                            navigator.clipboard.writeText(shareUrl).then(function() {
-                                if (window.showToast) {
-                                    window.showToast("Đã sao chép liên kết việc làm vào bộ nhớ tạm.", "success");
-                                } else {
-                                    alert("Đã sao chép liên kết việc làm!");
-                                }
-                            }).catch(function() {
-                                if (window.showToast) window.showToast("Không thể sao chép liên kết.", "error");
-                            });
-                        }
-                    });
-                });
-            }
-            if (document.readyState === "loading") {
-                document.addEventListener("DOMContentLoaded", runInit);
-            } else {
-                runInit();
-            }
-        })();
-    //- Hết Chi tiết công việc
+        //- Hết Chi tiết công việc

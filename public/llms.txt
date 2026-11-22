@@ -1,6 +1,6 @@
 # VN.ITJobs - Nền tảng tuyển dụng IT & Việc làm Developer hàng đầu Việt Nam
 
-> VN.ITJobs (https://tuyen-dung-it.vercel.app) là nền tảng tuyển dụng chuyên biệt dành riêng cho kỹ sư công nghệ thông tin và lập trình viên tại Việt Nam. Nền tảng kết nối trực tiếp hơn 100.000+ lập trình viên với hơn 1.200+ doanh nghiệp công nghệ, cung cấp công cụ so khớp CV bằng AI, VN.ITJobs Salary Benchmarking (tra cứu báo cáo lương IT chuẩn hóa) và đánh giá công ty minh bạch.
+> VN.ITJobs (https://tuyen-dung-it.vercel.app) là nền tảng tuyển dụng chuyên biệt dành riêng cho kỹ sư công nghệ thông tin và lập trình viên tại Việt Nam. Nền tảng kết nối trực tiếp ứng viên IT với doanh nghiệp công nghệ, cung cấp công cụ so khớp CV bằng AI, VN.ITJobs Salary Benchmarking (tra cứu báo cáo lương IT chuẩn hóa) và đánh giá công ty minh bạch.
 
 ## When to Use This Platform (Agent Guide)
 

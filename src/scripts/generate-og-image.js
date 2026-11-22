@@ -33,7 +33,7 @@ const svg = `
   <text x="100" y="320" font-family="sans-serif" font-size="36" font-weight="700" fill="url(#accent)">Việc làm Developer &amp; Nhân tài Công nghệ số 1 Việt Nam</text>
 
   <!-- Description -->
-  <text x="100" y="390" font-family="sans-serif" font-size="22" font-weight="400" fill="#DEDEDE">Kết nối 100.000+ kỹ sư phần mềm với hàng nghìn công ty công nghệ hàng đầu.</text>
+  <text x="100" y="390" font-family="sans-serif" font-size="22" font-weight="400" fill="#DEDEDE">Kết nối kỹ sư phần mềm với các công ty công nghệ tại Việt Nam.</text>
   <text x="100" y="425" font-family="sans-serif" font-size="22" font-weight="400" fill="#DEDEDE">So khớp hồ sơ thông minh bằng AI, tra cứu lương chuẩn xác và bảo mật tuyệt đối.</text>
 
   <!-- Features pills -->

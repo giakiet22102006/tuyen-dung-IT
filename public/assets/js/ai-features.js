@@ -25,27 +25,93 @@ window.initAiCvMatch = function (jobId) {
   const resultDiv = document.getElementById('aiCvMatchResult');
 
   if (!modal || !openBtn) return;
+  if (modal.parentElement !== document.body) {
+    document.body.appendChild(modal);
+  }
   if (openBtn.dataset.boundAi === 'true') return;
   openBtn.dataset.boundAi = 'true';
 
-  openBtn.addEventListener('click', () => {
+  function openAiMatchModal() {
     modal.classList.remove('hidden');
     modal.classList.add('flex');
-  });
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeAiMatchModal() {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    document.body.style.overflow = '';
+  }
+
+  openBtn.addEventListener('click', openAiMatchModal);
 
   if (closeBtn) {
-    closeBtn.addEventListener('click', () => {
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
-    });
+    closeBtn.addEventListener('click', closeAiMatchModal);
   }
 
   modal.addEventListener('click', (e) => {
     if (e.target === modal) {
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
+      closeAiMatchModal();
     }
   });
+
+  // Dropzone upload PDF đồng bộ với modal Ứng tuyển ngay
+  const dropzone = document.getElementById('dropzoneAiCvMatch');
+  const fileInputEl = document.getElementById('aiCvFileInput');
+  const dropzonePrompt = document.getElementById('aiDropzonePrompt');
+  const filePreview = document.getElementById('aiCvFilePreview');
+  const fileNameSpan = document.getElementById('aiCvFileName');
+  const fileSizeSpan = document.getElementById('aiCvFileSize');
+
+  function formatAiFileSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+  }
+
+  function handleAiCvFile(file) {
+    if (!file) return;
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      alert('Hệ thống chỉ chấp nhận file CV ở định dạng PDF.');
+      if (fileInputEl) fileInputEl.value = '';
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Kích thước file PDF không được vượt quá 5MB.');
+      if (fileInputEl) fileInputEl.value = '';
+      return;
+    }
+    if (dropzonePrompt) dropzonePrompt.classList.add('hidden');
+    if (filePreview) filePreview.classList.remove('hidden');
+    if (fileNameSpan) fileNameSpan.textContent = file.name;
+    if (fileSizeSpan) fileSizeSpan.textContent = formatAiFileSize(file.size);
+  }
+
+  if (fileInputEl) {
+    fileInputEl.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) {
+        handleAiCvFile(e.target.files[0]);
+      }
+    });
+  }
+
+  if (dropzone) {
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.classList.add('border-emerald-500', 'bg-emerald-50/60');
+    });
+    dropzone.addEventListener('dragleave', () => {
+      dropzone.classList.remove('border-emerald-500', 'bg-emerald-50/60');
+    });
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('border-emerald-500', 'bg-emerald-50/60');
+      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+        if (fileInputEl) fileInputEl.files = e.dataTransfer.files;
+        handleAiCvFile(e.dataTransfer.files[0]);
+      }
+    });
+  }
 
   if (form) {
     form.addEventListener('submit', async (e) => {
@@ -153,11 +219,16 @@ window.initAiInterviewPrep = function (jobId) {
   const container = document.getElementById('aiInterviewQuestions');
 
   if (!modal || !openBtn) return;
+  if (modal.parentElement !== document.body) {
+    document.body.appendChild(modal);
+  }
   if (openBtn.dataset.boundAi === 'true') return;
   openBtn.dataset.boundAi = 'true';
 
   openBtn.addEventListener('click', async () => {
     modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    document.body.style.overflow = 'hidden';
     modal.classList.add('flex');
 
     if (container && container.dataset.loaded !== 'true') {

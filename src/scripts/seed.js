@@ -59,7 +59,7 @@ const SAMPLE_COMPANIES = [
     time: "Thứ 2 - Thứ 6",
     ot: "Có OT (trả lương theo luật)",
     desc: "<p>FPT Software là công ty xuất khẩu phần mềm lớn nhất Đông Nam Á, hiện diện tại hơn 30 quốc gia trên thế giới với các dự án chuyển đổi số quy mô lớn.</p>",
-    logo: "/assets/images/demo/demo4.png"
+    logo: ""
   },
   {
     name: "VNG Corporation",
@@ -151,24 +151,34 @@ const SAMPLE_COMPANIES = [
   }
 ];
 
-// Danh sách Tiêu đề công việc mẫu kèm nhóm kỹ năng tương ứng
+// Danh sách Tiêu đề công việc mẫu kèm nhóm kỹ năng tương ứng và cấp bậc phù hợp
 const JOB_TEMPLATES = [
-  { title: "Frontend Engineer (ReactJS, NextJS)", skills: ["ReactJS", "NextJS", "TypeScript", "TailwindCSS"] },
-  { title: "Senior Backend Developer (NodeJS, Express)", skills: ["NodeJS", "TypeScript", "PostgreSQL", "Redis"] },
-  { title: "Fullstack Developer (ReactJS, NodeJS)", skills: ["ReactJS", "NodeJS", "TypeScript", "MongoDB"] },
-  { title: "Java Backend Engineer (Spring Boot, Microservices)", skills: ["Java", "Spring Boot", "Microservices", "Kafka"] },
-  { title: "DevOps Engineer (AWS, Docker, K8s)", skills: ["AWS", "Docker", "Kubernetes", "CI/CD"] },
-  { title: "Mobile Developer (Flutter, Dart)", skills: ["Flutter", "REST API", "Git"] },
-  { title: "iOS Engineer (Swift)", skills: ["iOS (Swift)", "REST API", "Git"] },
-  { title: "Android Engineer (Kotlin)", skills: ["Android (Kotlin)", "REST API", "Git"] },
-  { title: "Python Data Engineer", skills: ["Python", "SQL", "PostgreSQL", "Docker"] },
-  { title: "Senior Golang Engineer", skills: ["Golang", "PostgreSQL", "Docker", "Microservices"] },
-  { title: "Automation QA/QC Engineer", skills: ["Unit Test", "Jest", "JavaScript", "CI/CD"] },
-  { title: "Lead Frontend Architect", skills: ["ReactJS", "NextJS", "TypeScript", "GraphQL"] },
-  { title: "Software Engineer (.NET Core, C#)", skills: ["C#", ".NET Core", "PostgreSQL", "Docker"] },
-  { title: "Cloud Solutions Architect (GCP/AWS)", skills: ["AWS", "GCP", "Kubernetes", "Docker"] },
-  { title: "Data Scientist / AI Engineer", skills: ["Python", "Machine Learning", "Deep Learning", "PyTorch", "TensorFlow"] },
+  { title: "Frontend Engineer (ReactJS, NextJS)", skills: ["ReactJS", "NextJS", "TypeScript", "TailwindCSS"], positions: ["intern", "fresher", "junior", "middle"] },
+  { title: "Backend Developer (NodeJS, Express)", skills: ["NodeJS", "TypeScript", "PostgreSQL", "Redis"], positions: ["fresher", "junior", "middle", "senior"] },
+  { title: "Fullstack Developer (ReactJS, NodeJS)", skills: ["ReactJS", "NodeJS", "TypeScript", "MongoDB"], positions: ["junior", "middle", "senior"] },
+  { title: "Java Backend Engineer (Spring Boot, Microservices)", skills: ["Java", "Spring Boot", "Microservices", "Kafka"], positions: ["junior", "middle", "senior"] },
+  { title: "DevOps Engineer (AWS, Docker, K8s)", skills: ["AWS", "Docker", "Kubernetes", "CI/CD"], positions: ["junior", "middle", "senior"] },
+  { title: "Mobile Developer (Flutter, Dart)", skills: ["Flutter", "REST API", "Git"], positions: ["intern", "fresher", "junior", "middle"] },
+  { title: "iOS Engineer (Swift)", skills: ["iOS (Swift)", "REST API", "Git"], positions: ["fresher", "junior", "middle"] },
+  { title: "Android Engineer (Kotlin)", skills: ["Android (Kotlin)", "REST API", "Git"], positions: ["fresher", "junior", "middle"] },
+  { title: "Python Data Engineer", skills: ["Python", "SQL", "PostgreSQL", "Docker"], positions: ["fresher", "junior", "middle"] },
+  { title: "Senior Golang Engineer", skills: ["Golang", "PostgreSQL", "Docker", "Microservices"], positions: ["senior", "manager"] },
+  { title: "Automation QA/QC Engineer", skills: ["Unit Test", "Jest", "JavaScript", "CI/CD"], positions: ["intern", "fresher", "junior", "middle"] },
+  { title: "Lead Frontend Architect", skills: ["ReactJS", "NextJS", "TypeScript", "GraphQL"], positions: ["manager"] },
+  { title: "Software Engineer (.NET Core, C#)", skills: ["C#", ".NET Core", "PostgreSQL", "Docker"], positions: ["fresher", "junior", "middle", "senior"] },
+  { title: "Cloud Solutions Architect (GCP/AWS)", skills: ["AWS", "GCP", "Kubernetes", "Docker"], positions: ["senior", "manager"] },
+  { title: "Data Scientist / AI Engineer", skills: ["Python", "Machine Learning", "Deep Learning", "PyTorch", "TensorFlow"], positions: ["junior", "middle", "senior"] },
 ];
+
+// Khung lương USD thực tế theo từng cấp bậc tại thị trường IT Việt Nam
+const SALARY_RANGES_BY_POSITION = {
+  intern: { minBase: 250, minStep: 50, spread: 200 },
+  fresher: { minBase: 450, minStep: 100, spread: 350 },
+  junior: { minBase: 750, minStep: 150, spread: 450 },
+  middle: { minBase: 1300, minStep: 200, spread: 700 },
+  senior: { minBase: 2200, minStep: 300, spread: 1000 },
+  manager: { minBase: 3200, minStep: 400, spread: 1500 },
+};
 
 const SAMPLE_NAMES = [
   "Nguyễn Văn An", "Trần Thị Mai", "Lê Hoàng Long", "Phạm Minh Đức",
@@ -292,9 +302,10 @@ async function seedData() {
 
   for (let i = 0; i < jobCount; i++) {
     const employer = employers[i % employers.length];
-    const template = JOB_TEMPLATES[i % JOB_TEMPLATES.length];
-    const title = template.title;
     const position = positionKeys[i % positionKeys.length];
+    const matchingTemplates = JOB_TEMPLATES.filter((t) => t.positions.includes(position));
+    const template = matchingTemplates[i % matchingTemplates.length] || JOB_TEMPLATES[0];
+    const title = template.title;
     const workingForm = workingFormKeys[i % workingFormKeys.length];
 
     // Gán kỹ năng khớp chính xác với chuyên môn công việc
@@ -303,8 +314,9 @@ async function seedData() {
       .filter(Boolean)
       .map((sk) => ({ name: sk.name, slug: sk.slug }));
 
-    const minSal = 800 + (i % 10) * 200;
-    const maxSal = minSal + 500 + (i % 5) * 200;
+    const salCfg = SALARY_RANGES_BY_POSITION[position] || SALARY_RANGES_BY_POSITION.junior;
+    const minSal = salCfg.minBase + (i % 4) * salCfg.minStep;
+    const maxSal = minSal + salCfg.spread + (i % 3) * 100;
     const slug = isBigMode
       ? `${slugify(title)}-${i + 1}-${Math.random().toString(36).substring(2, 7)}`
       : slugify(title, true);

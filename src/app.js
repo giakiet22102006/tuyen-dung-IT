@@ -35,6 +35,14 @@ if (env.TRUST_PROXY) {
 // Security headers with Helmet
 app.use(
   helmet({
+    frameguard: { action: "deny" },
+    noSniff: true,
+    referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+    hsts: {
+      maxAge: 31536000,
+      includeSubDomains: true,
+      preload: true,
+    },
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
@@ -53,14 +61,17 @@ app.use(
         ],
         fontSrc: ["'self'", "https://cdnjs.cloudflare.com", "https://fonts.gstatic.com"],
         imgSrc: ["'self'", "data:", "blob:", "https:"],
+        connectSrc: ["'self'", "https://accounts.google.com", "https://oauth2.googleapis.com"],
+        formAction: ["'self'", "https://accounts.google.com"],
         frameSrc: [
           "'self'",
           "https://www.google.com",
           "https://maps.google.com",
           "https://*.google.com",
+          "https://accounts.google.com",
         ],
-        objectSrc: ["'self'"],
-        frameAncestors: ["'self'"],
+        objectSrc: ["'none'"],
+        frameAncestors: ["'none'"],
       },
     },
     crossOriginEmbedderPolicy: false,

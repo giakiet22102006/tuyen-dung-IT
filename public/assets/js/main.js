@@ -691,6 +691,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const submitBtn = document.getElementById("btnSubmitQuickApply");
 
     if (!modal) return;
+    if (modal.parentElement !== document.body) {
+      document.body.appendChild(modal);
+    }
 
     function openModal() {
       modal.classList.remove("hidden");

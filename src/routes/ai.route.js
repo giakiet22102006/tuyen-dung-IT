@@ -5,7 +5,11 @@ const aiController = require("../controllers/ai/ai.controller");
 const { requireEmployer, requireAdmin } = require("../middlewares/auth.middleware");
 const { doubleCsrfProtection } = require("../middlewares/csrf.middleware");
 const { uploadCvMiddleware } = require("../middlewares/upload.middleware");
+const { aiRateLimiter } = require("../middlewares/rateLimit.middleware");
 const asyncHandler = require("../utils/asyncHandler");
+
+// Chống spam & đốt quota AI cho toàn bộ endpoints /api/ai/*
+router.use(aiRateLimiter);
 
 // 1. Phân tích độ phù hợp CV (Công khai / Ứng viên)
 router.post("/match-cv", uploadCvMiddleware, doubleCsrfProtection, asyncHandler(aiController.postMatchCv));

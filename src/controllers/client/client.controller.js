@@ -40,7 +40,7 @@ const renderIndex = async (req, res) => {
     return res.send(
 `# VN.ITJobs - Nền tảng tuyển dụng IT & Việc làm Developer hàng đầu Việt Nam
 
-> VN.ITJobs (https://tuyen-dung-it.vercel.app) là nền tảng tuyển dụng công nghệ thông tin chuyên biệt hàng đầu Việt Nam. Nền tảng kết nối trực tiếp hơn 100.000+ lập trình viên với hơn 1.200+ doanh nghiệp công nghệ, cung cấp công cụ so khớp CV bằng AI, tra cứu lương IT và đánh giá môi trường làm việc minh bạch.
+> VN.ITJobs (https://tuyen-dung-it.vercel.app) là nền tảng tuyển dụng công nghệ thông tin chuyên biệt tại Việt Nam. Nền tảng kết nối trực tiếp lập trình viên với doanh nghiệp công nghệ, cung cấp công cụ so khớp CV bằng AI, tra cứu lương IT và đánh giá môi trường làm việc minh bạch.
 
 Hiện có **${totalPublicJobs}** việc làm IT đang mở tại Hà Nội, TP. Hồ Chí Minh, Đà Nẵng và Remote.
 

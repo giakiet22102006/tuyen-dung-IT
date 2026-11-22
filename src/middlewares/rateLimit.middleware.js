@@ -88,9 +88,35 @@ const apiRateLimiter = rateLimit({
   },
 });
 
+const aiRateLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10 phút
+  max: isTest ? 1000 : 12, // tối đa 12 lượt gọi AI mỗi 10 phút / IP hoặc session
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  validate: {
+    keyGeneratorIpFallback: false,
+  },
+  keyGenerator: (req) => {
+    const userId = req.user && req.user._id ? String(req.user._id) : "";
+    const sessionToken =
+      (req.cookies && (req.cookies.candidate_token || req.cookies.employer_token || req.cookies.admin_token)) || "";
+    const identity = userId || (sessionToken ? sessionToken.slice(-16) : "anon");
+    return `ai_${req.ip}_${identity}`;
+  },
+  handler: (req, res) => {
+    res.setHeader("Retry-After", 600);
+    return res.status(429).json({
+      success: false,
+      code: "AI_RATE_LIMITED",
+      message: "Bạn đã sử dụng tính năng AI quá nhiều lần trong thời gian ngắn. Vui lòng thử lại sau ít phút.",
+    });
+  },
+});
+
 module.exports = {
   loginRateLimiter,
   adminLoginRateLimiter,
   otpRateLimiter,
   apiRateLimiter,
+  aiRateLimiter,
 };

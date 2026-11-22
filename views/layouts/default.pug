@@ -145,5 +145,8 @@ html(lang="vi")
         //- Floating Support & Feedback Widget
         include ../partials/feedback-widget.pug
 
+        //- Root-level Modals (Portal outside <main> stacking context)
+        block modals
+
         script(src="/assets/js/main.js?v=2.6")
         script(src="/assets/js/ai-features.js?v=2.3")

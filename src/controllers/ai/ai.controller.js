@@ -1,5 +1,6 @@
 // src/controllers/ai/ai.controller.js
 const fs = require("fs");
+const mongoose = require("mongoose");
 const { Job, Application, Employer, Candidate } = require("../../models");
 const aiService = require("../../services/ai.service");
 const { getCVPath } = require("../../services/storage.service");
@@ -10,8 +11,15 @@ const { getCVPath } = require("../../services/storage.service");
 const postMatchCv = async (req, res) => {
   try {
     const { jobId, cvText: directCvText } = req.body;
-    if (!jobId) {
-      return res.status(400).json({ success: false, message: "Thiếu thông tin jobId." });
+    if (!jobId || !mongoose.Types.ObjectId.isValid(jobId)) {
+      return res.status(400).json({ success: false, message: "Mã việc làm (jobId) không hợp lệ." });
+    }
+
+    if (directCvText !== undefined && typeof directCvText !== "string") {
+      return res.status(400).json({ success: false, message: "Dữ liệu văn bản CV không hợp lệ." });
+    }
+    if (typeof directCvText === "string" && directCvText.trim().length > 20000) {
+      return res.status(400).json({ success: false, message: "Nội dung CV vượt quá giới hạn cho phép (tối đa 20.000 ký tự)." });
     }
 
     const job = await Job.findById(jobId).lean();
@@ -23,7 +31,7 @@ const postMatchCv = async (req, res) => {
     if (req.file && req.file.buffer) {
       const extracted = await aiService.extractTextFromPdf(req.file.buffer);
       if (extracted) {
-        cvText = extracted;
+        cvText = extracted.slice(0, 20000);
       }
     }
 
@@ -48,8 +56,8 @@ const postMatchCv = async (req, res) => {
 const postInterviewPrep = async (req, res) => {
   try {
     const { jobId } = req.body;
-    if (!jobId) {
-      return res.status(400).json({ success: false, message: "Thiếu thông tin jobId." });
+    if (!jobId || !mongoose.Types.ObjectId.isValid(jobId)) {
+      return res.status(400).json({ success: false, message: "Mã việc làm (jobId) không hợp lệ." });
     }
 
     const job = await Job.findById(jobId).lean();
@@ -71,12 +79,15 @@ const postInterviewPrep = async (req, res) => {
 const postGenerateJobDescription = async (req, res) => {
   try {
     const { title, position, skills, workingForm, city } = req.body;
-    if (!title) {
-      return res.status(400).json({ success: false, message: "Vui lòng nhập tên công việc để AI sinh mô tả." });
+    if (!title || typeof title !== "string" || title.trim().length < 3 || title.trim().length > 200) {
+      return res.status(400).json({ success: false, message: "Tiêu đề công việc phải từ 3 đến 200 ký tự." });
     }
 
     const skillsArray = skills
-      ? (Array.isArray(skills) ? skills : skills.split(",")).map((s) => ({ name: String(s).trim() })).filter((s) => s.name)
+      ? (Array.isArray(skills) ? skills : String(skills).split(","))
+          .slice(0, 20)
+          .map((s) => ({ name: String(s).trim().slice(0, 50) }))
+          .filter((s) => s.name)
       : [];
 
     const result = await aiService.generateJobDescription({

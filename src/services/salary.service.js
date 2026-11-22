@@ -1,6 +1,7 @@
 // src/services/salary.service.js
 const { Job } = require("../models");
 const { JOB_MODERATION } = require("../config/constants");
+const { getCityLabel } = require("../utils/labels");
 
 // Bảng dữ liệu chuẩn mức lương thị trường IT Việt Nam năm 2026 (Đơn vị: VNĐ/tháng)
 const SALARY_BENCHMARKS = {
@@ -61,6 +62,9 @@ async function getSalaryStats({ position = "junior", skill = "", city = "" }) {
     deletedAt: null,
   };
   if (position) filter.position = position;
+  if (["intern", "fresher", "junior"].includes(posKey)) {
+    filter.title = { $not: /\b(lead|manager|architect|senior|principal|head|director)\b/i };
+  }
   if (city) filter.city = city;
   if (skill) filter["skills.slug"] = { $regex: skill.toLowerCase().trim(), $options: "i" };
 
@@ -77,7 +81,7 @@ async function getSalaryStats({ position = "junior", skill = "", city = "" }) {
   return {
     position: base.label,
     skill: skill || "Tất cả công nghệ",
-    city: city || "Toàn quốc",
+    city: city ? getCityLabel(city) : "Toàn quốc",
     salaryMin: estMin,
     salaryMedian: estMedian,
     salaryMax: estMax,
