@@ -10,6 +10,7 @@ const flashMiddleware = require("./middlewares/flash.middleware");
 const { authenticateUser, authenticateAdmin } = require("./middlewares/auth.middleware");
 const localsMiddleware = require("./middlewares/locals.middleware");
 const { apiRateLimiter } = require("./middlewares/rateLimit.middleware");
+const isSafeRedirect = require("./utils/sanitizeRedirect");
 
 const clientRoutes = require("./routes/client.route");
 const candidateRoutes = require("./routes/candidate.route");
@@ -269,7 +270,23 @@ app.use((err, req, res, _next) => {
     if (req.flash) {
       req.flash("error", "Phiên làm việc đã hết hạn hoặc mã bảo mật (CSRF) không hợp lệ. Vui lòng thử lại.");
     }
-    return res.redirect(req.headers.referer || "/");
+    let safeBackUrl = "/";
+    const rawReferer = req.headers.referer;
+    if (rawReferer && typeof rawReferer === "string") {
+      try {
+        const parsedRef = new URL(rawReferer);
+        const currentHost = req.get("host");
+        if (currentHost && parsedRef.host === currentHost) {
+          const candidatePath = `${parsedRef.pathname}${parsedRef.search}`;
+          if (isSafeRedirect(candidatePath)) {
+            safeBackUrl = candidatePath;
+          }
+        }
+      } catch {
+        // Bỏ qua referer sai định dạng, dùng fallback "/"
+      }
+    }
+    return res.redirect(safeBackUrl);
   }
 
   console.error("Unhandled Error:", err);

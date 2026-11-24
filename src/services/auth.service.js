@@ -3,6 +3,9 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const env = require("../config/env");
 
+const JWT_ALGORITHM = "HS256";
+const MAX_JWT_LENGTH = 4096;
+
 /**
  * Tạo JWT token cho Candidate hoặc Employer
  * Payload gồm: id, role ('candidate' | 'employer'), tv (tokenVersion)
@@ -14,7 +17,10 @@ function signUserToken(user, role, extra = {}) {
     tv: extra.tv !== undefined ? extra.tv : (user.tokenVersion || 0),
     ...extra,
   };
-  return jwt.sign(payload, env.JWT_SECRET, { expiresIn: "7d" });
+  return jwt.sign(payload, env.JWT_SECRET, {
+    algorithm: JWT_ALGORITHM,
+    expiresIn: "7d",
+  });
 }
 
 /**
@@ -29,27 +35,36 @@ function signAdminToken(admin) {
       tv: admin.tokenVersion || 0,
     },
     env.ADMIN_JWT_SECRET,
-    { expiresIn: "1d" }
+    {
+      algorithm: JWT_ALGORITHM,
+      expiresIn: "1d",
+    }
   );
 }
 
 /**
- * Giải mã token của User
+ * Giải mã token của User (ghim cứng thuật toán HS256 chống algorithm confusion)
  */
 function verifyUserToken(token) {
+  if (!token || typeof token !== "string" || token.length > MAX_JWT_LENGTH) {
+    return null;
+  }
   try {
-    return jwt.verify(token, env.JWT_SECRET);
+    return jwt.verify(token, env.JWT_SECRET, { algorithms: [JWT_ALGORITHM] });
   } catch (err) {
     return null;
   }
 }
 
 /**
- * Giải mã token của Admin
+ * Giải mã token của Admin (ghim cứng thuật toán HS256 chống algorithm confusion)
  */
 function verifyAdminToken(token) {
+  if (!token || typeof token !== "string" || token.length > MAX_JWT_LENGTH) {
+    return null;
+  }
   try {
-    return jwt.verify(token, env.ADMIN_JWT_SECRET);
+    return jwt.verify(token, env.ADMIN_JWT_SECRET, { algorithms: [JWT_ALGORITHM] });
   } catch (err) {
     return null;
   }

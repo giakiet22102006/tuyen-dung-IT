@@ -1,23 +1,64 @@
 // src/middlewares/auth.middleware.js
+const mongoose = require("mongoose");
 const { verifyUserToken, verifyAdminToken } = require("../services/auth.service");
 const { Candidate, Employer, Admin } = require("../models");
 const { CANDIDATE_STATUS, EMPLOYER_STATUS, ADMIN_STATUS, ADMIN_ROLES } = require("../config/constants");
 const env = require("../config/env");
+const isSafeRedirect = require("../utils/sanitizeRedirect");
+
+const AUTH_COOKIE_CLEAR_OPTIONS = {
+  httpOnly: true,
+  secure: env.NODE_ENV === "production",
+  sameSite: "lax",
+  path: "/",
+};
+
+const CONFLICT_COOKIE_OPTIONS = {
+  ...AUTH_COOKIE_CLEAR_OPTIONS,
+  maxAge: 60 * 1000,
+};
+
+function clearCookieCleanly(req, res, cookieName) {
+  res.clearCookie(cookieName, AUTH_COOKIE_CLEAR_OPTIONS);
+  if (req.cookies && cookieName in req.cookies) {
+    delete req.cookies[cookieName];
+  }
+}
+
+function isApiRequest(req) {
+  return Boolean(
+    req.originalUrl?.startsWith("/api") ||
+      req.baseUrl?.startsWith("/api") ||
+      req.path?.startsWith("/api") ||
+      req.xhr ||
+      req.headers?.accept?.includes("json")
+  );
+}
+
+function getSafeReturnUrl(req) {
+  const candidateUrl = req.originalUrl || "/";
+  return encodeURIComponent(isSafeRedirect(candidateUrl) ? candidateUrl : "/");
+}
 
 /**
  * Middleware phân giải phiên đăng nhập từ cookie `itj_token` (Ứng viên / Nhà tuyển dụng)
- * Kiểm tra ngay lập tức status, deletedAt và tokenVersion trong DB
+ * Kiểm tra ngay lập tức ObjectId, role hợp lệ, status, deletedAt và tokenVersion trong DB
  */
 async function authenticateUser(req, res, next) {
   req.user = null;
   req.role = null;
 
-  const token = req.cookies.itj_token;
+  const token = req.cookies?.itj_token;
   if (!token) return next();
 
   const payload = verifyUserToken(token);
-  if (!payload || !payload.id || !payload.role) {
-    res.clearCookie("itj_token");
+  if (
+    !payload ||
+    !payload.id ||
+    !mongoose.Types.ObjectId.isValid(payload.id) ||
+    !["candidate", "employer"].includes(payload.role)
+  ) {
+    clearCookieCleanly(req, res, "itj_token");
     return next();
   }
 
@@ -29,15 +70,15 @@ async function authenticateUser(req, res, next) {
         .lean();
 
       if (!user || user.status === CANDIDATE_STATUS.BANNED) {
-        res.clearCookie("itj_token");
+        clearCookieCleanly(req, res, "itj_token");
         return next();
       }
 
       // Phát hiện xung đột phiên: tokenVersion không khớp do vừa đăng nhập ở máy khác
       if (user.tokenVersion !== payload.tv) {
-        res.clearCookie("itj_token");
+        clearCookieCleanly(req, res, "itj_token");
         req.sessionTerminatedByNewLogin = true;
-        res.cookie("itj_session_conflict", "1", { httpOnly: true, maxAge: 60 * 1000 });
+        res.cookie("itj_session_conflict", "1", CONFLICT_COOKIE_OPTIONS);
         return next();
       }
     } else if (payload.role === "employer") {
@@ -46,28 +87,32 @@ async function authenticateUser(req, res, next) {
         .lean();
 
       if (!user || user.status === EMPLOYER_STATUS.BANNED) {
-        res.clearCookie("itj_token");
+        clearCookieCleanly(req, res, "itj_token");
         return next();
       }
 
       if (payload.memberId) {
+        if (typeof payload.memberId !== "string" || !mongoose.Types.ObjectId.isValid(payload.memberId)) {
+          clearCookieCleanly(req, res, "itj_token");
+          return next();
+        }
         // Phiên đăng nhập riêng của Chuyên viên tuyển dụng
         const member = (user.teamMembers || []).find(
           (m) => m._id && m._id.toString() === payload.memberId
         );
         if (!member || (member.tokenVersion || 0) !== payload.tv) {
-          res.clearCookie("itj_token");
+          clearCookieCleanly(req, res, "itj_token");
           req.sessionTerminatedByNewLogin = true;
-          res.cookie("itj_session_conflict", "1", { httpOnly: true, maxAge: 60 * 1000 });
+          res.cookie("itj_session_conflict", "1", CONFLICT_COOKIE_OPTIONS);
           return next();
         }
         user.currentMember = member;
       } else {
         // Phát hiện xung đột phiên: tokenVersion không khớp do vừa đăng nhập ở máy khác
         if (user.tokenVersion !== payload.tv) {
-          res.clearCookie("itj_token");
+          clearCookieCleanly(req, res, "itj_token");
           req.sessionTerminatedByNewLogin = true;
-          res.cookie("itj_session_conflict", "1", { httpOnly: true, maxAge: 60 * 1000 });
+          res.cookie("itj_session_conflict", "1", CONFLICT_COOKIE_OPTIONS);
           return next();
         }
       }
@@ -89,14 +134,16 @@ async function authenticateUser(req, res, next) {
  */
 async function authenticateAdmin(req, res, next) {
   req.admin = null;
-  res.locals.currentAdmin = null;
+  if (res.locals) {
+    res.locals.currentAdmin = null;
+  }
 
-  const token = req.cookies.itj_admin_token;
+  const token = req.cookies?.itj_admin_token;
   if (!token) return next();
 
   const payload = verifyAdminToken(token);
-  if (!payload || !payload.id) {
-    res.clearCookie("itj_admin_token");
+  if (!payload || !payload.id || !mongoose.Types.ObjectId.isValid(payload.id)) {
+    clearCookieCleanly(req, res, "itj_admin_token");
     return next();
   }
 
@@ -109,20 +156,22 @@ async function authenticateAdmin(req, res, next) {
       .lean();
 
     if (!admin) {
-      res.clearCookie("itj_admin_token");
+      clearCookieCleanly(req, res, "itj_admin_token");
       return next();
     }
 
     // Phát hiện xung đột phiên Admin: tokenVersion không khớp do đăng nhập máy khác
     if (admin.tokenVersion !== payload.tv) {
-      res.clearCookie("itj_admin_token");
+      clearCookieCleanly(req, res, "itj_admin_token");
       req.adminSessionTerminatedByNewLogin = true;
-      res.cookie("itj_admin_session_conflict", "1", { httpOnly: true, maxAge: 60 * 1000 });
+      res.cookie("itj_admin_session_conflict", "1", CONFLICT_COOKIE_OPTIONS);
       return next();
     }
 
     req.admin = admin;
-    res.locals.currentAdmin = admin;
+    if (res.locals) {
+      res.locals.currentAdmin = admin;
+    }
   } catch (err) {
     console.error("Lỗi xác thực admin:", err);
   }
@@ -135,19 +184,24 @@ async function authenticateAdmin(req, res, next) {
  */
 function requireCandidate(req, res, next) {
   if (!req.user || req.role !== "candidate") {
-    const isApi = req.originalUrl?.startsWith("/api") || req.baseUrl?.startsWith("/api") || req.path?.startsWith("/api") || req.xhr || req.headers.accept?.includes("json");
-    if (isApi) {
-      return res.status(401).json({ success: false, message: "Phiên làm việc đã kết thúc do tài khoản vừa được đăng nhập trên thiết bị khác." });
+    const hasConflict = Boolean(req.sessionTerminatedByNewLogin || req.cookies?.itj_session_conflict);
+    if (hasConflict) {
+      clearCookieCleanly(req, res, "itj_session_conflict");
     }
-    if (req.sessionTerminatedByNewLogin || req.cookies?.itj_session_conflict) {
-      res.clearCookie("itj_session_conflict");
-      if (req.flash) {
-        req.flash("error", "⚠️ Phiên làm việc đã kết thúc do tài khoản của bạn vừa đăng nhập trên một thiết bị/trình duyệt khác. Nếu không phải bạn, hãy đổi mật khẩu ngay!");
-      }
+    if (isApiRequest(req)) {
+      return res.status(401).json({
+        success: false,
+        message: hasConflict
+          ? "Phiên làm việc đã kết thúc do tài khoản vừa được đăng nhập trên thiết bị khác."
+          : "Vui lòng đăng nhập với tư cách Ứng viên để tiếp tục.",
+      });
+    }
+    if (hasConflict && req.flash) {
+      req.flash("error", "⚠️ Phiên làm việc đã kết thúc do tài khoản của bạn vừa đăng nhập trên một thiết bị/trình duyệt khác. Nếu không phải bạn, hãy đổi mật khẩu ngay!");
     } else if (req.flash) {
       req.flash("error", "Vui lòng đăng nhập với tư cách Ứng viên để tiếp tục.");
     }
-    const returnUrl = encodeURIComponent(req.originalUrl);
+    const returnUrl = getSafeReturnUrl(req);
     return res.redirect(`/candidate/login?next=${returnUrl}`);
   }
   next();
@@ -158,19 +212,24 @@ function requireCandidate(req, res, next) {
  */
 function requireEmployer(req, res, next) {
   if (!req.user || req.role !== "employer") {
-    const isApi = req.originalUrl?.startsWith("/api") || req.baseUrl?.startsWith("/api") || req.path?.startsWith("/api") || req.xhr || req.headers.accept?.includes("json");
-    if (isApi) {
-      return res.status(401).json({ success: false, message: "Phiên làm việc đã kết thúc do tài khoản vừa được đăng nhập trên thiết bị khác." });
+    const hasConflict = Boolean(req.sessionTerminatedByNewLogin || req.cookies?.itj_session_conflict);
+    if (hasConflict) {
+      clearCookieCleanly(req, res, "itj_session_conflict");
     }
-    if (req.sessionTerminatedByNewLogin || req.cookies?.itj_session_conflict) {
-      res.clearCookie("itj_session_conflict");
-      if (req.flash) {
-        req.flash("error", "⚠️ Phiên làm việc đã kết thúc do tài khoản của bạn vừa đăng nhập trên một thiết bị/trình duyệt khác. Nếu không phải bạn, hãy đổi mật khẩu ngay!");
-      }
+    if (isApiRequest(req)) {
+      return res.status(401).json({
+        success: false,
+        message: hasConflict
+          ? "Phiên làm việc đã kết thúc do tài khoản vừa được đăng nhập trên thiết bị khác."
+          : "Vui lòng đăng nhập với tư cách Nhà tuyển dụng để tiếp tục.",
+      });
+    }
+    if (hasConflict && req.flash) {
+      req.flash("error", "⚠️ Phiên làm việc đã kết thúc do tài khoản của bạn vừa đăng nhập trên một thiết bị/trình duyệt khác. Nếu không phải bạn, hãy đổi mật khẩu ngay!");
     } else if (req.flash) {
       req.flash("error", "Vui lòng đăng nhập với tư cách Nhà tuyển dụng để tiếp tục.");
     }
-    const returnUrl = encodeURIComponent(req.originalUrl);
+    const returnUrl = getSafeReturnUrl(req);
     return res.redirect(`/employer/login?next=${returnUrl}`);
   }
   next();
@@ -181,20 +240,25 @@ function requireEmployer(req, res, next) {
  */
 function requireAdmin(req, res, next) {
   if (!req.admin) {
-    const isApi = req.originalUrl?.startsWith("/api") || req.baseUrl?.startsWith("/api") || req.path?.startsWith("/api") || req.xhr || req.headers.accept?.includes("json");
-    if (isApi) {
-      return res.status(401).json({ success: false, message: "Phiên quản trị viên đã bị hủy do tài khoản Admin vừa được đăng nhập trên thiết bị khác." });
+    const hasConflict = Boolean(req.adminSessionTerminatedByNewLogin || req.cookies?.itj_admin_session_conflict);
+    if (hasConflict) {
+      clearCookieCleanly(req, res, "itj_admin_session_conflict");
+    }
+    if (isApiRequest(req)) {
+      return res.status(401).json({
+        success: false,
+        message: hasConflict
+          ? "Phiên quản trị viên đã bị hủy do tài khoản Admin vừa được đăng nhập trên thiết bị khác."
+          : "Vui lòng đăng nhập vào trang Quản trị để tiếp tục.",
+      });
     }
     const adminPath = env.ADMIN_PATH || "admin";
-    if (req.adminSessionTerminatedByNewLogin || req.cookies?.itj_admin_session_conflict) {
-      res.clearCookie("itj_admin_session_conflict");
-      if (req.flash) {
-        req.flash("error", "⚠️ Phiên quản trị viên đã bị hủy do tài khoản Admin vừa được đăng nhập trên một thiết bị khác.");
-      }
+    if (hasConflict && req.flash) {
+      req.flash("error", "⚠️ Phiên quản trị viên đã bị hủy do tài khoản Admin vừa được đăng nhập trên một thiết bị khác.");
     } else if (req.flash) {
       req.flash("error", "Vui lòng đăng nhập vào trang Quản trị.");
     }
-    const returnUrl = encodeURIComponent(req.originalUrl);
+    const returnUrl = getSafeReturnUrl(req);
     return res.redirect(`/${adminPath}/login?next=${returnUrl}`);
   }
   next();
@@ -204,11 +268,28 @@ function requireAdmin(req, res, next) {
  * Bắt buộc quyền Superadmin
  */
 function requireSuperAdmin(req, res, next) {
-  if (!req.admin || req.admin.role !== ADMIN_ROLES.SUPERADMIN) {
+  const adminPath = env.ADMIN_PATH || "admin";
+  if (!req.admin) {
+    if (isApiRequest(req)) {
+      return res.status(401).json({
+        success: false,
+        message: "Vui lòng đăng nhập vào trang Quản trị để tiếp tục.",
+      });
+    }
+    const returnUrl = getSafeReturnUrl(req);
+    return res.redirect(`/${adminPath}/login?next=${returnUrl}`);
+  }
+
+  if (req.admin.role !== ADMIN_ROLES.SUPERADMIN) {
+    if (isApiRequest(req)) {
+      return res.status(403).json({
+        success: false,
+        message: "Chỉ Superadmin mới có quyền thực hiện thao tác này.",
+      });
+    }
     if (req.flash) {
       req.flash("error", "Chỉ Superadmin mới có quyền thực hiện thao tác này.");
     }
-    const adminPath = env.ADMIN_PATH || "admin";
     return res.redirect(`/${adminPath}`);
   }
   next();

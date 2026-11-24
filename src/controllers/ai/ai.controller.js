@@ -3,7 +3,7 @@ const fs = require("fs");
 const mongoose = require("mongoose");
 const { Job, Application, Employer, Candidate } = require("../../models");
 const aiService = require("../../services/ai.service");
-const { getCVPath } = require("../../services/storage.service");
+const { getCVPath, checkPdf } = require("../../services/storage.service");
 
 /**
  * 1. AI CV Match & Gap Analysis (Candidate / Public)
@@ -29,6 +29,13 @@ const postMatchCv = async (req, res) => {
 
     let cvText = directCvText || "";
     if (req.file && req.file.buffer) {
+      const isValidPdf = await checkPdf(req.file.buffer);
+      if (!isValidPdf) {
+        return res.status(400).json({
+          success: false,
+          message: "File CV không đúng định dạng PDF hợp lệ hoặc chứa nội dung không an toàn.",
+        });
+      }
       const extracted = await aiService.extractTextFromPdf(req.file.buffer);
       if (extracted) {
         cvText = extracted.slice(0, 20000);
