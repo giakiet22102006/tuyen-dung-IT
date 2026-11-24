@@ -98,10 +98,24 @@ app.get("/healthz", (req, res) => {
   return res.status(200).json({ status: "ok" });
 });
 
-app.get("/health", (req, res) => {
+const { connectDB } = require("./config/db");
+
+app.get("/health", async (req, res) => {
+  const shuttingDown = Boolean(req.app.locals.isShuttingDown);
+
+  // Trên Vercel Serverless không chạy server.js boot, nên cold-start instance
+  // chưa lazy-connect MongoDB cho tới request đầu tiên. Chủ động kết nối nhanh
+  // để readiness probe phản ánh đúng sức khỏe DB Atlas thay vì báo 503 giả.
+  if (process.env.VERCEL && !shuttingDown && mongoose.connection.readyState !== 1) {
+    try {
+      await connectDB();
+    } catch {
+      // Giữ nguyên readyState hiện tại để trả về 503 degraded JSON sạch
+    }
+  }
+
   const dbState = mongoose.connection.readyState;
   const dbLabel = DB_READY_STATES[dbState] || "unknown";
-  const shuttingDown = Boolean(req.app.locals.isShuttingDown);
   const isReady = !shuttingDown && dbState === 1;
 
   const status = shuttingDown ? "shutting_down" : isReady ? "ok" : "degraded";
@@ -116,7 +130,6 @@ app.get("/health", (req, res) => {
 });
 
 // Database connection middleware (cho serverless & standard)
-const { connectDB } = require("./config/db");
 app.use(async (req, res, next) => {
   // Bỏ qua tài nguyên tĩnh & tệp định danh máy đọc
   if (
