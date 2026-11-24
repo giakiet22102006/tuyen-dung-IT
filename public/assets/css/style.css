@@ -146,8 +146,20 @@ footer.site-footer {
     background: transparent;
 }
 
-.menu ul li:hover > ul {
+.menu ul li:hover > ul,
+.menu ul li:focus-within > ul,
+.menu ul li.is-open > ul {
     display: flex;
+}
+
+/* Nút mở User Dropdown (hỗ trợ bàn phím Tab / click toggle) */
+.menu ul li > button.user-dropdown-trigger {
+    border: 0;
+    font-family: inherit;
+}
+.menu ul li > button.user-dropdown-trigger:focus-visible {
+    outline: 2px solid #60A5FA;
+    outline-offset: 2px;
 }
 
 .menu ul li ul li {

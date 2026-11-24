@@ -7,6 +7,20 @@ div(class="bg-[#000065] py-[28px] sm:py-[40px]")
             else
                 | Cơ hội việc làm IT tại Hà Nội, TP.HCM, Đà Nẵng và Remote. Tích hợp AI Matching so khớp CV, tra cứu lương thị trường và kết nối trực tiếp với nhà tuyển dụng công nghệ.
         form(action="/search" method="GET" class="grid grid-cols-1 md:grid-cols-[220px_minmax(0,1fr)_180px] gap-[10px] sm:gap-[12px] relative" id="headerSearchForm")
+            //- Giữ lại bộ lọc đang áp dụng khi tìm lại từ thanh search (QA-M05)
+            if locals.selectedSkills && locals.selectedSkills.length
+                each sk in locals.selectedSkills
+                    input(type="hidden" name="skill" value=sk)
+            else if locals.selectedSkill
+                input(type="hidden" name="skill" value=locals.selectedSkill)
+            if locals.selectedCompany
+                input(type="hidden" name="company" value=locals.selectedCompany)
+            if locals.selectedBenefit
+                input(type="hidden" name="benefit" value=locals.selectedBenefit)
+            if locals.selectedPosition
+                input(type="hidden" name="position" value=locals.selectedPosition)
+            if locals.selectedWorkingForm
+                input(type="hidden" name="workingForm" value=locals.selectedWorkingForm)
             div(class="relative w-full")
                 select(name="city" aria-label="Chọn thành phố" class="w-full h-[48px] sm:h-[52px] rounded-[6px] bg-white font-[500] text-[15px] sm:text-[16px] px-[14px] py-0 leading-[48px] sm:leading-[52px] text-[#121212] border border-transparent cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0088FF]")
                     option(value="") Tất cả thành phố

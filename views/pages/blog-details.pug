@@ -12,9 +12,14 @@ block main
                 span /
                 a(href="/blog" class="hover:text-[#0088FF]") Cẩm Nang IT
                 span /
-                a(href=`/blog?category=${article.category}` class="hover:text-[#0088FF]") #{categoryLabel}
+                a(href=`/blog?category=${encodeURIComponent(article.category)}` class="hover:text-[#0088FF]") #{categoryLabel}
                 span /
                 span(class="text-gray-800 font-[500] truncate max-w-[300px]") #{article.title}
+
+            if isDraftPreview
+                div(class="mb-[20px] p-[14px] rounded-[10px] bg-amber-50 border border-amber-300 text-amber-900 text-[13.5px] flex items-center gap-[10px]")
+                    <i class="fa-solid fa-eye-slash text-amber-600"></i>
+                    span Đây là bản <strong>xem trước (chưa xuất bản)</strong> dành cho Quản trị viên. Khách truy cập sẽ chưa nhìn thấy bài viết này.
 
             div(class="grid grid-cols-1 lg:grid-cols-3 gap-[30px]")
                 //- Cột trái: Nội dung bài viết (2 Cột rộng)
@@ -85,7 +90,21 @@ block main
                                 div(class="w-[64px] h-[64px] rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto text-[28px] shadow-xs")
                                     <i class="fa-solid fa-lock"></i>
                                 div
-                                    if requiredRole === 'candidate'
+                                    if roleMismatch
+                                        span(class="inline-block bg-rose-100 text-rose-800 text-[11px] font-[700] px-[12px] py-[4px] rounded-full uppercase tracking-wider mb-[10px]")
+                                            <i class="fa-solid fa-user-lock mr-[4px]"></i> Sai loại tài khoản
+                                        h3(class="text-[20px] sm:text-[23px] font-[800] text-gray-900 leading-snug")
+                                            | Bài viết này chỉ dành cho tài khoản #{requiredRole === 'candidate' ? 'Ứng viên IT' : 'Nhà tuyển dụng'}
+                                        p(class="text-[14px] text-gray-600 mt-[8px] leading-relaxed")
+                                            | Bạn đang đăng nhập bằng tài khoản #{currentRole === 'candidate' ? 'Ứng viên' : 'Nhà tuyển dụng'}. Hãy đăng xuất rồi đăng nhập bằng tài khoản #{requiredRole === 'candidate' ? 'Ứng viên' : 'Nhà tuyển dụng'} để đọc toàn bộ nội dung.
+                                        div(class="flex flex-col sm:flex-row items-center justify-center gap-[12px] pt-[14px]")
+                                            form(action=`/${currentRole}/logout` method="POST" class="m-0 w-full sm:w-auto")
+                                                input(type="hidden" name="_csrf" value=csrfToken)
+                                                button(type="submit" class="w-full sm:w-auto bg-gray-900 hover:bg-gray-800 text-white font-[700] text-[14px] px-[24px] py-[11px] rounded-[8px] shadow-sm transition cursor-pointer")
+                                                    <i class="fa-solid fa-right-from-bracket mr-[6px]"></i> Đăng xuất tài khoản hiện tại
+                                            a(href="/blog" class="w-full sm:w-auto bg-white hover:bg-gray-50 text-gray-800 border border-gray-300 font-[600] text-[14px] px-[20px] py-[11px] rounded-[8px] transition flex items-center justify-center gap-[8px]")
+                                                span Quay lại Cẩm nang
+                                    else if requiredRole === 'candidate'
                                         span(class="inline-block bg-emerald-100 text-emerald-800 text-[11px] font-[700] px-[12px] py-[4px] rounded-full uppercase tracking-wider mb-[10px]")
                                             <i class="fa-solid fa-code mr-[4px]"></i> Cẩm Nang Độc Quyền Cho Ứng Viên IT
                                         h3(class="text-[20px] sm:text-[23px] font-[800] text-gray-900 leading-snug")

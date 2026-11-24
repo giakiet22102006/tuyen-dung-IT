@@ -1,0 +1,17 @@
+extends ../layouts/default.pug
+
+block title
+    title 500 - Lỗi máy chủ nội bộ | VN.ITJobs
+
+block main
+    div(class="py-[60px] sm:py-[100px] flex-1 flex items-center justify-center bg-gray-50")
+        div(class="max-w-[600px] mx-auto px-4 text-center")
+            div(class="font-[900] text-[72px] sm:text-[96px] text-[#EA1E30] leading-none mb-[16px]") 500
+            h1(class="font-[800] text-[24px] sm:text-[32px] text-[#121212] mb-[12px]") Hệ thống đang gặp sự cố
+            p(class="text-gray-600 text-[15px] sm:text-[16px] mb-[20px]") Rất tiếc, đã có lỗi xảy ra phía máy chủ VN.ITJobs. Đội ngũ kỹ thuật đã được ghi nhận sự cố, bạn vui lòng thử tải lại trang sau ít phút.
+            if locals.message
+                pre(class="text-left text-[12px] text-red-700 bg-red-50 border border-red-200 rounded-[8px] p-[12px] mb-[20px] overflow-x-auto whitespace-pre-wrap break-words") #{locals.message}
+            div(class="flex justify-center gap-[12px] flex-wrap")
+                a(href="/" class="px-[24px] py-[12px] bg-[#0088FF] hover:bg-[#0070d6] text-white font-[600] rounded-[8px] transition shadow-md") Quay về Trang chủ
+                a(href="/search" class="px-[24px] py-[12px] bg-white border border-gray-300 hover:border-gray-400 text-gray-800 font-[600] rounded-[8px] transition") Tìm việc làm IT
+                a(href="/contact" class="px-[24px] py-[12px] bg-white border border-gray-300 hover:border-gray-400 text-gray-800 font-[600] rounded-[8px] transition") Báo sự cố

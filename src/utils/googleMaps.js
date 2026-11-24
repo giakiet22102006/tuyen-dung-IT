@@ -86,8 +86,9 @@ function getCompanyMapData(company, job = null) {
   const customMapUrl = (company.googleMapsUrl || "").trim();
 
   // Tra cứu tên thành phố hiển thị tiếng Việt (Hà Nội, TP. Hồ Chí Minh, Đà Nẵng...)
+  // "khac" (tỉnh/thành khác) không phải địa danh thật => không nối ", Khác" vào địa chỉ
   const cityObj = CITIES.find((c) => c.value === cityCode);
-  const cityLabel = cityObj ? cityObj.label : cityCode;
+  const cityLabel = cityCode === "khac" ? "" : cityObj ? cityObj.label : cityCode;
 
   let embedUrl = "";
   let searchUrl = "";

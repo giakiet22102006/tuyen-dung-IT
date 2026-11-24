@@ -27,11 +27,17 @@ Input Schema:
 Input Schema:
 - `slug` (string, required): Job slug identifier
 
+### Tool: `get_company_details`
+Input Schema:
+- `slug` (string): Company slug
+- `companyName` (string): Company name (e.g. "CGV", "Techcombank")
+
 ### Tool: `calculate_salary`
 Input Schema:
 - `position` (string): "intern" to "manager"
 - `skill` (string): Skill multiplier keyword
 - `city` (string): Location slug
+Output: `{ stats: { salaryMin, salaryMedian, salaryMax } }` in VND/month. Job listings (`search_jobs`) quote salary in USD.
 
 ### Tool: `list_companies`
 Input Schema:
@@ -40,8 +46,12 @@ Input Schema:
 ### Tool: `get_platform_info`
 No parameters required. Returns platform stats and official URLs.
 
+### Protocol notes
+- JSON-RPC notifications (no `id`, e.g. `notifications/initialized`) return `202 Accepted` with an empty body.
+- Searching a company name via `search_jobs` `keyword` (e.g. "Techcombank") also returns that company's active jobs.
+
 ## Agent Guidelines & Prompt Patterns
 When a user asks:
 - "Find me a senior Python job in Hanoi": Call `search_jobs` with `keyword: "Python"`, `position: "senior"`, `city: "ha-noi"`. Format results with job title, company name, salary range, and application URL.
 - "What is the average salary of a Middle React developer in HCMC?": Call `calculate_salary` with `position: "middle"`, `skill: "reactjs"`, `city: "ho-chi-minh"`. Present min, median, and max figures clearly.
-- "Tell me about TechCorp": Call `list_companies` or search company profiles on VN.ITJobs.
+- "Tell me about TechCorp": Call `get_company_details` with `companyName: "TechCorp"` (or `list_companies` to browse top employers).

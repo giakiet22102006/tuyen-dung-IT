@@ -64,9 +64,14 @@ async function handleJsonRpc(reqBody) {
     };
   }
 
+  // JSON-RPC notification (không có id) => không trả body, caller trả 202 Accepted
+  if (method.startsWith("notifications/") && id === undefined) {
+    return null;
+  }
   if (method === "notifications/initialized") {
     return {
       jsonrpc: "2.0",
+      id: id !== undefined ? id : null,
       result: {},
     };
   }
@@ -174,11 +179,15 @@ const postMcp = async (req, res) => {
         id: null,
       });
     }
-    const responses = await Promise.all(body.map((item) => handleJsonRpc(item)));
+    const results = await Promise.all(body.map((item) => handleJsonRpc(item)));
+    const responses = results.filter((r) => r !== null);
+    // Batch chỉ gồm notification => 202 Accepted, không body
+    if (responses.length === 0) return res.status(202).end();
     return res.json(responses);
   }
 
   const response = await handleJsonRpc(body);
+  if (response === null) return res.status(202).end();
   return res.json(response);
 };
 

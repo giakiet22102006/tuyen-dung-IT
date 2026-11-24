@@ -5,6 +5,8 @@ block title
     title #{title || "Kết quả tìm kiếm"}
 
 block main
+    //- Xây URL /search giữ nguyên toàn bộ bộ lọc (skill, company, benefit...), mã hóa bằng encodeURIComponent (QA-B06, QA-M05)
+    - const buildSearchUrl = (overrides = {}) => { const base = { keyword: keyword, city: selectedCity, position: selectedPosition, workingForm: selectedWorkingForm, benefit: selectedBenefit, company: selectedCompany, exact: exact ? "true" : "" }; const merged = Object.assign({}, base, overrides); const parts = []; Object.keys(merged).forEach((k) => { const v = merged[k]; if (v === undefined || v === null || v === "") return; parts.push(k + "=" + encodeURIComponent(v)); }); const skillList = Object.prototype.hasOwnProperty.call(overrides, "skill") ? (overrides.skill ? [overrides.skill] : []) : (selectedSkills || []); skillList.forEach((s) => parts.push("skill=" + encodeURIComponent(s))); return "/search" + (parts.length ? "?" + parts.join("&") : ""); }
     //- Section 1
     include ../partials/section1.pug
     //- End Section 1
@@ -25,14 +27,14 @@ block main
                         div(class="mt-[6px] flex items-center gap-[10px] text-[13px] text-[#717171] flex-wrap")
                             span Có phải bạn muốn tìm "#{suggestedKeyword}"?
                             span •
-                            a(href=`/search?keyword=${encodeURIComponent(originalKeyword)}&exact=true&city=${selectedCity || ''}&position=${selectedPosition || ''}&workingForm=${selectedWorkingForm || ''}` class="text-[#0088FF] hover:underline font-[500]") Vẫn tìm kiếm chính xác "#{originalKeyword}"
+                            a(href=buildSearchUrl({ keyword: originalKeyword, exact: 'true' }) class="text-[#0088FF] hover:underline font-[500]") Vẫn tìm kiếm chính xác "#{originalKeyword}"
 
             //- TH2: Có gợi ý "Có phải bạn muốn tìm..." (Did You Mean)
             else if didYouMean && didYouMean.toLowerCase() !== (keyword || '').toLowerCase().trim()
                 div(class="bg-amber-50 border border-amber-200 rounded-[8px] py-[12px] px-[16px] mb-[25px] flex items-center gap-[10px] shadow-sm")
                     i(class="fa-regular fa-lightbulb text-amber-500 text-[18px]")
                     span(class="text-[#414042] text-[14px]") Có phải bạn muốn tìm: 
-                    a(href=`/search?keyword=${encodeURIComponent(didYouMean)}&city=${selectedCity || ''}&position=${selectedPosition || ''}&workingForm=${selectedWorkingForm || ''}` class="font-[700] text-[#0088FF] hover:underline text-[14px]") #{didYouMean}
+                    a(href=buildSearchUrl({ keyword: didYouMean, exact: '' }) class="font-[700] text-[#0088FF] hover:underline text-[14px]") #{didYouMean}
                     span(class="text-[#717171] text-[13px]") ?
 
             h2(class="font-[600] text-[20px] sm:text-[26px] text-[#121212] mb-[20px] sm:mb-[24px] tabular-nums") !{searchTitle || "Danh sách việc làm"}
@@ -74,7 +76,7 @@ block main
                 span(class="text-[12px] font-[500] text-gray-600 mr-[4px]") Đãi ngộ phổ biến:
                 each b in (benefits || [])
                     - var isBenActive = (selectedBenefit === b.value)
-                    a(href=`/search?keyword=${encodeURIComponent(keyword || '')}&city=${selectedCity || ''}&position=${selectedPosition || ''}&workingForm=${selectedWorkingForm || ''}&benefit=${isBenActive ? '' : b.value}` class=`inline-flex items-center gap-[4px] px-[10px] py-[4px] rounded-full text-[12px] font-[500] transition-colors border ${isBenActive ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-gray-700 border-gray-200 hover:border-emerald-400 hover:text-emerald-700'}`)
+                    a(href=buildSearchUrl({ benefit: isBenActive ? '' : b.value }) class=`inline-flex items-center gap-[4px] px-[10px] py-[4px] rounded-full text-[12px] font-[500] transition-colors border ${isBenActive ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-gray-700 border-gray-200 hover:border-emerald-400 hover:text-emerald-700'}`)
                         <i class="#{b.icon} text-[11px]"></i>
                         span #{b.shortLabel || b.label}
 
@@ -89,7 +91,7 @@ block main
                         if didYouMean
                             p(class="text-[#414042] text-[15px] mt-[4px]")
                                 span Có phải bạn muốn tìm: 
-                                a(href=`/search?keyword=${encodeURIComponent(didYouMean)}&city=${selectedCity || ''}` class="text-[#0088FF] font-[600] underline hover:text-[#0066cc]") #{didYouMean}
+                                a(href=buildSearchUrl({ keyword: didYouMean, exact: '' }) class="text-[#0088FF] font-[600] underline hover:text-[#0066cc]") #{didYouMean}
                                 span ?
                         p(class="text-[#717171] text-[14px] mt-[10px]") Thử kiểm tra lại lỗi chính tả hoặc bấm chọn các kỹ năng phổ biến bên dưới:
                         div(class="flex justify-center gap-[8px] mt-[16px] flex-wrap")
@@ -114,8 +116,17 @@ block main
                         | Nhận thông báo
 
             if pagination && pagination.totalPages > 1
-                div(class="relative inline-block")
-                    select(aria-label="Chọn trang" class="pagination-select border border-[#CBD5E1] bg-white rounded-[8px] py-[10px] px-[14px] font-[500] text-[15px] text-[#334155] cursor-pointer focus:border-[#0088FF] focus:outline-none tabular-nums") 
-                        - for (let i = 1; i <= pagination.totalPages; i++)
-                            option(value=i selected=(pagination.currentPage === i)) Trang #{i}
+                nav(class="flex items-center justify-center gap-[8px] flex-wrap" aria-label="Phân trang kết quả tìm kiếm")
+                    if pagination.hasPrevPage
+                        a(href=buildSearchUrl({ page: pagination.prevPage }) rel="prev" class="px-[14px] py-[8px] rounded-[8px] border border-[#DEDEDE] bg-white hover:border-[#0088FF] hover:text-[#0088FF] text-[#414042] text-[14px] font-[500] transition-colors")
+                            i(class="fa-solid fa-chevron-left text-[12px] mr-[4px]")
+                            | Trước
+                    div(class="relative inline-block")
+                        select(aria-label="Chọn trang" class="pagination-select border border-[#CBD5E1] bg-white rounded-[8px] py-[8px] px-[14px] font-[500] text-[14px] text-[#334155] cursor-pointer focus:border-[#0088FF] focus:outline-none tabular-nums") 
+                            - for (let i = 1; i <= pagination.totalPages; i++)
+                                option(value=i selected=(pagination.currentPage === i)) Trang #{i} / #{pagination.totalPages}
+                    if pagination.hasNextPage
+                        a(href=buildSearchUrl({ page: pagination.nextPage }) rel="next" class="px-[14px] py-[8px] rounded-[8px] border border-[#DEDEDE] bg-white hover:border-[#0088FF] hover:text-[#0088FF] text-[#414042] text-[14px] font-[500] transition-colors")
+                            | Sau
+                            i(class="fa-solid fa-chevron-right text-[12px] ml-[4px]")
     //- Hết kết quả tìm kiếm

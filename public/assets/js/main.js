@@ -159,7 +159,35 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // 2.1 Xử lý Bookmark / Lưu việc làm yêu thích (AJAX Toggle)
+  // 2.1 Xử lý Bookmark / Lưu việc làm yêu thích (AJAX Toggle + đồng bộ mọi nút cùng job)
+  const applyBookmarkState = (jobId, saved) => {
+    document.querySelectorAll(".btn-bookmark-job").forEach((b) => {
+      if (b.getAttribute("data-job-id") !== jobId) return;
+      const icon = b.querySelector("i");
+      const textSpan = b.querySelector("span");
+      if (icon) {
+        icon.classList.toggle("fa-solid", saved);
+        icon.classList.toggle("fa-regular", !saved);
+        icon.classList.toggle("text-red-500", saved);
+      }
+      if (textSpan) {
+        textSpan.textContent = saved ? "Đã lưu" : "Lưu tin";
+        textSpan.classList.toggle("text-red-600", saved);
+      }
+    });
+  };
+
+  const redirectToCandidateLogin = (message) => {
+    if (typeof window.showToast === "function") {
+      window.showToast(message, "warning");
+    }
+    const next = encodeURIComponent(window.location.pathname + window.location.search);
+    setTimeout(() => {
+      window.location.href = "/candidate/login?next=" + next;
+    }, 1200);
+  };
+  window.itjRedirectToCandidateLogin = redirectToCandidateLogin;
+
   document.querySelectorAll(".btn-bookmark-job").forEach((btn) => {
     btn.addEventListener("click", async (e) => {
       e.preventDefault();
@@ -173,63 +201,41 @@ document.addEventListener("DOMContentLoaded", () => {
 
       try {
         btn.disabled = true;
-        const res = await fetch(`/candidate/saved-jobs/${jobId}/toggle`, {
+        const res = await fetch(`/candidate/saved-jobs/${encodeURIComponent(jobId)}/toggle`, {
           method: "POST",
+          credentials: "same-origin",
           headers: {
             "Content-Type": "application/json",
+            Accept: "application/json",
+            "X-Requested-With": "XMLHttpRequest",
             "x-csrf-token": csrfToken,
           },
         });
 
-        if (res.status === 401 || res.status === 403) {
-          if (typeof window.showToast === "function") {
-            window.showToast("Bạn cần đăng nhập tài khoản Ứng viên để lưu việc làm.", "warning");
-          }
-          setTimeout(() => {
-            if (confirm("Chuyển đến trang Đăng nhập để lưu việc làm này?")) {
-              window.location.href = `/candidate/login?next=${encodeURIComponent(window.location.pathname)}`;
-            }
-          }, 300);
+        // Chưa đăng nhập / hết phiên / sai vai trò: báo rõ và chuyển tới trang đăng nhập Ứng viên
+        const contentType = res.headers.get("content-type") || "";
+        if (res.status === 401 || res.status === 403 || res.redirected || !contentType.includes("application/json")) {
+          redirectToCandidateLogin("Bạn cần đăng nhập tài khoản Ứng viên để lưu việc làm.");
           return;
         }
 
         const data = await res.json();
         if (data.success) {
-          const icon = btn.querySelector("i");
-          const textSpan = btn.querySelector("span");
-
-          if (data.saved) {
-            if (icon) {
-              icon.className = "fa-solid fa-bookmark text-red-500 text-[14px]";
-            }
-            if (textSpan) {
-              textSpan.textContent = "Đã lưu";
-              textSpan.className = "hidden sm:inline text-red-600";
-            }
-            if (typeof window.showToast === "function") {
-              window.showToast("⭐ Đã lưu việc làm vào danh sách yêu thích của bạn!", "success");
-            }
-          } else {
-            if (icon) {
-              icon.className = "fa-regular fa-bookmark text-[14px]";
-            }
-            if (textSpan) {
-              textSpan.textContent = "Lưu tin";
-              textSpan.className = "hidden sm:inline";
-            }
-            if (typeof window.showToast === "function") {
-              window.showToast("Đã xóa việc làm khỏi danh sách đã lưu.", "info");
-            }
-          }
-        } else {
+          applyBookmarkState(jobId, Boolean(data.saved));
           if (typeof window.showToast === "function") {
-            window.showToast(data.message || "Không thể thực hiện thao tác lúc này.", "error");
-          } else {
-            alert(data.message || "Không thể thực hiện thao tác lúc này.");
+            window.showToast(
+              data.saved ? "⭐ Đã lưu việc làm vào danh sách yêu thích của bạn!" : "Đã xóa việc làm khỏi danh sách đã lưu.",
+              data.saved ? "success" : "info"
+            );
           }
+        } else if (typeof window.showToast === "function") {
+          window.showToast(data.message || "Không thể thực hiện thao tác lúc này.", "error");
         }
       } catch (err) {
         console.error("Lỗi khi lưu việc làm:", err);
+        if (typeof window.showToast === "function") {
+          window.showToast("Mất kết nối mạng, vui lòng thử lại.", "error");
+        }
       } finally {
         btn.disabled = false;
       }
@@ -252,6 +258,27 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
+
+  // 3.1 User dropdown (desktop): click để mở/đóng, Escape & click ngoài để đóng; :focus-within lo phần bàn phím
+  document.querySelectorAll(".user-dropdown-trigger").forEach((trigger) => {
+    const item = trigger.closest("li");
+    if (!item) return;
+    const setOpen = (open) => {
+      item.classList.toggle("is-open", open);
+      trigger.setAttribute("aria-expanded", open ? "true" : "false");
+      if (!open) trigger.blur();
+    };
+    trigger.addEventListener("click", (e) => {
+      e.stopPropagation();
+      setOpen(!item.classList.contains("is-open"));
+    });
+    document.addEventListener("click", (e) => {
+      if (!item.contains(e.target)) setOpen(false);
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && item.classList.contains("is-open")) setOpen(false);
+    });
+  });
 
   // 4. Live Search Suggestions & Typo Tolerance ("Có phải bạn muốn tìm...")
   const searchInput = document.getElementById("searchKeywordInput");
@@ -537,7 +564,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const loadNotifications = async () => {
       try {
-        const res = await fetch("/api/notifications");
+        const res = await fetch("/api/notifications", { headers: { Accept: "application/json", "X-Requested-With": "XMLHttpRequest" } });
         if (!res.ok) return;
         const data = await res.json();
         if (!data.success) return;
@@ -588,9 +615,11 @@ document.addEventListener("DOMContentLoaded", () => {
           item.addEventListener("click", async (e) => {
             const notifId = item.getAttribute("data-id");
             if (notifId) {
-              fetch(`/api/notifications/${notifId}/read`, {
+              // keepalive: request vẫn hoàn tất khi trình duyệt chuyển trang ngay sau click
+              fetch(`/api/notifications/${encodeURIComponent(notifId)}/read`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json", "x-csrf-token": csrfToken },
+                keepalive: true,
+                headers: { "Content-Type": "application/json", Accept: "application/json", "X-Requested-With": "XMLHttpRequest", "x-csrf-token": csrfToken },
               }).catch(() => {});
             }
           });
@@ -626,7 +655,8 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
           await fetch("/api/notifications/read-all", {
             method: "POST",
-            headers: { "Content-Type": "application/json", "x-csrf-token": csrfToken },
+            keepalive: true,
+            headers: { "Content-Type": "application/json", Accept: "application/json", "X-Requested-With": "XMLHttpRequest", "x-csrf-token": csrfToken },
           });
           notifBadge.classList.add("hidden");
           loadNotifications();
@@ -635,9 +665,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Polling định kỳ mỗi 60s để nhận thông báo mới
+    // Không polling khi tab đang ẩn (tiết kiệm request & tránh ghi đè cookie CSRF vô ích)
     setInterval(() => {
-      fetch("/api/notifications")
-        .then((r) => r.json())
+      if (document.hidden) return;
+      fetch("/api/notifications", { headers: { Accept: "application/json", "X-Requested-With": "XMLHttpRequest" } })
+        .then((r) => (r.ok ? r.json() : { success: false }))
         .then((d) => {
           if (d.success && notifBadge) {
             if (d.unreadCount > 0) {

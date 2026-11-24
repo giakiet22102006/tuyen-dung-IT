@@ -75,19 +75,19 @@ div(id="modalFeedbackWidget" class="fixed inset-0 z-[9010] hidden items-center j
 
                 div
                     label(for="fbTitle" class="block text-[12px] font-[600] text-gray-700 mb-[3px]") Tiêu đề
-                    input(type="text" id="fbTitle" name="title" placeholder="VD: Lỗi tải file CV, gợi ý thêm bộ lọc..." class="w-full border border-gray-300 rounded-[6px] px-[10px] py-[7px] text-[13px] bg-white")
+                    input(type="text" id="fbTitle" name="title" maxlength="150" placeholder="VD: Lỗi tải file CV, gợi ý thêm bộ lọc..." class="w-full border border-gray-300 rounded-[6px] px-[10px] py-[7px] text-[13px] bg-white")
 
                 div
                     label(for="fbContent" class="block text-[12px] font-[600] text-gray-700 mb-[3px]") Nội dung chi tiết *
-                    textarea(id="fbContent" name="content" required rows="3" placeholder="Mô tả sự cố bạn gặp phải hoặc ý kiến đóng góp của bạn..." class="w-full border border-gray-300 rounded-[6px] p-[10px] text-[13px] bg-white")
+                    textarea(id="fbContent" name="content" required rows="3" maxlength="3000" placeholder="Mô tả sự cố bạn gặp phải hoặc ý kiến đóng góp của bạn..." class="w-full border border-gray-300 rounded-[6px] p-[10px] text-[13px] bg-white")
 
                 div(class="grid grid-cols-2 gap-[10px]")
                     div
                         label(for="fbContactName" class="block text-[11px] font-[500] text-gray-600 mb-[2px]") Tên của bạn
-                        input(type="text" id="fbContactName" name="contactName" value=(currentUser ? (currentUser.fullName || currentUser.companyName) : "") placeholder="Tên hoặc ẩn danh" class="w-full border border-gray-300 rounded-[6px] px-[8px] py-[6px] text-[12px] bg-white")
+                        input(type="text" id="fbContactName" name="contactName" maxlength="100" value=(currentUser ? (currentUser.fullName || currentUser.companyName) : "") placeholder="Tên hoặc ẩn danh" class="w-full border border-gray-300 rounded-[6px] px-[8px] py-[6px] text-[12px] bg-white")
                     div
                         label(for="fbContactEmail" class="block text-[11px] font-[500] text-gray-600 mb-[2px]") Email liên hệ
-                        input(type="email" id="fbContactEmail" name="contactEmail" value=(currentUser ? currentUser.email : "") placeholder="Email phản hồi" class="w-full border border-gray-300 rounded-[6px] px-[8px] py-[6px] text-[12px] bg-white")
+                        input(type="email" id="fbContactEmail" name="contactEmail" maxlength="254" value=(currentUser ? currentUser.email : "") placeholder="Email phản hồi" class="w-full border border-gray-300 rounded-[6px] px-[8px] py-[6px] text-[12px] bg-white")
 
                 button(type="submit" id="btnSubmitFeedback" class="w-full bg-[#0088FF] hover:bg-[#0070D2] text-white font-[700] py-[9px] rounded-[6px] text-[13px] transition-colors cursor-pointer shadow-xs flex items-center justify-center gap-[6px]")
                     span(id="fbSpin" class="hidden") <i class="fa-solid fa-circle-notch animate-spin"></i>
@@ -169,9 +169,35 @@ script.
             });
         }
 
+        // Timer tự đóng sau khi gửi thành công: phải hủy nếu người dùng mở lại widget sớm (QA-P06)
+        var successTimer = null;
+
+        function resetStars() {
+            if (!starPicker) return;
+            if (inputRating) inputRating.value = "5";
+            starPicker.querySelectorAll(".star-btn").forEach(function(s) {
+                s.className = "star-btn hover:scale-110 transition-transform cursor-pointer text-amber-400";
+            });
+        }
+
+        function resetFeedbackForm() {
+            if (formFeedback) {
+                formFeedback.reset();
+                formFeedback.classList.remove("hidden");
+            }
+            if (successMsg) successMsg.classList.add("hidden");
+            resetStars();
+        }
+
         btnOpen.addEventListener("click", function() {
+            if (successTimer) {
+                clearTimeout(successTimer);
+                successTimer = null;
+                resetFeedbackForm();
+            }
             modal.classList.remove("hidden");
             modal.classList.add("flex");
+            btnOpen.setAttribute("aria-expanded", "true");
             activateTab("chat");
             setTimeout(scrollChatToBottom, 100);
         });
@@ -179,9 +205,18 @@ script.
         function hideModal() {
             modal.classList.add("hidden");
             modal.classList.remove("flex");
+            btnOpen.setAttribute("aria-expanded", "false");
         }
 
         if (btnClose) btnClose.addEventListener("click", hideModal);
+
+        // Click ra ngoài khung hộp thoại (lớp phủ) hoặc nhấn Escape => đóng
+        modal.addEventListener("click", function(e) {
+            if (e.target === modal) hideModal();
+        });
+        document.addEventListener("keydown", function(e) {
+            if (e.key === "Escape" && !modal.classList.contains("hidden")) hideModal();
+        });
 
         // =======================
         // CHATBOX LOGIC
@@ -537,6 +572,8 @@ script.
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
+                            "Accept": "application/json",
+                            "X-Requested-With": "XMLHttpRequest",
                             "x-csrf-token": csrfToken
                         },
                         body: JSON.stringify(payload)
@@ -545,11 +582,11 @@ script.
                     if (data.success) {
                         formFeedback.classList.add("hidden");
                         successMsg.classList.remove("hidden");
-                        setTimeout(function() {
+                        if (successTimer) clearTimeout(successTimer);
+                        successTimer = setTimeout(function() {
+                            successTimer = null;
                             hideModal();
-                            formFeedback.reset();
-                            formFeedback.classList.remove("hidden");
-                            successMsg.classList.add("hidden");
+                            resetFeedbackForm();
                         }, 2200);
                     } else {
                         alert(data.message || "Không thể gửi phản hồi.");
