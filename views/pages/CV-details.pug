@@ -8,10 +8,12 @@ block main
     div(class="py-[35px] sm:py-[60px]")
         .contain 
             div(class="")
-                if flash && flash.success
-                    div(class="mb-[20px] p-[12px] bg-[#E8F5E9] border border-[#A5D6A7] text-[#2E7D32] rounded-[4px] text-[14px]") #{flash.success}
-                if flash && flash.error
-                    div(class="mb-[20px] p-[12px] bg-[#FFEBEE] border border-[#FFCDD2] text-[#C62828] rounded-[4px] text-[14px]") #{flash.error}
+                //- Flash hiển thị tập trung ở layouts/default.pug (QA-m01 — tránh lặp 2 banner)
+                - const stageLabels = statusLabels || { pending: 'Chờ duyệt', approved: 'Phù hợp', interviewing: 'Phỏng vấn', offered: 'Đề nghị (Offer)', hired: 'Đã tuyển', rejected: 'Từ chối' }
+                - const stageList = statusOptions || ['pending', 'approved', 'interviewing', 'offered', 'hired', 'rejected']
+                - const stageStyles = { pending: 'bg-amber-50 text-amber-700 border-amber-200', approved: 'bg-blue-50 text-[#0088FF] border-blue-200', interviewing: 'bg-purple-50 text-purple-700 border-purple-200', offered: 'bg-indigo-50 text-indigo-700 border-indigo-200', hired: 'bg-emerald-50 text-emerald-700 border-emerald-200', rejected: 'bg-red-50 text-red-700 border-red-200' }
+                - const stageIcons = { pending: 'fa-clock', approved: 'fa-circle-check', interviewing: 'fa-comments', offered: 'fa-file-signature', hired: 'fa-user-check', rejected: 'fa-circle-xmark' }
+                - const currentStage = application.status || 'pending'
 
                 //- Thông tin CV
                 div(class="border border-[#DEDEDE] rounded-[8px] p-[16px] sm:p-[20px] bg-white")
@@ -23,21 +25,32 @@ block main
                     div(class="font-[400] text-[15px] sm:text-[16px] mt-[10px]") Email: <span class="font-[600]">#{application.email}</span> 
                     div(class="font-[400] text-[15px] sm:text-[16px] mt-[10px]") Số điện thoại: <span class="font-[600]">#{application.phone}</span> 
                     
-                    div(class="font-[400] text-[15px] sm:text-[16px] mt-[10px]") Trạng thái hồ sơ: 
-                        if application.status === 'pending'
-                            span(class="font-[600] text-[#FFB200] ml-[6px]") <i class="fa-solid fa-clock mr-[2px]"></i> Chưa duyệt
-                        else if application.status === 'approved'
-                            span(class="font-[600] text-[#2E7D32] ml-[6px]") <i class="fa-solid fa-circle-check mr-[2px]"></i> Đã duyệt phù hợp
-                        else if application.status === 'rejected'
-                            span(class="font-[600] text-[#C62828] ml-[6px]") <i class="fa-solid fa-circle-xmark mr-[2px]"></i> Đã từ chối
+                    div(class="font-[400] text-[15px] sm:text-[16px] mt-[10px] flex items-center flex-wrap gap-[8px]")
+                        span Trạng thái hồ sơ:
+                        span(id="cvStatusBadge" class=`inline-flex items-center gap-[6px] px-[10px] py-[3px] rounded-full border text-[13px] font-[700] whitespace-nowrap ${stageStyles[currentStage] || stageStyles.pending}`)
+                            i(class=`fa-solid ${stageIcons[currentStage] || 'fa-clock'}`)
+                            span #{stageLabels[currentStage] || currentStage}
+
+                    //- Đổi vòng tuyển dụng nhanh (đủ 6 trạng thái ATS)
+                    form(action="/employer/cvs/" + application._id + "/status" method="POST" id="formStageSelect" class="mt-[12px] flex items-center gap-[8px] flex-wrap")
+                        input(type="hidden" name="_csrf" value=csrfToken)
+                        label(for="stageSelect" class="text-[14px] text-gray-700") Chuyển vòng:
+                        select(id="stageSelect" name="status" class="border border-gray-300 rounded-[6px] py-[6px] px-[10px] text-[13px] bg-white cursor-pointer")
+                            each st in stageList
+                                if st !== 'rejected'
+                                    option(value=st selected=(currentStage === st)) #{stageLabels[st] || st}
+                        button(type="submit" class="bg-[#0088FF] hover:bg-[#0070d6] text-white rounded-[6px] py-[6px] px-[14px] font-[600] text-[13px] cursor-pointer whitespace-nowrap") Cập nhật vòng
+                        span(class="text-[12px] text-gray-500") (Từ chối: dùng nút "Từ chối hồ sơ" để ghi lý do)
 
                     //- Scorecard / Đánh giá ứng viên (1-5 sao)
                     div(class="flex items-center gap-[10px] mt-[12px] flex-wrap")
                         span(class="font-[400] text-[15px] sm:text-[16px] text-gray-700") Đánh giá nội bộ:
-                        div(id="starRatingContainer" class="flex items-center gap-[4px] cursor-pointer text-[18px]" data-application-id=application._id data-current-rating=(application.rating || 0))
+                        div(id="starRatingContainer" class="flex items-center gap-[4px] cursor-pointer text-[18px]" data-application-id=application._id data-current-rating=(application.rating || 0) role="radiogroup" aria-label="Chấm điểm ứng viên")
                             each star in [1, 2, 3, 4, 5]
-                                <i class="fa-solid fa-star star-btn #{ (application.rating || 0) >= star ? 'text-amber-400' : 'text-gray-300' } hover:text-amber-400 transition-colors" data-value=star></i>
+                                //- QA-B02: cú pháp Pug để data-value xuất đúng "1".."5" (HTML thô in ra chuỗi "star" → 400)
+                                i.fa-solid.fa-star.star-btn.cursor-pointer.transition.rating-star(class=[(star <= (application.rating || 0) ? "text-amber-400" : "text-gray-300"), "hover:text-amber-400"] data-value=star role="radio" tabindex="0" aria-label=`${star} sao` aria-checked=(star === (application.rating || 0) ? "true" : "false"))
                         span(id="ratingText" class="text-[13px] font-[600] text-gray-500") #{application.rating ? (application.rating + '/5 sao') : 'Chưa chấm điểm'}
+                        span(id="ratingStatus" class="text-[12px] font-[600] hidden" role="status" aria-live="polite")
 
                     div(class="flex flex-wrap items-center gap-[10px] mt-[16px]")
                         form(action="/employer/cvs/" + application._id + "/status" method="POST" class="inline")
@@ -95,11 +108,13 @@ block main
                                 div(class="font-[700] text-[15px] flex items-center justify-between flex-wrap gap-[6px]")
                                     span Lịch Phỏng Vấn Chính Thức (Đồng bộ iCalendar .ics)
                                     if application.interviewSchedule.status === 'confirmed'
-                                        span(class="bg-emerald-100 text-emerald-800 text-[11px] font-[700] px-[8px] py-[2px] rounded-full border border-emerald-300") ✓ Ứng viên đã xác nhận tham gia
+                                        span(class="bg-emerald-100 text-emerald-800 text-[11px] font-[700] px-[8px] py-[2px] rounded-full border border-emerald-300 whitespace-nowrap") ✓ Ứng viên đã xác nhận tham gia
                                     else if application.interviewSchedule.status === 'rescheduled'
-                                        span(class="bg-amber-100 text-amber-800 text-[11px] font-[700] px-[8px] py-[2px] rounded-full border border-amber-300") ⚠️ Ứng viên đề xuất đổi lịch
+                                        span(class="bg-amber-100 text-amber-800 text-[11px] font-[700] px-[8px] py-[2px] rounded-full border border-amber-300 whitespace-nowrap") ⚠️ Ứng viên đề xuất đổi lịch
+                                    else if application.interviewSchedule.status === 'declined' || (application.interviewSchedule.candidateResponse && application.interviewSchedule.candidateResponse.status === 'declined')
+                                        span(class="bg-red-100 text-red-800 text-[11px] font-[700] px-[8px] py-[2px] rounded-full border border-red-300 whitespace-nowrap") ✕ Ứng viên từ chối lịch phỏng vấn
                                     else
-                                        span(class="bg-purple-100 text-purple-800 text-[11px] font-[700] px-[8px] py-[2px] rounded-full border border-purple-300") Đang chờ ứng viên xác nhận
+                                        span(class="bg-purple-100 text-purple-800 text-[11px] font-[700] px-[8px] py-[2px] rounded-full border border-purple-300 whitespace-nowrap") Đang chờ ứng viên xác nhận
                                 
                                 div(class="mt-[6px] space-y-[4px] text-gray-700")
                                     div ⏱️ <strong>Thời gian:</strong> #{formatDateTime(application.interviewSchedule.scheduledAt)} (#{application.interviewSchedule.durationMinutes} phút)
@@ -118,7 +133,11 @@ block main
                                             strong Phản hồi từ ứng viên: 
                                             | "#{application.interviewSchedule.candidateResponse.note}"
                                 
-                                button(type="button" id="btnOpenScheduleAgain" class="mt-[8px] text-[#0088FF] hover:underline font-[600] inline-block cursor-pointer") Chỉnh sửa / Đổi lịch phỏng vấn khác →
+                                div(class="mt-[8px] flex items-center flex-wrap gap-[14px]")
+                                    button(type="button" id="btnOpenScheduleAgain" class="text-[#0088FF] hover:underline font-[600] inline-block cursor-pointer") Chỉnh sửa / Đổi lịch phỏng vấn khác →
+                                    a(href=`/employer/cvs/${application._id}/ics` class="inline-flex items-center gap-[6px] bg-white border border-purple-300 hover:bg-purple-100 text-purple-800 font-[600] text-[12.5px] px-[12px] py-[5px] rounded-[6px] whitespace-nowrap" download)
+                                        i(class="fa-solid fa-calendar-arrow-down")
+                                        span Tải lịch (.ics)
 
                     //- Trợ lý AI Tuyển Dụng (CV Screening & Executive Summary)
                     div(class="mt-[24px] p-[20px] bg-gradient-to-r from-blue-50/70 via-indigo-50/50 to-white rounded-[10px] border border-blue-200")
@@ -191,10 +210,20 @@ block main
                             button(type="submit" class="bg-[#000065] hover:bg-[#000085] text-white px-[16px] py-[10px] rounded-[6px] font-[600] text-[13px] shrink-0 cursor-pointer transition") Lưu Ghi Chú
 
                     div(class="mt-[20px]")
-                        div(class="font-[400] text-[16px] my-[10px] flex justify-between items-center")
+                        div(class="font-[400] text-[16px] my-[10px] flex justify-between items-center flex-wrap gap-[8px]")
                             span File CV:
-                            a(href="/employer/cvs/" + application._id + "/pdf" target="_blank" rel="noopener noreferrer" class="text-[#0088FF] text-[14px] underline") Mở xem toàn màn hình <i class="fa-solid fa-arrow-up-right-from-square ml-[4px]"></i>
-                        embed(src="/employer/cvs/" + application._id + "/pdf" type="application/pdf" class="bg-[#D9D9D9] w-full h-[736px] rounded-[4px]") 
+                            if cvExists
+                                a(href="/employer/cvs/" + application._id + "/pdf" target="_blank" rel="noopener noreferrer" class="text-[#0088FF] text-[14px] underline") Mở xem toàn màn hình <i class="fa-solid fa-arrow-up-right-from-square ml-[4px]"></i>
+                        if cvExists
+                            //- QA-B02: <iframe> cùng origin (route PDF trả X-Frame-Options SAMEORIGIN + frame-ancestors 'self'); <embed> bị CSP object-src 'none' chặn
+                            iframe(src="/employer/cvs/" + application._id + "/pdf" class="w-full h-[750px] border-0 rounded-lg bg-white" title="CV PDF" loading="lazy")
+                        else
+                            div(class="p-[20px] bg-amber-50 border border-amber-200 rounded-[8px] text-[14px] text-amber-900 flex items-start gap-[12px]")
+                                i(class="fa-solid fa-triangle-exclamation text-amber-500 text-[20px] mt-[2px]")
+                                div
+                                    div(class="font-[700]") Không tìm thấy file CV PDF trên hệ thống lưu trữ
+                                    div(class="mt-[4px] text-amber-800") File có thể đã bị xóa hoặc chưa được đồng bộ. Bạn có thể thử tải lại hoặc liên hệ ứng viên (#{application.email}) để nhận bản CV mới.
+                                    a(href="/employer/cvs/" + application._id + "/pdf" class="inline-flex items-center gap-[6px] mt-[8px] text-[#0088FF] font-[600] underline" download) Thử tải file CV
                 //- Hết Thông tin CV
 
                 //- Thông tin công việc
@@ -331,44 +360,46 @@ block main
 
                 form(action=`/employer/cvs/${application._id}/schedule` method="POST" id="formScheduleInterview" class="p-[20px] overflow-y-auto flex-1 space-y-[14px]")
                     input(type="hidden" name="_csrf" value=csrfToken)
+                    - const sched = application.interviewSchedule || {}
+                    - const prefill = schedulePrefill || { date: "", time: "" }
+                    - const schedIsOffline = sched.scheduledAt && sched.locationType === 'offline'
+                    - const schedDuration = String(sched.durationMinutes || 60)
                     
                     div(class="grid sm:grid-cols-2 grid-cols-1 gap-[12px]")
                         div
-                            label(class="block text-[13px] font-[600] text-gray-700 mb-[4px]") Ngày phỏng vấn *
-                            input(type="date" name="scheduledDate" required id="schedDateInput" class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[8px] text-[14px] focus:outline-none focus:ring-2 focus:ring-[#0088FF]")
+                            label(for="schedDateInput" class="block text-[13px] font-[600] text-gray-700 mb-[4px]") Ngày phỏng vấn *
+                            input(type="date" name="scheduledDate" required id="schedDateInput" min=(todayVN || "") value=prefill.date data-default-empty=(prefill.date ? "0" : "1") class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[8px] text-[14px] focus:outline-none focus:ring-2 focus:ring-[#0088FF]")
                         div
-                            label(class="block text-[13px] font-[600] text-gray-700 mb-[4px]") Giờ bắt đầu *
-                            input(type="time" name="scheduledTime" required value="09:30" class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[8px] text-[14px] focus:outline-none focus:ring-2 focus:ring-[#0088FF]")
+                            label(for="schedTimeInput" class="block text-[13px] font-[600] text-gray-700 mb-[4px]") Giờ bắt đầu (giờ Việt Nam) *
+                            input(type="time" name="scheduledTime" id="schedTimeInput" required value=(prefill.time || "09:30") class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[8px] text-[14px] focus:outline-none focus:ring-2 focus:ring-[#0088FF]")
 
                     div(class="grid sm:grid-cols-2 grid-cols-1 gap-[12px]")
                         div
                             label(class="block text-[13px] font-[600] text-gray-700 mb-[4px]") Thời lượng dự kiến
                             select(name="durationMinutes" class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[8px] text-[14px] bg-white cursor-pointer")
-                                option(value="30") 30 Phút
-                                option(value="45") 45 Phút
-                                option(value="60" selected) 60 Phút (1 Giờ)
-                                option(value="90") 90 Phút
+                                each d in ['30', '45', '60', '90', '120']
+                                    option(value=d selected=(schedDuration === d)) #{d === '60' ? '60 Phút (1 Giờ)' : (d === '120' ? '120 Phút (2 Giờ)' : d + ' Phút')}
                         div
                             label(class="block text-[13px] font-[600] text-gray-700 mb-[4px]") Hình thức phỏng vấn
                             select(name="locationType" id="schedLocationType" class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[8px] text-[14px] bg-white cursor-pointer")
-                                option(value="online" selected) Trực tuyến (Online Meeting)
-                                option(value="offline") Trực tiếp tại văn phòng
+                                option(value="online" selected=!schedIsOffline) Trực tuyến (Online Meeting)
+                                option(value="offline" selected=schedIsOffline) Trực tiếp tại văn phòng
 
-                    div(id="schedOnlineGroup")
+                    div(id="schedOnlineGroup" class=(schedIsOffline ? "hidden" : ""))
                         label(class="block text-[13px] font-[600] text-gray-700 mb-[4px]") Link phòng họp (Google Meet / Zoom / Teams)
-                        input(type="url" name="meetingLink" placeholder="https://meet.google.com/abc-defg-hij" class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[8px] text-[14px] focus:outline-none focus:ring-2 focus:ring-[#0088FF]")
+                        input(type="url" name="meetingLink" id="schedMeetingLink" value=(schedIsOffline ? "" : (sched.meetingLink || "")) placeholder="https://meet.google.com/abc-defg-hij" class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[8px] text-[14px] focus:outline-none focus:ring-2 focus:ring-[#0088FF]")
 
-                    div(id="schedOfflineGroup" class="hidden")
+                    div(id="schedOfflineGroup" class=(schedIsOffline ? "" : "hidden"))
                         label(class="block text-[13px] font-[600] text-gray-700 mb-[4px]") Địa chỉ văn phòng phỏng vấn
-                        input(type="text" name="locationAddress" placeholder="Tầng 12, Tòa nhà Keangnam, Mễ Trì, Hà Nội" class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[8px] text-[14px] focus:outline-none focus:ring-2 focus:ring-[#0088FF]")
+                        input(type="text" name="locationAddress" value=(sched.locationAddress || "") placeholder="Tầng 12, Tòa nhà Keangnam, Mễ Trì, Hà Nội" class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[8px] text-[14px] focus:outline-none focus:ring-2 focus:ring-[#0088FF]")
 
                     div
                         label(class="block text-[13px] font-[600] text-gray-700 mb-[4px]") Người / Hội đồng phỏng vấn
-                        input(type="text" name="interviewers" placeholder="VD: Anh Tuấn (Tech Lead) & Chị Mai (HR)" class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[8px] text-[14px] focus:outline-none focus:ring-2 focus:ring-[#0088FF]")
+                        input(type="text" name="interviewers" value=(sched.interviewers || "") placeholder="VD: Anh Tuấn (Tech Lead) & Chị Mai (HR)" class="w-full border border-gray-300 rounded-[6px] px-[12px] py-[8px] text-[14px] focus:outline-none focus:ring-2 focus:ring-[#0088FF]")
 
                     div
                         label(class="block text-[13px] font-[600] text-gray-700 mb-[4px]") Ghi chú chuẩn bị cho ứng viên
-                        textarea(name="notes" rows="2" placeholder="VD: Vui lòng mang laptop và chuẩn bị sẵn sàng demo dự án nổi bật..." class="w-full border border-gray-300 rounded-[6px] p-[10px] text-[13px] focus:outline-none focus:ring-2 focus:ring-[#0088FF]")
+                        textarea(name="notes" rows="2" placeholder="VD: Vui lòng mang laptop và chuẩn bị sẵn sàng demo dự án nổi bật..." class="w-full border border-gray-300 rounded-[6px] p-[10px] text-[13px] focus:outline-none focus:ring-2 focus:ring-[#0088FF]")= (sched.notes || "")
 
                     div(class="p-[12px] bg-blue-50 border border-blue-200 rounded-[8px] text-[12px] text-blue-900 leading-relaxed")
                         <i class="fa-solid fa-circle-check text-blue-600 mr-[4px]"></i>
@@ -395,12 +426,23 @@ block main
                 var schedOnlineGroup = document.getElementById("schedOnlineGroup");
                 var schedOfflineGroup = document.getElementById("schedOfflineGroup");
                 var schedDateInput = document.getElementById("schedDateInput");
+                var schedMeetingLink = document.getElementById("schedMeetingLink");
 
-                // Mặc định ngày mai
+                function toLocalYmd(d) {
+                    var m = String(d.getMonth() + 1).padStart(2, "0");
+                    var day = String(d.getDate()).padStart(2, "0");
+                    return d.getFullYear() + "-" + m + "-" + day;
+                }
+
+                // Chưa có lịch cũ → mặc định ngày mai (theo giờ máy người dùng, không lệch UTC)
                 if (schedDateInput && !schedDateInput.value) {
                     var tomorrow = new Date();
                     tomorrow.setDate(tomorrow.getDate() + 1);
-                    schedDateInput.value = tomorrow.toISOString().split('T')[0];
+                    schedDateInput.value = toLocalYmd(tomorrow);
+                }
+                // Không cho chọn ngày trong quá khứ (kể cả khi server không truyền todayVN)
+                if (schedDateInput && !schedDateInput.min) {
+                    schedDateInput.min = toLocalYmd(new Date());
                 }
 
                 function openScheduleModal() {
@@ -429,6 +471,8 @@ block main
                         } else {
                             if (schedOnlineGroup) schedOnlineGroup.classList.add("hidden");
                             if (schedOfflineGroup) schedOfflineGroup.classList.remove("hidden");
+                            // Phỏng vấn Offline: xóa link phòng họp cũ để không gửi nhầm cho ứng viên
+                            if (schedMeetingLink) schedMeetingLink.value = "";
                         }
                     });
                 }
@@ -436,39 +480,72 @@ block main
                 // 2. Chấm điểm sao đánh giá (Scorecard Rating)
                 var starContainer = document.getElementById("starRatingContainer");
                 var ratingText = document.getElementById("ratingText");
+                var ratingStatus = document.getElementById("ratingStatus");
+
+                function notify(message, type) {
+                    if (typeof window.showToast === "function") {
+                        window.showToast(message, type);
+                    }
+                    if (ratingStatus) {
+                        ratingStatus.textContent = message;
+                        ratingStatus.classList.remove("hidden", "text-emerald-600", "text-red-600");
+                        ratingStatus.classList.add(type === "success" ? "text-emerald-600" : "text-red-600");
+                    }
+                }
+
                 if (starContainer) {
                     var stars = starContainer.querySelectorAll(".star-btn");
-                    stars.forEach(function(s) {
-                        s.addEventListener("click", async function() {
-                            var val = parseInt(s.getAttribute("data-value"), 10);
-                            var csrfMeta = document.querySelector('meta[name="csrf-token"]');
-                            var csrfToken = csrfMeta ? csrfMeta.getAttribute("content") : "";
+                    var paintStars = function(val) {
+                        stars.forEach(function(starEl) {
+                            var starVal = parseInt(starEl.getAttribute("data-value"), 10);
+                            var on = starVal <= val;
+                            starEl.classList.toggle("text-amber-400", on);
+                            starEl.classList.toggle("text-gray-300", !on);
+                            starEl.setAttribute("aria-checked", starVal === val ? "true" : "false");
+                        });
+                    };
+                    var submitRating = async function(s) {
+                        var val = parseInt(s.getAttribute("data-value"), 10);
+                        if (!Number.isInteger(val) || val < 1 || val > 5) {
+                            notify("Giá trị đánh giá không hợp lệ.", "error");
+                            return;
+                        }
+                        var previous = parseInt(starContainer.getAttribute("data-current-rating"), 10) || 0;
+                        var csrfMeta = document.querySelector('meta[name="csrf-token"]');
+                        var csrfToken = csrfMeta ? csrfMeta.getAttribute("content") : "";
+                        paintStars(val); // Optimistic UI, rollback nếu lỗi
 
-                            try {
-                                var res = await fetch("/employer/cvs/#{application._id}/rating", {
-                                    method: "POST",
-                                    headers: {
-                                        "Content-Type": "application/json",
-                                        "x-csrf-token": csrfToken
-                                    },
-                                    body: JSON.stringify({ rating: val })
-                                });
-                                var data = await res.json();
-                                if (data.success) {
-                                    stars.forEach(function(starEl) {
-                                        var starVal = parseInt(starEl.getAttribute("data-value"), 10);
-                                        if (starVal <= val) {
-                                            starEl.classList.remove("text-gray-300");
-                                            starEl.classList.add("text-amber-400");
-                                        } else {
-                                            starEl.classList.remove("text-amber-400");
-                                            starEl.classList.add("text-gray-300");
-                                        }
-                                    });
-                                    if (ratingText) ratingText.textContent = val + "/5 sao";
-                                }
-                            } catch(err) {
-                                console.error(err);
+                        try {
+                            var res = await fetch("/employer/cvs/#{application._id}/rating", {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    "Accept": "application/json",
+                                    "X-Requested-With": "XMLHttpRequest",
+                                    "x-csrf-token": csrfToken
+                                },
+                                body: JSON.stringify({ rating: val })
+                            });
+                            var data = await res.json().catch(function() { return {}; });
+                            if (res.ok && data.success) {
+                                starContainer.setAttribute("data-current-rating", String(data.rating));
+                                if (ratingText) ratingText.textContent = data.rating + "/5 sao";
+                                notify(data.message || ("Đã cập nhật đánh giá " + val + " sao."), "success");
+                            } else {
+                                paintStars(previous);
+                                notify(data.message || "Không thể lưu đánh giá (HTTP " + res.status + ").", "error");
+                            }
+                        } catch(err) {
+                            paintStars(previous);
+                            notify("Lỗi kết nối máy chủ, chưa lưu được đánh giá.", "error");
+                        }
+                    };
+                    stars.forEach(function(s) {
+                        s.addEventListener("click", function() { submitRating(s); });
+                        s.addEventListener("keydown", function(e) {
+                            if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                submitRating(s);
                             }
                         });
                     });

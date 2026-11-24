@@ -14,47 +14,74 @@ const slugify = require("../../utils/slugify");
 const env = require("../../config/env");
 const isSafeRedirect = require("../../utils/sanitizeRedirect");
 
+const AUTH_COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: env.NODE_ENV === "production",
+  sameSite: "lax",
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+};
+
+/**
+ * Chỉ giữ lại `next` nếu là đường dẫn nội bộ an toàn (chống Open Redirect)
+ */
+function getSafeNext(...candidates) {
+  for (const value of candidates) {
+    if (typeof value === "string" && value && isSafeRedirect(value)) return value;
+  }
+  return "";
+}
+
+/**
+ * Tài khoản Chủ công ty tạo qua Google chưa từng tự đặt mật khẩu (mật khẩu ngẫu nhiên 64 ký tự)
+ */
+function isGoogleNoPasswordUser(user) {
+  return Boolean(user && user.authProvider === "google" && !user.currentMember);
+}
+
 const renderSignup = (req, res) => {
   res.render("pages/employer-signup", {
     title: "Đăng ký (Nhà tuyển dụng)",
     errors: {},
     old: {},
+    next: getSafeNext(req.query.next),
   });
 };
 
 const postSignup = async (req, res) => {
+  const nextUrl = getSafeNext(req.body.next, req.query.next);
+  const renderSignupError = (errors) =>
+    res.status(400).render("pages/employer-signup", {
+      title: "Đăng ký (Nhà tuyển dụng)",
+      errors,
+      old: req.body,
+      next: nextUrl,
+    });
+
   const result = employerSignupSchema.safeParse(req.body);
   if (!result.success) {
     const errors = {};
     result.error.errors.forEach((err) => {
       errors[err.path[0]] = err.message;
     });
-    return res.status(400).render("pages/employer-signup", {
-      title: "Đăng ký (Nhà tuyển dụng)",
-      errors,
-      old: req.body,
-    });
+    return renderSignupError(errors);
   }
 
   const { companyName, email, password } = result.data;
   const cleanEmail = email.toLowerCase().trim();
+  const verifyUrl = `/employer/verify-registration?email=${encodeURIComponent(cleanEmail)}${nextUrl ? `&next=${encodeURIComponent(nextUrl)}` : ""}`;
   const existingTeamConflict = await Employer.exists({ "teamMembers.email": cleanEmail });
   if (existingTeamConflict) {
-    return res.status(400).render("pages/employer-signup", {
-      title: "Đăng ký (Nhà tuyển dụng)",
-      errors: { email: "Email này đã được sử dụng. Vui lòng chọn email khác hoặc Đăng nhập." },
-      old: req.body,
-    });
+    return renderSignupError({ email: "Email này đã được sử dụng. Vui lòng chọn email khác hoặc Đăng nhập." });
   }
   const existing = await Employer.findOne({ email: cleanEmail });
 
   if (existing) {
+    // Email thuộc tài khoản đã bị xóa mềm: báo rõ ràng thay vì để trùng khóa E11000 hoặc im lặng
+    if (existing.deletedAt) {
+      return renderSignupError({ email: "Email này thuộc một tài khoản công ty đã bị xóa. Vui lòng liên hệ quản trị viên để được hỗ trợ khôi phục." });
+    }
     if (existing.isEmailVerified !== false) {
-      return res.status(400).render("pages/employer-signup", {
-        title: "Đăng ký (Nhà tuyển dụng)",
-        errors: { email: "Email này đã được sử dụng. Vui lòng chọn email khác hoặc Đăng nhập." },
-        old: req.body,
-      });
+      return renderSignupError({ email: "Email này đã được sử dụng. Vui lòng chọn email khác hoặc Đăng nhập." });
     }
 
     // Cập nhật lại thông tin nếu chưa xác thực email
@@ -82,7 +109,7 @@ const postSignup = async (req, res) => {
     }
 
     req.flash("success", "Tài khoản công ty đã được cập nhật. Vui lòng nhập mã OTP gửi về Gmail để kích hoạt!");
-    return res.redirect(`/employer/verify-registration?email=${encodeURIComponent(cleanEmail)}`);
+    return res.redirect(verifyUrl);
   }
 
   const hashedPassword = await hashPassword(password);
@@ -120,7 +147,7 @@ const postSignup = async (req, res) => {
   }
 
   req.flash("success", "Đăng ký thành công! Vui lòng nhập mã xác thực OTP gửi về Gmail để kích hoạt tài khoản công ty.");
-  res.redirect(`/employer/verify-registration?email=${encodeURIComponent(cleanEmail)}`);
+  res.redirect(verifyUrl);
 };
 
 // Giao diện nhập mã OTP kích hoạt tài khoản nhà tuyển dụng
@@ -133,6 +160,7 @@ const renderVerifyRegistration = (req, res) => {
     title: "Xác thực Email đăng ký (Nhà tuyển dụng)",
     userRole: "employer",
     email,
+    next: getSafeNext(req.query.next),
     errors: {},
   });
 };
@@ -140,8 +168,8 @@ const renderVerifyRegistration = (req, res) => {
 // Xử lý xác thực mã OTP kích hoạt nhà tuyển dụng
 const postVerifyRegistration = async (req, res) => {
   const { email, otp } = req.body;
-  const cleanEmail = (email || "").toLowerCase().trim();
-  const cleanOtp = (otp || "").trim();
+  const cleanEmail = (typeof email === "string" ? email : "").toLowerCase().trim();
+  const cleanOtp = (typeof otp === "string" ? otp : "").trim();
 
   if (!cleanOtp || cleanOtp.length !== 6 || !/^\d{6}$/.test(cleanOtp)) {
     return res.status(400).render("pages/verify-registration", {
@@ -201,7 +229,7 @@ const postVerifyRegistration = async (req, res) => {
   }
 
   // Khớp OTP -> Kích hoạt email công ty
-  const employer = await Employer.findOne({ email: cleanEmail });
+  const employer = await Employer.findOne({ email: cleanEmail, deletedAt: null });
   if (!employer) {
     req.flash("error", "Không tìm thấy thông tin tài khoản công ty.");
     return res.redirect("/employer/signup");
@@ -216,15 +244,10 @@ const postVerifyRegistration = async (req, res) => {
 
   // Tự động đăng nhập
   const token = signUserToken(employer, "employer");
-  res.cookie("itj_token", token, {
-    httpOnly: true,
-    secure: env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
+  res.cookie("itj_token", token, AUTH_COOKIE_OPTIONS);
 
   req.flash("success", "Xác thực email thành công! Tài khoản công ty đã được kích hoạt.");
-  res.redirect("/employer/company-profile");
+  res.redirect(getSafeNext(req.body.next, req.query.next) || "/employer/company-profile");
 };
 
 // Gửi lại mã OTP đăng ký nhà tuyển dụng
@@ -258,7 +281,8 @@ const postResendRegistrationOtp = async (req, res) => {
   }
 
   req.flash("success", `Đã gửi lại mã OTP mới tới hòm thư ${cleanEmail}. Vui lòng kiểm tra email!`);
-  res.redirect(`/employer/verify-registration?email=${encodeURIComponent(cleanEmail)}`);
+  const resendNext = getSafeNext(req.body.next, req.query.next);
+  res.redirect(`/employer/verify-registration?email=${encodeURIComponent(cleanEmail)}${resendNext ? `&next=${encodeURIComponent(resendNext)}` : ""}`);
 };
 
 const renderLogin = (req, res) => {
@@ -276,7 +300,7 @@ const renderLogin = (req, res) => {
 
   res.render("pages/employer-login", {
     title: "Đăng nhập (Nhà tuyển dụng)",
-    next: req.query.next || "",
+    next: getSafeNext(req.query.next),
     errors: {},
     old: {},
   });
@@ -289,7 +313,7 @@ const postLogin = async (req, res) => {
       title: "Đăng nhập (Nhà tuyển dụng)",
       errors: { general: "Email hoặc mật khẩu không đúng" },
       old: req.body,
-      next: req.body.next || "",
+      next: getSafeNext(req.body.next),
     });
   }
 
@@ -315,7 +339,7 @@ const postLogin = async (req, res) => {
       title: "Đăng nhập (Nhà tuyển dụng)",
       errors: { general: "Email hoặc mật khẩu không đúng" },
       old: req.body,
-      next: req.body.next || "",
+      next: getSafeNext(req.body.next),
     });
   }
 
@@ -325,7 +349,7 @@ const postLogin = async (req, res) => {
       title: "Đăng nhập (Nhà tuyển dụng)",
       errors: { general: `Tài khoản của bạn đã bị khóa.${reasonMsg}` },
       old: req.body,
-      next: req.body.next || "",
+      next: getSafeNext(req.body.next),
     });
   }
 
@@ -336,7 +360,7 @@ const postLogin = async (req, res) => {
       errors: { general: "Tài khoản công ty chưa xác thực email. Vui lòng xác thực trước khi đăng nhập." },
       unverifiedEmail: employer.email,
       old: req.body,
-      next: req.body.next || "",
+      next: getSafeNext(req.body.next),
     });
   }
 
@@ -348,7 +372,7 @@ const postLogin = async (req, res) => {
         title: "Đăng nhập (Nhà tuyển dụng)",
         errors: { general: "Email hoặc mật khẩu không đúng" },
         old: req.body,
-        next: req.body.next || "",
+        next: getSafeNext(req.body.next),
       });
     }
 
@@ -392,7 +416,7 @@ const postLogin = async (req, res) => {
       title: "Đăng nhập (Nhà tuyển dụng)",
       errors: { general: "Email hoặc mật khẩu không đúng" },
       old: req.body,
-      next: req.body.next || "",
+      next: getSafeNext(req.body.next),
     });
   }
 
@@ -449,24 +473,34 @@ const renderChangePassword = (req, res) => {
   res.render("pages/change-password", {
     title: "Đổi mật khẩu (Nhà tuyển dụng)",
     userRole: "employer",
+    isGoogleNoPassword: isGoogleNoPasswordUser(req.user),
     errors: {},
     old: {},
   });
 };
 
 const postChangePassword = async (req, res) => {
-  const result = changePasswordSchema.safeParse(req.body);
+  // Chủ công ty đăng ký bằng Google chưa từng có mật khẩu thật → cho đặt mật khẩu lần đầu không cần mật khẩu hiện tại
+  const isGoogleNoPassword = isGoogleNoPasswordUser(req.user);
+  const payload = isGoogleNoPassword
+    ? { ...req.body, currentPassword: "__google_initial_password__" }
+    : req.body;
+  const renderError = (errors) =>
+    res.status(400).render("pages/change-password", {
+      title: "Đổi mật khẩu (Nhà tuyển dụng)",
+      userRole: "employer",
+      isGoogleNoPassword,
+      errors,
+      old: req.body,
+    });
+
+  const result = changePasswordSchema.safeParse(payload);
   if (!result.success) {
     const errors = {};
     result.error.errors.forEach((err) => {
       errors[err.path[0]] = err.message;
     });
-    return res.status(400).render("pages/change-password", {
-      title: "Đổi mật khẩu (Nhà tuyển dụng)",
-      userRole: "employer",
-      errors,
-      old: req.body,
-    });
+    return renderError(errors);
   }
 
   const { currentPassword, newPassword } = result.data;
@@ -484,12 +518,7 @@ const postChangePassword = async (req, res) => {
 
     const isMemberMatch = await comparePassword(currentPassword, member.password || "");
     if (!isMemberMatch) {
-      return res.status(400).render("pages/change-password", {
-        title: "Đổi mật khẩu (Nhà tuyển dụng)",
-        userRole: "employer",
-        errors: { currentPassword: "Mật khẩu hiện tại không chính xác" },
-        old: req.body,
-      });
+      return renderError({ currentPassword: "Mật khẩu hiện tại không chính xác" });
     }
 
     member.password = await hashPassword(newPassword);
@@ -503,18 +532,23 @@ const postChangePassword = async (req, res) => {
       memberRole: member.role,
       tv: member.tokenVersion,
     });
-    res.cookie("itj_token", newToken, {
-      httpOnly: true,
-      secure: env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie("itj_token", newToken, AUTH_COOKIE_OPTIONS);
 
     req.flash("success", "Đổi mật khẩu thành công!");
     return res.redirect("/employer/company-profile");
   }
 
   const employer = await Employer.findById(req.user._id).select("+password");
+
+  if (isGoogleNoPassword) {
+    employer.password = await hashPassword(newPassword);
+    employer.authProvider = "local"; // Đã có mật khẩu thật, vẫn giữ googleId để đăng nhập Google song song
+    employer.tokenVersion = (employer.tokenVersion || 0) + 1;
+    await employer.save();
+    res.cookie("itj_token", signUserToken(employer, "employer"), AUTH_COOKIE_OPTIONS);
+    req.flash("success", "Đặt mật khẩu thành công! Từ giờ bạn có thể đăng nhập bằng Email + Mật khẩu hoặc Google.");
+    return res.redirect("/employer/company-profile");
+  }
 
   const isMatch = await comparePassword(currentPassword, employer.password);
   if (!isMatch) {
@@ -593,13 +627,57 @@ const handleGoogleCallback = async (req, res) => {
 
     const cleanEmail = profile.email.toLowerCase().trim();
 
-    // Tìm nhà tuyển dụng theo googleId trước, sau đó mới theo email
+    // Tìm nhà tuyển dụng theo googleId trước, sau đó mới theo email (KỂ CẢ tài khoản đã xóa mềm)
     let employer = await Employer.findOne({ googleId: profile.sub, deletedAt: null });
     if (!employer) {
-      employer = await Employer.findOne({ email: cleanEmail, deletedAt: null });
-      if (employer && employer.googleId && employer.googleId !== profile.sub) {
+      const ownerByEmail = await Employer.findOne({ email: cleanEmail });
+      if (ownerByEmail && ownerByEmail.deletedAt) {
+        // Email thuộc công ty đã bị xóa mềm: chặn rõ ràng thay vì Employer.create văng lỗi trùng khóa E11000
+        req.flash("error", "Tài khoản công ty gắn với email Google này đã bị xóa. Vui lòng liên hệ quản trị viên để được hỗ trợ.");
+        return res.redirect("/employer/login");
+      }
+      if (ownerByEmail && ownerByEmail.googleId && ownerByEmail.googleId !== profile.sub) {
         req.flash("error", "Email công ty này đã được liên kết với một tài khoản Google khác.");
         return res.redirect("/employer/login");
+      }
+      employer = ownerByEmail;
+    }
+
+    // QA-B10: Email là Chuyên viên (teamMember) của một công ty → đăng nhập vào ĐÚNG công ty đó,
+    // tuyệt đối không tự tạo công ty rỗng trùng email (gây mất quyền truy cập vĩnh viễn)
+    if (!employer) {
+      const teamEmployer = await Employer.findOne({ "teamMembers.email": cleanEmail, deletedAt: null });
+      if (teamEmployer) {
+        if (teamEmployer.status === EMPLOYER_STATUS.BANNED) {
+          const reasonMsg = teamEmployer.banReason ? ` Lí do: ${teamEmployer.banReason}` : "";
+          req.flash("error", `Tài khoản công ty của bạn đã bị khóa.${reasonMsg}`);
+          return res.redirect("/employer/login");
+        }
+        const member = (teamEmployer.teamMembers || []).find((m) => m.email === cleanEmail);
+        member.tokenVersion = (member.tokenVersion || 0) + 1;
+        member.lastLoginAt = new Date();
+        await teamEmployer.save();
+
+        const memberToken = signUserToken(teamEmployer, "employer", {
+          memberId: member._id.toString(),
+          memberName: member.fullName,
+          memberEmail: member.email,
+          memberRole: member.role,
+          tv: member.tokenVersion || 0,
+        });
+        res.cookie("itj_token", memberToken, AUTH_COOKIE_OPTIONS);
+
+        sendSecurityAlertEmail({
+          toEmail: member.email,
+          fullName: member.fullName,
+          userType: "employer",
+          ip: req.ip || req.headers["x-forwarded-for"] || "127.0.0.1",
+          userAgent: req.headers["user-agent"] || "Trình duyệt web",
+          loginTime: member.lastLoginAt,
+        }).catch((err) => console.error("Lỗi gửi email cảnh báo bảo mật Google Chuyên viên:", err.message));
+
+        req.flash("success", `Chào mừng chuyên viên ${member.fullName} đăng nhập bằng Google thành công!`);
+        return res.redirect(nextUrl);
       }
     }
 
@@ -644,12 +722,7 @@ const handleGoogleCallback = async (req, res) => {
     }
 
     const token = signUserToken(employer, "employer");
-    res.cookie("itj_token", token, {
-      httpOnly: true,
-      secure: env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie("itj_token", token, AUTH_COOKIE_OPTIONS);
 
     sendSecurityAlertEmail({
       toEmail: employer.email,

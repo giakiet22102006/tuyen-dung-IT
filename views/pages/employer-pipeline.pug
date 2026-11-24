@@ -50,11 +50,11 @@ block main
                         | Kéo thả ứng viên trực tiếp giữa các vòng tuyển dụng hoặc chọn nhanh từ menu.
 
                 //- Toggle Chế độ xem: Bảng Kanban vs Danh sách
-                div(class="flex items-center gap-[8px] bg-white p-[4px] rounded-[8px] border border-gray-200 shadow-2xs")
-                    a(href="/employer/pipeline" class="inline-flex items-center gap-[6px] px-[14px] py-[7px] rounded-[6px] text-[13px] font-[600] bg-[#0088FF] text-white shadow-xs")
+                div(class="flex items-center gap-[8px] bg-white p-[4px] rounded-[8px] border border-gray-200 shadow-2xs shrink-0")
+                    a(href="/employer/pipeline" class="inline-flex items-center gap-[6px] px-[14px] py-[7px] rounded-[6px] text-[13px] font-[600] bg-[#0088FF] text-white shadow-xs whitespace-nowrap")
                         i(class="fa-solid fa-table-columns")
                         | Bảng Kanban
-                    a(href="/employer/cvs" class="inline-flex items-center gap-[6px] px-[14px] py-[7px] rounded-[6px] text-[13px] font-[500] text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition")
+                    a(href="/employer/cvs" class="inline-flex items-center gap-[6px] px-[14px] py-[7px] rounded-[6px] text-[13px] font-[500] text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition whitespace-nowrap")
                         i(class="fa-solid fa-list")
                         | Dạng danh sách
 
@@ -153,11 +153,79 @@ block main
                             each app in colRejected
                                 +kanbanCard(app, "rejected")
 
-    //- Script xử lý kéo thả Drag & Drop & Quick Select
+    //- Script xử lý kéo thả Drag & Drop & Quick Select (có xác nhận khi Từ chối + rollback DOM khi hủy/lỗi)
     script.
         document.addEventListener('DOMContentLoaded', () => {
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const STATUS_LABELS = { pending: 'Chờ duyệt', approved: 'Phù hợp', interviewing: 'Phỏng vấn', offered: 'Offer', hired: 'Đã tuyển', rejected: 'Từ chối' };
             let draggedCard = null;
+
+            function notify(message, type) {
+                if (typeof window.showToast === 'function') {
+                    window.showToast(message, type);
+                } else if (type === 'error') {
+                    alert(message);
+                }
+            }
+
+            // Ghi nhớ vị trí cũ của thẻ để hoàn tác (rollback) khi người dùng hủy hoặc request lỗi
+            function snapshot(card) {
+                return {
+                    parent: card.parentElement,
+                    next: card.nextElementSibling,
+                    status: card.closest('.kanban-col')?.getAttribute('data-status') || 'pending',
+                };
+            }
+
+            function rollback(card, snap) {
+                if (!snap || !snap.parent) return;
+                if (snap.next && snap.next.parentElement === snap.parent) {
+                    snap.parent.insertBefore(card, snap.next);
+                } else {
+                    snap.parent.appendChild(card);
+                }
+                const sel = card.querySelector('.status-quick-select');
+                if (sel) sel.value = snap.status;
+                updateCounters();
+            }
+
+            // Kéo sang "Từ chối": bắt buộc xác nhận + nhập lý do (gửi kèm email thông báo)
+            function askRejection() {
+                const reason = window.prompt('Nhập lý do từ chối ứng viên (sẽ gửi email thông báo kết quả). Bấm Hủy để hoàn tác:', 'Chưa phù hợp với yêu cầu vị trí tại thời điểm này');
+                if (reason === null) return null;
+                const trimmed = reason.trim();
+                if (!trimmed) {
+                    notify('Vui lòng nhập lý do từ chối.', 'warning');
+                    return null;
+                }
+                return trimmed;
+            }
+
+            async function moveCard(card, targetStatus) {
+                const snap = snapshot(card);
+                if (snap.status === targetStatus) return;
+                const targetContainer = document.querySelector(`.kanban-col[data-status="${targetStatus}"] .cards-container`);
+                if (!targetContainer) return;
+
+                let extra = {};
+                if (targetStatus === 'rejected') {
+                    const reason = askRejection();
+                    if (!reason) {
+                        rollback(card, snap);
+                        return;
+                    }
+                    extra = { rejectionReason: reason, sendEmail: 'true' };
+                }
+
+                // Optimistic UI
+                targetContainer.prepend(card);
+                const sel = card.querySelector('.status-quick-select');
+                if (sel) sel.value = targetStatus;
+                updateCounters();
+
+                const ok = await sendStatusUpdate(card.getAttribute('data-id'), targetStatus, extra);
+                if (!ok) rollback(card, snap);
+            }
 
             // 1. Gán sự kiện cho các Card
             function attachCardEvents(card) {
@@ -177,8 +245,6 @@ block main
 
             // 2. Gán sự kiện Drop cho các Cột Kanban
             document.querySelectorAll('.kanban-col').forEach(col => {
-                const container = col.querySelector('.cards-container');
-
                 col.addEventListener('dragover', (e) => {
                     e.preventDefault();
                     col.classList.add('ring-2', 'ring-[#0088FF]', 'bg-blue-50/50');
@@ -192,59 +258,49 @@ block main
                     e.preventDefault();
                     col.classList.remove('ring-2', 'ring-[#0088FF]', 'bg-blue-50/50');
                     if (!draggedCard) return;
-
-                    const appId = draggedCard.getAttribute('data-id');
-                    const targetStatus = col.getAttribute('data-status');
-
-                    // Di chuyển DOM
-                    container.prepend(draggedCard);
-
-                    // Cập nhật giá trị select bên trong card
-                    const sel = draggedCard.querySelector('.status-quick-select');
-                    if (sel) sel.value = targetStatus;
-
-                    updateCounters();
-
-                    // Gửi request API
-                    await sendStatusUpdate(appId, targetStatus);
+                    const card = draggedCard;
+                    await moveCard(card, col.getAttribute('data-status'));
                 });
             });
 
             // 3. Xử lý Quick Select đổi vòng tuyển dụng
             document.querySelectorAll('.status-quick-select').forEach(sel => {
+                sel.addEventListener('focus', () => {
+                    sel.dataset.prev = sel.value;
+                });
                 sel.addEventListener('change', async (e) => {
-                    const appId = sel.getAttribute('data-id');
+                    const card = document.getElementById(`card-${sel.getAttribute('data-id')}`);
                     const targetStatus = e.target.value;
-                    const card = document.getElementById(`card-${appId}`);
-                    const targetCol = document.querySelector(`.kanban-col[data-status="${targetStatus}"] .cards-container`);
-
-                    if (card && targetCol) {
-                        targetCol.prepend(card);
-                        updateCounters();
-                    }
-
-                    await sendStatusUpdate(appId, targetStatus);
+                    if (!card) return;
+                    // Trả select về giá trị cũ trước, moveCard sẽ cập nhật lại khi thành công
+                    sel.value = card.closest('.kanban-col')?.getAttribute('data-status') || sel.dataset.prev || 'pending';
+                    await moveCard(card, targetStatus);
                 });
             });
 
-            // Hàm gửi AJAX cập nhật trạng thái
-            async function sendStatusUpdate(appId, status) {
+            // Hàm gửi AJAX cập nhật trạng thái — trả về true/false để quyết định rollback
+            async function sendStatusUpdate(appId, status, extra) {
                 try {
                     const res = await fetch(`/employer/cvs/${appId}/status`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
                             'x-csrf-token': csrfToken
                         },
-                        body: JSON.stringify({ status })
+                        body: JSON.stringify(Object.assign({ status }, extra || {}))
                     });
-                    const data = await res.json();
-                    if (!data.success) {
-                        alert(data.message || 'Lỗi cập nhật trạng thái');
+                    const data = await res.json().catch(() => ({}));
+                    if (!res.ok || !data.success) {
+                        notify(data.message || 'Lỗi cập nhật trạng thái, đã hoàn tác thao tác.', 'error');
+                        return false;
                     }
+                    notify(data.message || `Đã chuyển sang vòng: ${STATUS_LABELS[status] || status}`, 'success');
+                    return true;
                 } catch (err) {
-                    console.error('Lỗi kết nối máy chủ:', err);
+                    notify('Mất kết nối máy chủ, đã hoàn tác thao tác.', 'error');
+                    return false;
                 }
             }
 

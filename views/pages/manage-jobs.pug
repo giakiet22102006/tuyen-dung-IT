@@ -8,14 +8,26 @@ block main
     div(class="py-[35px] sm:py-[60px]") 
         .contain 
             div(class="")
+                - const isRecruiterRole = Boolean(currentUser && currentUser.currentMember && currentUser.currentMember.role !== 'admin')
+                - const isPendingCompany = Boolean(currentUser && currentUser.status !== 'active')
                 div(class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-[20px] gap-[12px] sm:gap-[20px]")
                     h1(class="font-[700] text-[20px] sm:text-[28px] text-[#121212]") Quản lý công việc
-                    a(href="/employer/jobs/create" class="bg-[#0088FF] hover:bg-[#0070d6] rounded-[6px] py-[9px] px-[20px] font-[600] text-[14px] text-white flex items-center cursor-pointer shadow-sm") + Đăng việc làm mới 
+                    if isRecruiterRole
+                        span(class="bg-gray-200 text-gray-500 rounded-[6px] py-[9px] px-[20px] font-[600] text-[14px] cursor-not-allowed whitespace-nowrap" title="Chỉ Chủ công ty hoặc Quản trị nhóm mới được đăng tin" aria-disabled="true") + Đăng việc làm mới
+                    else if isPendingCompany
+                        span(class="bg-[#0088FF]/40 text-white rounded-[6px] py-[9px] px-[20px] font-[600] text-[14px] cursor-not-allowed whitespace-nowrap" title="Tài khoản công ty đang chờ Admin phê duyệt" aria-disabled="true") + Đăng việc làm mới
+                    else
+                        a(href="/employer/jobs/create" class="bg-[#0088FF] hover:bg-[#0070d6] rounded-[6px] py-[9px] px-[20px] font-[600] text-[14px] text-white flex items-center cursor-pointer shadow-sm whitespace-nowrap") + Đăng việc làm mới 
 
-                if flash && flash.success
-                    div(class="mb-[20px] p-[12px] bg-[#E8F5E9] border border-[#A5D6A7] text-[#2E7D32] rounded-[4px] text-[14px]") #{flash.success}
-                if flash && flash.error
-                    div(class="mb-[20px] p-[12px] bg-[#FFEBEE] border border-[#FFCDD2] text-[#C62828] rounded-[4px] text-[14px]") #{flash.error}
+                //- Flash hiển thị tập trung ở layouts/default.pug (QA-m01)
+                if isPendingCompany
+                    div(class="mb-[20px] p-[12px] bg-amber-50 border border-amber-200 text-amber-900 rounded-[6px] text-[14px] flex items-start gap-[8px]")
+                        i(class="fa-solid fa-hourglass-half mt-[3px]")
+                        span Tài khoản công ty đang chờ Admin phê duyệt. Bạn có thể cập nhật hồ sơ công ty trong lúc chờ, việc đăng/sửa tin sẽ mở khi tài khoản được duyệt.
+                if isRecruiterRole
+                    div(class="mb-[20px] p-[12px] bg-blue-50 border border-blue-200 text-blue-900 rounded-[6px] text-[14px] flex items-start gap-[8px]")
+                        i(class="fa-solid fa-circle-info mt-[3px]")
+                        span Bạn đang đăng nhập với vai trò Chuyên viên tuyển dụng: chỉ xem danh sách tin, việc đăng/sửa/xóa tin do Chủ công ty hoặc Quản trị nhóm thực hiện.
 
                 div(class="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-[20px]")
                     if jobs && jobs.length > 0
@@ -34,11 +46,27 @@ block main
                                         each sk in job.skills
                                             div(class="border border-[#DEDEDE] rounded-[20px] py-[4px] px-[12px] font-[400] text-[11px] sm:text-[12px] text-[#414042] bg-white/70") #{sk.name}
             
-                                div(class="flex justify-center gap-[10px] mt-[10px]")
-                                    a(href="/employer/jobs/" + job._id + "/edit" class="bg-[#FFB200] hover:bg-[#e5a000] rounded-[6px] py-[7px] px-[18px] font-[600] text-[13px] text-black cursor-pointer shadow-xs") Sửa
-                                    form(action="/employer/jobs/" + job._id + "/delete" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa tin tuyển dụng này không?');" class="inline")
-                                        input(type="hidden" name="_csrf" value=csrfToken)
-                                        button(type="submit" class="bg-[#FF0000] hover:bg-[#d60000] rounded-[6px] py-[7px] px-[18px] font-[600] text-[13px] text-white cursor-pointer shadow-xs") Xóa
+                                div(class="text-center mt-[8px]")
+                                    if job.moderation && job.moderation !== 'visible'
+                                        span(class="inline-flex items-center gap-[4px] px-[8px] py-[2px] rounded-full bg-red-50 text-red-700 border border-red-200 text-[11.5px] font-[700] whitespace-nowrap") Bị ẩn bởi kiểm duyệt
+                                    else if job.employerActive
+                                        span(class="inline-flex items-center gap-[4px] px-[8px] py-[2px] rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11.5px] font-[700] whitespace-nowrap") ● Đang hiển thị
+                                    else
+                                        span(class="inline-flex items-center gap-[4px] px-[8px] py-[2px] rounded-full bg-gray-100 text-gray-600 border border-gray-200 text-[11.5px] font-[700] whitespace-nowrap") ❚❚ Đang tạm dừng
+
+                                if !isRecruiterRole
+                                    div(class="flex justify-center flex-wrap gap-[8px] mt-[10px]")
+                                        if !isPendingCompany
+                                            a(href="/employer/jobs/" + job._id + "/edit" class="bg-[#FFB200] hover:bg-[#e5a000] rounded-[6px] py-[7px] px-[18px] font-[600] text-[13px] text-black cursor-pointer shadow-xs") Sửa
+                                            form(action="/employer/jobs/" + job._id + "/toggle-active" method="POST" class="inline")
+                                                input(type="hidden" name="_csrf" value=csrfToken)
+                                                if job.employerActive
+                                                    button(type="submit" class="bg-gray-700 hover:bg-gray-800 rounded-[6px] py-[7px] px-[14px] font-[600] text-[13px] text-white cursor-pointer shadow-xs whitespace-nowrap") Tạm dừng
+                                                else
+                                                    button(type="submit" class="bg-emerald-600 hover:bg-emerald-700 rounded-[6px] py-[7px] px-[14px] font-[600] text-[13px] text-white cursor-pointer shadow-xs whitespace-nowrap") Mở lại
+                                        form(action="/employer/jobs/" + job._id + "/delete" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa tin tuyển dụng này không?');" class="inline")
+                                            input(type="hidden" name="_csrf" value=csrfToken)
+                                            button(type="submit" class="bg-[#FF0000] hover:bg-[#d60000] rounded-[6px] py-[7px] px-[18px] font-[600] text-[13px] text-white cursor-pointer shadow-xs") Xóa
                     else
                         div(class="col-span-full py-[40px] text-center text-[#717171] text-[16px]") Bạn chưa đăng tin tuyển dụng nào. Hãy nhấn nút "Thêm mới" để bắt đầu!
     
