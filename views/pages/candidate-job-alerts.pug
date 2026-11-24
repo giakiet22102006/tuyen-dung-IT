@@ -26,7 +26,7 @@ block main
                                     span(class=`w-[10px] h-[10px] rounded-full ${alert.isActive ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'}`)
                                     span(class="text-[12px] font-[600] uppercase text-gray-600")
                                         | #{alert.isActive ? 'Đang nhận thông báo' : 'Tạm dừng'}
-                                span(class="text-[11px] text-gray-400") #{alert.frequency === 'daily' ? 'Hàng ngày' : 'Tức thì'}
+                                span(class="text-[11px] text-gray-500 bg-gray-100 px-[8px] py-[2px] rounded-full font-[500]") #{alert.frequency === 'weekly' ? 'Hàng tuần' : (alert.frequency === 'daily' ? 'Hàng ngày' : 'Tức thì')}
 
                             div(class="space-y-[8px] mb-[16px]")
                                 div(class="text-[15px] font-[700] text-gray-800")
@@ -36,10 +36,10 @@ block main
                                         | Mọi từ khóa công nghệ
                                 div(class="text-[13px] text-gray-600 flex items-center gap-[6px]")
                                     i(class="fa-solid fa-location-dot text-gray-400 text-[12px]")
-                                    span Khu vực: <strong>#{alert.city ? alert.city : 'Toàn quốc'}</strong>
+                                    span Khu vực: <strong>#{alert.city ? labels.getCityLabel(alert.city) : 'Toàn quốc'}</strong>
                                 div(class="text-[13px] text-gray-600 flex items-center gap-[6px]")
                                     i(class="fa-solid fa-layer-group text-gray-400 text-[12px]")
-                                    span Cấp bậc: <strong>#{alert.position ? alert.position : 'Tất cả cấp bậc'}</strong>
+                                    span Cấp bậc: <strong>#{alert.position ? labels.getPositionLabel(alert.position) : 'Tất cả cấp bậc'}</strong>
                                 div(class="text-[12px] text-gray-500 flex items-center gap-[6px]")
                                     i(class="fa-solid fa-envelope text-gray-400 text-[12px]")
                                     span Gửi đến: <span class="font-mono text-gray-700">#{alert.email}</span>

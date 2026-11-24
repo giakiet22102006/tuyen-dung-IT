@@ -14,17 +14,11 @@ block main
                             span Hồ sơ IT Profile Trực Tuyến
                         p(class="text-[13px] sm:text-[14px] text-gray-500 mt-[2px]") Xây dựng hồ sơ công nghệ chuẩn ITviec - Ứng tuyển nhanh 1-Click không cần upload lại PDF
 
-                    div(class="flex items-center gap-[10px]")
+                    div(class="flex flex-wrap items-center gap-[10px]")
+                        a(href="/candidate/it-profile/pdf" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-[6px] px-[14px] py-[8px] bg-emerald-600 hover:bg-emerald-700 text-white text-[13px] font-[700] rounded-[6px] shadow-xs transition")
+                            <i class="fa-solid fa-file-pdf"></i>
+                            span Xem trước / Tải PDF CV
                         a(href="/candidate/profile" class="text-[13px] font-[600] text-[#0088FF] hover:underline") <i class="fa-solid fa-user mr-[4px]"></i> Thông tin tài khoản
-
-                if flash && flash.success
-                    div(class="mb-[20px] p-[14px] bg-[#E8F5E9] border border-[#A5D6A7] text-[#2E7D32] rounded-[8px] text-[14px] flex items-center gap-[8px]")
-                        <i class="fa-solid fa-circle-check text-[16px]"></i>
-                        span #{flash.success}
-                if flash && flash.error
-                    div(class="mb-[20px] p-[14px] bg-[#FFEBEE] border border-[#FFCDD2] text-[#C62828] rounded-[8px] text-[14px] flex items-center gap-[8px]")
-                        <i class="fa-solid fa-circle-exmark text-[16px]"></i>
-                        span #{flash.error}
 
                 form(action="/candidate/it-profile" method="POST" id="formItProfile" class="space-y-[24px]")
                     input(type="hidden" name="_csrf" value=csrfToken)
@@ -36,6 +30,8 @@ block main
                     input(type="hidden" id="certificatesJson" name="certificates" value=JSON.stringify(profile.certificates || []))
 
                     //- 0. Cài đặt Bật/Tắt Tìm Việc & Quyền riêng tư Headhunting
+                    - const isOpenWork = profile.openToWork !== false
+                    - const cityOptions = (cities && cities.length > 0) ? cities : (labels && labels.CITIES ? labels.CITIES : [])
                     div(class="bg-gradient-to-r from-emerald-50 via-teal-50 to-white rounded-[10px] border border-emerald-200 p-[18px] sm:p-[22px] shadow-2xs")
                         div(class="flex flex-col sm:flex-row sm:items-center justify-between gap-[16px]")
                             div(class="flex items-start gap-[12px]")
@@ -47,18 +43,23 @@ block main
                                         span(class="text-[11px] font-[700] uppercase tracking-wider bg-emerald-200/60 text-emerald-800 px-[6px] py-[1px] rounded") Hot
                                     p(class="text-[13px] text-gray-600 mt-[2px]") Khi bật, hồ sơ của bạn sẽ hiển thị trong Kho ứng viên (Talent Pool) để các Nhà tuyển dụng hàng đầu chủ động săn đón và gửi lời mời phỏng vấn.
                             
-                            label(class="relative inline-flex items-center cursor-pointer shrink-0")
-                                input(type="checkbox" name="openToWork" value="true" checked=(profile.openToWork !== false) class="sr-only peer")
+                            label(for="openToWork" class="relative inline-flex items-center cursor-pointer shrink-0")
+                                input(type="checkbox" id="openToWork" name="openToWork" value="true" checked=isOpenWork class="sr-only peer")
                                 div(class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600")
-                                span(class="ml-3 text-[13px] font-[700] text-emerald-900") Đang mở cơ hội
+                                span(id="openToWorkLabel" class=`ml-3 text-[13px] font-[700] ${isOpenWork ? 'text-emerald-900' : 'text-gray-500'}`) #{isOpenWork ? 'Đang mở cơ hội' : 'Đang ẩn hồ sơ'}
 
-                        div(class="grid grid-cols-1 sm:grid-cols-2 gap-[14px] mt-[16px] pt-[14px] border-t border-emerald-200/60")
+                        div(class="grid grid-cols-1 sm:grid-cols-3 gap-[14px] mt-[16px] pt-[14px] border-t border-emerald-200/60")
                             div
-                                label(class="block text-[12.5px] font-[600] text-gray-700 mb-[4px]") Mức lương kỳ vọng (Triệu VNĐ/tháng)
-                                input(type="number" name="expectedSalary" value=(profile.expectedSalary || "") placeholder="VD: 25 (triệu)" class="w-full bg-white border border-gray-300 rounded-[6px] px-[12px] py-[8px] text-[13.5px] focus:outline-none focus:ring-2 focus:ring-emerald-500")
+                                label(for="expectedSalary" class="block text-[12.5px] font-[600] text-gray-700 mb-[4px]") Mức lương kỳ vọng (USD / tháng — $)
+                                input(type="number" id="expectedSalary" name="expectedSalary" min="0" step="50" value=(profile.expectedSalary || "") placeholder="VD: 1500 ($/tháng)" class="w-full bg-white border border-gray-300 rounded-[6px] px-[12px] py-[8px] text-[13.5px] focus:outline-none focus:ring-2 focus:ring-emerald-500")
                             div
-                                label(class="block text-[12.5px] font-[600] text-gray-700 mb-[4px]") Ẩn hồ sơ với công ty hiện tại (Bảo mật quyền riêng tư)
-                                input(type="text" name="hideFromCurrentCompany" value=(profile.hideFromCurrentCompany || "") placeholder="Nhập tên công ty hiện tại của bạn (VD: FPT, Viettel...)" class="w-full bg-white border border-gray-300 rounded-[6px] px-[12px] py-[8px] text-[13.5px] focus:outline-none focus:ring-2 focus:ring-emerald-500")
+                                label(for="preferredCity" class="block text-[12.5px] font-[600] text-gray-700 mb-[4px]") Khu vực làm việc mong muốn
+                                select(id="preferredCity" name="preferredCity" class="w-full bg-white border border-gray-300 rounded-[6px] px-[12px] py-[8px] text-[13.5px] cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500")
+                                    each c in cityOptions
+                                        option(value=c.value selected=((profile.preferredCity || "ha-noi") === c.value)) #{c.label}
+                            div
+                                label(for="hideFromCurrentCompany" class="block text-[12.5px] font-[600] text-gray-700 mb-[4px]") Ẩn hồ sơ với công ty hiện tại
+                                input(type="text" id="hideFromCurrentCompany" name="hideFromCurrentCompany" value=(profile.hideFromCurrentCompany || "") placeholder="VD: FPT, Viettel..." class="w-full bg-white border border-gray-300 rounded-[6px] px-[12px] py-[8px] text-[13.5px] focus:outline-none focus:ring-2 focus:ring-emerald-500")
 
                     //- 1. Thông tin chuyên môn cốt lõi
                     div(class="bg-white rounded-[10px] border border-gray-200 p-[20px] sm:p-[24px] shadow-2xs")
@@ -151,18 +152,52 @@ block main
                         div(id="eduListContainer" class="space-y-[12px]")
                             //- Dynamically populated by JS
 
-                    //- Nút Lưu
-                    div(class="flex items-center justify-end gap-[12px] pt-[10px]")
+                        div(class="mt-[22px] pt-[18px] border-t border-gray-100")
+                            div(class="flex items-center justify-between mb-[12px]")
+                                h3(class="font-[700] text-[14.5px] text-gray-800 flex items-center gap-[6px]")
+                                    <i class="fa-solid fa-certificate text-amber-500"></i>
+                                    span Chứng chỉ chuyên môn (Certifications)
+                                button(type="button" id="btnAddCert" class="inline-flex items-center gap-[6px] px-[12px] py-[6px] bg-amber-50 text-amber-700 hover:bg-amber-100 text-[12px] font-[700] rounded-[6px] cursor-pointer transition-colors")
+                                    <i class="fa-solid fa-plus"></i> Thêm chứng chỉ
+
+                            div(id="certificatesList" class="space-y-[12px]")
+                                //- Dynamically populated by JS
+
+                    //- Nút Lưu & Xem PDF
+                    div(class="flex flex-wrap items-center justify-end gap-[12px] pt-[10px]")
                         a(href="/candidate/profile" class="px-[20px] py-[12px] border border-gray-300 text-gray-700 font-[600] rounded-[6px] hover:bg-gray-50 text-[14px]") Hủy bỏ
+                        a(href="/candidate/it-profile/pdf" target="_blank" rel="noopener noreferrer" class="px-[20px] py-[12px] border border-emerald-600 text-emerald-700 hover:bg-emerald-50 font-[700] rounded-[6px] text-[14px] inline-flex items-center gap-[8px]")
+                            <i class="fa-solid fa-file-pdf"></i>
+                            span Xem trước / Tải PDF CV
                         button(type="submit" class="bg-[#0088FF] hover:bg-[#0070d6] text-white px-[28px] py-[12px] font-[700] rounded-[6px] text-[15px] shadow-sm cursor-pointer inline-flex items-center gap-[8px]")
                             <i class="fa-solid fa-floppy-disk"></i>
                             span Lưu Hồ Sơ IT Profile
 
     script.
         (function() {
+            var openToWorkCheckbox = document.getElementById("openToWork");
+            var openToWorkLabel = document.getElementById("openToWorkLabel");
+            function syncOpenToWorkLabel() {
+                if (!openToWorkCheckbox || !openToWorkLabel) return;
+                if (openToWorkCheckbox.checked) {
+                    openToWorkLabel.textContent = "Đang mở cơ hội";
+                    openToWorkLabel.classList.remove("text-gray-500");
+                    openToWorkLabel.classList.add("text-emerald-900");
+                } else {
+                    openToWorkLabel.textContent = "Đang ẩn hồ sơ";
+                    openToWorkLabel.classList.remove("text-emerald-900");
+                    openToWorkLabel.classList.add("text-gray-500");
+                }
+            }
+            if (openToWorkCheckbox) {
+                openToWorkCheckbox.addEventListener("change", syncOpenToWorkLabel);
+                syncOpenToWorkLabel();
+            }
+
             var workData = [];
             var projectData = [];
             var eduData = [];
+            var certData = [];
 
             try {
                 workData = JSON.parse(document.getElementById("workExperienceJson").value || "[]");
@@ -173,10 +208,14 @@ block main
             try {
                 eduData = JSON.parse(document.getElementById("educationJson").value || "[]");
             } catch(e) {}
+            try {
+                certData = JSON.parse(document.getElementById("certificatesJson").value || "[]");
+            } catch(e) {}
 
             var workContainer = document.getElementById("workListContainer");
             var projectContainer = document.getElementById("projectListContainer");
             var eduContainer = document.getElementById("eduListContainer");
+            var certContainer = document.getElementById("certificatesList");
 
             function esc(str) {
                 if (str === null || str === undefined) return "";
@@ -197,7 +236,7 @@ block main
                 }
                 workData.forEach(function(w, idx) {
                     var card = document.createElement("div");
-                    card.className = "p-[14px] bg-gray-50 border border-gray-200 rounded-[8px] space-y-[10px] relative";
+                    card.className = "work-card p-[14px] bg-gray-50 border border-gray-200 rounded-[8px] space-y-[10px] relative";
                     card.innerHTML = `
                         <button type="button" class="btn-del-work absolute top-[10px] right-[10px] text-red-500 hover:text-red-700 text-[14px] cursor-pointer p-[4px]" data-idx="${idx}" title="Xóa">
                             <i class="fa-solid fa-trash-can"></i>
@@ -219,7 +258,7 @@ block main
                             </div>
                             <div>
                                 <label class="block text-[12px] font-[600] text-gray-600 mb-[2px]">Kết thúc</label>
-                                <input type="text" class="w-full border border-gray-300 rounded-[4px] px-[10px] py-[6px] text-[13px] bg-white inp-work-end" value="${esc(w.endDate || '')}" placeholder="Hien tai hoặc 08/2025">
+                                <input type="text" class="w-full border border-gray-300 rounded-[4px] px-[10px] py-[6px] text-[13px] bg-white inp-work-end" value="${esc(w.endDate || '')}" placeholder="Hiện tại hoặc 08/2025">
                             </div>
                             <div class="flex items-center pt-[18px]">
                                 <label class="flex items-center gap-[6px] text-[12px] text-gray-700 cursor-pointer select-none">
@@ -250,7 +289,7 @@ block main
             }
 
             function syncWorksFromDOM() {
-                var cards = workContainer.querySelectorAll(".p-\\[14px\\]");
+                var cards = workContainer.querySelectorAll(".work-card");
                 workData = [];
                 cards.forEach(function(card) {
                     workData.push({
@@ -274,7 +313,7 @@ block main
                 }
                 projectData.forEach(function(p, idx) {
                     var card = document.createElement("div");
-                    card.className = "p-[14px] bg-gray-50 border border-gray-200 rounded-[8px] space-y-[10px] relative";
+                    card.className = "project-card p-[14px] bg-gray-50 border border-gray-200 rounded-[8px] space-y-[10px] relative";
                     card.innerHTML = `
                         <button type="button" class="btn-del-project absolute top-[10px] right-[10px] text-red-500 hover:text-red-700 text-[14px] cursor-pointer p-[4px]" data-idx="${idx}" title="Xóa">
                             <i class="fa-solid fa-trash-can"></i>
@@ -322,7 +361,7 @@ block main
             }
 
             function syncProjectsFromDOM() {
-                var cards = projectContainer.querySelectorAll(".p-\\[14px\\]");
+                var cards = projectContainer.querySelectorAll(".project-card");
                 projectData = [];
                 cards.forEach(function(card) {
                     projectData.push({
@@ -345,7 +384,7 @@ block main
                 }
                 eduData.forEach(function(e, idx) {
                     var card = document.createElement("div");
-                    card.className = "p-[12px] bg-gray-50 border border-gray-200 rounded-[8px] flex items-center justify-between gap-[10px]";
+                    card.className = "edu-card p-[12px] bg-gray-50 border border-gray-200 rounded-[8px] flex items-center justify-between gap-[10px]";
                     card.innerHTML = `
                         <div class="grid sm:grid-cols-3 grid-cols-1 gap-[8px] flex-1">
                             <input type="text" class="border border-gray-300 rounded-[4px] px-[8px] py-[5px] text-[13px] bg-white inp-edu-school" value="${esc(e.school || '')}" placeholder="Trường ĐH / Học viện">
@@ -374,7 +413,7 @@ block main
             }
 
             function syncEduFromDOM() {
-                var cards = eduContainer.querySelectorAll(".p-\\[12px\\]");
+                var cards = eduContainer.querySelectorAll(".edu-card");
                 eduData = [];
                 cards.forEach(function(card) {
                     eduData.push({
@@ -384,6 +423,56 @@ block main
                     });
                 });
                 document.getElementById("educationJson").value = JSON.stringify(eduData);
+            }
+
+            function renderCerts() {
+                if (!certContainer) return;
+                certContainer.innerHTML = "";
+                if (certData.length === 0) {
+                    certContainer.innerHTML = "<div class='text-[13px] text-gray-400 italic py-[8px]'>Chưa có chứng chỉ nào. Bấm '+ Thêm chứng chỉ' để bổ sung (AWS, IELTS, CKA, TOEIC...).</div>";
+                    return;
+                }
+                certData.forEach(function(c, idx) {
+                    var card = document.createElement("div");
+                    card.className = "cert-card p-[12px] bg-amber-50/40 border border-amber-200/70 rounded-[8px] flex items-center justify-between gap-[10px]";
+                    card.innerHTML = `
+                        <div class="grid sm:grid-cols-3 grid-cols-1 gap-[8px] flex-1">
+                            <input type="text" class="border border-gray-300 rounded-[4px] px-[8px] py-[5px] text-[13px] bg-white inp-cert-name" value="${esc(c.name || '')}" placeholder="Tên chứng chỉ (VD: AWS Solutions Architect)">
+                            <input type="text" class="border border-gray-300 rounded-[4px] px-[8px] py-[5px] text-[13px] bg-white inp-cert-org" value="${esc(c.organization || '')}" placeholder="Tổ chức cấp (VD: Amazon Web Services)">
+                            <input type="text" class="border border-gray-300 rounded-[4px] px-[8px] py-[5px] text-[13px] bg-white inp-cert-year" value="${esc(c.year || '')}" placeholder="Năm cấp (VD: 2025)">
+                        </div>
+                        <button type="button" class="btn-del-cert text-red-500 hover:text-red-700 text-[14px] p-[4px] cursor-pointer" data-idx="${idx}" title="Xóa chứng chỉ">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    `;
+                    certContainer.appendChild(card);
+                });
+
+                bindCertEvents();
+            }
+
+            function bindCertEvents() {
+                certContainer.querySelectorAll(".btn-del-cert").forEach(function(btn) {
+                    btn.addEventListener("click", function() {
+                        var idx = parseInt(btn.getAttribute("data-idx"), 10);
+                        syncCertsFromDOM();
+                        certData.splice(idx, 1);
+                        renderCerts();
+                    });
+                });
+            }
+
+            function syncCertsFromDOM() {
+                var cards = certContainer.querySelectorAll(".cert-card");
+                certData = [];
+                cards.forEach(function(card) {
+                    certData.push({
+                        name: card.querySelector(".inp-cert-name").value.trim(),
+                        organization: card.querySelector(".inp-cert-org").value.trim(),
+                        year: card.querySelector(".inp-cert-year").value.trim()
+                    });
+                });
+                document.getElementById("certificatesJson").value = JSON.stringify(certData);
             }
 
             // Sự kiện Add
@@ -405,15 +494,23 @@ block main
                 renderEdu();
             });
 
+            document.getElementById("btnAddCert").addEventListener("click", function() {
+                syncCertsFromDOM();
+                certData.push({ name: "", organization: "", year: "" });
+                renderCerts();
+            });
+
             // Khi submit form, đồng bộ dữ liệu vào hidden inputs
             document.getElementById("formItProfile").addEventListener("submit", function() {
                 syncWorksFromDOM();
                 syncProjectsFromDOM();
                 syncEduFromDOM();
+                syncCertsFromDOM();
             });
 
             // Khởi tạo hiển thị ban đầu
             renderWorks();
             renderProjects();
             renderEdu();
+            renderCerts();
         })();

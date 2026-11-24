@@ -10,11 +10,6 @@ block main
             div(class="")
                 h1(class="font-[700] text-[20px] sm:text-[28px] text-[#121212] mb-[20px]") Quản lý CV đã gửi
 
-                if flash && flash.success
-                    div(class="mb-[20px] p-[12px] bg-[#E8F5E9] border border-[#A5D6A7] text-[#2E7D32] rounded-[4px] text-[14px]") #{flash.success}
-                if flash && flash.error
-                    div(class="mb-[20px] p-[12px] bg-[#FFEBEE] border border-[#FFCDD2] text-[#C62828] rounded-[4px] text-[14px]") #{flash.error}
-
                 div(class="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-[20px]")
                     if applications && applications.length > 0
                         each app in applications
@@ -32,13 +27,35 @@ block main
                                 div(class="font-[400] text-[13px] sm:text-[14px] text-[#121212] text-center mt-[6px]") 
                                     <i class="fa-solid fa-briefcase text-[14px] mr-[4px]"></i> #{app.jobId ? labels.getWorkingFormLabel(app.jobId.workingForm) : "Khác"}
                                 
-                                div(class="font-[500] text-[13px] text-center mt-[6px]")
+                                //- Trạng thái hồ sơ (đầy đủ 6 trạng thái ATS Pipeline)
+                                div(class="font-[600] text-[13px] text-center mt-[8px]")
                                     if app.status === 'pending'
-                                        span(class="text-[#FFB200]") <i class="fa-solid fa-clock mr-[4px]"></i> Chưa duyệt
+                                        span(class="inline-flex items-center gap-[5px] px-[10px] py-[3px] rounded-full bg-amber-50 border border-amber-200 text-amber-700")
+                                            i(class="fa-solid fa-clock")
+                                            | Chờ duyệt
                                     else if app.status === 'approved'
-                                        span(class="text-[#2E7D32]") <i class="fa-solid fa-circle-check mr-[4px]"></i> Phù hợp
+                                        span(class="inline-flex items-center gap-[5px] px-[10px] py-[3px] rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700")
+                                            i(class="fa-solid fa-circle-check")
+                                            | Phù hợp
+                                    else if app.status === 'interviewing'
+                                        span(class="inline-flex items-center gap-[5px] px-[10px] py-[3px] rounded-full bg-purple-50 border border-purple-200 text-purple-700")
+                                            i(class="fa-solid fa-calendar-check")
+                                            | Phỏng vấn
+                                    else if app.status === 'offered'
+                                        span(class="inline-flex items-center gap-[5px] px-[10px] py-[3px] rounded-full bg-blue-50 border border-blue-200 text-blue-700")
+                                            i(class="fa-solid fa-envelope-open-text")
+                                            | Đề nghị (Offer)
+                                    else if app.status === 'hired'
+                                        span(class="inline-flex items-center gap-[5px] px-[10px] py-[3px] rounded-full bg-teal-50 border border-teal-200 text-teal-800")
+                                            i(class="fa-solid fa-trophy")
+                                            | Đã tuyển
                                     else if app.status === 'rejected'
-                                        span(class="text-[#C62828]") <i class="fa-solid fa-circle-xmark mr-[4px]"></i> Đã từ chối
+                                        span(class="inline-flex items-center gap-[5px] px-[10px] py-[3px] rounded-full bg-red-50 border border-red-200 text-red-700")
+                                            i(class="fa-solid fa-circle-xmark")
+                                            | Đã từ chối
+                                    else
+                                        span(class="inline-flex items-center gap-[5px] px-[10px] py-[3px] rounded-full bg-gray-100 border border-gray-200 text-gray-700")
+                                            | #{labels.getApplicationStatusLabel(app.status)}
 
                                 if app.status === 'rejected'
                                     div(class="mt-[10px] p-[10px] bg-red-50/90 border border-red-200 rounded-[8px] text-left space-y-[4px]")
@@ -56,32 +73,44 @@ block main
                                                     <i class="fa-solid fa-arrow-right text-[10px]"></i>
 
                                 if app.interviewSchedule && app.interviewSchedule.scheduledAt
+                                    - const candRespStatus = app.interviewSchedule.candidateResponse && app.interviewSchedule.candidateResponse.status ? app.interviewSchedule.candidateResponse.status : ""
+                                    - const isDeclined = candRespStatus === 'declined' || app.interviewSchedule.status === 'cancelled'
                                     div(class="mt-[10px] p-[10px] bg-purple-50 border border-purple-200 rounded-[8px] text-left text-[12.5px] space-y-[4px]")
-                                        div(class="font-[700] text-purple-900 flex items-center justify-between")
+                                        div(class="font-[700] text-purple-900 flex items-center justify-between gap-[6px]")
                                             span(class="flex items-center gap-[4px]")
                                                 <i class="fa-solid fa-calendar-check text-purple-600"></i> Lịch Phỏng Vấn:
-                                            if app.interviewSchedule.status === 'confirmed'
+                                            if isDeclined
+                                                span(class="text-[10px] bg-red-100 text-red-800 font-[700] px-[6px] py-[1px] rounded-full") ✕ Đã từ chối
+                                            else if app.interviewSchedule.status === 'confirmed'
                                                 span(class="text-[10px] bg-emerald-100 text-emerald-800 font-[700] px-[6px] py-[1px] rounded-full") ✓ Đã xác nhận
                                             else if app.interviewSchedule.status === 'rescheduled'
                                                 span(class="text-[10px] bg-amber-100 text-amber-800 font-[700] px-[6px] py-[1px] rounded-full") Đã xin dời lịch
                                             else
                                                 span(class="text-[10px] bg-purple-200 text-purple-800 font-[700] px-[6px] py-[1px] rounded-full") Cần xác nhận
                                         
-                                        div(class="text-gray-700") ⏱️ <strong>Thời gian:</strong> #{formatDateTime(app.interviewSchedule.scheduledAt)} (#{app.interviewSchedule.durationMinutes}p)
+                                        div(class="text-gray-700") ⏱️ <strong>Thời gian:</strong> #{formatDateTime(app.interviewSchedule.scheduledAt)} (#{app.interviewSchedule.durationMinutes || 60}p)
                                         div(class="text-gray-700 truncate") 📍 <strong>Hình thức:</strong> #{app.interviewSchedule.locationType === 'online' ? 'Trực tuyến (Online)' : (app.interviewSchedule.locationAddress || 'Văn phòng')}
                                         - const safeMeetingLink = safeUrl(app.interviewSchedule.meetingLink)
-                                        if safeMeetingLink
+                                        if safeMeetingLink && app.interviewSchedule.locationType === 'online'
                                             div(class="text-gray-700 truncate")
                                                 | 🔗 <strong>Link họp:</strong> 
                                                 a(href=safeMeetingLink target="_blank" rel="noopener noreferrer" class="text-[#0088FF] underline font-[600]") Mở phòng họp
+                                        if app.interviewSchedule.notes
+                                            div(class="text-gray-600 text-[12px] whitespace-pre-line") 📝 <strong>Ghi chú:</strong> #{app.interviewSchedule.notes}
+
+                                        div(class="pt-[4px]")
+                                            a(href=`/candidate/applied-jobs/${app._id}/ics` class="inline-flex items-center gap-[5px] text-[11.5px] font-[600] text-purple-700 hover:text-purple-900 bg-white border border-purple-200 hover:bg-purple-100/70 px-[9px] py-[4px] rounded-[6px] transition")
+                                                i(class="fa-solid fa-calendar-plus")
+                                                span Tải lịch (.ics)
 
                                         if app.interviewSchedule.status === 'pending'
-                                            div(class="flex items-center gap-[6px] pt-[6px] border-t border-purple-200/80")
-                                                form(action=`/candidate/applied-jobs/${app._id}/respond-interview` method="POST" class="flex-1")
+                                            div(class="flex flex-wrap items-center gap-[6px] pt-[6px] border-t border-purple-200/80")
+                                                form(action=`/candidate/applied-jobs/${app._id}/respond-interview` method="POST" class="flex-1 min-w-[120px]")
                                                     input(type="hidden" name="_csrf" value=csrfToken)
                                                     input(type="hidden" name="responseStatus" value="confirmed")
-                                                    button(type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-[700] text-[11px] py-[5px] rounded-[6px] shadow-xs cursor-pointer transition") ✓ Xác Nhận Đi Phỏng Vấn
+                                                    button(type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-[700] text-[11px] py-[5px] px-[8px] rounded-[6px] shadow-xs cursor-pointer transition") ✓ Xác nhận
                                                 button(type="button" onclick=`var m=document.getElementById('modalResched_${app._id}'); if(m){m.classList.remove('hidden');m.classList.add('flex');}` class="px-[8px] py-[5px] bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-[600] text-[11px] rounded-[6px] cursor-pointer") Xin đổi giờ
+                                                button(type="button" onclick=`var m=document.getElementById('modalDecline_${app._id}'); if(m){m.classList.remove('hidden');m.classList.add('flex');}` class="px-[8px] py-[5px] bg-white border border-red-300 hover:bg-red-50 text-red-600 font-[600] text-[11px] rounded-[6px] cursor-pointer") Từ chối
 
                                 if app.interviewInvitation && app.interviewInvitation.sentAt
                                     div(class="mt-[10px] p-[8px] bg-emerald-50 border border-emerald-200 rounded-[6px] text-center")
@@ -92,6 +121,7 @@ block main
                                             <i class="fa-solid fa-arrow-right text-[10px]"></i>
 
                                 if app.interviewSchedule && app.interviewSchedule.scheduledAt
+                                    //- MODAL XIN DỜI LỊCH PHỎNG VẤN
                                     div(id=`modalResched_${app._id}` class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-xs p-[16px] text-left")
                                         div(class="bg-white rounded-[12px] shadow-2xl max-w-[480px] w-full p-[20px]")
                                             h3(class="font-[700] text-[16px] text-gray-900 mb-[4px]") Đề Xuất Dời Lịch Phỏng Vấn
@@ -103,8 +133,23 @@ block main
                                                     label(class="block text-[12px] font-[600] text-gray-700 mb-[4px]") Khung giờ / Ngày bạn có thể tham gia
                                                     textarea(name="note" required rows="3" placeholder="VD: Em xin phép dời sang chiều Thứ Năm lúc 14:00 do trùng lịch học/làm việc..." class="w-full p-[10px] rounded-[6px] border border-gray-300 text-[13px] focus:outline-none focus:ring-2 focus:ring-[#0088FF]")
                                                 div(class="flex justify-end gap-[8px]")
-                                                    button(type="button" onclick=`document.getElementById('modalResched_${app._id}').classList.add('hidden'); document.getElementById('modalResched_${app._id}').classList.remove('flex');` class="px-[14px] py-[6px] border border-gray-300 rounded-[6px] text-[12px] font-[600] text-gray-600 hover:bg-gray-100") Hủy
-                                                    button(type="submit" class="px-[16px] py-[6px] bg-[#0088FF] hover:bg-[#0070d6] text-white rounded-[6px] text-[12px] font-[700]") Gửi Đề Xuất
+                                                    button(type="button" onclick=`document.getElementById('modalResched_${app._id}').classList.add('hidden'); document.getElementById('modalResched_${app._id}').classList.remove('flex');` class="px-[14px] py-[6px] border border-gray-300 rounded-[6px] text-[12px] font-[600] text-gray-600 hover:bg-gray-100 cursor-pointer") Hủy
+                                                    button(type="submit" class="px-[16px] py-[6px] bg-[#0088FF] hover:bg-[#0070d6] text-white rounded-[6px] text-[12px] font-[700] cursor-pointer") Gửi Đề Xuất
+
+                                    //- MODAL TỪ CHỐI LỊCH PHỎNG VẤN
+                                    div(id=`modalDecline_${app._id}` class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-xs p-[16px] text-left")
+                                        div(class="bg-white rounded-[12px] shadow-2xl max-w-[480px] w-full p-[20px]")
+                                            h3(class="font-[700] text-[16px] text-red-700 mb-[4px]") Từ Chối Phỏng Vấn
+                                            p(class="text-[12px] text-gray-500 mb-[14px]") Thông báo tới #{app.employerId ? app.employerId.companyName : "Nhà tuyển dụng"} rằng bạn không thể tham gia buổi phỏng vấn này.
+                                            form(action=`/candidate/applied-jobs/${app._id}/respond-interview` method="POST" class="space-y-[12px]")
+                                                input(type="hidden" name="_csrf" value=csrfToken)
+                                                input(type="hidden" name="responseStatus" value="declined")
+                                                div
+                                                    label(class="block text-[12px] font-[600] text-gray-700 mb-[4px]") Lý do từ chối (tùy chọn)
+                                                    textarea(name="note" rows="3" placeholder="VD: Em đã nhận được đề nghị công việc phù hợp khác. Cảm ơn quý công ty đã dành thời gian..." class="w-full p-[10px] rounded-[6px] border border-gray-300 text-[13px] focus:outline-none focus:ring-2 focus:ring-red-400")
+                                                div(class="flex justify-end gap-[8px]")
+                                                    button(type="button" onclick=`document.getElementById('modalDecline_${app._id}').classList.add('hidden'); document.getElementById('modalDecline_${app._id}').classList.remove('flex');` class="px-[14px] py-[6px] border border-gray-300 rounded-[6px] text-[12px] font-[600] text-gray-600 hover:bg-gray-100 cursor-pointer") Hủy
+                                                    button(type="submit" class="px-[16px] py-[6px] bg-red-600 hover:bg-red-700 text-white rounded-[6px] text-[12px] font-[700] cursor-pointer") Xác nhận từ chối
             
                                 div(class="flex justify-center gap-[10px] mt-[14px]")
                                     a(href="/candidate/applied-jobs/" + app._id + "/pdf" target="_blank" rel="noopener noreferrer" class="bg-[#0088FF] hover:bg-[#0070d6] rounded-[6px] py-[8px] px-[20px] cursor-pointer font-[500] text-[13px] text-white flex items-center shadow-xs") Xem CV
@@ -155,6 +200,8 @@ block main
 
                                 if app.interviewInvitation && app.interviewInvitation.sentAt
                                     //- MODAL XEM THƯ MỜI PHỎNG VẤN DÀNH CHO ỨNG VIÊN
+                                    - const inviteContactEmail = app.interviewInvitation.employerEmail || (app.employerId && app.employerId.email) || ""
+                                    - const inviteContactPhone = app.interviewInvitation.employerPhone || (app.employerId && app.employerId.phone) || ""
                                     div(id=`modalInvite_${app._id}` class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-xs p-[16px] text-left")
                                         div(class="bg-white rounded-[12px] shadow-2xl max-w-[600px] w-full max-h-[90vh] flex flex-col overflow-hidden animate-fadeIn")
                                             div(class="p-[18px] border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-emerald-50 to-teal-50")
@@ -186,15 +233,19 @@ block main
 
                                                 div(class="p-[12px] bg-blue-50/60 border border-blue-200 rounded-[8px] text-[13px] space-y-[4px]")
                                                     div(class="font-[700] text-blue-900") 📞 Kênh liên hệ trực tiếp:
-                                                    if app.interviewInvitation.employerEmail || (app.employerId && app.employerId.email)
-                                                        div(class="text-blue-800") Email: <a href="mailto:" + (app.interviewInvitation.employerEmail || app.employerId.email) class="font-[600] underline">#{app.interviewInvitation.employerEmail || app.employerId.email}</a>
-                                                    if app.interviewInvitation.employerPhone || (app.employerId && app.employerId.phone)
-                                                        div(class="text-blue-800") Điện thoại / Zalo: <a href="tel:" + (app.interviewInvitation.employerPhone || app.employerId.phone) class="font-[600] underline">#{app.interviewInvitation.employerPhone || app.employerId.phone}</a>
+                                                    if inviteContactEmail
+                                                        div(class="text-blue-800")
+                                                            | Email: 
+                                                            a(href=`mailto:${inviteContactEmail}` class="font-[600] underline") #{inviteContactEmail}
+                                                    if inviteContactPhone
+                                                        div(class="text-blue-800")
+                                                            | Điện thoại / Zalo: 
+                                                            a(href=`tel:${inviteContactPhone}` class="font-[600] underline") #{inviteContactPhone}
 
                                             div(class="p-[14px] border-t border-gray-200 flex flex-wrap justify-end gap-[10px] bg-gray-50")
                                                 button(type="button" onclick=`var m=document.getElementById('modalInvite_${app._id}'); if(m){m.classList.add('hidden');m.classList.remove('flex');}` class="px-[16px] py-[8px] border border-gray-300 rounded-[6px] text-[13px] font-[600] text-gray-700 hover:bg-gray-100 cursor-pointer") Đóng
-                                                if app.interviewInvitation.employerEmail || (app.employerId && app.employerId.email)
-                                                    a(href="mailto:" + (app.interviewInvitation.employerEmail || app.employerId.email) + "?subject=Re: " + encodeURIComponent(app.interviewInvitation.subject || "Phản hồi thư mời phỏng vấn") class="px-[18px] py-[8px] bg-[#0088FF] hover:bg-[#0070D2] rounded-[6px] text-[13px] font-[700] text-white inline-flex items-center gap-[6px] shadow-xs")
+                                                if inviteContactEmail
+                                                    a(href=`mailto:${inviteContactEmail}?subject=${encodeURIComponent("Re: " + (app.interviewInvitation.subject || "Phản hồi thư mời phỏng vấn"))}` class="px-[18px] py-[8px] bg-[#0088FF] hover:bg-[#0070D2] rounded-[6px] text-[13px] font-[700] text-white inline-flex items-center gap-[6px] shadow-xs")
                                                         <i class="fa-solid fa-reply"></i> Trả Lời Qua Email
                     else
                         div(class="col-span-full py-[40px] text-center text-[#717171] text-[16px]") Bạn chưa gửi hồ sơ ứng tuyển nào. Hãy tìm kiếm việc làm phù hợp và ứng tuyển ngay nhé!

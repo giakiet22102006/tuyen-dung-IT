@@ -83,10 +83,17 @@ block main
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
-                                'x-csrf-token': csrfToken
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'x-csrf-token': csrfToken || ''
                             }
                         });
-                        const data = await res.json();
+                        if (res.status === 401) {
+                            window.location.href = '/candidate/login?next=' + encodeURIComponent(window.location.pathname);
+                            return;
+                        }
+                        const isJson = (res.headers.get('content-type') || '').includes('application/json');
+                        const data = isJson ? await res.json() : { success: false, message: 'Phiên đăng nhập không hợp lệ.' };
                         if (data.success) {
                             const card = document.getElementById(`company-card-${companyId}`);
                             if (card) {

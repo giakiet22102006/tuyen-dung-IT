@@ -16,21 +16,16 @@ block main
                         <i class="fa-solid fa-magnifying-glass"></i>
                         span Khám phá thêm việc làm
 
-                if flash && flash.success
-                    div(class="mb-[20px] p-[12px] bg-[#E8F5E9] border border-[#A5D6A7] text-[#2E7D32] rounded-[6px] text-[14px]") #{flash.success}
-                if flash && flash.error
-                    div(class="mb-[20px] p-[12px] bg-[#FFEBEE] border border-[#FFCDD2] text-[#C62828] rounded-[6px] text-[14px]") #{flash.error}
-
                 if savedJobs && savedJobs.length > 0
-                    div(class="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-[20px]")
+                    div(class="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-[20px]" id="savedJobsGrid")
                         each item in savedJobs
                             - var job = item.job
                             if job
-                                div(class="card-item p-[16px] sm:p-[20px] hover:shadow-md transition-shadow relative flex flex-col justify-between")
+                                div(class="card-item p-[16px] sm:p-[20px] hover:shadow-md transition-shadow relative flex flex-col justify-between" id=`saved-job-card-${item._id}`)
                                     img(src="/assets/images/bg-card.png" class="inner-bg")
                                     
-                                    //- Nút bỏ lưu nhanh
-                                    form(action="/candidate/saved-jobs/" + item._id + "/remove" method="POST" class="absolute top-[14px] right-[14px] z-10")
+                                    //- Nút bỏ lưu nhanh (hỗ trợ cả form submit & AJAX)
+                                    form(action="/candidate/saved-jobs/" + item._id + "/remove" method="POST" class="form-remove-saved absolute top-[14px] right-[14px] z-10" data-saved-id=item._id)
                                         input(type="hidden" name="_csrf" value=csrfToken)
                                         button(type="submit" title="Bỏ lưu công việc này" class="w-[32px] h-[32px] rounded-full bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center cursor-pointer transition shadow-2xs")
                                             <i class="fa-solid fa-bookmark text-[14px]"></i>
@@ -83,3 +78,47 @@ block main
                         a(href="/search" class="inline-flex items-center gap-[6px] bg-[#0088FF] hover:bg-[#0070d6] text-white px-[20px] py-[10px] rounded-[6px] text-[14px] font-[600] shadow-xs")
                             <i class="fa-solid fa-magnifying-glass"></i>
                             span Khám Phá Việc Làm IT Ngay
+
+    script.
+        document.addEventListener('DOMContentLoaded', () => {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+            document.querySelectorAll('.form-remove-saved').forEach((form) => {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const savedId = form.getAttribute('data-saved-id');
+                    try {
+                        const res = await fetch(form.action, {
+                            method: 'POST',
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'x-csrf-token': csrfToken
+                            }
+                        });
+                        if (res.status === 401) {
+                            window.location.href = '/candidate/login?next=' + encodeURIComponent(window.location.pathname);
+                            return;
+                        }
+                        const isJson = (res.headers.get('content-type') || '').includes('application/json');
+                        const data = isJson ? await res.json() : null;
+                        if (data && data.success) {
+                            const card = document.getElementById(`saved-job-card-${savedId}`);
+                            if (card) {
+                                card.style.opacity = '0';
+                                setTimeout(() => {
+                                    card.remove();
+                                    const grid = document.getElementById('savedJobsGrid');
+                                    if (grid && grid.children.length === 0) {
+                                        window.location.reload();
+                                    }
+                                }, 250);
+                            }
+                        } else {
+                            form.submit();
+                        }
+                    } catch {
+                        form.submit();
+                    }
+                });
+            });
+        });

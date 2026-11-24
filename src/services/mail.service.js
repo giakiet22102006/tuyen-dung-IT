@@ -2,6 +2,8 @@
 const nodemailer = require("nodemailer");
 const env = require("../config/env");
 const { escapeHtml, sanitizeSingleLine, safeUrl } = require("../utils/securityHelpers");
+const formatSalary = require("../utils/formatSalary");
+const { getCityLabel, getPositionLabel } = require("../utils/labels");
 
 function sanitizeEmailHeader(addr) {
   return sanitizeSingleLine(addr, 254).replace(/[<>,"']/g, "").trim();
@@ -409,12 +411,9 @@ async function sendJobAlertEmail({ toEmail, alert, job, companyName }) {
   const mailTransporter = getTransporter();
   const safeToEmail = sanitizeEmailHeader(toEmail);
   const safeTitle = job.title || "Việc làm IT mới";
-  const salaryDisplay =
-    job.salaryMin && job.salaryMax
-      ? `${(job.salaryMin / 1000000).toFixed(0)} - ${(job.salaryMax / 1000000).toFixed(0)} Triệu VNĐ`
-      : job.salaryMin
-      ? `Từ ${(job.salaryMin / 1000000).toFixed(0)} Triệu VNĐ`
-      : "Thương lượng";
+  const salaryDisplay = formatSalary(job.salaryMin, job.salaryMax);
+  const cityDisplay = job.city ? getCityLabel(job.city) : "Toàn quốc";
+  const positionDisplay = job.position ? getPositionLabel(job.position) : "Tất cả cấp bậc";
 
   const appUrl = safeUrl(env.APP_URL) || "https://tuyen-dung-it.vercel.app";
   const cleanAppUrl = appUrl.replace(/\/+$/, "");
@@ -444,7 +443,7 @@ async function sendJobAlertEmail({ toEmail, alert, job, companyName }) {
             💰 Mức lương: ${escapeHtml(salaryDisplay)}
           </div>
           <div style="font-size: 13px; color: #64748B;">
-            📍 Khu vực: ${escapeHtml(job.city || "Toàn quốc")} • Cấp bậc: ${escapeHtml(job.position || "Tất cả cấp bậc")}
+            📍 Khu vực: ${escapeHtml(cityDisplay)} • Cấp bậc: ${escapeHtml(positionDisplay)}
           </div>
         </div>
 

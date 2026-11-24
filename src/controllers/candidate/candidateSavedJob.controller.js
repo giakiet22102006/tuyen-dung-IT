@@ -77,7 +77,12 @@ const postRemoveSavedJob = async (req, res) => {
   const saved = await SavedJob.findOne({ _id: id, candidateId });
   if (saved) {
     await SavedJob.findByIdAndDelete(saved._id);
+    if (req.xhr || req.headers.accept?.includes("application/json")) {
+      return res.json({ success: true, message: "Đã xóa công việc khỏi danh sách đã lưu." });
+    }
     req.flash("success", "Đã xóa công việc khỏi danh sách đã lưu.");
+  } else if (req.xhr || req.headers.accept?.includes("application/json")) {
+    return res.status(404).json({ success: false, message: "Không tìm thấy công việc đã lưu." });
   }
 
   res.redirect("/candidate/saved-jobs");

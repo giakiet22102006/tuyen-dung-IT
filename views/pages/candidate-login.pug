@@ -72,7 +72,7 @@ block main
                         if unverifiedEmail
                             div(class="mt-[15px] p-[12px] bg-[#FFFBEB] border border-[#FDE68A] text-[#B45309] rounded-[6px] text-[13.5px]")
                                 | Tài khoản của bạn chưa xác thực email. 
-                                a(href="/candidate/verify-registration?email=" + encodeURIComponent(unverifiedEmail) class="text-[#0088FF] font-[600] underline ml-[4px]") Bấm vào đây để xác thực ngay
+                                a(href="/candidate/verify-registration?email=" + encodeURIComponent(unverifiedEmail) + (next ? "&next=" + encodeURIComponent(next) : "") class="text-[#0088FF] font-[600] underline ml-[4px]") Bấm vào đây để xác thực ngay
 
                         //- Đăng nhập nhanh với Google
                         div(class="mt-[20px]")
@@ -115,5 +115,5 @@ block main
                                 button(type="submit" class="bg-[#0088FF] hover:bg-[#0070d6] py-[12px] px-[20px] rounded-[8px] font-[700] text-[15px] sm:text-[16px] text-white text-center w-full cursor-pointer shadow-sm hover:shadow-md transition-all") Đăng nhập
 
                         div(class="mt-[20px] text-center font-[400] text-[14px] text-slate-600") Chưa có tài khoản? 
-                            a(href="/candidate/signup" class="text-[#0088FF] font-[600] hover:underline ml-[4px]") Đăng ký ngay
+                            a(href="/candidate/signup" + (next ? "?next=" + encodeURIComponent(next) : "") class="text-[#0088FF] font-[600] hover:underline ml-[4px]") Đăng ký ngay
     //- Hết Đăng nhập

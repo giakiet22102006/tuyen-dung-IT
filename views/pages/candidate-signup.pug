@@ -57,14 +57,22 @@ block main
                         h1(class="font-[800] text-[24px] sm:text-[26px] text-slate-900 tracking-tight") Đăng ký tài khoản Ứng viên
                         p(class="text-[14px] text-slate-500 mt-[4px]") Chỉ mất 30 giây để bắt đầu hành trình công nghệ mới
 
+                        if flash && flash.success
+                            div(class="mt-[15px] p-[12px] bg-[#E8F5E9] border border-[#A5D6A7] text-[#2E7D32] rounded-[6px] text-[13.5px] flex items-center gap-[8px]")
+                                <i class="fa-solid fa-circle-check"></i>
+                                span #{flash.success}
                         if flash && flash.error
                             div(class="mt-[15px] p-[12px] bg-[#FFEBEE] border border-[#FFCDD2] text-[#C62828] rounded-[6px] text-[13.5px] flex items-center gap-[8px]")
                                 <i class="fa-solid fa-circle-exclamation"></i>
                                 span #{flash.error}
+                        if errors && errors.general
+                            div(class="mt-[15px] p-[12px] bg-[#FFEBEE] border border-[#FFCDD2] text-[#C62828] rounded-[6px] text-[13.5px] flex items-center gap-[8px]")
+                                <i class="fa-solid fa-circle-exclamation"></i>
+                                span #{errors.general}
 
                         //- Đăng ký nhanh với Google
                         div(class="mt-[20px]")
-                            a(href="/candidate/auth/google" class="flex items-center justify-center gap-[10px] w-full py-[11px] px-[20px] border border-gray-300 hover:border-gray-400 hover:bg-gray-50 rounded-[8px] font-[600] text-[14px] text-slate-700 transition-all shadow-2xs")
+                            a(href="/candidate/auth/google" + (next ? "?next=" + encodeURIComponent(next) : "") class="flex items-center justify-center gap-[10px] w-full py-[11px] px-[20px] border border-gray-300 hover:border-gray-400 hover:bg-gray-50 rounded-[8px] font-[600] text-[14px] text-slate-700 transition-all shadow-2xs")
                                 svg(class="w-[18px] h-[18px]" viewBox="0 0 24 24")
                                     path(fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z")
                                     path(fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z")
@@ -79,6 +87,8 @@ block main
 
                         form(action="/candidate/signup" method="POST" class="space-y-[14px]") 
                             input(type="hidden" name="_csrf" value=csrfToken)
+                            if next
+                                input(type="hidden" name="next" value=next)
 
                             div
                                 label(for="fullName" class="font-[600] text-[13.5px] text-slate-800 block mb-[6px]") Họ và tên *
@@ -115,5 +125,5 @@ block main
                                 button(type="submit" class="bg-[#0088FF] hover:bg-[#0070d6] py-[12px] px-[20px] rounded-[8px] font-[700] text-[15px] sm:text-[16px] text-white text-center w-full cursor-pointer shadow-sm hover:shadow-md transition-all") Hoàn tất đăng ký
 
                         div(class="mt-[20px] text-center font-[400] text-[14px] text-slate-600") Đã có tài khoản? 
-                            a(href="/candidate/login" class="text-[#0088FF] font-[600] hover:underline ml-[4px]") Đăng nhập ngay
+                            a(href="/candidate/login" + (next ? "?next=" + encodeURIComponent(next) : "") class="text-[#0088FF] font-[600] hover:underline ml-[4px]") Đăng nhập ngay
     //- Hết Đăng ký

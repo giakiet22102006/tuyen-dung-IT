@@ -8,12 +8,20 @@ const candidateApplication = require("../controllers/candidate/candidateApplicat
 const candidateSavedJob = require("../controllers/candidate/candidateSavedJob.controller");
 const candidateJobAlert = require("../controllers/candidate/candidateJobAlert.controller");
 const candidateCompanyFollow = require("../controllers/candidate/candidateCompanyFollow.controller");
-const { requireCandidate, requireGuest } = require("../middlewares/auth.middleware");
+const { requireCandidate, requireGuest, bypassCsrfIfLoggedOut } = require("../middlewares/auth.middleware");
 const { doubleCsrfProtection } = require("../middlewares/csrf.middleware");
-const { loginRateLimiter, otpRateLimiter } = require("../middlewares/rateLimit.middleware");
+const {
+  loginRateLimiter,
+  otpRateLimiter,
+  otpSendRateLimiter,
+  otpVerifyRateLimiter,
+} = require("../middlewares/rateLimit.middleware");
 const { uploadAvatarMiddleware } = require("../middlewares/upload.middleware");
 const asyncHandler = require("../utils/asyncHandler");
 const { isValidObjectId } = require("../utils/securityHelpers");
+
+const sendOtpLimiter = otpSendRateLimiter || otpRateLimiter;
+const verifyOtpLimiter = otpVerifyRateLimiter || otpRateLimiter;
 
 function rejectInvalidParam(req, res, next, val) {
   if (!isValidObjectId(val)) {
@@ -33,12 +41,12 @@ router.param("jobId", rejectInvalidParam);
 
 // Guest routes
 router.get("/signup", requireGuest, candidateAuth.renderSignup);
-router.post("/signup", requireGuest, otpRateLimiter, doubleCsrfProtection, asyncHandler(candidateAuth.postSignup));
+router.post("/signup", requireGuest, sendOtpLimiter, doubleCsrfProtection, asyncHandler(candidateAuth.postSignup));
 
 // Xác thực Email kích hoạt tài khoản
 router.get("/verify-registration", requireGuest, candidateAuth.renderVerifyRegistration);
-router.post("/verify-registration", requireGuest, otpRateLimiter, doubleCsrfProtection, asyncHandler(candidateAuth.postVerifyRegistration));
-router.post("/resend-registration-otp", requireGuest, otpRateLimiter, doubleCsrfProtection, asyncHandler(candidateAuth.postResendRegistrationOtp));
+router.post("/verify-registration", requireGuest, verifyOtpLimiter, doubleCsrfProtection, asyncHandler(candidateAuth.postVerifyRegistration));
+router.post("/resend-registration-otp", requireGuest, sendOtpLimiter, doubleCsrfProtection, asyncHandler(candidateAuth.postResendRegistrationOtp));
 
 router.get("/login", requireGuest, candidateAuth.renderLogin);
 router.post("/login", requireGuest, loginRateLimiter, doubleCsrfProtection, asyncHandler(candidateAuth.postLogin));
@@ -49,16 +57,21 @@ router.get("/auth/google/callback", requireGuest, asyncHandler(candidateAuth.han
 
 // Quên & Đặt lại mật khẩu (OTP qua Gmail)
 router.get("/forgot-password", requireGuest, passwordReset.renderForgotPassword("candidate"));
-router.post("/forgot-password", requireGuest, otpRateLimiter, doubleCsrfProtection, asyncHandler(passwordReset.postForgotPassword("candidate")));
+router.post("/forgot-password", requireGuest, sendOtpLimiter, doubleCsrfProtection, asyncHandler(passwordReset.postForgotPassword("candidate")));
 
 router.get("/verify-otp", requireGuest, passwordReset.renderVerifyOtp("candidate"));
-router.post("/verify-otp", requireGuest, otpRateLimiter, doubleCsrfProtection, asyncHandler(passwordReset.postVerifyOtp("candidate")));
+router.post("/verify-otp", requireGuest, verifyOtpLimiter, doubleCsrfProtection, asyncHandler(passwordReset.postVerifyOtp("candidate")));
 
 router.get("/reset-password", requireGuest, asyncHandler(passwordReset.renderResetPassword("candidate")));
-router.post("/reset-password", requireGuest, otpRateLimiter, doubleCsrfProtection, asyncHandler(passwordReset.postResetPassword("candidate")));
+router.post("/reset-password", requireGuest, verifyOtpLimiter, doubleCsrfProtection, asyncHandler(passwordReset.postResetPassword("candidate")));
 
 // Authenticated routes
-router.post("/logout", doubleCsrfProtection, asyncHandler(candidateAuth.postLogout));
+router.post(
+  "/logout",
+  bypassCsrfIfLoggedOut("candidate", "/candidate/login"),
+  doubleCsrfProtection,
+  asyncHandler(candidateAuth.postLogout)
+);
 
 router.get("/change-password", requireCandidate, candidateAuth.renderChangePassword);
 router.post("/change-password", requireCandidate, doubleCsrfProtection, asyncHandler(candidateAuth.postChangePassword));
@@ -70,12 +83,14 @@ router.post("/profile", requireCandidate, uploadAvatarMiddleware, doubleCsrfProt
 // Hồ sơ IT Profile trực tuyến (Chuẩn ITviec Profile Builder)
 router.get("/it-profile", requireCandidate, asyncHandler(candidateProfile.renderItProfile));
 router.post("/it-profile", requireCandidate, doubleCsrfProtection, asyncHandler(candidateProfile.postItProfile));
+router.get("/it-profile/pdf", requireCandidate, asyncHandler(candidateProfile.streamItProfilePdf));
 
 // Quản lý CV đã nộp (Ứng tuyển)
 router.get("/applied-jobs", requireCandidate, asyncHandler(candidateApplication.renderAppliedJobs));
 router.post("/applied-jobs/:id/delete", requireCandidate, doubleCsrfProtection, asyncHandler(candidateApplication.postWithdrawApplication));
 router.post("/applied-jobs/:id/respond-interview", requireCandidate, doubleCsrfProtection, asyncHandler(candidateApplication.postRespondInterview));
 router.get("/applied-jobs/:id/pdf", requireCandidate, asyncHandler(candidateApplication.streamCandidateCv));
+router.get("/applied-jobs/:id/ics", requireCandidate, asyncHandler(candidateApplication.downloadInterviewIcs));
 
 // Quản lý Việc làm đã lưu (Saved Jobs)
 router.get("/saved-jobs", requireCandidate, asyncHandler(candidateSavedJob.renderSavedJobs));

@@ -1,6 +1,7 @@
 // src/controllers/candidate/candidateAuth.controller.js
 const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
+const { z } = require("zod");
 const { Candidate, Otp } = require("../../models");
 const { CANDIDATE_STATUS } = require("../../config/constants");
 const { hashPassword, comparePassword, signUserToken } = require("../../services/auth.service");
@@ -13,15 +14,67 @@ const {
 const env = require("../../config/env");
 const isSafeRedirect = require("../../utils/sanitizeRedirect");
 
+const SIGNUP_NEXT_COOKIE = "itj_signup_next";
+
+const setInitialPasswordSchema = z
+  .object({
+    newPassword: z
+      .string({ required_error: "Mật khẩu không được để trống" })
+      .min(8, "Mật khẩu phải có ít nhất 8 ký tự")
+      .regex(/[A-Za-z]/, "Mật khẩu phải chứa ít nhất một chữ cái")
+      .regex(/[0-9]/, "Mật khẩu phải chứa ít nhất một chữ số"),
+    confirmPassword: z
+      .string({ required_error: "Xác nhận mật khẩu không được để trống" })
+      .min(1, "Vui lòng xác nhận mật khẩu mới"),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Mật khẩu xác nhận không khớp",
+    path: ["confirmPassword"],
+  });
+
+function getSafeNext(raw) {
+  return isSafeRedirect(raw) ? raw : "";
+}
+
+function setSignupNextCookie(res, nextUrl) {
+  if (!nextUrl) return;
+  res.cookie(SIGNUP_NEXT_COOKIE, nextUrl, {
+    httpOnly: true,
+    secure: env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 15 * 60 * 1000,
+  });
+}
+
+function clearSignupNextCookie(res) {
+  res.clearCookie(SIGNUP_NEXT_COOKIE, {
+    httpOnly: true,
+    secure: env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+  });
+}
+
+function buildVerifyRegistrationUrl(email, nextUrl) {
+  const qs = [`email=${encodeURIComponent(email)}`];
+  if (nextUrl) {
+    qs.push(`next=${encodeURIComponent(nextUrl)}`);
+  }
+  return `/candidate/verify-registration?${qs.join("&")}`;
+}
+
 const renderSignup = (req, res) => {
   res.render("pages/candidate-signup", {
     title: "Đăng ký (Ứng viên)",
+    next: getSafeNext(req.query.next),
     errors: {},
     old: {},
   });
 };
 
 const postSignup = async (req, res) => {
+  const nextUrl = getSafeNext(req.body.next || req.query.next);
   const result = candidateSignupSchema.safeParse(req.body);
   if (!result.success) {
     const errors = {};
@@ -30,6 +83,7 @@ const postSignup = async (req, res) => {
     });
     return res.status(400).render("pages/candidate-signup", {
       title: "Đăng ký (Ứng viên)",
+      next: nextUrl,
       errors,
       old: req.body,
     });
@@ -37,29 +91,38 @@ const postSignup = async (req, res) => {
 
   const { fullName, email, password } = result.data;
   const cleanEmail = email.toLowerCase().trim();
+  // Tra cứu bao gồm cả tài khoản đã xóa mềm để xử lý rõ ràng thay vì để văng lỗi E11000
   const existing = await Candidate.findOne({ email: cleanEmail });
 
   if (existing) {
+    if (existing.deletedAt) {
+      return res.status(400).render("pages/candidate-signup", {
+        title: "Đăng ký (Ứng viên)",
+        next: nextUrl,
+        errors: {
+          email: "Tài khoản gắn với email này đã bị xóa hoặc vô hiệu hóa. Vui lòng dùng email khác hoặc liên hệ quản trị viên.",
+        },
+        old: req.body,
+      });
+    }
+
     // Nếu tài khoản đã tồn tại và ĐÃ xác thực email
     if (existing.isEmailVerified !== false) {
       return res.status(400).render("pages/candidate-signup", {
         title: "Đăng ký (Ứng viên)",
+        next: nextUrl,
         errors: { email: "Email này đã được sử dụng. Vui lòng chọn email khác hoặc Đăng nhập." },
         old: req.body,
       });
     }
 
-    // Nếu tài khoản đã đăng ký trước đó nhưng CHƯA xác thực email -> cập nhật thông tin và gửi lại mã OTP
-    existing.fullName = fullName;
-    existing.password = await hashPassword(password);
-    await existing.save();
-
+    // Tài khoản chưa xác thực email: KHÔNG âm thầm ghi đè mật khẩu/họ tên trước khi xác minh quyền sở hữu OTP
     const otpCode = crypto.randomInt(100000, 999999).toString();
     const salt = await bcrypt.genSalt(10);
     const otpHash = await bcrypt.hash(otpCode, salt);
 
     await Otp.deleteMany({ email: cleanEmail, userType: "candidate", type: "register" });
-    await Otp.create({
+    const createdOtp = await Otp.create({
       email: cleanEmail,
       otpHash,
       userType: "candidate",
@@ -71,14 +134,22 @@ const postSignup = async (req, res) => {
       await sendRegistrationOtpEmail(cleanEmail, otpCode, "candidate");
     } catch (err) {
       console.error("Lỗi gửi email đăng ký:", err.message);
+      await Otp.deleteOne({ _id: createdOtp._id }).catch(() => {});
+      return res.status(503).render("pages/candidate-signup", {
+        title: "Đăng ký (Ứng viên)",
+        next: nextUrl,
+        errors: { general: "Không thể gửi email xác thực OTP lúc này. Vui lòng thử lại sau." },
+        old: req.body,
+      });
     }
 
-    req.flash("success", "Tài khoản của bạn đã được cập nhật. Vui lòng nhập mã OTP gửi về Gmail để kích hoạt!");
-    return res.redirect(`/candidate/verify-registration?email=${encodeURIComponent(cleanEmail)}`);
+    setSignupNextCookie(res, nextUrl);
+    req.flash("success", "Email này đang chờ xác thực. Chúng tôi đã gửi lại mã OTP mới tới hòm thư của bạn!");
+    return res.redirect(buildVerifyRegistrationUrl(cleanEmail, nextUrl));
   }
 
   const hashedPassword = await hashPassword(password);
-  await Candidate.create({
+  const createdCandidate = await Candidate.create({
     fullName,
     email: cleanEmail,
     password: hashedPassword,
@@ -92,7 +163,7 @@ const postSignup = async (req, res) => {
   const otpHash = await bcrypt.hash(otpCode, salt);
 
   await Otp.deleteMany({ email: cleanEmail, userType: "candidate", type: "register" });
-  await Otp.create({
+  const createdOtp = await Otp.create({
     email: cleanEmail,
     otpHash,
     userType: "candidate",
@@ -104,22 +175,36 @@ const postSignup = async (req, res) => {
     await sendRegistrationOtpEmail(cleanEmail, otpCode, "candidate");
   } catch (err) {
     console.error("Lỗi gửi email đăng ký:", err.message);
+    await Otp.deleteOne({ _id: createdOtp._id }).catch(() => {});
+    await Candidate.deleteOne({ _id: createdCandidate._id }).catch(() => {});
+    return res.status(503).render("pages/candidate-signup", {
+      title: "Đăng ký (Ứng viên)",
+      next: nextUrl,
+      errors: { general: "Không thể gửi email xác thực OTP lúc này. Vui lòng thử lại sau." },
+      old: req.body,
+    });
   }
 
+  setSignupNextCookie(res, nextUrl);
   req.flash("success", "Đăng ký thành công! Vui lòng nhập mã xác thực OTP gửi về Gmail để kích hoạt tài khoản.");
-  res.redirect(`/candidate/verify-registration?email=${encodeURIComponent(cleanEmail)}`);
+  res.redirect(buildVerifyRegistrationUrl(cleanEmail, nextUrl));
 };
 
 // Giao diện nhập mã OTP kích hoạt tài khoản
 const renderVerifyRegistration = (req, res) => {
   const email = (req.query.email || "").toLowerCase().trim();
+  const nextUrl = getSafeNext(req.query.next || req.cookies?.[SIGNUP_NEXT_COOKIE]);
   if (!email) {
-    return res.redirect("/candidate/signup");
+    return res.redirect(nextUrl ? `/candidate/signup?next=${encodeURIComponent(nextUrl)}` : "/candidate/signup");
+  }
+  if (req.query.next && nextUrl) {
+    setSignupNextCookie(res, nextUrl);
   }
   res.render("pages/verify-registration", {
     title: "Xác thực Email đăng ký (Ứng viên)",
     userRole: "candidate",
     email,
+    next: nextUrl,
     errors: {},
   });
 };
@@ -129,12 +214,14 @@ const postVerifyRegistration = async (req, res) => {
   const { email, otp } = req.body;
   const cleanEmail = (email || "").toLowerCase().trim();
   const cleanOtp = (otp || "").trim();
+  const nextUrl = getSafeNext(req.body.next || req.query.next || req.cookies?.[SIGNUP_NEXT_COOKIE]);
 
   if (!cleanOtp || cleanOtp.length !== 6 || !/^\d{6}$/.test(cleanOtp)) {
     return res.status(400).render("pages/verify-registration", {
       title: "Xác thực Email đăng ký (Ứng viên)",
       userRole: "candidate",
       email: cleanEmail,
+      next: nextUrl,
       errors: { otp: "Mã OTP phải gồm đúng 6 chữ số." },
     });
   }
@@ -163,6 +250,7 @@ const postVerifyRegistration = async (req, res) => {
       title: "Xác thực Email đăng ký (Ứng viên)",
       userRole: "candidate",
       email: cleanEmail,
+      next: nextUrl,
       errors: { otp: "Mã OTP đã hết hạn, không tồn tại hoặc đã vượt quá 5 lần thử. Vui lòng bấm 'Gửi lại mã OTP'." },
     });
   }
@@ -175,6 +263,7 @@ const postVerifyRegistration = async (req, res) => {
         title: "Xác thực Email đăng ký (Ứng viên)",
         userRole: "candidate",
         email: cleanEmail,
+        next: nextUrl,
         errors: { otp: "Bạn đã nhập sai mã quá 5 lần. Vui lòng bấm gửi lại mã mới." },
       });
     }
@@ -183,12 +272,13 @@ const postVerifyRegistration = async (req, res) => {
       title: "Xác thực Email đăng ký (Ứng viên)",
       userRole: "candidate",
       email: cleanEmail,
+      next: nextUrl,
       errors: { otp: `Mã OTP không chính xác. Bạn còn ${remaining} lần thử.` },
     });
   }
 
   // Khớp OTP -> Kích hoạt tài khoản ứng viên
-  const candidate = await Candidate.findOne({ email: cleanEmail });
+  const candidate = await Candidate.findOne({ email: cleanEmail, deletedAt: null });
   if (!candidate) {
     req.flash("error", "Không tìm thấy thông tin tài khoản.");
     return res.redirect("/candidate/signup");
@@ -198,8 +288,9 @@ const postVerifyRegistration = async (req, res) => {
   candidate.tokenVersion = (candidate.tokenVersion || 0) + 1;
   await candidate.save();
 
-  // Xóa mã OTP đã dùng
+  // Xóa mã OTP đã dùng và cookie next tạm
   await Otp.deleteMany({ email: cleanEmail, userType: "candidate", type: "register" });
+  clearSignupNextCookie(res);
 
   // Tự động đăng nhập
   const token = signUserToken(candidate, "candidate");
@@ -211,18 +302,19 @@ const postVerifyRegistration = async (req, res) => {
   });
 
   req.flash("success", "Xác thực email thành công! Chào mừng bạn gia nhập VN.ITJobs.");
-  res.redirect("/");
+  res.redirect(nextUrl || "/");
 };
 
 // Gửi lại mã OTP đăng ký
 const postResendRegistrationOtp = async (req, res) => {
   const { email } = req.body;
   const cleanEmail = (email || "").toLowerCase().trim();
+  const nextUrl = getSafeNext(req.body.next || req.query.next || req.cookies?.[SIGNUP_NEXT_COOKIE]);
 
-  const candidate = await Candidate.findOne({ email: cleanEmail });
+  const candidate = await Candidate.findOne({ email: cleanEmail, deletedAt: null });
   if (!candidate || candidate.isEmailVerified) {
     req.flash("error", "Tài khoản không tồn tại hoặc đã được xác thực trước đó.");
-    return res.redirect("/candidate/login");
+    return res.redirect(nextUrl ? `/candidate/login?next=${encodeURIComponent(nextUrl)}` : "/candidate/login");
   }
 
   const otpCode = crypto.randomInt(100000, 999999).toString();
@@ -230,7 +322,7 @@ const postResendRegistrationOtp = async (req, res) => {
   const otpHash = await bcrypt.hash(otpCode, salt);
 
   await Otp.deleteMany({ email: cleanEmail, userType: "candidate", type: "register" });
-  await Otp.create({
+  const createdOtp = await Otp.create({
     email: cleanEmail,
     otpHash,
     userType: "candidate",
@@ -242,10 +334,13 @@ const postResendRegistrationOtp = async (req, res) => {
     await sendRegistrationOtpEmail(cleanEmail, otpCode, "candidate");
   } catch (err) {
     console.error("Lỗi gửi lại mã OTP:", err.message);
+    await Otp.deleteOne({ _id: createdOtp._id }).catch(() => {});
+    req.flash("error", "Không thể gửi lại email xác thực OTP lúc này. Vui lòng thử lại sau.");
+    return res.redirect(buildVerifyRegistrationUrl(cleanEmail, nextUrl));
   }
 
   req.flash("success", `Đã gửi lại mã OTP mới tới hòm thư ${cleanEmail}. Vui lòng kiểm tra email!`);
-  res.redirect(`/candidate/verify-registration?email=${encodeURIComponent(cleanEmail)}`);
+  res.redirect(buildVerifyRegistrationUrl(cleanEmail, nextUrl));
 };
 
 const renderLogin = (req, res) => {
@@ -263,20 +358,21 @@ const renderLogin = (req, res) => {
 
   res.render("pages/candidate-login", {
     title: "Đăng nhập (Ứng viên)",
-    next: req.query.next || "",
+    next: getSafeNext(req.query.next),
     errors: {},
     old: {},
   });
 };
 
 const postLogin = async (req, res) => {
+  const nextUrl = getSafeNext(req.body.next);
   const result = loginSchema.safeParse(req.body);
   if (!result.success) {
     return res.status(400).render("pages/candidate-login", {
       title: "Đăng nhập (Ứng viên)",
       errors: { general: "Email hoặc mật khẩu không đúng" },
       old: req.body,
-      next: req.body.next || "",
+      next: nextUrl,
     });
   }
 
@@ -289,7 +385,7 @@ const postLogin = async (req, res) => {
       title: "Đăng nhập (Ứng viên)",
       errors: { general: "Email hoặc mật khẩu không đúng" },
       old: req.body,
-      next: req.body.next || "",
+      next: nextUrl,
     });
   }
 
@@ -299,7 +395,7 @@ const postLogin = async (req, res) => {
       title: "Đăng nhập (Ứng viên)",
       errors: { general: `Tài khoản của bạn đã bị khóa.${reasonMsg}` },
       old: req.body,
-      next: req.body.next || "",
+      next: nextUrl,
     });
   }
 
@@ -310,7 +406,7 @@ const postLogin = async (req, res) => {
       errors: { general: "Tài khoản của bạn chưa xác thực email. Vui lòng xác thực trước khi đăng nhập." },
       unverifiedEmail: cleanEmail,
       old: req.body,
-      next: req.body.next || "",
+      next: nextUrl,
     });
   }
 
@@ -320,7 +416,7 @@ const postLogin = async (req, res) => {
       title: "Đăng nhập (Ứng viên)",
       errors: { general: "Email hoặc mật khẩu không đúng" },
       old: req.body,
-      next: req.body.next || "",
+      next: nextUrl,
     });
   }
 
@@ -348,8 +444,7 @@ const postLogin = async (req, res) => {
   }).catch((err) => console.error("Lỗi gửi email cảnh báo bảo mật ứng viên:", err.message));
 
   req.flash("success", "Đăng nhập thành công!");
-  const redirectUrl = isSafeRedirect(req.body.next) ? req.body.next : "/";
-  res.redirect(redirectUrl);
+  res.redirect(nextUrl || "/");
 };
 
 const postLogout = async (req, res) => {
@@ -368,15 +463,58 @@ const postLogout = async (req, res) => {
 };
 
 const renderChangePassword = (req, res) => {
+  const isGoogleNoPassword = Boolean(req.user && req.user.authProvider === "google" && !req.user.currentMember);
   res.render("pages/change-password", {
-    title: "Đổi mật khẩu (Ứng viên)",
+    title: isGoogleNoPassword ? "Thiết lập mật khẩu (Ứng viên)" : "Đổi mật khẩu (Ứng viên)",
     userRole: "candidate",
+    isGoogleNoPassword,
     errors: {},
     old: {},
   });
 };
 
 const postChangePassword = async (req, res) => {
+  const candidate = await Candidate.findById(req.user._id).select("+password");
+  if (!candidate) {
+    return res.redirect("/candidate/login");
+  }
+
+  const isGoogleNoPassword = Boolean(candidate.authProvider === "google" && !req.user.currentMember);
+  const pageTitle = isGoogleNoPassword ? "Thiết lập mật khẩu (Ứng viên)" : "Đổi mật khẩu (Ứng viên)";
+
+  if (isGoogleNoPassword) {
+    const result = setInitialPasswordSchema.safeParse(req.body);
+    if (!result.success) {
+      const errors = {};
+      result.error.errors.forEach((err) => {
+        errors[err.path[0]] = err.message;
+      });
+      return res.status(400).render("pages/change-password", {
+        title: pageTitle,
+        userRole: "candidate",
+        isGoogleNoPassword: true,
+        errors,
+        old: req.body,
+      });
+    }
+
+    candidate.password = await hashPassword(result.data.newPassword);
+    candidate.authProvider = "local"; // Giữ nguyên googleId để tiếp tục đăng nhập được cả 2 cách
+    candidate.tokenVersion = (candidate.tokenVersion || 0) + 1;
+    await candidate.save();
+
+    const newToken = signUserToken(candidate, "candidate");
+    res.cookie("itj_token", newToken, {
+      httpOnly: true,
+      secure: env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    req.flash("success", "Thiết lập mật khẩu thành công! Từ giờ bạn có thể đăng nhập bằng cả Email và Google.");
+    return res.redirect("/candidate/profile");
+  }
+
   const result = changePasswordSchema.safeParse(req.body);
   if (!result.success) {
     const errors = {};
@@ -384,21 +522,22 @@ const postChangePassword = async (req, res) => {
       errors[err.path[0]] = err.message;
     });
     return res.status(400).render("pages/change-password", {
-      title: "Đổi mật khẩu (Ứng viên)",
+      title: pageTitle,
       userRole: "candidate",
+      isGoogleNoPassword: false,
       errors,
       old: req.body,
     });
   }
 
   const { currentPassword, newPassword } = result.data;
-  const candidate = await Candidate.findById(req.user._id).select("+password");
 
   const isMatch = await comparePassword(currentPassword, candidate.password);
   if (!isMatch) {
     return res.status(400).render("pages/change-password", {
-      title: "Đổi mật khẩu (Ứng viên)",
+      title: pageTitle,
       userRole: "candidate",
+      isGoogleNoPassword: false,
       errors: { currentPassword: "Mật khẩu hiện tại không chính xác" },
       old: req.body,
     });
@@ -471,18 +610,27 @@ const handleGoogleCallback = async (req, res) => {
 
     const cleanEmail = profile.email.toLowerCase().trim();
 
-    // Tìm ứng viên theo googleId trước, sau đó mới theo email
-    let candidate = await Candidate.findOne({ googleId: profile.sub, deletedAt: null });
+    // Tìm ứng viên theo googleId trước, sau đó theo email (BAO GỒM cả bản ghi xóa mềm để chặn E11000)
+    let candidate = await Candidate.findOne({ googleId: profile.sub });
     if (!candidate) {
-      candidate = await Candidate.findOne({ email: cleanEmail, deletedAt: null });
-      // Không cho phép ghi đè googleId nếu tài khoản này đã gắn với một tài khoản Google khác
-      if (candidate && candidate.googleId && candidate.googleId !== profile.sub) {
-        req.flash("error", "Email này đã được liên kết với một tài khoản Google khác.");
-        return res.redirect("/candidate/login");
-      }
+      candidate = await Candidate.findOne({ email: cleanEmail });
+    }
+
+    if (candidate && candidate.deletedAt) {
+      req.flash(
+        "error",
+        "Tài khoản gắn với email này đã bị xóa hoặc vô hiệu hóa. Vui lòng liên hệ quản trị viên để được hỗ trợ."
+      );
+      return res.redirect("/candidate/login");
     }
 
     if (candidate) {
+      // Không cho phép ghi đè googleId nếu tài khoản này đã gắn với một tài khoản Google khác
+      if (candidate.googleId && candidate.googleId !== profile.sub) {
+        req.flash("error", "Email này đã được liên kết với một tài khoản Google khác.");
+        return res.redirect("/candidate/login");
+      }
+
       if (candidate.status === CANDIDATE_STATUS.BANNED) {
         const reasonMsg = candidate.banReason ? ` Lí do: ${candidate.banReason}` : "";
         req.flash("error", `Tài khoản của bạn đã bị khóa.${reasonMsg}`);
