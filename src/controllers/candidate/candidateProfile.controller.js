@@ -1,7 +1,10 @@
 // src/controllers/candidate/candidateProfile.controller.js
 const { Candidate } = require("../../models");
-const { uploadAvatar, deleteFile } = require("../../services/storage.service");
-const { POSITIONS } = require("../../config/constants");
+const { uploadAvatar, deleteFile, setPdfInlineHeaders } = require("../../services/storage.service");
+const { generateItProfilePdf } = require("../../services/pdfGenerator.service");
+const { CITIES, POSITIONS } = require("../../config/constants");
+
+const VALID_CITY_VALUES = new Set(CITIES.map((c) => c.value));
 
 const renderProfile = async (req, res) => {
   const candidate = await Candidate.findById(req.user._id).lean();
@@ -71,6 +74,7 @@ const renderItProfile = async (req, res) => {
     candidate,
     profile: candidate.itProfile || {},
     positions: POSITIONS,
+    cities: CITIES,
   });
 };
 
@@ -113,25 +117,48 @@ const postItProfile = async (req, res) => {
       try {
         const parsed = JSON.parse(data);
         if (Array.isArray(parsed)) return parsed;
-      } catch (_) {}
+      } catch {
+        // Bỏ qua JSON không hợp lệ
+      }
     }
     return [];
   }
 
-  const workList = safeParseArray(workExperience);
-  const projectList = safeParseArray(projects);
-  const eduList = safeParseArray(education);
-  const certList = safeParseArray(certificates);
+  const workList = safeParseArray(workExperience).filter(
+    (w) => w && (w.company || w.position || w.description)
+  );
+  const projectList = safeParseArray(projects).filter(
+    (p) => p && (p.name || p.role || p.techStack || p.description)
+  );
+  const eduList = safeParseArray(education).filter(
+    (e) => e && (e.school || e.major || e.gradYear)
+  );
+  const certList = safeParseArray(certificates).filter(
+    (c) => c && (c.name || c.organization || c.year)
+  );
 
-  const isOpenToWork = openToWork === "true" || openToWork === "on" || openToWork === true || openToWork === 1 || openToWork === "1";
+  const isOpenToWork =
+    openToWork === "true" ||
+    openToWork === "on" ||
+    openToWork === true ||
+    openToWork === 1 ||
+    openToWork === "1";
+
+  // Giữ nguyên preferredCity hiện tại nếu form không gửi lên hoặc gửi rỗng
+  const existingCity = candidate.itProfile?.preferredCity || "ha-noi";
+  const rawCity = typeof preferredCity === "string" ? preferredCity.trim() : "";
+  const resolvedCity = rawCity && VALID_CITY_VALUES.has(rawCity) ? rawCity : existingCity;
+
+  const parsedSalary = Number(expectedSalary);
+  const parsedYears = Number(yearsOfExperience);
 
   candidate.itProfile = {
     title: (title || "").trim(),
     level: level || "junior",
-    yearsOfExperience: Number(yearsOfExperience) || 0,
+    yearsOfExperience: Number.isFinite(parsedYears) && parsedYears >= 0 ? Math.min(50, parsedYears) : 0,
     openToWork: isOpenToWork,
-    expectedSalary: Number(expectedSalary) || 0,
-    preferredCity: (preferredCity || "ha-noi").trim(),
+    expectedSalary: Number.isFinite(parsedSalary) && parsedSalary >= 0 ? parsedSalary : 0,
+    preferredCity: resolvedCity,
     hideFromCurrentCompany: (hideFromCurrentCompany || "").trim(),
     bio: (bio || "").trim(),
     githubUrl: (githubUrl || "").trim(),
@@ -150,9 +177,28 @@ const postItProfile = async (req, res) => {
   res.redirect("/candidate/it-profile");
 };
 
+const streamItProfilePdf = async (req, res) => {
+  const candidate = await Candidate.findById(req.user._id).lean();
+  if (!candidate) {
+    return res.redirect("/candidate/login");
+  }
+
+  const pdfBuffer = await generateItProfilePdf(candidate);
+  const safeBase =
+    (candidate.fullName || "IT_Profile")
+      .replace(/[^\p{L}\p{N}\s_-]/gu, "")
+      .trim()
+      .replace(/\s+/g, "_")
+      .slice(0, 80) || "IT_Profile";
+
+  setPdfInlineHeaders(res, `CV_${safeBase}.pdf`);
+  return res.send(pdfBuffer);
+};
+
 module.exports = {
   renderProfile,
   postProfile,
   renderItProfile,
   postItProfile,
+  streamItProfilePdf,
 };

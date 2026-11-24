@@ -10,11 +10,6 @@ block main
             div(class="border border-[#DEDEDE] rounded-[8px] p-[20px]")
                 h1(class="font-[700] text-[20px] mb-[20px]") Thông tin cá nhân
 
-                if flash && flash.success
-                    div(class="mb-[20px] p-[12px] bg-[#E8F5E9] border border-[#A5D6A7] text-[#2E7D32] rounded-[4px] text-[14px]") #{flash.success}
-                if flash && flash.error
-                    div(class="mb-[20px] p-[12px] bg-[#FFEBEE] border border-[#FFCDD2] text-[#C62828] rounded-[4px] text-[14px]") #{flash.error}
-
                 form(action="/candidate/profile" method="POST" enctype="multipart/form-data" class="") 
                     input(type="hidden" name="_csrf" value=csrfToken)
 

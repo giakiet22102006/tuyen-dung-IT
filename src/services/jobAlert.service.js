@@ -2,6 +2,26 @@
 const { JobAlert, Employer } = require("../models");
 const { sendJobAlertEmail } = require("./mail.service");
 
+const FREQUENCY_COOLDOWN_MS = {
+  instant: 0,
+  daily: 24 * 60 * 60 * 1000,
+  weekly: 7 * 24 * 60 * 60 * 1000,
+};
+
+/**
+ * Kiểm tra xem thông báo việc làm đã đủ chu kỳ gửi tiếp theo (instant / daily / weekly) hay chưa
+ */
+function isAlertEligibleByFrequency(alert, nowMs = Date.now()) {
+  const freq = alert?.frequency || "instant";
+  const cooldownMs = FREQUENCY_COOLDOWN_MS[freq] ?? 0;
+  if (cooldownMs <= 0 || !alert?.lastSentAt) {
+    return true;
+  }
+  const lastSentMs = new Date(alert.lastSentAt).getTime();
+  if (Number.isNaN(lastSentMs)) return true;
+  return nowMs - lastSentMs >= cooldownMs;
+}
+
 /**
  * Quét các thuê bao Job Alert đang kích hoạt và gửi email khi có job mới phù hợp
  * Chạy bất đồng bộ trong background để không chặn luồng đăng việc của NTD.
@@ -28,9 +48,17 @@ async function notifyMatchingSubscribers(job, employer = null) {
     const jobTitleLower = (job.title || "").toLowerCase();
     const jobCity = job.city || "";
     const jobPosition = job.position || "";
-    const jobSkills = (job.skills || []).map((s) => (typeof s === "string" ? s : s.name || s.slug || "").toLowerCase());
+    const jobSkills = (job.skills || []).map((s) =>
+      (typeof s === "string" ? s : s.name || s.slug || "").toLowerCase()
+    );
+    const nowMs = Date.now();
 
     const matchingAlerts = alerts.filter((alert) => {
+      // Tôn trọng chu kỳ gửi (instant / daily / weekly)
+      if (!isAlertEligibleByFrequency(alert, nowMs)) {
+        return false;
+      }
+
       // Nếu có cài đặt city mà khác city của job -> skip
       if (alert.city && alert.city !== jobCity) {
         return false;
@@ -76,4 +104,5 @@ async function notifyMatchingSubscribers(job, employer = null) {
 
 module.exports = {
   notifyMatchingSubscribers,
+  isAlertEligibleByFrequency,
 };
