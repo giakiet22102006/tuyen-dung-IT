@@ -4,6 +4,25 @@ block title
     title #{title || (job ? job.title : "Chi tiết công việc")}
 
 block main
+    //- CTA ứng tuyển: khách => đăng nhập (kèm ?next), NTD => vô hiệu hóa, đã nộp => link tới danh sách (QA-B03, QA-m02)
+    mixin applyCta(sizeClass)
+        if hasApplied
+            a(href="/candidate/applied-jobs" class=`${sizeClass} bg-emerald-600 hover:bg-emerald-700 text-white font-[600] flex items-center justify-center gap-[8px] transition-colors` title="Xem hồ sơ đã nộp")
+                <i class="fa-solid fa-circle-check"></i>
+                <span>✓ Đã ứng tuyển</span>
+        else if role === "employer"
+            button(type="button" disabled aria-disabled="true" class=`${sizeClass} bg-gray-300 text-gray-600 font-[600] flex items-center justify-center gap-[8px] cursor-not-allowed` title="Tài khoản Nhà tuyển dụng không thể nộp CV")
+                <i class="fa-solid fa-ban"></i>
+                <span>Tài khoản Nhà tuyển dụng</span>
+        else if !currentUser
+            a(href="/candidate/login?next=/jobs/" + job.slug class=`${sizeClass} bg-[#0088FF] hover:bg-[#0070d6] text-white font-[600] flex items-center justify-center gap-[8px] transition-colors`)
+                <i class="fa-solid fa-paper-plane"></i>
+                <span>Ứng tuyển ngay</span>
+        else
+            button(type="button" class=`btn-open-quick-apply ${sizeClass} bg-[#0088FF] hover:bg-[#0070d6] text-white font-[600] flex items-center justify-center gap-[8px] cursor-pointer transition-colors`)
+                <i class="fa-solid fa-paper-plane"></i>
+                <span>Ứng tuyển ngay</span>
+
     //- Chi tiết công việc
     div(class="pt-[20px] sm:pt-[30px] pb-[40px] sm:pb-[60px]")
         .contain 
@@ -16,9 +35,7 @@ block main
                         div(class="font-[600] text-[18px] sm:text-[20px] text-[#0088FF] mb-[16px] sm:mb-[20px] tabular-nums") #{formatSalary(job.salaryMin, job.salaryMax)}
                         
                         div(class="flex items-center gap-[10px]")
-                            button(type="button" class="btn-open-quick-apply flex-1 bg-[#0088FF] hover:bg-[#0070d6] rounded-[6px] p-[12px] sm:p-[14px] font-[600] text-[15px] sm:text-[16px] text-white flex items-center justify-center gap-[8px] cursor-pointer transition-colors")
-                                <i class="fa-solid fa-paper-plane text-[15px]"></i>
-                                <span>Ứng tuyển ngay</span>
+                            +applyCta("flex-1 rounded-[6px] p-[12px] sm:p-[14px] text-[15px] sm:text-[16px]")
                             button(type="button" class="btn-bookmark-job px-[18px] py-[12px] sm:py-[14px] rounded-[6px] border border-gray-300 hover:border-red-400 bg-white hover:bg-red-50 text-gray-600 hover:text-red-500 font-[600] text-[14px] cursor-pointer transition-colors flex items-center justify-center gap-[6px]" data-job-id=job._id title="Lưu việc làm này")
                                 if savedJobIds && savedJobIds.has(job._id.toString())
                                     <i class="fa-solid fa-bookmark text-red-500 text-[16px]"></i>
@@ -83,15 +100,6 @@ block main
 
                     //- Kêu gọi Ứng tuyển ở đáy trang (Bottom Apply Action Card)
                     div(id="boxApply" class="rounded-[12px] p-[20px] sm:p-[24px] mt-[20px] bg-[#F8FAFC] border border-[#E2E8F0]")
-                        if flash && flash.error
-                            div(class="mb-[15px] p-[12px] bg-[#FFEBEE] border border-[#FFCDD2] text-[#C62828] rounded-[6px] text-[13.5px] flex items-center gap-[8px]")
-                                <i class="fa-solid fa-circle-exclamation"></i>
-                                span #{flash.error}
-                        if flash && flash.success
-                            div(class="mb-[15px] p-[12px] bg-[#E8F5E9] border border-[#A5D6A7] text-[#2E7D32] rounded-[6px] text-[13.5px] flex items-center gap-[8px]")
-                                <i class="fa-solid fa-circle-check"></i>
-                                span #{flash.success}
-
                         div(class="flex flex-col md:flex-row items-start md:items-center justify-between gap-[20px]")
                             div(class="max-w-[480px]")
                                 span(class="inline-flex items-center gap-[6px] text-[12px] font-[600] text-[#0088FF] mb-[4px]")
@@ -102,9 +110,7 @@ block main
                                     | Cơ hội gia nhập #{company ? company.companyName : "Doanh nghiệp"} với mức lương #{formatSalary(job.salaryMin, job.salaryMax)}.
 
                             div(class="flex items-center gap-[10px] w-full md:w-auto shrink-0")
-                                button(type="button" class="btn-open-quick-apply flex-1 md:flex-none bg-[#0088FF] hover:bg-[#0070d6] text-white font-[600] text-[14px] sm:text-[15px] py-[12px] px-[24px] rounded-[8px] cursor-pointer transition-colors flex items-center justify-center gap-[8px]")
-                                    <i class="fa-solid fa-paper-plane text-[14px]"></i>
-                                    <span>Ứng tuyển ngay</span>
+                                +applyCta("flex-1 md:flex-none text-[14px] sm:text-[15px] py-[12px] px-[24px] rounded-[8px]")
                                 button(type="button" class="btn-bookmark-job px-[16px] py-[12px] rounded-[8px] border border-gray-300 hover:border-red-400 bg-white hover:bg-red-50 text-gray-700 hover:text-red-500 font-[600] text-[13.5px] cursor-pointer transition-colors flex items-center justify-center gap-[6px]" data-job-id=job._id title="Lưu việc làm này")
                                     if savedJobIds && savedJobIds.has(job._id.toString())
                                         <i class="fa-solid fa-bookmark text-red-500 text-[15px]"></i>

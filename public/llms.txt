@@ -32,13 +32,15 @@ Agents and AI workflows have multiple native integration options:
    - Tools available:
      - `search_jobs`: Filter by `keyword`, `city`, `skill`, `position`, `limit`.
      - `get_job_details`: Retrieve full requirements, salary, benefits by `slug`.
+     - `get_company_details`: Retrieve a company profile and its open jobs by `slug` or `companyName`.
      - `calculate_salary`: Retrieve VN.ITJobs Salary Benchmarking figures by `position`, `skill`, `city`.
      - `list_companies`: Retrieve top employers hiring developers.
      - `get_platform_info`: Retrieve platform stats and index URLs.
+   - JSON-RPC notifications (no `id`, e.g. `notifications/initialized`) are answered with `202 Accepted` and an empty body.
 
 2. **Official CLI Tool (vn-itjobs)**:
    - Installable via npm: `npm install -g vn-itjobs` or run directly with `npx vn-itjobs`
-   - Commands: `vn-itjobs search "ReactJS" --city ha-noi --json`, `vn-itjobs salary senior --skill golang --json`, `vn-itjobs companies --json`, `vn-itjobs mcp`.
+   - Commands: `vn-itjobs search "ReactJS" --city ha-noi --json`, `vn-itjobs salary senior --skill golang --json` (add `--salary 25000000` to get your percentile; salary is in VND/month), `vn-itjobs companies --json`, `vn-itjobs mcp`.
 
 3. **OpenAPI 3.1 & Versioned REST API (/api/v1/)**:
    - Specification: `https://tuyen-dung-it.vercel.app/openapi.json`
@@ -46,8 +48,8 @@ Agents and AI workflows have multiple native integration options:
    - Typed Errors: RFC 9457 Problem Details (`application/problem+json`).
    - Standard Rate Limiting: RFC draft-7 headers (`RateLimit-Limit`, `RateLimit-Remaining`, `RateLimit-Reset`, `Retry-After`).
    - Autocomplete & Suggestions: `GET /api/v1/search/suggestions?q={query}`
-   - VN.ITJobs Salary Benchmarking: `GET /api/v1/salary/calculate?position={pos}&skill={skill}&city={city}`
-   - Feedback & Report: `POST /api/v1/feedback`
+   - VN.ITJobs Salary Benchmarking: `GET /api/v1/salary/calculate?position={pos}&skill={skill}&city={city}&salary={vnd_per_month}` -> `{ success, stats: { salaryMin, salaryMedian, salaryMax }, evaluation }` (VND/month; negative salary returns 400; job listings use USD)
+   - Feedback & Report: `POST /api/v1/feedback` (`type`: bug | rating | suggestion | contact)
 
 4. **Markdown Content Negotiation (acceptmarkdown.com)**:
    - Request any public page (`/`, `/about`, `/contact`, `/privacy`, `/docs`, `/salary`) with header:

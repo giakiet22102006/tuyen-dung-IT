@@ -3,6 +3,7 @@ const { Job } = require("../models");
 const { JOB_MODERATION } = require("../config/constants");
 const { getCityLabel } = require("../utils/labels");
 const { escapeRegex } = require("../utils/securityHelpers");
+const { PUBLIC_JOB_CARD_FIELDS } = require("./job.service");
 
 // Bảng dữ liệu chuẩn mức lương thị trường IT Việt Nam năm 2026 (Đơn vị: VNĐ/tháng)
 const SALARY_BENCHMARKS = {
@@ -79,8 +80,8 @@ async function getSalaryStats({ position = "junior", skill = "", city = "" }) {
   }
 
   const dbJobs = await Job.find(filter)
-    .select("salaryMin salaryMax title slug employerId skills benefits city")
-    .populate("employerId", "companyName logo")
+    .select(PUBLIC_JOB_CARD_FIELDS)
+    .populate("employerId", "companyName slug logo")
     .limit(10)
     .lean();
 

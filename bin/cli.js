@@ -101,10 +101,11 @@ async function handleSalary() {
   const position = args[1] && !args[1].startsWith("--") ? args[1] : "junior";
   const skill = getFlag("--skill") || "";
   const city = getFlag("--city") || "";
+  const salary = getFlag("--salary") || "";
 
   try {
     const res = await fetch(
-      `${BASE_URL}/api/v1/salary/calculate?position=${encodeURIComponent(position)}&skill=${encodeURIComponent(skill)}&city=${encodeURIComponent(city)}`
+      `${BASE_URL}/api/v1/salary/calculate?position=${encodeURIComponent(position)}&skill=${encodeURIComponent(skill)}&city=${encodeURIComponent(city)}${salary ? `&salary=${encodeURIComponent(salary)}` : ""}`
     );
     const data = await res.json();
 
@@ -114,11 +115,19 @@ async function handleSalary() {
     }
 
     console.log(`\n📊 VN.ITJobs Salary Benchmarking [${position.toUpperCase()}] ${skill ? `(${skill})` : ""}:`);
-    if (data.data) {
-      const d = data.data;
-      console.log(`- Mức thấp nhất: ${d.minFormatted || d.min}`);
-      console.log(`- Mức trung vị thị trường: ${d.medianFormatted || d.median}`);
-      console.log(`- Mức cao nhất: ${d.maxFormatted || d.max}`);
+    // API trả về { success, stats: { salaryMin, salaryMedian, salaryMax, ... }, evaluation }
+    if (data.stats) {
+      const s = data.stats;
+      const fmt = (v) => `${(Number(v || 0) / 1000000).toFixed(1)} triệu VNĐ/tháng`;
+      console.log(`- Mức thấp nhất: ${fmt(s.salaryMin)}`);
+      console.log(`- Mức trung vị thị trường: ${fmt(s.salaryMedian)}`);
+      console.log(`- Mức cao nhất: ${fmt(s.salaryMax)}`);
+      if (data.evaluation) {
+        console.log(`- Lương của bạn: phân vị ${data.evaluation.percentile}% — ${data.evaluation.rankLabel}`);
+      }
+    } else if (data.success === false) {
+      console.error(`Lỗi: ${data.message || "Không thể tra cứu lương."}`);
+      process.exit(1);
     } else {
       console.log(JSON.stringify(data, null, 2));
     }

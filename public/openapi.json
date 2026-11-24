@@ -94,7 +94,9 @@
             "in": "query",
             "required": true,
             "description": "Search keyword query string (e.g. 'react', 'pythn')",
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -133,7 +135,14 @@
             "description": "Position level (intern, fresher, junior, middle, senior, manager)",
             "schema": {
               "type": "string",
-              "enum": ["intern", "fresher", "junior", "middle", "senior", "manager"],
+              "enum": [
+                "intern",
+                "fresher",
+                "junior",
+                "middle",
+                "senior",
+                "manager"
+              ],
               "default": "junior"
             }
           },
@@ -142,7 +151,9 @@
             "in": "query",
             "required": false,
             "description": "Skill multiplier keyword (e.g. golang, rust, python, ai, reactjs, devops)",
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
           },
           {
             "name": "city",
@@ -151,7 +162,23 @@
             "description": "City location (ha-noi, ho-chi-minh, da-nang, khac)",
             "schema": {
               "type": "string",
-              "enum": ["ha-noi", "ho-chi-minh", "da-nang", "khac"]
+              "enum": [
+                "ha-noi",
+                "ho-chi-minh",
+                "da-nang",
+                "khac"
+              ]
+            }
+          },
+          {
+            "name": "salary",
+            "in": "query",
+            "required": false,
+            "description": "Mức lương hiện tại của bạn (VNĐ/tháng, số nguyên dương, VD: 18500000) để nhận phân vị so với thị trường. Số âm hoặc không hợp lệ trả về 400.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "example": 18500000
             }
           }
         ],
@@ -220,7 +247,7 @@
       "post": {
         "summary": "Model Context Protocol (MCP) JSON-RPC Transport",
         "operationId": "postMcpRpc",
-        "description": "Execute Model Context Protocol JSON-RPC 2.0 requests (methods: initialize, tools/list, tools/call, ping).",
+        "description": "Execute Model Context Protocol JSON-RPC 2.0 requests (methods: initialize, tools/list, tools/call, ping). JSON-RPC notifications (no id, e.g. notifications/initialized) return 202 Accepted with an empty body.",
         "requestBody": {
           "required": true,
           "content": {
@@ -241,6 +268,9 @@
                 }
               }
             }
+          },
+          "202": {
+            "description": "Notification accepted (no response body)"
           },
           "400": {
             "$ref": "#/components/responses/BadRequestError"
@@ -298,7 +328,13 @@
     "schemas": {
       "ProblemDetails": {
         "type": "object",
-        "required": ["type", "title", "status", "detail", "code"],
+        "required": [
+          "type",
+          "title",
+          "status",
+          "detail",
+          "code"
+        ],
         "properties": {
           "type": {
             "type": "string",
@@ -340,39 +376,74 @@
       },
       "HealthcheckResponse": {
         "type": "object",
-        "required": ["status"],
+        "required": [
+          "status"
+        ],
         "properties": {
-          "status": { "type": "string", "example": "ok" }
+          "status": {
+            "type": "string",
+            "example": "ok"
+          }
         }
       },
       "ReadinessResponse": {
         "type": "object",
-        "required": ["status", "uptime", "timestamp", "checks"],
+        "required": [
+          "status",
+          "uptime",
+          "timestamp",
+          "checks"
+        ],
         "properties": {
-          "status": { "type": "string", "example": "ok" },
-          "uptime": { "type": "integer", "example": 120 },
-          "timestamp": { "type": "string", "format": "date-time" },
+          "status": {
+            "type": "string",
+            "example": "ok"
+          },
+          "uptime": {
+            "type": "integer",
+            "example": 120
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
           "checks": {
             "type": "object",
-            "required": ["database"],
+            "required": [
+              "database"
+            ],
             "properties": {
-              "database": { "type": "string", "example": "connected" }
+              "database": {
+                "type": "string",
+                "example": "connected"
+              }
             }
           }
         }
       },
       "SearchSuggestionsResponse": {
         "type": "object",
-        "required": ["suggestions"],
+        "required": [
+          "suggestions"
+        ],
         "properties": {
           "suggestions": {
             "type": "array",
             "items": {
               "type": "object",
-              "required": ["text", "type"],
+              "required": [
+                "text",
+                "type"
+              ],
               "properties": {
-                "text": { "type": "string", "example": "ReactJS" },
-                "type": { "type": "string", "example": "skill" }
+                "text": {
+                  "type": "string",
+                  "example": "ReactJS"
+                },
+                "type": {
+                  "type": "string",
+                  "example": "skill"
+                }
               }
             }
           },
@@ -380,123 +451,334 @@
             "type": "object",
             "nullable": true,
             "properties": {
-              "suggestion": { "type": "string", "example": "python" }
+              "suggestion": {
+                "type": "string",
+                "example": "python"
+              }
             }
           }
         }
       },
       "SalaryCalculateResponse": {
         "type": "object",
-        "required": ["success", "data"],
+        "required": [
+          "success",
+          "stats"
+        ],
         "properties": {
-          "success": { "type": "boolean", "example": true },
-          "data": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "stats": {
             "type": "object",
-            "required": ["min", "median", "max"],
+            "required": [
+              "salaryMin",
+              "salaryMedian",
+              "salaryMax"
+            ],
             "properties": {
-              "min": { "type": "number", "example": 14000000 },
-              "median": { "type": "number", "example": 20000000 },
-              "max": { "type": "number", "example": 28000000 },
-              "minFormatted": { "type": "string", "example": "14.000.000 VNĐ" },
-              "medianFormatted": { "type": "string", "example": "20.000.000 VNĐ" },
-              "maxFormatted": { "type": "string", "example": "28.000.000 VNĐ" }
+              "position": {
+                "type": "string",
+                "example": "Junior"
+              },
+              "skill": {
+                "type": "string",
+                "example": "Tất cả công nghệ"
+              },
+              "city": {
+                "type": "string",
+                "example": "Toàn quốc"
+              },
+              "salaryMin": {
+                "type": "number",
+                "description": "Mức lương thấp nhất (VNĐ/tháng)",
+                "example": 14000000
+              },
+              "salaryMedian": {
+                "type": "number",
+                "description": "Mức trung vị (VNĐ/tháng)",
+                "example": 20000000
+              },
+              "salaryMax": {
+                "type": "number",
+                "description": "Mức cao nhất (VNĐ/tháng)",
+                "example": 28000000
+              },
+              "multiplier": {
+                "type": "number",
+                "example": 1
+              },
+              "sampleJobs": {
+                "type": "array",
+                "description": "Tối đa 10 tin tuyển dụng mẫu (lương niêm yết bằng USD)",
+                "items": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "evaluation": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Chỉ có khi truyền tham số salary hợp lệ",
+            "properties": {
+              "amount": {
+                "type": "number",
+                "example": 25000000
+              },
+              "percentile": {
+                "type": "number",
+                "example": 62
+              },
+              "rankLabel": {
+                "type": "string"
+              }
             }
           }
         }
       },
       "FeedbackSubmitRequest": {
         "type": "object",
-        "required": ["type", "content"],
+        "required": [
+          "type",
+          "content"
+        ],
         "properties": {
-          "type": { "type": "string", "enum": ["bug", "rating", "feature", "other"], "example": "bug" },
-          "title": { "type": "string", "example": "Lỗi hiển thị giao diện" },
-          "content": { "type": "string", "example": "Gặp khó khăn khi tìm kiếm việc làm Golang." },
-          "contactName": { "type": "string", "example": "Nguyễn Văn A" },
-          "contactEmail": { "type": "string", "format": "email", "example": "dev@example.com" }
+          "type": {
+            "type": "string",
+            "enum": [
+              "bug",
+              "rating",
+              "suggestion",
+              "contact"
+            ],
+            "example": "bug",
+            "description": "Loại phản hồi (contact = liên hệ Ban quản trị từ trang /contact)"
+          },
+          "title": {
+            "type": "string",
+            "example": "Lỗi hiển thị giao diện",
+            "maxLength": 150
+          },
+          "content": {
+            "type": "string",
+            "example": "Gặp khó khăn khi tìm kiếm việc làm Golang.",
+            "maxLength": 3000
+          },
+          "contactName": {
+            "type": "string",
+            "example": "Nguyễn Văn A"
+          },
+          "contactEmail": {
+            "type": "string",
+            "format": "email",
+            "example": "dev@example.com"
+          },
+          "rating": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "description": "Chỉ dùng cho type=rating"
+          },
+          "url": {
+            "type": "string",
+            "description": "URL trang phát sinh phản hồi"
+          }
         }
       },
       "FeedbackSubmitResponse": {
         "type": "object",
-        "required": ["success", "message"],
+        "required": [
+          "success",
+          "message"
+        ],
         "properties": {
-          "success": { "type": "boolean", "example": true },
-          "message": { "type": "string", "example": "Phản hồi đã được tiếp nhận thành công." }
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "example": "Phản hồi đã được tiếp nhận thành công."
+          }
         }
       },
       "McpRpcRequest": {
         "type": "object",
-        "required": ["jsonrpc", "method"],
+        "required": [
+          "jsonrpc",
+          "method"
+        ],
         "properties": {
-          "jsonrpc": { "type": "string", "enum": ["2.0"], "example": "2.0" },
-          "id": { "type": "integer", "example": 1 },
-          "method": { "type": "string", "enum": ["initialize", "tools/list", "tools/call", "ping"], "example": "tools/list" },
+          "jsonrpc": {
+            "type": "string",
+            "enum": [
+              "2.0"
+            ],
+            "example": "2.0"
+          },
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "initialize",
+              "tools/list",
+              "tools/call",
+              "ping"
+            ],
+            "example": "tools/list"
+          },
           "params": {
             "type": "object",
             "properties": {
-              "name": { "type": "string", "example": "search_jobs" },
-              "arguments": { "type": "object" },
-              "protocolVersion": { "type": "string", "example": "2024-11-05" }
+              "name": {
+                "type": "string",
+                "example": "search_jobs"
+              },
+              "arguments": {
+                "type": "object"
+              },
+              "protocolVersion": {
+                "type": "string",
+                "example": "2024-11-05"
+              }
             }
           }
         }
       },
       "McpRpcResponse": {
         "type": "object",
-        "required": ["jsonrpc"],
+        "required": [
+          "jsonrpc"
+        ],
         "properties": {
-          "jsonrpc": { "type": "string", "example": "2.0" },
-          "id": { "type": "integer", "nullable": true, "example": 1 },
-          "result": { "type": "object" },
+          "jsonrpc": {
+            "type": "string",
+            "example": "2.0"
+          },
+          "id": {
+            "type": "integer",
+            "nullable": true,
+            "example": 1
+          },
+          "result": {
+            "type": "object"
+          },
           "error": {
             "type": "object",
             "properties": {
-              "code": { "type": "integer", "example": -32601 },
-              "message": { "type": "string", "example": "Method not found" }
+              "code": {
+                "type": "integer",
+                "example": -32601
+              },
+              "message": {
+                "type": "string",
+                "example": "Method not found"
+              }
             }
           }
         }
       },
       "McpServerHandshakeResponse": {
         "type": "object",
-        "required": ["status", "server", "protocolVersion", "transport"],
+        "required": [
+          "status",
+          "server",
+          "protocolVersion",
+          "transport"
+        ],
         "properties": {
-          "status": { "type": "string", "example": "ok" },
+          "status": {
+            "type": "string",
+            "example": "ok"
+          },
           "server": {
             "type": "object",
             "properties": {
-              "name": { "type": "string", "example": "vn-itjobs-mcp" },
-              "version": { "type": "string", "example": "1.0.0" }
+              "name": {
+                "type": "string",
+                "example": "vn-itjobs-mcp"
+              },
+              "version": {
+                "type": "string",
+                "example": "1.0.0"
+              }
             }
           },
-          "protocolVersion": { "type": "string", "example": "2024-11-05" },
-          "transport": { "type": "string", "example": "Streamable HTTP" },
+          "protocolVersion": {
+            "type": "string",
+            "example": "2024-11-05"
+          },
+          "transport": {
+            "type": "string",
+            "example": "Streamable HTTP"
+          },
           "toolsAvailable": {
             "type": "array",
-            "items": { "type": "string" }
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
       "McpManifestResponse": {
         "type": "object",
-        "required": ["mcpVersion", "name", "version", "transport", "capabilities"],
+        "required": [
+          "mcpVersion",
+          "name",
+          "version",
+          "transport",
+          "capabilities"
+        ],
         "properties": {
-          "mcpVersion": { "type": "string", "example": "2024-11-05" },
-          "name": { "type": "string", "example": "vn-itjobs-mcp" },
-          "version": { "type": "string", "example": "1.0.0" },
-          "description": { "type": "string" },
+          "mcpVersion": {
+            "type": "string",
+            "example": "2024-11-05"
+          },
+          "name": {
+            "type": "string",
+            "example": "vn-itjobs-mcp"
+          },
+          "version": {
+            "type": "string",
+            "example": "1.0.0"
+          },
+          "description": {
+            "type": "string"
+          },
           "transport": {
             "type": "object",
-            "required": ["type", "url"],
+            "required": [
+              "type",
+              "url"
+            ],
             "properties": {
-              "type": { "type": "string", "example": "http" },
-              "url": { "type": "string", "example": "https://tuyen-dung-it.vercel.app/mcp" },
-              "endpoint": { "type": "string", "example": "/mcp" }
+              "type": {
+                "type": "string",
+                "example": "http"
+              },
+              "url": {
+                "type": "string",
+                "example": "https://tuyen-dung-it.vercel.app/mcp"
+              },
+              "endpoint": {
+                "type": "string",
+                "example": "/mcp"
+              }
             }
           },
           "capabilities": {
             "type": "object",
             "properties": {
-              "tools": { "type": "object" }
+              "tools": {
+                "type": "object"
+              }
             }
           }
         }
@@ -507,10 +789,14 @@
         "description": "Bad Request - Invalid parameters or malformed syntax",
         "content": {
           "application/problem+json": {
-            "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+            "schema": {
+              "$ref": "#/components/schemas/ProblemDetails"
+            }
           },
           "application/json": {
-            "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+            "schema": {
+              "$ref": "#/components/schemas/ProblemDetails"
+            }
           }
         }
       },
@@ -518,27 +804,55 @@
         "description": "Not Found - Requested resource or slug does not exist",
         "content": {
           "application/problem+json": {
-            "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+            "schema": {
+              "$ref": "#/components/schemas/ProblemDetails"
+            }
           },
           "application/json": {
-            "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+            "schema": {
+              "$ref": "#/components/schemas/ProblemDetails"
+            }
           }
         }
       },
       "RateLimitError": {
         "description": "Too Many Requests - Rate limit exceeded (RFC standard headers returned)",
         "headers": {
-          "RateLimit-Limit": { "schema": { "type": "integer" }, "description": "Maximum allowed requests in window" },
-          "RateLimit-Remaining": { "schema": { "type": "integer" }, "description": "Remaining requests in current window" },
-          "RateLimit-Reset": { "schema": { "type": "integer" }, "description": "Seconds until window resets" },
-          "Retry-After": { "schema": { "type": "integer" }, "description": "Seconds to wait before retrying" }
+          "RateLimit-Limit": {
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Maximum allowed requests in window"
+          },
+          "RateLimit-Remaining": {
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Remaining requests in current window"
+          },
+          "RateLimit-Reset": {
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Seconds until window resets"
+          },
+          "Retry-After": {
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Seconds to wait before retrying"
+          }
         },
         "content": {
           "application/problem+json": {
-            "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+            "schema": {
+              "$ref": "#/components/schemas/ProblemDetails"
+            }
           },
           "application/json": {
-            "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+            "schema": {
+              "$ref": "#/components/schemas/ProblemDetails"
+            }
           }
         }
       },
@@ -546,13 +860,25 @@
         "description": "Internal Server Error",
         "content": {
           "application/problem+json": {
-            "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+            "schema": {
+              "$ref": "#/components/schemas/ProblemDetails"
+            }
           },
           "application/json": {
-            "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+            "schema": {
+              "$ref": "#/components/schemas/ProblemDetails"
+            }
           }
         }
       }
     }
-  }
+  },
+  "x-mcp-tools": [
+    "search_jobs",
+    "get_job_details",
+    "get_company_details",
+    "calculate_salary",
+    "list_companies",
+    "get_platform_info"
+  ]
 }

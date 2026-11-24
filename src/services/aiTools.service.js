@@ -9,6 +9,7 @@ const {
   getJobDetails,
 } = require("./job.service");
 const { getSalaryStats } = require("./salary.service");
+const formatSalary = require("../utils/formatSalary");
 const { Employer } = require("../models");
 const { EMPLOYER_STATUS } = require("../config/constants");
 const { escapeRegex } = require("../utils/securityHelpers");
@@ -154,7 +155,7 @@ function formatJobSummary(j) {
     workingForm: j.workingForm,
     salaryMin: j.salaryMin,
     salaryMax: j.salaryMax,
-    salaryFormatted: `${j.salaryMin}$ - ${j.salaryMax}$`,
+    salaryFormatted: formatSalary(j.salaryMin, j.salaryMax),
     skills: (j.skills || []).map((s) => s.name),
     benefits: j.benefits || [],
     url: `${SITE_BASE_URL}/jobs/${j.slug}`,
@@ -297,7 +298,7 @@ async function executeTool(name, args = {}) {
         },
         salaryMin: job.salaryMin,
         salaryMax: job.salaryMax,
-        salaryFormatted: `${job.salaryMin}$ - ${job.salaryMax}$`,
+        salaryFormatted: formatSalary(job.salaryMin, job.salaryMax),
         position: job.position,
         workingForm: job.workingForm,
         city: job.city,

@@ -235,11 +235,16 @@ window.initAiInterviewPrep = function (jobId) {
   if (openBtn.dataset.boundAi === 'true') return;
   openBtn.dataset.boundAi = 'true';
 
+  function closeInterviewModal() {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    document.body.style.overflow = '';
+  }
+
   openBtn.addEventListener('click', async () => {
     modal.classList.remove('hidden');
     modal.classList.add('flex');
     document.body.style.overflow = 'hidden';
-    modal.classList.add('flex');
 
     if (container && container.dataset.loaded !== 'true') {
       await loadQuestions();
@@ -247,16 +252,19 @@ window.initAiInterviewPrep = function (jobId) {
   });
 
   if (closeBtn) {
-    closeBtn.addEventListener('click', () => {
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
-    });
+    closeBtn.addEventListener('click', closeInterviewModal);
   }
 
   modal.addEventListener('click', (e) => {
     if (e.target === modal) {
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
+      closeInterviewModal();
+    }
+  });
+
+  // Escape cũng phải gỡ khóa cuộn (QA-B11)
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+      closeInterviewModal();
     }
   });
 
@@ -525,6 +533,11 @@ window.openAiMarketInsights = async function () {
   if (content && content.dataset.loaded === 'true') {
     return;
   }
+  // Đang tải rồi => bỏ qua lần gọi trùng (onclick inline + addEventListener)
+  if (window.__aiMarketInsightsLoading) {
+    return;
+  }
+  window.__aiMarketInsightsLoading = true;
 
   if (loading) loading.classList.remove('hidden');
   if (content) content.classList.add('hidden');
@@ -557,6 +570,8 @@ window.openAiMarketInsights = async function () {
     modal.classList.add('hidden');
     modal.classList.remove('flex');
     modal.style.display = 'none';
+  } finally {
+    window.__aiMarketInsightsLoading = false;
   }
 
   function renderInsights(marketData) {
@@ -622,6 +637,7 @@ document.addEventListener('DOMContentLoaded', () => {
           m.style.display = 'none';
         }
       });
+      document.body.style.overflow = '';
     }
   });
 });

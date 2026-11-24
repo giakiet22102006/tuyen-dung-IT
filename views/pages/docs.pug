@@ -87,9 +87,11 @@ block main
                 ul(class="list-disc pl-[24px] space-y-[6px] text-[15px]")
                     li <code>search_jobs</code>: Tìm kiếm việc làm IT theo từ khóa, kỹ năng công nghệ, địa điểm và cấp bậc.
                     li <code>get_job_details</code>: Lấy chi tiết mô tả, yêu cầu và phúc lợi việc làm theo slug.
+                    li <code>get_company_details</code>: Lấy hồ sơ công ty và các việc làm đang mở theo slug hoặc tên công ty.
                     li <code>calculate_salary</code>: Tra cứu VN.ITJobs Salary Benchmarking trung vị và khoảng lương chuẩn thị trường IT Việt Nam.
                     li <code>list_companies</code>: Xem danh sách các công ty công nghệ hàng đầu đang tuyển dụng.
                     li <code>get_platform_info</code>: Thống kê số lượng việc làm mở và trạng thái hệ thống.
+                p(class="mt-[10px] text-[14px] text-gray-600") Thông báo JSON-RPC (không có <code>id</code>, ví dụ <code>notifications/initialized</code>) được phản hồi <code>202 Accepted</code> với body rỗng.
 
             section
                 h2(class="font-[700] text-[22px] sm:text-[26px] text-[#121212] mb-[14px]") 7. Markdown Content Negotiation (acceptmarkdown.com)

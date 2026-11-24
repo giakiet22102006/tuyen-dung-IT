@@ -35,9 +35,9 @@ block main
                 div(class="flex items-center gap-[6px] bg-white p-[4px] rounded-full border border-gray-200 shadow-2xs")
                     a(href=`/blog?${selectedCategory ? 'category=' + selectedCategory : ''}${searchKeyword ? '&search=' + encodeURIComponent(searchKeyword) : ''}` class=`px-[14px] py-[6px] rounded-full text-[12px] sm:text-[13px] font-[600] transition ${!selectedAudience ? 'bg-[#0088FF] text-white shadow-xs' : 'text-gray-600 hover:text-gray-900'}`)
                         <i class="fa-solid fa-users mr-[4px]"></i> Tất cả
-                    a(href=`/blog?audience=candidate${selectedCategory ? '&category=' + selectedCategory : ''}${searchKeyword ? '&search=' + encodeURIComponent(searchKeyword) : ''}` class=`px-[14px] py-[6px] rounded-full text-[12px] sm:text-[13px] font-[600] transition ${selectedAudience === 'candidate' ? 'bg-[#0088FF] text-white shadow-xs' : 'text-gray-600 hover:text-gray-900'}`)
+                    a(href=`/blog?audience=candidate${selectedCategory ? '&category=' + encodeURIComponent(selectedCategory) : ''}${searchKeyword ? '&search=' + encodeURIComponent(searchKeyword) : ''}` class=`px-[14px] py-[6px] rounded-full text-[12px] sm:text-[13px] font-[600] transition ${selectedAudience === 'candidate' ? 'bg-[#0088FF] text-white shadow-xs' : 'text-gray-600 hover:text-gray-900'}`)
                         <i class="fa-solid fa-code mr-[4px]"></i> Dành cho Ứng viên
-                    a(href=`/blog?audience=employer${selectedCategory ? '&category=' + selectedCategory : ''}${searchKeyword ? '&search=' + encodeURIComponent(searchKeyword) : ''}` class=`px-[14px] py-[6px] rounded-full text-[12px] sm:text-[13px] font-[600] transition ${selectedAudience === 'employer' ? 'bg-[#0088FF] text-white shadow-xs' : 'text-gray-600 hover:text-gray-900'}`)
+                    a(href=`/blog?audience=employer${selectedCategory ? '&category=' + encodeURIComponent(selectedCategory) : ''}${searchKeyword ? '&search=' + encodeURIComponent(searchKeyword) : ''}` class=`px-[14px] py-[6px] rounded-full text-[12px] sm:text-[13px] font-[600] transition ${selectedAudience === 'employer' ? 'bg-[#0088FF] text-white shadow-xs' : 'text-gray-600 hover:text-gray-900'}`)
                         <i class="fa-solid fa-building mr-[4px]"></i> Cho Nhà tuyển dụng
 
                 if total
@@ -52,10 +52,10 @@ block main
                 each catKey in Object.keys(categories)
                     - var catVal = categories[catKey]
                     - var isCatActive = (selectedCategory === catVal)
-                    a(href=`/blog?category=${catVal}${selectedAudience ? '&audience=' + selectedAudience : ''}${searchKeyword ? '&search=' + encodeURIComponent(searchKeyword) : ''}` class=`inline-flex items-center gap-[6px] px-[16px] py-[8px] rounded-full text-[13px] font-[600] whitespace-nowrap transition ${isCatActive ? 'bg-[#000071] text-white shadow-xs' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}`)
+                    a(href=`/blog?category=${catVal}${selectedAudience ? '&audience=' + encodeURIComponent(selectedAudience) : ''}${searchKeyword ? '&search=' + encodeURIComponent(searchKeyword) : ''}` class=`inline-flex items-center gap-[6px] px-[16px] py-[8px] rounded-full text-[13px] font-[600] whitespace-nowrap transition ${isCatActive ? 'bg-[#000071] text-white shadow-xs' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}`)
                         | #{categoryLabels[catVal]}
                 if selectedCategory && !Object.values(categories).includes(selectedCategory)
-                    a(href=`/blog?category=${selectedCategory}${selectedAudience ? '&audience=' + selectedAudience : ''}${searchKeyword ? '&search=' + encodeURIComponent(searchKeyword) : ''}` class="inline-flex items-center gap-[6px] px-[16px] py-[8px] rounded-full text-[13px] font-[600] whitespace-nowrap bg-[#000071] text-white shadow-xs")
+                    a(href=`/blog?category=${selectedCategory}${selectedAudience ? '&audience=' + encodeURIComponent(selectedAudience) : ''}${searchKeyword ? '&search=' + encodeURIComponent(searchKeyword) : ''}` class="inline-flex items-center gap-[6px] px-[16px] py-[8px] rounded-full text-[13px] font-[600] whitespace-nowrap bg-[#000071] text-white shadow-xs")
                         | #{categoryLabels[selectedCategory] || selectedCategory}
 
             if articles && articles.length > 0
@@ -118,17 +118,17 @@ block main
                 if pagination && pagination.totalPages > 1
                     div(class="flex justify-center items-center gap-[6px]")
                         if pagination.hasPrev
-                            a(href=`/blog?page=${pagination.prevPage}${selectedCategory ? '&category=' + selectedCategory : ''}${selectedAudience ? '&audience=' + selectedAudience : ''}${searchKeyword ? '&search=' + encodeURIComponent(searchKeyword) : ''}` class="w-[36px] h-[36px] rounded-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 flex items-center justify-center text-[13px] transition")
+                            a(href=`/blog?page=${encodeURIComponent(pagination.prevPage)}${selectedCategory ? '&category=' + encodeURIComponent(selectedCategory) : ''}${selectedAudience ? '&audience=' + encodeURIComponent(selectedAudience) : ''}${searchKeyword ? '&search=' + encodeURIComponent(searchKeyword) : ''}` class="w-[36px] h-[36px] rounded-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 flex items-center justify-center text-[13px] transition")
                                 i(class="fa-solid fa-chevron-left")
 
                         each pageNum in Array.from({length: pagination.totalPages}, (_, i) => i + 1)
                             if pageNum === pagination.currentPage
                                 span(class="w-[36px] h-[36px] rounded-full bg-[#0088FF] text-white font-[700] flex items-center justify-center text-[13px] shadow-xs") #{pageNum}
                             else if pageNum === 1 || pageNum === pagination.totalPages || Math.abs(pageNum - pagination.currentPage) <= 1
-                                a(href=`/blog?page=${pageNum}${selectedCategory ? '&category=' + selectedCategory : ''}${selectedAudience ? '&audience=' + selectedAudience : ''}${searchKeyword ? '&search=' + encodeURIComponent(searchKeyword) : ''}` class="w-[36px] h-[36px] rounded-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 flex items-center justify-center text-[13px] transition") #{pageNum}
+                                a(href=`/blog?page=${encodeURIComponent(pageNum)}${selectedCategory ? '&category=' + encodeURIComponent(selectedCategory) : ''}${selectedAudience ? '&audience=' + encodeURIComponent(selectedAudience) : ''}${searchKeyword ? '&search=' + encodeURIComponent(searchKeyword) : ''}` class="w-[36px] h-[36px] rounded-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 flex items-center justify-center text-[13px] transition") #{pageNum}
 
                         if pagination.hasNext
-                            a(href=`/blog?page=${pagination.nextPage}${selectedCategory ? '&category=' + selectedCategory : ''}${selectedAudience ? '&audience=' + selectedAudience : ''}${searchKeyword ? '&search=' + encodeURIComponent(searchKeyword) : ''}` class="w-[36px] h-[36px] rounded-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 flex items-center justify-center text-[13px] transition")
+                            a(href=`/blog?page=${encodeURIComponent(pagination.nextPage)}${selectedCategory ? '&category=' + encodeURIComponent(selectedCategory) : ''}${selectedAudience ? '&audience=' + encodeURIComponent(selectedAudience) : ''}${searchKeyword ? '&search=' + encodeURIComponent(searchKeyword) : ''}` class="w-[36px] h-[36px] rounded-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 flex items-center justify-center text-[13px] transition")
                                 i(class="fa-solid fa-chevron-right")
             else
                 div(class="bg-white rounded-[12px] p-[50px] text-center shadow-xs border border-gray-200")

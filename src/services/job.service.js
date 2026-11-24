@@ -4,6 +4,7 @@ const { Job, Employer } = require("../models");
 const { EMPLOYER_STATUS, JOB_MODERATION } = require("../config/constants");
 const normalizeVi = require("../utils/normalizeVi");
 const paginate = require("../utils/pagination");
+const slugify = require("../utils/slugify");
 const { findDidYouMean, clearVocabCache } = require("./fuzzySearch.service");
 
 const statsCache = new NodeCache({ stdTTL: 600, checkperiod: 120 });
@@ -103,8 +104,51 @@ async function getTopEmployers(limit = 9) {
 /**
  * Tìm kiếm việc làm công khai với bộ lọc, phân trang, Fuzzy Search và Typo Tolerance
  */
+/**
+ * Lấy chuỗi đầu tiên không rỗng từ query param (Express parse ?a=1&a=2 thành mảng).
+ * Chống lỗi "x.trim is not a function" khi tham số bị lặp / dạng object (?a[b]=1).
+ */
+function pickFirstString(value) {
+  const list = Array.isArray(value) ? value : [value];
+  for (const item of list) {
+    if (typeof item === "string" && item.trim()) return item.trim();
+  }
+  return "";
+}
+
+/**
+ * Chuẩn hóa query param (string | string[]) thành mảng chuỗi sạch, không trùng lặp.
+ */
+function normalizeFilterArray(value, { max = 10, maxLen = 100 } = {}) {
+  const list = Array.isArray(value) ? value : [value];
+  const out = [];
+  for (const item of list) {
+    if (typeof item !== "string") continue;
+    const t = item.trim().slice(0, maxLen);
+    if (t && !out.includes(t)) out.push(t);
+    if (out.length >= max) break;
+  }
+  return out;
+}
+
+// 1 giá trị => so khớp trực tiếp (tận dụng index), nhiều giá trị => $in
+const toMatch = (values) => (values.length === 1 ? values[0] : { $in: values });
+
+const PUBLIC_JOB_CARD_FIELDS =
+  "title slug salaryMin salaryMax position workingForm skills benefits city createdAt employerId";
+const JOBS_PER_PAGE = 9;
+
 async function searchJobs(query = {}) {
-  const { city, keyword, skill, position, workingForm, benefit, company, page, exact } = query;
+  const { page, exact } = query;
+  const cities = normalizeFilterArray(query.city);
+  const positions = normalizeFilterArray(query.position);
+  const workingForms = normalizeFilterArray(query.workingForm);
+  const benefits = normalizeFilterArray(query.benefit);
+  const skillSlugs = normalizeFilterArray(query.skill)
+    .map((s) => slugify(s))
+    .filter(Boolean);
+  const keyword = pickFirstString(query.keyword);
+  const company = pickFirstString(query.company);
 
   const baseFilter = {
     employerActive: true,
@@ -112,28 +156,14 @@ async function searchJobs(query = {}) {
     deletedAt: null,
   };
 
-  if (city && city.trim()) {
-    baseFilter.city = city.trim();
-  }
+  if (cities.length) baseFilter.city = toMatch(cities);
+  if (positions.length) baseFilter.position = toMatch(positions);
+  if (workingForms.length) baseFilter.workingForm = toMatch(workingForms);
+  if (benefits.length) baseFilter.benefits = toMatch(benefits);
+  if (skillSlugs.length) baseFilter["skills.slug"] = toMatch([...new Set(skillSlugs)]);
 
-  if (position && position.trim()) {
-    baseFilter.position = position.trim();
-  }
-
-  if (workingForm && workingForm.trim()) {
-    baseFilter.workingForm = workingForm.trim();
-  }
-
-  if (benefit && benefit.trim()) {
-    baseFilter.benefits = benefit.trim();
-  }
-
-  if (skill && skill.trim()) {
-    baseFilter["skills.slug"] = skill.toLowerCase().trim();
-  }
-
-  if (company && company.trim()) {
-    const emp = await Employer.findOne({ slug: company.trim(), status: EMPLOYER_STATUS.ACTIVE });
+  if (company) {
+    const emp = await Employer.findOne({ slug: company, status: EMPLOYER_STATUS.ACTIVE, deletedAt: null });
     if (emp) {
       baseFilter.employerId = emp._id;
     } else {
@@ -153,29 +183,50 @@ async function searchJobs(query = {}) {
   let suggestedKeyword = "";
   let didYouMean = null;
 
-  if (typeof keyword === "string" && keyword.trim()) {
+  if (keyword) {
     const { escapeRegex } = require("../utils/securityHelpers");
-    originalKeyword = keyword.trim().slice(0, 100);
+    originalKeyword = keyword.slice(0, 100);
     const normalized = escapeRegex(normalizeVi(originalKeyword));
     if (normalized) {
-      filter.searchText = { $regex: normalized, $options: "i" };
+      const keywordOr = [{ searchText: { $regex: normalized, $options: "i" } }];
+      // Job.searchText chỉ gồm title + skills => bổ sung tìm theo tên công ty (QA-M01)
+      const matchedEmployerIds = await findEmployerIdsByKeyword(originalKeyword, normalized);
+      if (matchedEmployerIds.length) {
+        keywordOr.push({ employerId: { $in: matchedEmployerIds } });
+      }
+      filter.$or = keywordOr;
     }
   }
 
   const pageNum = Math.max(parseInt(page, 10) || 1, 1);
-  const skip = (pageNum - 1) * 9;
+  let effectivePage = pageNum;
+
+  const runQuery = (queryFilter, pageToLoad) =>
+    Promise.all([
+      Job.countDocuments(queryFilter),
+      Job.find(queryFilter)
+        .sort({ createdAt: -1 })
+        .skip((pageToLoad - 1) * JOBS_PER_PAGE)
+        .limit(JOBS_PER_PAGE)
+        .populate("employerId", "companyName slug logo")
+        .select(PUBLIC_JOB_CARD_FIELDS)
+        .lean(),
+    ]);
 
   // Thực thi song song truy vấn đếm và lấy dữ liệu trang (giảm 50% độ trễ network)
-  let [total, jobs] = await Promise.all([
-    Job.countDocuments(filter),
-    Job.find(filter)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(9)
-      .populate("employerId", "companyName slug logo")
-      .select("title slug salaryMin salaryMax position workingForm skills benefits city createdAt employerId")
-      .lean(),
-  ]);
+  let [total, jobs] = await runQuery(filter, effectivePage);
+
+  // Trang vượt ngưỡng: kéo về trang cuối hợp lệ thay vì hiện danh sách rỗng (QA-M05)
+  const clampPage = async (queryFilter, count, currentJobs) => {
+    const lastPage = Math.max(1, Math.ceil(count / JOBS_PER_PAGE));
+    if (count > 0 && effectivePage > lastPage) {
+      effectivePage = lastPage;
+      const [, lastJobs] = await runQuery(queryFilter, lastPage);
+      return lastJobs;
+    }
+    return currentJobs;
+  };
+  jobs = await clampPage(filter, total, jobs);
 
   // LOGIC FUZZY SEARCH (TÌM KIẾM MỜ) & TYPO TOLERANCE (BỎ QUA LỖI CHÍNH TẢ)
   if (originalKeyword) {
@@ -197,21 +248,12 @@ async function searchJobs(query = {}) {
           searchText: { $regex: fuzzyNormalized, $options: "i" },
         };
 
-        const [fuzzyTotal, fuzzyJobs] = await Promise.all([
-          Job.countDocuments(fuzzyFilter),
-          Job.find(fuzzyFilter)
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(9)
-            .populate("employerId", "companyName slug logo")
-            .select("title slug salaryMin salaryMax position workingForm skills city createdAt employerId")
-            .lean(),
-        ]);
+        const [fuzzyTotal, fuzzyJobs] = await runQuery(fuzzyFilter, effectivePage);
 
         if (fuzzyTotal > 0) {
           // Tìm thấy kết quả từ khóa gợi ý!
           total = fuzzyTotal;
-          jobs = fuzzyJobs;
+          jobs = await clampPage(fuzzyFilter, fuzzyTotal, fuzzyJobs);
           isFuzzyApplied = true;
           suggestedKeyword = suggestionInfo.displayText || suggestionInfo.suggestion;
           didYouMean = suggestedKeyword;
@@ -223,7 +265,7 @@ async function searchJobs(query = {}) {
     }
   }
 
-  const pagination = paginate(total, pageNum, 9);
+  const pagination = paginate(total, effectivePage, JOBS_PER_PAGE);
 
   return {
     jobs,
@@ -236,6 +278,27 @@ async function searchJobs(query = {}) {
 }
 
 /**
+ * Tìm các nhà tuyển dụng active khớp từ khóa (theo tên công ty, có/không dấu)
+ */
+async function findEmployerIdsByKeyword(rawKeyword, normalizedEscaped) {
+  const { escapeRegex } = require("../utils/securityHelpers");
+  const rawEscaped = escapeRegex(rawKeyword);
+  const or = [];
+  if (rawEscaped) or.push({ companyName: { $regex: rawEscaped, $options: "i" } });
+  if (normalizedEscaped) or.push({ searchText: { $regex: `^${normalizedEscaped}`, $options: "i" } });
+  if (!or.length) return [];
+  const employers = await Employer.find({
+    status: EMPLOYER_STATUS.ACTIVE,
+    deletedAt: null,
+    $or: or,
+  })
+    .select("_id")
+    .limit(50)
+    .lean();
+  return employers.map((e) => e._id);
+}
+
+/**
  * Danh sách công ty có phân trang và đếm job bằng batch aggregate song song
  */
 async function getCompanyList(page = 1, limit = 9) {
@@ -245,19 +308,27 @@ async function getCompanyList(page = 1, limit = 9) {
   };
 
   const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 9, 1), 50);
-  const pageNum = Math.max(parseInt(page, 10) || 1, 1);
-  const skip = (pageNum - 1) * safeLimit;
+  let pageNum = Math.max(parseInt(page, 10) || 1, 1);
 
   // Truy vấn song song đếm tổng số công ty và dữ liệu phân trang
-  const [total, employers] = await Promise.all([
-    Employer.countDocuments(filter),
-    Employer.find(filter)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(safeLimit)
-      .select("companyName slug logo city")
-      .lean(),
-  ]);
+  const loadPage = (p) =>
+    Promise.all([
+      Employer.countDocuments(filter),
+      Employer.find(filter)
+        .sort({ createdAt: -1 })
+        .skip((p - 1) * safeLimit)
+        .limit(safeLimit)
+        .select("companyName slug logo city")
+        .lean(),
+    ]);
+  let [total, employers] = await loadPage(pageNum);
+
+  // Trang vượt ngưỡng: kéo về trang cuối hợp lệ (QA-M05)
+  const lastPage = Math.max(1, Math.ceil(total / safeLimit));
+  if (total > 0 && pageNum > lastPage) {
+    pageNum = lastPage;
+    [total, employers] = await loadPage(pageNum);
+  }
 
   const pagination = paginate(total, pageNum, safeLimit);
 
@@ -321,7 +392,7 @@ async function getCompanyDetails(slug) {
   })
     .sort({ createdAt: -1 })
     .populate("employerId", "companyName slug logo")
-    .select("title slug salaryMin salaryMax position workingForm skills city createdAt employerId")
+    .select(PUBLIC_JOB_CARD_FIELDS)
     .lean();
 
   return { company, jobs };
@@ -341,7 +412,7 @@ async function getJobDetails(slug) {
     .populate("employerId", PUBLIC_EMPLOYER_FIELDS)
     .lean();
 
-  if (!job) return null;
+  if (!job || !job.employerId) return null;
 
   // Đếm tổng số việc làm của công ty đó
   const companyJobCount = await Job.countDocuments({
@@ -359,6 +430,9 @@ module.exports = {
   clearStatsCache,
   getTopEmployers,
   searchJobs,
+  pickFirstString,
+  normalizeFilterArray,
+  PUBLIC_JOB_CARD_FIELDS,
   getCompanyList,
   getCompanyDetails,
   getJobDetails,

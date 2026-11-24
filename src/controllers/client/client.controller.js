@@ -6,7 +6,10 @@ const {
   getCompanyList,
   getCompanyDetails,
   getJobDetails,
+  pickFirstString,
+  normalizeFilterArray,
 } = require("../../services/job.service");
+const { getSafeBackRedirect } = require("../../utils/securityHelpers");
 const { getAutocompleteSuggestions } = require("../../services/fuzzySearch.service");
 const { CITIES, POSITIONS, WORKING_FORMS, BENEFITS, JOB_MODERATION, EMPLOYER_STATUS } = require("../../config/constants");
 const { Job, Application, Review, Employer, Feedback, Candidate, CompanyFollow, Setting } = require("../../models");
@@ -139,20 +142,28 @@ ${about.overviewParagraph2 || ""}
   });
 };
 
-const renderContact = (req, res) => {
+const renderContact = async (req, res) => {
   res.vary("Accept");
+  let siteSetting = {};
+  try {
+    const settingDoc = await Setting.getSettings();
+    siteSetting = (settingDoc && settingDoc.about) ? settingDoc.about : {};
+  } catch (err) {
+    console.error("Lỗi lấy cấu hình Setting (contact):", err.message);
+  }
   if (wantsMarkdown(req)) {
     res.setHeader("Content-Type", "text/markdown; charset=utf-8");
     return res.send(
 `# Liên hệ Ban Quản Trị - VN.ITJobs
 
 ## Thông tin văn phòng
-- Trụ sở Hà Nội: Tầng 12, Tòa nhà Keangnam Landmark 72, Đường Phạm Hùng, Phường Mễ Trì, Quận Nam Từ Liêm, TP. Hà Nội.
-- Hotline Miền Bắc: +84-24-3768-9999
-- Chi nhánh TP.HCM: Tầng 6, Bitexco Financial Tower, Số 2 Hải Triều, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh.
+- Trụ sở Hà Nội: ${siteSetting.headOffice || "Tầng 12, Tòa nhà Keangnam Landmark 72, Đường Phạm Hùng, Phường Mễ Trì, Quận Nam Từ Liêm, TP. Hà Nội."}
+- Hotline Miền Bắc: ${siteSetting.hotline || "+84-24-3768-9999"}
+- Chi nhánh TP.HCM: ${siteSetting.branchOffice || "Tầng 6, Bitexco Financial Tower, Số 2 Hải Triều, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh."}
 - Hotline Miền Nam: +84-28-3829-8888
 
 ## Kênh hỗ trợ chuyên biệt
+- Email chung: ${siteSetting.email || "contact@vn-itjobs.com"}
 - Hỗ trợ Ứng viên: candidate-care@vn-itjobs.com
 - Hỗ trợ Doanh nghiệp tuyển dụng: employer@vn-itjobs.com
 - Hợp tác & Truyền thông: partnership@vn-itjobs.com
@@ -163,6 +174,7 @@ const renderContact = (req, res) => {
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.render("pages/contact", {
     title: "Liên hệ - VN.ITJobs | Hỗ trợ Ứng viên & Nhà tuyển dụng công nghệ",
+    siteSetting,
   });
 };
 
@@ -216,7 +228,7 @@ Tài liệu lập trình viên, OpenAPI Specification và Model Context Protocol
 - Streamable HTTP Transport Endpoint: \`POST https://tuyen-dung-it.vercel.app/mcp\`
 - Protocol Version: 2024-11-05
 - Discovery Manifest: \`https://tuyen-dung-it.vercel.app/.well-known/mcp\`
-- Available Tools: \`search_jobs\`, \`get_job_details\`, \`calculate_salary\`, \`list_companies\`, \`get_platform_info\`.
+- Available Tools (6): \`search_jobs\`, \`get_job_details\`, \`get_company_details\`, \`calculate_salary\`, \`list_companies\`, \`get_platform_info\`.
 
 ## 2. OpenAPI 3.1 Spec
 - URL: [https://tuyen-dung-it.vercel.app/openapi.json](https://tuyen-dung-it.vercel.app/openapi.json)
@@ -238,7 +250,16 @@ Tài liệu lập trình viên, OpenAPI Specification và Model Context Protocol
 };
 
 const renderSearch = async (req, res) => {
-  const { city, keyword, skill, position, workingForm, benefit, exact } = req.query;
+  // Express parse ?a=1&a=2 thành mảng => chuẩn hóa về chuỗi đầu tiên để render an toàn (QA-B11)
+  const city = pickFirstString(req.query.city);
+  const keyword = pickFirstString(req.query.keyword);
+  const skill = pickFirstString(req.query.skill);
+  const position = pickFirstString(req.query.position);
+  const workingForm = pickFirstString(req.query.workingForm);
+  const benefit = pickFirstString(req.query.benefit);
+  const company = pickFirstString(req.query.company);
+  const exact = pickFirstString(req.query.exact);
+  const skillList = normalizeFilterArray(req.query.skill);
 
   const [searchResult, totalPublicJobs] = await Promise.all([
     searchJobs(req.query),
@@ -296,8 +317,10 @@ const renderSearch = async (req, res) => {
     selectedPosition: position || "",
     selectedWorkingForm: workingForm || "",
     selectedBenefit: benefit || "",
+    selectedCompany: company || "",
     keyword: keyword || "",
     selectedSkill: skill || "",
+    selectedSkills: skillList,
     isFuzzyApplied: !!isFuzzyApplied,
     originalKeyword: originalKeyword || "",
     suggestedKeyword: suggestedKeyword || "",
@@ -307,7 +330,7 @@ const renderSearch = async (req, res) => {
 };
 
 const renderCompanyList = async (req, res) => {
-  const page = req.query.page || 1;
+  const page = pickFirstString(req.query.page) || 1;
   const { employers, pagination } = await getCompanyList(page, 9);
 
   res.render("pages/company-list", {
@@ -320,9 +343,9 @@ const renderCompanyList = async (req, res) => {
 const renderCompanyDetails = async (req, res) => {
   const data = await getCompanyDetails(req.params.slug);
   if (!data) {
-    return res.status(404).render("pages/index", {
-      title: "Không tìm thấy công ty",
-      flash: { error: "Không tìm thấy thông tin công ty yêu cầu hoặc công ty đã ngừng hoạt động." },
+    return res.status(404).render("pages/404", {
+      title: "Không tìm thấy công ty - VN.ITJobs",
+      notFoundMessage: "Không tìm thấy thông tin công ty yêu cầu hoặc công ty đã ngừng hoạt động.",
     });
   }
 
@@ -366,6 +389,21 @@ const renderCompanyDetails = async (req, res) => {
     isFollowed,
     mapData,
   });
+};
+
+// Giới hạn độ dài review (khớp maxlength trong review.model.js)
+const REVIEW_LIMITS = { title: 120, body: 2000 };
+
+// Bộ lọc từ nhạy cảm: so khớp theo RANH GIỚI TỪ Unicode, không khớp chuỗi con
+// (tránh ẩn nhầm "nhanh chóng", "admin", "roadmap", "đụng chạm")
+const TOXIC_WORDS = ["lừa đảo", "chó", "mất dạy", "đụ", "dm", "đm", "vcl"];
+const escapeForRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const TOXIC_REGEXES = TOXIC_WORDS.map(
+  (w) => new RegExp(`(?<![\\p{L}\\p{N}_])${escapeForRegex(w)}(?![\\p{L}\\p{N}_])`, "iu")
+);
+const containsToxicWord = (text) => {
+  const normalized = String(text || "").normalize("NFC");
+  return TOXIC_REGEXES.some((re) => re.test(normalized));
 };
 
 const postCompanyReview = async (req, res) => {
@@ -413,8 +451,19 @@ const postCompanyReview = async (req, res) => {
     return res.redirect(`/companies/${slug}#review-section`);
   }
 
-  if (!title || !title.trim()) {
+  if (typeof title !== "string" || !title.trim()) {
     req.flash("error", "Vui lòng nhập tiêu đề đánh giá.");
+    return res.redirect(`/companies/${slug}#review-section`);
+  }
+  const cleanTitle = title.trim();
+  const cleanPros = typeof pros === "string" ? pros.trim() : "";
+  const cleanCons = typeof cons === "string" ? cons.trim() : "";
+  if (cleanTitle.length > REVIEW_LIMITS.title) {
+    req.flash("error", `Tiêu đề đánh giá tối đa ${REVIEW_LIMITS.title} ký tự.`);
+    return res.redirect(`/companies/${slug}#review-section`);
+  }
+  if (cleanPros.length > REVIEW_LIMITS.body || cleanCons.length > REVIEW_LIMITS.body) {
+    req.flash("error", `Nội dung ưu điểm / nhược điểm tối đa ${REVIEW_LIMITS.body} ký tự mỗi mục.`);
     return res.redirect(`/companies/${slug}#review-section`);
   }
 
@@ -434,9 +483,7 @@ const postCompanyReview = async (req, res) => {
   }
 
   // Bộ lọc từ khóa nhạy cảm cơ bản
-  const badWords = ["lừa đảo", "chó", "mất dạy", "đụ", "dm", "đm", "vcl"];
-  const fullContent = `${title} ${pros || ""} ${cons || ""}`.toLowerCase();
-  const hasToxic = badWords.some((w) => fullContent.includes(w));
+  const hasToxic = containsToxicWord(`${cleanTitle} ${cleanPros} ${cleanCons}`);
 
   const review = new Review({
     employerId: company._id,
@@ -445,9 +492,9 @@ const postCompanyReview = async (req, res) => {
     authorEmployerId,
     authorName,
     rating: numRating,
-    title: title.trim(),
-    pros: pros ? pros.trim() : "",
-    cons: cons ? cons.trim() : "",
+    title: cleanTitle,
+    pros: cleanPros,
+    cons: cleanCons,
     isApproved: !hasToxic,
   });
 
@@ -462,35 +509,58 @@ const postCompanyReview = async (req, res) => {
   res.redirect(`/companies/${slug}#review-section`);
 };
 
+const FEEDBACK_TYPES = ["bug", "rating", "suggestion", "contact"];
+
 const postSubmitFeedback = async (req, res) => {
+  // Form HTML truyền thống (vd: /contact) => flash + redirect thay vì in JSON thô (QA-B01)
+  // (Body JSON = API client / widget fetch => luôn trả JSON)
+  const wantsJson =
+    Boolean(req.xhr) ||
+    (req.headers.accept || "").includes("application/json") ||
+    Boolean(req.is && req.is("application/json"));
+  const respond = (status, success, message) => {
+    if (wantsJson) return res.status(status).json({ success, message });
+    req.flash(success ? "success" : "error", message);
+    return res.redirect(getSafeBackRedirect(req, "/contact"));
+  };
+
   try {
-    const { type, rating, title, content, url, contactEmail, contactName } = req.body;
-    if (!content || !content.trim()) {
-      return res.status(400).json({ success: false, message: "Vui lòng nhập nội dung phản hồi." });
+    const body = req.body || {};
+    const { type, rating, title, content, url, contactEmail, contactName } = body;
+    if (typeof content !== "string" || !content.trim()) {
+      return respond(400, false, "Vui lòng nhập nội dung phản hồi.");
     }
+    if (content.trim().length > 3000) {
+      return respond(400, false, "Nội dung phản hồi tối đa 3000 ký tự.");
+    }
+    if (typeof title === "string" && title.trim().length > 150) {
+      return respond(400, false, "Tiêu đề tối đa 150 ký tự.");
+    }
+    const numRating = Number(rating);
 
     const feedback = new Feedback({
-      type: ["bug", "rating", "suggestion"].includes(type) ? type : "bug",
-      rating: rating ? Number(rating) : null,
-      title: title ? title.trim() : "",
+      type: FEEDBACK_TYPES.includes(type) ? type : "bug",
+      rating: Number.isInteger(numRating) && numRating >= 1 && numRating <= 5 ? numRating : null,
+      title: typeof title === "string" ? title.trim() : "",
       content: content.trim(),
-      url: url || "",
-      contactEmail: contactEmail ? contactEmail.trim() : (req.user ? req.user.email : ""),
-      contactName: contactName ? contactName.trim() : (req.user ? (req.user.fullName || req.user.companyName) : ""),
+      url: typeof url === "string" ? url.slice(0, 500) : "",
+      contactEmail: typeof contactEmail === "string" && contactEmail.trim() ? contactEmail.trim() : (req.user ? req.user.email : ""),
+      contactName: typeof contactName === "string" && contactName.trim() ? contactName.trim() : (req.user ? (req.user.fullName || req.user.companyName) : ""),
       userRole: req.role || "guest",
       userId: req.user ? req.user._id : null,
       status: "new",
     });
 
     await feedback.save();
-    return res.json({
-      success: true,
-      message: "Cảm ơn bạn đã gửi phản hồi / báo cáo sự cố! Ban Quản trị VN.ITJobs đã tiếp nhận.",
-    });
+    return respond(
+      200,
+      true,
+      "Cảm ơn bạn đã gửi phản hồi / báo cáo sự cố! Ban Quản trị VN.ITJobs đã tiếp nhận."
+    );
   } catch (err) {
     console.error("Lỗi gửi feedback:", err.message);
     const errMsg = env.NODE_ENV === "production" ? "Không thể gửi phản hồi lúc này. Vui lòng thử lại sau." : "Không thể gửi phản hồi: " + err.message;
-    return res.status(500).json({ success: false, message: errMsg });
+    return respond(500, false, errMsg);
   }
 };
 
@@ -552,9 +622,9 @@ const postChatAssistant = async (req, res) => {
 const renderJobDetails = async (req, res) => {
   const data = await getJobDetails(req.params.slug);
   if (!data) {
-    return res.status(404).render("pages/index", {
-      title: "Không tìm thấy việc làm",
-      flash: { error: "Việc làm này không tồn tại hoặc đã ngừng tuyển dụng." },
+    return res.status(404).render("pages/404", {
+      title: "Không tìm thấy việc làm - VN.ITJobs",
+      notFoundMessage: "Việc làm này không tồn tại hoặc đã ngừng tuyển dụng.",
     });
   }
 
@@ -563,12 +633,19 @@ const renderJobDetails = async (req, res) => {
 
   const mapData = getCompanyMapData(data.job.employerId, data.job);
 
+  // QA-m02: ứng viên đã nộp CV thì nút "Ứng tuyển ngay" đổi thành "Đã ứng tuyển"
+  const hasApplied =
+    req.role === "candidate" && req.user
+      ? Boolean(await Application.exists({ jobId: data.job._id, candidateId: req.user._id }))
+      : false;
+
   res.render("pages/job-details", {
     title: `${data.job.title} - ${data.job.employerId.companyName}`,
     job: data.job,
     company: data.job.employerId,
     companyJobCount: data.companyJobCount,
     mapData,
+    hasApplied,
   });
 };
 
@@ -598,7 +675,10 @@ const postApplyJob = async (req, res) => {
   }
 
   const { fullName, email, phone, applyType } = req.body;
-  if (!fullName || !fullName.trim() || !email || !email.trim() || !phone || !phone.trim()) {
+  const cleanFullName = typeof fullName === "string" ? fullName.trim() : "";
+  const cleanEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
+  const cleanPhone = typeof phone === "string" ? phone.trim() : "";
+  if (!cleanFullName || !cleanEmail || !cleanPhone) {
     req.flash("error", "Vui lòng điền đầy đủ họ tên, email và số điện thoại.");
     return res.redirect(`/jobs/${slug}`);
   }
@@ -617,7 +697,14 @@ const postApplyJob = async (req, res) => {
     }
 
     try {
-      const pdfBuffer = await generateItProfilePdf(candidate, job.title);
+      // Dùng họ tên / SĐT / email người dùng vừa sửa trong modal để in lên PDF (QA-B12)
+      const candidateForPdf = {
+        ...(typeof candidate.toObject === "function" ? candidate.toObject() : candidate),
+        fullName: cleanFullName,
+        phone: cleanPhone,
+        email: cleanEmail,
+      };
+      const pdfBuffer = await generateItProfilePdf(candidateForPdf, job.title);
       const safeName = `IT_Profile_${(candidate.fullName || "Candidate").replace(/[^a-zA-Z0-9]/g, "_")}.pdf`;
       cvData = await saveCvBuffer(pdfBuffer, safeName);
     } catch (err) {
@@ -644,9 +731,9 @@ const postApplyJob = async (req, res) => {
       jobId: job._id,
       employerId: job.employerId,
       candidateId: req.user._id,
-      fullName: fullName.trim(),
-      email: email.trim().toLowerCase(),
-      phone: phone.trim(),
+      fullName: cleanFullName,
+      email: cleanEmail,
+      phone: cleanPhone,
       cv: {
         key: cvData.key,
         originalName: cvData.originalName || (req.file ? req.file.originalname : "CV.pdf"),
@@ -662,7 +749,7 @@ const postApplyJob = async (req, res) => {
       recipientId: job.employerId,
       recipientType: "employer",
       title: "Ứng viên mới nộp hồ sơ",
-      message: `${fullName.trim()} vừa ứng tuyển vào vị trí "${job.title}".`,
+      message: `${cleanFullName} vừa ứng tuyển vào vị trí "${job.title}".`,
       link: "/employer/cvs",
       type: "application_new",
     }).catch(() => {});

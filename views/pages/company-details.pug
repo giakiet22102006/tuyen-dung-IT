@@ -241,17 +241,17 @@ block main
 
                             div
                                 label(for="reviewTitle" class="block text-[14px] font-[600] text-gray-700 mb-[4px]") Tiêu đề đánh giá *
-                                input(type="text" id="reviewTitle" name="title" required placeholder="Ví dụ: Môi trường làm việc năng động, đãi ngộ tốt..." class="w-full border border-gray-300 rounded-[6px] px-[14px] py-[10px] text-[14px] bg-white")
+                                input(type="text" id="reviewTitle" name="title" required maxlength="120" placeholder="Ví dụ: Môi trường làm việc năng động, đãi ngộ tốt..." class="w-full border border-gray-300 rounded-[6px] px-[14px] py-[10px] text-[14px] bg-white")
 
                             div(class="grid sm:grid-cols-2 grid-cols-1 gap-[14px]")
                                 div
                                     label(for="reviewPros" class="block text-[14px] font-[600] text-gray-700 mb-[4px] flex items-center gap-[6px]")
                                         <i class="fa-solid fa-circle-plus text-emerald-600"></i> Ưu điểm nổi bật
-                                    textarea(id="reviewPros" name="pros" rows="3" placeholder="Ví dụ: Đồng nghiệp thân thiện, sếp tâm lý, dự án công nghệ mới..." class="w-full border border-gray-300 rounded-[6px] p-[10px] text-[13px] bg-white")
+                                    textarea(id="reviewPros" name="pros" rows="3" maxlength="2000" placeholder="Ví dụ: Đồng nghiệp thân thiện, sếp tâm lý, dự án công nghệ mới..." class="w-full border border-gray-300 rounded-[6px] p-[10px] text-[13px] bg-white")
                                 div
                                     label(for="reviewCons" class="block text-[14px] font-[600] text-gray-700 mb-[4px] flex items-center gap-[6px]")
                                         <i class="fa-solid fa-circle-minus text-amber-600"></i> Điểm cần cải thiện
-                                    textarea(id="reviewCons" name="cons" rows="3" placeholder="Ví dụ: Quy trình bàn giao dự án nên tinh gọn hơn..." class="w-full border border-gray-300 rounded-[6px] p-[10px] text-[13px] bg-white")
+                                    textarea(id="reviewCons" name="cons" rows="3" maxlength="2000" placeholder="Ví dụ: Quy trình bàn giao dự án nên tinh gọn hơn..." class="w-full border border-gray-300 rounded-[6px] p-[10px] text-[13px] bg-white")
 
                             div(class="flex items-center justify-between pt-[6px]")
                                 div(class="text-[12px] text-gray-500")
@@ -274,7 +274,9 @@ block main
             followBtn.addEventListener('click', async () => {
                 const isLoggedIn = followBtn.getAttribute('data-logged-in') === 'true';
                 if (!isLoggedIn) {
-                    if (confirm('Vui lòng đăng nhập với tài khoản Ứng viên để theo dõi công ty này. Chuyển đến trang đăng nhập?')) {
+                    if (window.itjRedirectToCandidateLogin) {
+                        window.itjRedirectToCandidateLogin('Vui lòng đăng nhập tài khoản Ứng viên để theo dõi công ty này.');
+                    } else {
                         window.location.href = '/candidate/login?next=' + encodeURIComponent(window.location.pathname);
                     }
                     return;
@@ -287,11 +289,24 @@ block main
                     followBtn.disabled = true;
                     const res = await fetch(`/companies/${companyId}/follow`, {
                         method: 'POST',
+                        credentials: 'same-origin',
                         headers: {
                             'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
                             'x-csrf-token': csrfToken
                         }
                     });
+                    // Hết phiên / chưa đăng nhập / sai vai trò => báo rõ + chuyển tới đăng nhập (QA-M02)
+                    const contentType = res.headers.get('content-type') || '';
+                    if (res.status === 401 || res.status === 403 || res.redirected || !contentType.includes('application/json')) {
+                        if (window.itjRedirectToCandidateLogin) {
+                            window.itjRedirectToCandidateLogin('Bạn cần đăng nhập tài khoản Ứng viên để theo dõi công ty.');
+                        } else {
+                            window.location.href = '/candidate/login?next=' + encodeURIComponent(window.location.pathname);
+                        }
+                        return;
+                    }
                     const data = await res.json();
                     if (data.success) {
                         const icon = document.getElementById('followIcon');
@@ -314,11 +329,14 @@ block main
                         if (badge && data.followersCount !== undefined) {
                             badge.textContent = data.followersCount;
                         }
+                    } else if (window.showToast) {
+                        window.showToast(data.message || 'Lỗi thao tác', 'error');
                     } else {
                         alert(data.message || 'Lỗi thao tác');
                     }
                 } catch (err) {
-                    alert('Lỗi kết nối máy chủ');
+                    if (window.showToast) window.showToast('Lỗi kết nối máy chủ', 'error');
+                    else alert('Lỗi kết nối máy chủ');
                 } finally {
                     followBtn.disabled = false;
                 }

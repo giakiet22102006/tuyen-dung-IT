@@ -85,7 +85,7 @@ header(class="bg-[#000071] py-[12px] sm:py-[14px] sticky top-0 z-50 shadow-md w-
                             span(id="notifBadge" class=(unreadNotificationCount > 0 ? "" : "hidden") class="absolute -top-[2px] -right-[2px] bg-[#EA1E30] text-white text-[10px] font-[800] min-w-[18px] h-[18px] rounded-full flex items-center justify-center px-[4px] border-2 border-[#000065] shadow-sm") #{unreadNotificationCount}
                         
                         //- Dropdown Menu Popup
-                        div(id="notifDropdownMenu" class="hidden absolute right-0 sm:-right-[40px] mt-[10px] w-[310px] sm:w-[380px] bg-white text-[#1E293B] rounded-[12px] shadow-2xl border border-gray-100 z-50 overflow-hidden text-left")
+                        div(id="notifDropdownMenu" class="hidden fixed left-3 right-3 top-[64px] sm:absolute sm:left-auto sm:right-0 sm:top-full sm:w-[340px] sm:mt-[10px] bg-white text-[#1E293B] rounded-[12px] shadow-2xl border border-gray-100 z-50 overflow-hidden text-left")
                             div(class="p-[12px] sm:p-[14px] bg-[#F8FAFC] border-b border-gray-100 flex items-center justify-between")
                                 div(class="font-[700] text-[13.5px] sm:text-[14.5px] flex items-center gap-[6px] text-[#000065]")
                                     <i class="fa-solid fa-bell text-[#0088FF]"></i>
@@ -100,7 +100,7 @@ header(class="bg-[#000071] py-[12px] sm:py-[14px] sticky top-0 z-50 shadow-md w-
                     div(class="menu")
                         ul
                             li(class="relative py-[5px]")
-                                div(class="flex items-center gap-[8px] bg-white/10 hover:bg-white/15 px-[10px] py-[6px] rounded-[6px] text-white font-[600] sm:text-[15px] text-[12px] cursor-pointer transition")
+                                button(type="button" class="user-dropdown-trigger flex items-center gap-[8px] bg-white/10 hover:bg-white/15 px-[10px] py-[6px] rounded-[6px] text-white font-[600] sm:text-[15px] text-[12px] cursor-pointer transition" aria-haspopup="true" aria-expanded="false")
                                     <i class="fa-solid fa-circle-user text-[18px] text-[#60A5FA]"></i>
                                     span(class="max-w-[140px] sm:max-w-[220px] truncate") #{role === 'employer' ? (currentUser.currentMember ? `${currentUser.companyName} (${currentUser.currentMember.fullName})` : currentUser.companyName) : currentUser.fullName}
                                     <i class="fa-solid fa-angle-down text-[11px] opacity-80"></i>
@@ -124,7 +124,8 @@ header(class="bg-[#000071] py-[12px] sm:py-[14px] sticky top-0 z-50 shadow-md w-
                                         li: a(href="/employer/candidates" class="block w-full text-[#93C5FD] whitespace-nowrap font-[600]") <i class="fa-solid fa-users-viewfinder mr-[6px]"></i> Săn Ứng Viên IT (Talent)
                                         li: a(href="/employer/cvs" class="block w-full whitespace-nowrap") <i class="fa-solid fa-id-card mr-[6px]"></i> Quản lý CV
                                         li: a(href="/employer/analytics" class="block w-full whitespace-nowrap") <i class="fa-solid fa-chart-line mr-[6px]"></i> Báo cáo tuyển dụng
-                                        li: a(href="/employer/team" class="block w-full whitespace-nowrap") <i class="fa-solid fa-user-group mr-[6px]"></i> Nhóm tuyển dụng (HR)
+                                        if !(currentUser.currentMember && currentUser.currentMember.role !== 'admin')
+                                            li: a(href="/employer/team" class="block w-full whitespace-nowrap") <i class="fa-solid fa-user-group mr-[6px]"></i> Nhóm tuyển dụng (HR)
                                         li: a(href="/employer/change-password" class="block w-full whitespace-nowrap") <i class="fa-solid fa-key mr-[6px]"></i> Đổi mật khẩu
                                         li
                                             form(action="/employer/logout" method="POST" class="w-full m-0")
@@ -164,8 +165,8 @@ header(class="bg-[#000071] py-[12px] sm:py-[14px] sticky top-0 z-50 shadow-md w-
                         span Kỹ năng tuyển dụng phổ biến
                     a(href="/search" class="text-[11px] text-white/70 hover:text-white underline") Xem tất cả
                 div(class="flex flex-wrap gap-[6px]")
-                    each sk in ['ReactJS', 'NodeJS', 'Python', 'Golang', 'Java', 'DevOps', 'AI Engineer', 'Flutter', 'TypeScript']
-                        a(href=`/search?skill=${sk.toLowerCase().replace(/[^a-z0-9]/g, '')}` class="bg-white/15 hover:bg-[#0088FF] text-white text-[12px] font-[500] py-[4px] px-[10px] rounded-full transition-colors border border-white/10") #{sk}
+                    each sk in [{ label: 'ReactJS', href: '/search?skill=reactjs' }, { label: 'NodeJS', href: '/search?skill=nodejs' }, { label: 'Python', href: '/search?skill=python' }, { label: 'Golang', href: '/search?skill=golang' }, { label: 'Java', href: '/search?skill=java' }, { label: 'DevOps', href: '/search?skill=devops' }, { label: 'AI Engineer', href: '/search?keyword=AI' }, { label: 'Flutter', href: '/search?skill=flutter' }, { label: 'TypeScript', href: '/search?skill=typescript' }]
+                        a(href=sk.href class="bg-white/15 hover:bg-[#0088FF] text-white text-[12px] font-[500] py-[4px] px-[10px] rounded-full transition-colors border border-white/10") #{sk.label}
 
             //- Quick Filter Pills: Địa điểm làm việc (1 chạm)
             div(class="p-[12px] bg-white/5 rounded-[12px] border border-white/10")
@@ -192,6 +193,9 @@ header(class="bg-[#000071] py-[12px] sm:py-[14px] sticky top-0 z-50 shadow-md w-
                             a(href="/candidate/it-profile" class="py-[7px] px-[10px] rounded-[6px] bg-blue-500/20 text-[#93C5FD] text-[13px] font-[600] hover:bg-blue-500/30") <i class="fa-solid fa-file-code mr-[6px]"></i> IT Profile
                             a(href="/candidate/saved-jobs" class="py-[7px] px-[10px] rounded-[6px] bg-white/10 text-[13px] hover:bg-white/20") <i class="fa-solid fa-bookmark mr-[6px] text-rose-400"></i> Việc đã lưu
                             a(href="/candidate/applied-jobs" class="py-[7px] px-[10px] rounded-[6px] bg-white/10 text-[13px] hover:bg-white/20") <i class="fa-solid fa-file-lines mr-[6px] text-[#60A5FA]"></i> CV đã gửi
+                            a(href="/candidate/followed-companies" class="py-[7px] px-[10px] rounded-[6px] bg-white/10 text-[13px] hover:bg-white/20") <i class="fa-solid fa-heart mr-[6px] text-rose-400"></i> Công ty theo dõi
+                            a(href="/candidate/job-alerts" class="py-[7px] px-[10px] rounded-[6px] bg-white/10 text-[13px] hover:bg-white/20") <i class="fa-solid fa-bell mr-[6px] text-[#60A5FA]"></i> Thông báo việc
+                            a(href="/candidate/change-password" class="py-[7px] px-[10px] rounded-[6px] bg-white/10 text-[13px] hover:bg-white/20 col-span-2") <i class="fa-solid fa-key mr-[6px] text-[#60A5FA]"></i> Đổi mật khẩu
                             form(action="/candidate/logout" method="POST" class="col-span-2 m-0 mt-[4px]")
                                 input(type="hidden" name="_csrf" value=csrfToken)
                                 button(type="submit" class="w-full py-[8px] px-[10px] rounded-[6px] bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 text-[13px] font-[600] text-center cursor-pointer")
@@ -201,6 +205,11 @@ header(class="bg-[#000071] py-[12px] sm:py-[14px] sticky top-0 z-50 shadow-md w-
                             a(href="/employer/jobs" class="py-[7px] px-[10px] rounded-[6px] bg-white/10 text-[13px] hover:bg-white/20") <i class="fa-solid fa-briefcase mr-[6px] text-[#60A5FA]"></i> Việc làm
                             a(href="/employer/pipeline" class="py-[7px] px-[10px] rounded-[6px] bg-blue-500/20 text-[#93C5FD] text-[13px] font-[600] hover:bg-blue-500/30") <i class="fa-solid fa-table-columns mr-[6px]"></i> Pipeline
                             a(href="/employer/cvs" class="py-[7px] px-[10px] rounded-[6px] bg-white/10 text-[13px] hover:bg-white/20") <i class="fa-solid fa-id-card mr-[6px] text-[#60A5FA]"></i> Hồ sơ CV
+                            a(href="/employer/candidates" class="py-[7px] px-[10px] rounded-[6px] bg-blue-500/20 text-[#93C5FD] text-[13px] font-[600] hover:bg-blue-500/30") <i class="fa-solid fa-users-viewfinder mr-[6px]"></i> Săn ứng viên
+                            a(href="/employer/analytics" class="py-[7px] px-[10px] rounded-[6px] bg-white/10 text-[13px] hover:bg-white/20") <i class="fa-solid fa-chart-line mr-[6px] text-[#60A5FA]"></i> Báo cáo
+                            if !(currentUser.currentMember && currentUser.currentMember.role !== 'admin')
+                                a(href="/employer/team" class="py-[7px] px-[10px] rounded-[6px] bg-white/10 text-[13px] hover:bg-white/20") <i class="fa-solid fa-user-group mr-[6px] text-[#60A5FA]"></i> Nhóm HR
+                            a(href="/employer/change-password" class="py-[7px] px-[10px] rounded-[6px] bg-white/10 text-[13px] hover:bg-white/20") <i class="fa-solid fa-key mr-[6px] text-[#60A5FA]"></i> Đổi mật khẩu
                             form(action="/employer/logout" method="POST" class="col-span-2 m-0 mt-[4px]")
                                 input(type="hidden" name="_csrf" value=csrfToken)
                                 button(type="submit" class="w-full py-[8px] px-[10px] rounded-[6px] bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 text-[13px] font-[600] text-center cursor-pointer")

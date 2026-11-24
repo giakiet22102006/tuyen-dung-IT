@@ -61,10 +61,13 @@ block main
                             i(class="fa-solid fa-coins text-[#EA1E30] mr-[6px]")
                             | Lương hiện tại (VNĐ/tháng)
                         div(class="flex gap-[8px]")
-                            input(type="number" step="1000000" name="salary" value=(query.salary || "") placeholder="VD: 25000000" class="w-full border border-gray-300 rounded-[8px] py-[10px] px-[12px] text-[14px] focus:border-[#0088FF] focus:outline-none")
+                            input(type="number" min="0" step="100000" inputmode="numeric" name="salary" value=(query.salary || "") placeholder="VD: 18500000" aria-describedby="salaryUnitHint" class="w-full border border-gray-300 rounded-[8px] py-[10px] px-[12px] text-[14px] focus:border-[#0088FF] focus:outline-none")
                             button(type="submit" class="bg-[#0088FF] hover:bg-[#0070D2] text-white font-[600] text-[14px] px-[18px] py-[10px] rounded-[8px] transition cursor-pointer flex items-center justify-center whitespace-nowrap")
                                 i(class="fa-solid fa-magnifying-glass mr-[6px]")
                                 | Tra cứu
+                        p(id="salaryUnitHint" class="text-[11.5px] text-gray-500 mt-[4px] leading-snug") Nhập bằng <strong>VNĐ</strong> (VD: 18500000 = 18,5 triệu). Các tin tuyển dụng bên dưới niêm yết lương bằng <strong>USD ($)</strong>.
+                        if salaryError
+                            p(class="text-[12.5px] text-red-600 font-[600] mt-[4px]" role="alert") #{salaryError}
 
                 //- Quick Skills Tag
                 div(class="mt-[14px] pt-[12px] border-t border-gray-100 flex items-center gap-[8px] flex-wrap")
@@ -141,36 +144,17 @@ block main
                                         th(class="py-[10px] px-[12px]") Trung vị (Phổ biến)
                                         th(class="py-[10px] px-[12px]") Cao nhất
                                 tbody(class="divide-y divide-gray-100")
-                                    tr(class=(query.position === 'intern' ? "bg-blue-50/70 font-[600]" : ""))
-                                        td(class="py-[10px] px-[12px]") Intern (Thực tập)
-                                        td(class="py-[10px] px-[12px] text-gray-600") 4 - 6 Tr
-                                        td(class="py-[10px] px-[12px] text-emerald-600 font-[600]") 7 Tr
-                                        td(class="py-[10px] px-[12px] text-gray-600") 10 Tr
-                                    tr(class=(query.position === 'fresher' ? "bg-blue-50/70 font-[600]" : ""))
-                                        td(class="py-[10px] px-[12px]") Fresher (&lt; 1 năm)
-                                        td(class="py-[10px] px-[12px] text-gray-600") 8 - 10 Tr
-                                        td(class="py-[10px] px-[12px] text-emerald-600 font-[600]") 13 Tr
-                                        td(class="py-[10px] px-[12px] text-gray-600") 18 Tr
-                                    tr(class=(query.position === 'junior' ? "bg-blue-50/70 font-[600]" : ""))
-                                        td(class="py-[10px] px-[12px]") Junior (1 - 2 năm)
-                                        td(class="py-[10px] px-[12px] text-gray-600") 14 - 17 Tr
-                                        td(class="py-[10px] px-[12px] text-emerald-600 font-[600]") 20 Tr
-                                        td(class="py-[10px] px-[12px] text-gray-600") 28 Tr
-                                    tr(class=(query.position === 'middle' ? "bg-blue-50/70 font-[600]" : ""))
-                                        td(class="py-[10px] px-[12px]") Middle (3 - 4 năm)
-                                        td(class="py-[10px] px-[12px] text-gray-600") 22 - 28 Tr
-                                        td(class="py-[10px] px-[12px] text-emerald-600 font-[600]") 35 Tr
-                                        td(class="py-[10px] px-[12px] text-gray-600") 48 Tr
-                                    tr(class=(query.position === 'senior' ? "bg-blue-50/70 font-[600]" : ""))
-                                        td(class="py-[10px] px-[12px]") Senior (5+ năm)
-                                        td(class="py-[10px] px-[12px] text-gray-600") 38 - 45 Tr
-                                        td(class="py-[10px] px-[12px] text-emerald-600 font-[600]") 55 Tr
-                                        td(class="py-[10px] px-[12px] text-gray-600") 80 Tr
-                                    tr(class=(query.position === 'manager' ? "bg-blue-50/70 font-[600]" : ""))
-                                        td(class="py-[10px] px-[12px]") Lead / Architect / Manager
-                                        td(class="py-[10px] px-[12px] text-gray-600") 55 - 70 Tr
-                                        td(class="py-[10px] px-[12px] text-emerald-600 font-[600]") 80 Tr
-                                        td(class="py-[10px] px-[12px] text-gray-600") 130+ Tr
+                                    - const levelMax = Math.max.apply(null, (levelRows || []).map((r) => r.max).concat([1]))
+                                    each row in (levelRows || [])
+                                        tr(class=(query.position === row.key ? "bg-blue-50/70 font-[600]" : ""))
+                                            td(class="py-[10px] px-[12px]")
+                                                div #{row.label}
+                                                div(class="mt-[4px] w-full max-w-[140px] bg-gray-200 rounded-full h-[5px] overflow-hidden" role="presentation")
+                                                    div(class="bg-gradient-to-r from-blue-500 to-emerald-500 h-full rounded-full" style=`width: ${Math.max(4, Math.round((row.median / levelMax) * 100))}%`)
+                                            td(class="py-[10px] px-[12px] text-gray-600 tabular-nums") #{(row.min / 1000000).toFixed(1)} Tr
+                                            td(class="py-[10px] px-[12px] text-emerald-600 font-[600] tabular-nums") #{(row.median / 1000000).toFixed(1)} Tr
+                                            td(class="py-[10px] px-[12px] text-gray-600 tabular-nums") #{(row.max / 1000000).toFixed(1)} Tr
+                        p(class="text-[11.5px] text-gray-400 mt-[8px]") Số liệu đã nhân hệ số kỹ năng / khu vực đang chọn (x#{(stats.multiplier || 1).toFixed(2)}). Đơn vị: triệu VNĐ / tháng.
 
                 //- Cột phải: Nhận thông báo việc làm + Lời khuyên
                 div(class="space-y-[20px]")
