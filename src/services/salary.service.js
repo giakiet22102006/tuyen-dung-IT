@@ -2,6 +2,7 @@
 const { Job } = require("../models");
 const { JOB_MODERATION } = require("../config/constants");
 const { getCityLabel } = require("../utils/labels");
+const { escapeRegex } = require("../utils/securityHelpers");
 
 // Bảng dữ liệu chuẩn mức lương thị trường IT Việt Nam năm 2026 (Đơn vị: VNĐ/tháng)
 const SALARY_BENCHMARKS = {
@@ -38,12 +39,16 @@ const SALARY_BENCHMARKS = {
  * Phân tích mức lương thực tế từ database kết hợp baseline thị trường
  */
 async function getSalaryStats({ position = "junior", skill = "", city = "" }) {
-  const posKey = (position || "junior").toLowerCase();
-  const base = SALARY_BENCHMARKS.positions[posKey] || SALARY_BENCHMARKS.positions.junior;
+  const safePosition = typeof position === "string" ? position.trim().toLowerCase() : "junior";
+  const safeSkill = typeof skill === "string" ? skill.trim().slice(0, 80) : "";
+  const safeCity = typeof city === "string" ? city.trim().slice(0, 50) : "";
+
+  const posKey = SALARY_BENCHMARKS.positions[safePosition] ? safePosition : "junior";
+  const base = SALARY_BENCHMARKS.positions[posKey];
 
   let multiplier = 1.0;
-  if (skill) {
-    const s = skill.toLowerCase().trim();
+  if (safeSkill) {
+    const s = safeSkill.toLowerCase();
     for (const [k, mult] of Object.entries(SALARY_BENCHMARKS.skillMultipliers)) {
       if (s.includes(k)) {
         multiplier = Math.max(multiplier, mult);
@@ -51,8 +56,8 @@ async function getSalaryStats({ position = "junior", skill = "", city = "" }) {
     }
   }
 
-  if (city && SALARY_BENCHMARKS.cityMultipliers[city]) {
-    multiplier *= SALARY_BENCHMARKS.cityMultipliers[city];
+  if (safeCity && SALARY_BENCHMARKS.cityMultipliers[safeCity]) {
+    multiplier *= SALARY_BENCHMARKS.cityMultipliers[safeCity];
   }
 
   // Thống kê thực tế từ DB
@@ -61,12 +66,17 @@ async function getSalaryStats({ position = "junior", skill = "", city = "" }) {
     moderation: JOB_MODERATION.VISIBLE,
     deletedAt: null,
   };
-  if (position) filter.position = position;
+  if (SALARY_BENCHMARKS.positions[safePosition]) filter.position = safePosition;
   if (["intern", "fresher", "junior"].includes(posKey)) {
     filter.title = { $not: /\b(lead|manager|architect|senior|principal|head|director)\b/i };
   }
-  if (city) filter.city = city;
-  if (skill) filter["skills.slug"] = { $regex: skill.toLowerCase().trim(), $options: "i" };
+  if (safeCity && SALARY_BENCHMARKS.cityMultipliers[safeCity]) filter.city = safeCity;
+  if (safeSkill) {
+    const escapedSkill = escapeRegex(safeSkill.toLowerCase());
+    if (escapedSkill) {
+      filter["skills.slug"] = { $regex: escapedSkill, $options: "i" };
+    }
+  }
 
   const dbJobs = await Job.find(filter)
     .select("salaryMin salaryMax title slug employerId skills benefits city")
@@ -80,8 +90,8 @@ async function getSalaryStats({ position = "junior", skill = "", city = "" }) {
 
   return {
     position: base.label,
-    skill: skill || "Tất cả công nghệ",
-    city: city ? getCityLabel(city) : "Toàn quốc",
+    skill: safeSkill || "Tất cả công nghệ",
+    city: safeCity ? getCityLabel(safeCity) : "Toàn quốc",
     salaryMin: estMin,
     salaryMedian: estMedian,
     salaryMax: estMax,

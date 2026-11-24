@@ -4,13 +4,34 @@ const { getMenuData } = require("../services/menu.service");
 const formatSalary = require("../utils/formatSalary");
 const formatJobDescription = require("../utils/formatJobDescription");
 const labels = require("../utils/labels");
+const { safeUrl, safeJsonForScript } = require("../utils/securityHelpers");
 const env = require("../config/env");
 const { SavedJob, Setting } = require("../models");
 
+function sanitizeLocalUser(user) {
+  if (!user || typeof user !== "object") return null;
+  const plain = typeof user.toObject === "function" ? user.toObject() : { ...user };
+  delete plain.password;
+  if (Array.isArray(plain.teamMembers)) {
+    plain.teamMembers = plain.teamMembers.map((member) => {
+      if (!member || typeof member !== "object") return member;
+      const copy = { ...member };
+      delete copy.password;
+      return copy;
+    });
+  }
+  if (plain.currentMember && typeof plain.currentMember === "object") {
+    const memberCopy = { ...plain.currentMember };
+    delete memberCopy.password;
+    plain.currentMember = memberCopy;
+  }
+  return plain;
+}
+
 async function localsMiddleware(req, res, next) {
-  res.locals.currentUser = req.user || null;
+  res.locals.currentUser = sanitizeLocalUser(req.user);
   res.locals.role = req.role || null;
-  res.locals.currentAdmin = req.admin || null;
+  res.locals.currentAdmin = sanitizeLocalUser(req.admin);
   res.locals.adminPath = env.ADMIN_PATH || "admin";
   res.locals.currentPath = req.path;
 
@@ -40,6 +61,8 @@ async function localsMiddleware(req, res, next) {
   res.locals.formatSalary = formatSalary;
   res.locals.formatJobDescription = formatJobDescription;
   res.locals.labels = labels;
+  res.locals.safeUrl = safeUrl;
+  res.locals.safeJson = safeJsonForScript;
   res.locals.formatDate = (date) => {
     if (!date) return "";
     return new Date(date).toLocaleDateString("vi-VN");

@@ -1,5 +1,10 @@
 // src/services/googleAuth.service.js
+const crypto = require("crypto");
 const env = require("../config/env");
+const isSafeRedirect = require("../utils/sanitizeRedirect");
+
+const OAUTH_STATE_COOKIE = "itj_oauth_state";
+const isProd = env.NODE_ENV === "production" || Boolean(process.env.VERCEL);
 
 /**
  * Kiểm tra xem ứng dụng đã được cấu hình Google OAuth Client hay chưa
@@ -14,13 +19,81 @@ function isGoogleConfigured() {
 }
 
 /**
+ * Sinh cryptographic nonce gắn với trình duyệt (cookie HttpOnly) để chống OAuth Login CSRF
+ */
+function createOAuthState(role, next = "/", res = null) {
+  const nonce = crypto.randomBytes(32).toString("hex");
+  const safeNext = isSafeRedirect(next) ? next : "/";
+
+  if (res && typeof res.cookie === "function") {
+    res.cookie(OAUTH_STATE_COOKIE, nonce, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 10 * 60 * 1000, // 10 phút
+    });
+  }
+
+  return Buffer.from(JSON.stringify({ role, next: safeNext, nonce })).toString("base64url");
+}
+
+/**
+ * Xác thực state trả về từ Google callback khớp với cookie nonce của phiên hiện tại (timing-safe)
+ */
+function verifyOAuthState(rawState, expectedRole, req, res = null, defaultNext = "/") {
+  const cookieNonce = req?.cookies?.[OAUTH_STATE_COOKIE];
+
+  if (res && typeof res.clearCookie === "function") {
+    res.clearCookie(OAUTH_STATE_COOKIE, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: "lax",
+      path: "/",
+    });
+  }
+
+  if (
+    !rawState ||
+    typeof rawState !== "string" ||
+    !cookieNonce ||
+    typeof cookieNonce !== "string"
+  ) {
+    return { valid: false, next: defaultNext };
+  }
+
+  try {
+    const decoded = JSON.parse(Buffer.from(rawState, "base64url").toString("utf8"));
+    if (
+      !decoded ||
+      decoded.role !== expectedRole ||
+      typeof decoded.nonce !== "string" ||
+      decoded.nonce.length !== cookieNonce.length
+    ) {
+      return { valid: false, next: defaultNext };
+    }
+
+    const expectedBuf = Buffer.from(cookieNonce, "utf8");
+    const actualBuf = Buffer.from(decoded.nonce, "utf8");
+    if (expectedBuf.length !== actualBuf.length || !crypto.timingSafeEqual(expectedBuf, actualBuf)) {
+      return { valid: false, next: defaultNext };
+    }
+
+    const safeNext = isSafeRedirect(decoded.next) ? decoded.next : defaultNext;
+    return { valid: true, next: safeNext };
+  } catch {
+    return { valid: false, next: defaultNext };
+  }
+}
+
+/**
  * Xây dựng URL chuyển hướng sang Google OAuth Consent Screen
  */
-function getGoogleAuthUrl(role, next = "/", req = null) {
+function getGoogleAuthUrl(role, next = "/", req = null, res = null) {
   if (!isGoogleConfigured()) return null;
 
   const redirectUri = getCallbackUrl(role, req);
-  const state = Buffer.from(JSON.stringify({ role, next: next || "/" })).toString("base64url");
+  const state = createOAuthState(role, next || "/", res);
 
   const params = new URLSearchParams({
     client_id: env.GOOGLE_CLIENT_ID.trim(),
@@ -45,7 +118,11 @@ function getCallbackUrl(role, req) {
   }
 
   if (req) {
-    const proto = req.headers["x-forwarded-proto"] || req.protocol || "http";
+    let rawProto = req.protocol || "http";
+    if (env.TRUST_PROXY && req.headers && req.headers["x-forwarded-proto"]) {
+      rawProto = String(req.headers["x-forwarded-proto"]).split(",")[0].trim().toLowerCase();
+    }
+    const proto = rawProto === "https" ? "https" : "http";
     const host = req.get("host");
     return `${proto}://${host}/${role}/auth/google/callback`;
   }
@@ -101,7 +178,10 @@ async function fetchGoogleUserInfo(accessToken) {
 }
 
 module.exports = {
+  OAUTH_STATE_COOKIE,
   isGoogleConfigured,
+  createOAuthState,
+  verifyOAuthState,
   getGoogleAuthUrl,
   getCallbackUrl,
   exchangeCodeForTokens,

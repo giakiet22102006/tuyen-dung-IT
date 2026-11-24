@@ -17,6 +17,7 @@ const env = require("../config/env");
 const { requireCandidate } = require("../middlewares/auth.middleware");
 const { uploadCvMiddleware } = require("../middlewares/upload.middleware");
 const { doubleCsrfProtection } = require("../middlewares/csrf.middleware");
+const { apiRateLimiter, aiRateLimiter } = require("../middlewares/rateLimit.middleware");
 const isSafeRedirect = require("../utils/sanitizeRedirect");
 
 router.get("/", asyncHandler(clientController.renderIndex));
@@ -87,7 +88,7 @@ router.get("/api/salary/calculate", asyncHandler(salaryController.getSalaryApi))
 router.get("/api/v1/salary/calculate", asyncHandler(salaryController.getSalaryApi));
 
 // Đăng ký nhận thông báo việc làm mới (Job Alert)
-router.post("/job-alerts", doubleCsrfProtection, asyncHandler(jobAlertController.postSubscribeJobAlert));
+router.post("/job-alerts", apiRateLimiter, doubleCsrfProtection, asyncHandler(jobAlertController.postSubscribeJobAlert));
 router.get("/job-alerts/unsubscribe/:token", asyncHandler(jobAlertController.getUnsubscribeJobAlert));
 
 // IT Blog & Cẩm nang nghề nghiệp lập trình viên
@@ -101,14 +102,17 @@ router.post("/api/notifications/read-all", doubleCsrfProtection, asyncHandler(no
 
 router.post(
   "/api/feedback",
+  doubleCsrfProtection,
   asyncHandler(clientController.postSubmitFeedback)
 );
 router.post(
   "/api/v1/feedback",
+  doubleCsrfProtection,
   asyncHandler(clientController.postSubmitFeedback)
 );
 router.post(
   "/api/chat-assistant",
+  aiRateLimiter,
   doubleCsrfProtection,
   asyncHandler(clientController.postChatAssistant)
 );

@@ -1,6 +1,7 @@
 // src/controllers/candidate/candidateCompanyFollow.controller.js
 const { CompanyFollow, Employer, Job } = require("../../models");
 const { JOB_MODERATION, EMPLOYER_STATUS } = require("../../config/constants");
+const { isValidObjectId } = require("../../utils/securityHelpers");
 
 /**
  * AJAX Toggle theo dõi / bỏ theo dõi một công ty
@@ -8,6 +9,9 @@ const { JOB_MODERATION, EMPLOYER_STATUS } = require("../../config/constants");
 async function postToggleFollowCompany(req, res) {
   try {
     const { id } = req.params;
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({ success: false, message: "Mã công ty không hợp lệ." });
+    }
 
     // Kiểm tra employer có tồn tại không
     const employer = await Employer.findOne({

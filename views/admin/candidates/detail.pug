@@ -107,7 +107,7 @@ block main
                                 tr(class="hover:bg-gray-50 transition-colors")
                                     td(class="py-[14px] px-[20px] font-[600] text-[#111827]")
                                         if app.jobId
-                                            a(href="/jobs/" + app.jobId.slug target="_blank" class="hover:text-[#0088FF]") #{app.jobId.title}
+                                            a(href="/jobs/" + app.jobId.slug target="_blank" rel="noopener noreferrer" class="hover:text-[#0088FF]") #{app.jobId.title}
                                         else
                                             span(class="text-gray-400") Việc làm đã bị xóa
                                     td(class="py-[14px] px-[20px] text-[#4B5563]")

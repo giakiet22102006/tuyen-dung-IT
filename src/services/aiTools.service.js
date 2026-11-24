@@ -9,8 +9,9 @@ const {
   getJobDetails,
 } = require("./job.service");
 const { getSalaryStats } = require("./salary.service");
-const { Employer, Job } = require("../models");
-const { EMPLOYER_STATUS, JOB_MODERATION } = require("../config/constants");
+const { Employer } = require("../models");
+const { EMPLOYER_STATUS } = require("../config/constants");
+const { escapeRegex } = require("../utils/securityHelpers");
 
 const SITE_BASE_URL = "https://tuyen-dung-it.vercel.app";
 
@@ -133,10 +134,6 @@ const TOOLS_MANIFEST = [
     },
   },
 ];
-
-function escapeRegex(str) {
-  return String(str || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
 
 function stripHtml(html) {
   return String(html || "")
@@ -276,13 +273,14 @@ async function executeTool(name, args = {}) {
     }
 
     case "get_job_details": {
-      if (!args.slug) {
-        throw new Error("Tham số 'slug' là bắt buộc.");
+      if (typeof args.slug !== "string" || !args.slug.trim()) {
+        throw new Error("Tham số 'slug' là bắt buộc và phải là chuỗi hợp lệ.");
       }
-      const result = await getJobDetails(args.slug);
+      const cleanSlug = args.slug.trim().slice(0, 200);
+      const result = await getJobDetails(cleanSlug);
       const job = result && result.job ? result.job : null;
       if (!job) {
-        throw new Error(`Không tìm thấy công việc với slug: ${args.slug}`);
+        throw new Error(`Không tìm thấy công việc với slug: ${cleanSlug}`);
       }
 
       return {
@@ -344,13 +342,16 @@ async function executeTool(name, args = {}) {
     }
 
     case "calculate_salary": {
+      const safePos = typeof args.position === "string" ? args.position.trim().slice(0, 40) : "junior";
+      const safeSkill = typeof args.skill === "string" ? args.skill.trim().slice(0, 80) : "";
+      const safeCity = typeof args.city === "string" ? args.city.trim().slice(0, 50) : "";
       const stats = await getSalaryStats({
-        position: args.position || "junior",
-        skill: args.skill || "",
-        city: args.city || "",
+        position: safePos || "junior",
+        skill: safeSkill,
+        city: safeCity,
       });
       return {
-        query: { position: args.position || "junior", skill: args.skill || "", city: args.city || "" },
+        query: { position: safePos || "junior", skill: safeSkill, city: safeCity },
         salaryBenchmark: stats,
       };
     }

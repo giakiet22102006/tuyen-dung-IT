@@ -69,8 +69,11 @@ block main
                                         
                                         div(class="text-gray-700") ⏱️ <strong>Thời gian:</strong> #{formatDateTime(app.interviewSchedule.scheduledAt)} (#{app.interviewSchedule.durationMinutes}p)
                                         div(class="text-gray-700 truncate") 📍 <strong>Hình thức:</strong> #{app.interviewSchedule.locationType === 'online' ? 'Trực tuyến (Online)' : (app.interviewSchedule.locationAddress || 'Văn phòng')}
-                                        if app.interviewSchedule.meetingLink
-                                            div(class="text-gray-700 truncate") 🔗 <strong>Link họp:</strong> <a href=app.interviewSchedule.meetingLink target="_blank" class="text-[#0088FF] underline font-[600]">Mở phòng họp</a>
+                                        - const safeMeetingLink = safeUrl(app.interviewSchedule.meetingLink)
+                                        if safeMeetingLink
+                                            div(class="text-gray-700 truncate")
+                                                | 🔗 <strong>Link họp:</strong> 
+                                                a(href=safeMeetingLink target="_blank" rel="noopener noreferrer" class="text-[#0088FF] underline font-[600]") Mở phòng họp
 
                                         if app.interviewSchedule.status === 'pending'
                                             div(class="flex items-center gap-[6px] pt-[6px] border-t border-purple-200/80")
@@ -104,7 +107,7 @@ block main
                                                     button(type="submit" class="px-[16px] py-[6px] bg-[#0088FF] hover:bg-[#0070d6] text-white rounded-[6px] text-[12px] font-[700]") Gửi Đề Xuất
             
                                 div(class="flex justify-center gap-[10px] mt-[14px]")
-                                    a(href="/candidate/applied-jobs/" + app._id + "/pdf" target="_blank" class="bg-[#0088FF] hover:bg-[#0070d6] rounded-[6px] py-[8px] px-[20px] cursor-pointer font-[500] text-[13px] text-white flex items-center shadow-xs") Xem CV
+                                    a(href="/candidate/applied-jobs/" + app._id + "/pdf" target="_blank" rel="noopener noreferrer" class="bg-[#0088FF] hover:bg-[#0070d6] rounded-[6px] py-[8px] px-[20px] cursor-pointer font-[500] text-[13px] text-white flex items-center shadow-xs") Xem CV
                                     if app.status === 'pending'
                                         form(action="/candidate/applied-jobs/" + app._id + "/delete" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn rút hồ sơ ứng tuyển này không?');" class="inline")
                                             input(type="hidden" name="_csrf" value=csrfToken)

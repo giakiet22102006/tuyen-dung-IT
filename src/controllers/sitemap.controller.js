@@ -4,6 +4,15 @@ const { JOB_MODERATION, EMPLOYER_STATUS } = require("../config/constants");
 
 const BASE_URL = "https://tuyen-dung-it.vercel.app";
 
+function escapeXml(str) {
+  return String(str || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
 async function renderSitemap(req, res) {
   res.setHeader("Content-Type", "application/xml; charset=utf-8");
   res.setHeader("Cache-Control", "public, max-age=3600, s-maxage=3600");
@@ -38,13 +47,13 @@ async function renderSitemap(req, res) {
         .limit(200)
         .lean(),
 
-      Employer.find({ status: EMPLOYER_STATUS.ACTIVE })
+      Employer.find({ status: EMPLOYER_STATUS.ACTIVE, deletedAt: null })
         .select("slug updatedAt")
         .sort({ updatedAt: -1 })
         .limit(100)
         .lean(),
 
-      Article.find({ status: "published" })
+      Article.find({ isPublished: true })
         .select("slug updatedAt")
         .sort({ updatedAt: -1 })
         .limit(50)
@@ -53,7 +62,7 @@ async function renderSitemap(req, res) {
 
     (jobs || []).forEach((j) => {
       dynamicUrls.push({
-        loc: `${BASE_URL}/jobs/${j.slug}`,
+        loc: `${BASE_URL}/jobs/${encodeURIComponent(j.slug)}`,
         priority: "0.8",
         changefreq: "daily",
         lastmod: (j.updatedAt || new Date()).toISOString().split("T")[0],
@@ -62,7 +71,7 @@ async function renderSitemap(req, res) {
 
     (employers || []).forEach((e) => {
       dynamicUrls.push({
-        loc: `${BASE_URL}/companies/${e.slug}`,
+        loc: `${BASE_URL}/companies/${encodeURIComponent(e.slug)}`,
         priority: "0.7",
         changefreq: "weekly",
         lastmod: (e.updatedAt || new Date()).toISOString().split("T")[0],
@@ -71,7 +80,7 @@ async function renderSitemap(req, res) {
 
     (articles || []).forEach((a) => {
       dynamicUrls.push({
-        loc: `${BASE_URL}/blog/${a.slug}`,
+        loc: `${BASE_URL}/blog/${encodeURIComponent(a.slug)}`,
         priority: "0.6",
         changefreq: "monthly",
         lastmod: (a.updatedAt || new Date()).toISOString().split("T")[0],
@@ -86,10 +95,10 @@ async function renderSitemap(req, res) {
   const xmlEntries = allUrls
     .map(
       (u) => `  <url>
-    <loc>${u.loc}</loc>
-    <lastmod>${u.lastmod}</lastmod>
-    <changefreq>${u.changefreq}</changefreq>
-    <priority>${u.priority}</priority>
+    <loc>${escapeXml(u.loc)}</loc>
+    <lastmod>${escapeXml(u.lastmod)}</lastmod>
+    <changefreq>${escapeXml(u.changefreq)}</changefreq>
+    <priority>${escapeXml(u.priority)}</priority>
   </url>`
     )
     .join("\n");

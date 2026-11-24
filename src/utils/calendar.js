@@ -1,4 +1,41 @@
 // src/utils/calendar.js
+const { safeUrl } = require("./securityHelpers");
+
+/**
+ * Escape văn bản chuẩn RFC 5545 để chống CRLF & iCalendar Property Injection
+ */
+function escapeIcsText(value, { allowNewlines = false } = {}) {
+  let str = String(value || "")
+    .replace(/\\/g, "\\\\")
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n");
+  str = allowNewlines ? str.replace(/\n/g, "\\n") : str.replace(/\n/g, " ");
+  return str
+    .replace(/,/g, "\\,")
+    .replace(/;/g, "\\;")
+    // eslint-disable-next-line no-control-regex
+    .replace(/[\u0000-\u001F\u007F]/g, "");
+}
+
+/**
+ * Làm sạch tham số CN và địa chỉ email trong thuộc tính ORGANIZER/ATTENDEE (chặn tách dòng hoặc phá cú pháp ;)
+ */
+function sanitizeIcsParam(value, fallback = "") {
+  const cleaned = String(value || fallback)
+    // eslint-disable-next-line no-control-regex
+    .replace(/[\r\n\u0000-\u001F\u007F":;,]/g, " ")
+    .trim();
+  return cleaned || fallback;
+}
+
+function sanitizeIcsEmail(value, fallback = "recruitment@vn-itjobs.com") {
+  const cleaned = String(value || "")
+    // eslint-disable-next-line no-control-regex
+    .replace(/[\r\n\s\u0000-\u001F\u007F":;,<>]/g, "")
+    .trim();
+  return cleaned.includes("@") ? cleaned : fallback;
+}
+
 /**
  * Tạo nội dung file sự kiện iCalendar (.ics) chuẩn RFC 5545
  * Tương thích Google Calendar, Microsoft Outlook, Apple Calendar
@@ -34,14 +71,14 @@ function generateIcsEvent({
   const now = new Date();
   const uid = `interview-${Date.now()}-${Math.random().toString(36).substring(2, 9)}@vn-itjobs.com`;
 
-  const safeTitle = (title || "Lịch phỏng vấn").replace(/,/g, "\\,").replace(/;/g, "\\;");
-  const cleanDesc = (description || "")
-    .replace(/\r\n/g, "\n")
-    .replace(/\n/g, "\\n")
-    .replace(/,/g, "\\,")
-    .replace(/;/g, "\\;");
-
-  const fullLocation = location || meetingUrl || "Online";
+  const safeTitle = escapeIcsText(title || "Lịch phỏng vấn");
+  const cleanDesc = escapeIcsText(description || "", { allowNewlines: true });
+  const validMeetingUrl = safeUrl(meetingUrl);
+  const fullLocation = escapeIcsText(location || validMeetingUrl || "Online");
+  const safeOrganizerName = sanitizeIcsParam(organizerName, "Nhà tuyển dụng");
+  const safeOrganizerEmail = sanitizeIcsEmail(organizerEmail, "recruitment@vn-itjobs.com");
+  const safeAttendeeName = sanitizeIcsParam(attendeeName, "Ứng viên");
+  const safeAttendeeEmail = sanitizeIcsEmail(attendeeEmail, "candidate@vn-itjobs.com");
 
   return [
     "BEGIN:VCALENDAR",
@@ -55,10 +92,10 @@ function generateIcsEvent({
     `DTSTART:${toIcsDate(start)}`,
     `DTEND:${toIcsDate(end)}`,
     `SUMMARY:${safeTitle}`,
-    `DESCRIPTION:${cleanDesc}${meetingUrl ? `\\nLink phỏng vấn: ${meetingUrl}` : ""}`,
-    `LOCATION:${fullLocation.replace(/,/g, "\\,")}`,
-    `ORGANIZER;CN=${(organizerName || "Nhà tuyển dụng").replace(/,/g, "\\,")}:mailto:${organizerEmail || "recruitment@vn-itjobs.com"}`,
-    `ATTENDEE;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;CN=${(attendeeName || "Ứng viên").replace(/,/g, "\\,")}:mailto:${attendeeEmail}`,
+    `DESCRIPTION:${cleanDesc}${validMeetingUrl ? `\\nLink phỏng vấn: ${escapeIcsText(validMeetingUrl)}` : ""}`,
+    `LOCATION:${fullLocation}`,
+    `ORGANIZER;CN=${safeOrganizerName}:mailto:${safeOrganizerEmail}`,
+    `ATTENDEE;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;CN=${safeAttendeeName}:mailto:${safeAttendeeEmail}`,
     "STATUS:CONFIRMED",
     "SEQUENCE:0",
     "BEGIN:VALARM",

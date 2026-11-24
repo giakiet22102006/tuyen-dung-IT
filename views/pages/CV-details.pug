@@ -104,8 +104,11 @@ block main
                                 div(class="mt-[6px] space-y-[4px] text-gray-700")
                                     div ⏱️ <strong>Thời gian:</strong> #{formatDateTime(application.interviewSchedule.scheduledAt)} (#{application.interviewSchedule.durationMinutes} phút)
                                     div 📍 <strong>Hình thức:</strong> #{application.interviewSchedule.locationType === 'online' ? 'Trực tuyến (Online Meeting)' : 'Trực tiếp tại văn phòng'}
-                                    if application.interviewSchedule.meetingLink
-                                        div 🔗 <strong>Link phòng họp:</strong> <a href=application.interviewSchedule.meetingLink target="_blank" class="text-[#0088FF] underline font-[600]">#{application.interviewSchedule.meetingLink}</a>
+                                    - const safeMeetingLink = safeUrl(application.interviewSchedule.meetingLink)
+                                    if safeMeetingLink
+                                        div
+                                            | 🔗 <strong>Link phòng họp:</strong> 
+                                            a(href=safeMeetingLink target="_blank" rel="noopener noreferrer" class="text-[#0088FF] underline font-[600]") #{safeMeetingLink}
                                     if application.interviewSchedule.locationAddress
                                         div 🏢 <strong>Địa chỉ:</strong> #{application.interviewSchedule.locationAddress}
                                     if application.interviewSchedule.interviewers
@@ -190,7 +193,7 @@ block main
                     div(class="mt-[20px]")
                         div(class="font-[400] text-[16px] my-[10px] flex justify-between items-center")
                             span File CV:
-                            a(href="/employer/cvs/" + application._id + "/pdf" target="_blank" class="text-[#0088FF] text-[14px] underline") Mở xem toàn màn hình <i class="fa-solid fa-arrow-up-right-from-square ml-[4px]"></i>
+                            a(href="/employer/cvs/" + application._id + "/pdf" target="_blank" rel="noopener noreferrer" class="text-[#0088FF] text-[14px] underline") Mở xem toàn màn hình <i class="fa-solid fa-arrow-up-right-from-square ml-[4px]"></i>
                         embed(src="/employer/cvs/" + application._id + "/pdf" type="application/pdf" class="bg-[#D9D9D9] w-full h-[736px] rounded-[4px]") 
                 //- Hết Thông tin CV
 
@@ -204,7 +207,7 @@ block main
                         div(class="font-[400] text-[16px] mb-[10px]") Hình thức làm việc: <span class="font-[600] text-[16px]">#{labels.getWorkingFormLabel(application.jobId.workingForm)}</span> 
                         if application.jobId.skills && application.jobId.skills.length > 0
                             div(class="font-[400] text-[16px] mb-[10px]") Công nghệ: <span class="font-[600] text-[16px]">#{application.jobId.skills.map(s => s.name).join(', ')}</span> 
-                        a(href="/jobs/" + application.jobId.slug target="_blank" class="font-[400] text-[14px] text-[#0088FF] underline") Xem chi tiết công việc 
+                        a(href="/jobs/" + application.jobId.slug target="_blank" rel="noopener noreferrer" class="font-[400] text-[14px] text-[#0088FF] underline") Xem chi tiết công việc 
                 //- Hết Thông tin công việc
 
         //- ==========================================

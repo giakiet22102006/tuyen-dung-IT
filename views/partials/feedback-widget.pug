@@ -197,7 +197,7 @@ script.
 
         function formatInlineMarkdown(escapedLine) {
             return escapedLine
-                .replace(/\[([^\]]+)\]\(((?:https?:\/\/|\/)[^\s)]+)\)/g, function (_m, label, url) {
+                .replace(/\[([^\]]+)\]\(((?:https?:\/\/|\/(?!\/|\\))[^\s)]+)\)/g, function (_m, label, url) {
                     var safeUrl = url.replace(/"/g, "&quot;");
                     var isExternal = /^https?:\/\//i.test(url);
                     var targetAttr = isExternal ? ' target="_blank" rel="noopener noreferrer"' : "";

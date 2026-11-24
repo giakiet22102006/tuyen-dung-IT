@@ -1,6 +1,16 @@
 // public/assets/js/ai-features.js
 // Quản lý tất cả tính năng AI (VN.ITJobs AI Suite)
 
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function getCsrfToken() {
   const meta = document.querySelector('meta[name="csrf-token"]');
   if (meta && meta.getAttribute('content')) {
@@ -181,20 +191,20 @@ window.initAiCvMatch = function (jobId) {
 
     if (matchedSkillsEl) {
       matchedSkillsEl.innerHTML = (match.matchedSkills || [])
-        .map(s => `<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-semibold"><i class="fa-solid fa-check text-[10px]"></i> ${s}</span>`)
+        .map(s => `<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-semibold"><i class="fa-solid fa-check text-[10px]"></i> ${escapeHtml(s)}</span>`)
         .join(' ') || '<span class="text-xs text-gray-500">Chưa ghi nhận kỹ năng khớp trực tiếp</span>';
     }
 
     if (missingSkillsEl) {
       missingSkillsEl.innerHTML = (match.missingSkills || [])
-        .map(s => `<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-xs font-semibold"><i class="fa-solid fa-triangle-exclamation text-[10px]"></i> ${s}</span>`)
+        .map(s => `<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-xs font-semibold"><i class="fa-solid fa-triangle-exclamation text-[10px]"></i> ${escapeHtml(s)}</span>`)
         .join(' ') || '<span class="text-xs text-gray-500">CV đáp ứng đầy đủ yêu cầu chính</span>';
     }
 
     if (adviceEl) {
       const list = Array.isArray(match.advice) ? match.advice : [];
       adviceEl.innerHTML = list
-        .map(adv => `<li class="flex items-start gap-2 text-sm text-gray-700"><i class="fa-solid fa-lightbulb text-amber-500 mt-1 shrink-0"></i> <span>${adv}</span></li>`)
+        .map(adv => `<li class="flex items-start gap-2 text-sm text-gray-700"><i class="fa-solid fa-lightbulb text-amber-500 mt-1 shrink-0"></i> <span>${escapeHtml(adv)}</span></li>`)
         .join('');
     }
   }
@@ -268,7 +278,7 @@ window.initAiInterviewPrep = function (jobId) {
       if (loading) loading.classList.add('hidden');
 
       if (!res.ok || !data.success) {
-        if (container) container.innerHTML = `<div class="p-4 bg-red-50 text-red-700 text-sm rounded">Không thể tải bộ câu hỏi lúc này: ${data.message || ''}</div>`;
+        if (container) container.innerHTML = `<div class="p-4 bg-red-50 text-red-700 text-sm rounded">Không thể tải bộ câu hỏi lúc này: ${escapeHtml(data.message || '')}</div>`;
         return;
       }
 
@@ -302,7 +312,7 @@ window.initAiInterviewPrep = function (jobId) {
               <span class="text-xs font-bold text-gray-500 uppercase">Câu hỏi #${index + 1}</span>
               <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full border ${badgeColor}">${badgeLabel}</span>
             </div>
-            <h4 class="font-bold text-gray-900 text-base mb-3 leading-snug">${item.question}</h4>
+            <h4 class="font-bold text-gray-900 text-base mb-3 leading-snug">${escapeHtml(item.question)}</h4>
             
             <details class="group bg-gray-50 rounded-lg p-3 border border-gray-200/80 cursor-pointer">
               <summary class="flex items-center justify-between font-semibold text-xs text-[#0088FF] select-none">
@@ -311,12 +321,12 @@ window.initAiInterviewPrep = function (jobId) {
               </summary>
               <div class="mt-3 pt-3 border-t border-gray-200 text-sm text-gray-700 leading-relaxed">
                 <p class="font-medium text-gray-900 mb-1.5">💡 Định hướng câu trả lời:</p>
-                <p class="text-gray-700 mb-3">${item.suggestedAnswer || ''}</p>
+                <p class="text-gray-700 mb-3">${escapeHtml(item.suggestedAnswer || '')}</p>
                 ${
                   item.keyPoints && item.keyPoints.length
                     ? `<p class="font-medium text-gray-900 text-xs mb-1">Các ý chính cần làm nổi bật:</p>
                        <ul class="list-disc list-inside text-xs text-gray-600 space-y-1">
-                         ${item.keyPoints.map(kp => `<li>${kp}</li>`).join('')}
+                         ${item.keyPoints.map(kp => `<li>${escapeHtml(kp)}</li>`).join('')}
                        </ul>`
                     : ''
                 }
@@ -462,14 +472,14 @@ window.initAiCvScreening = function (applicationId) {
     const strengthsList = screen.strengths || screen.pros || [];
     if (strengthsEl) {
       strengthsEl.innerHTML = strengthsList
-        .map(s => `<li class="flex items-start gap-2 text-sm text-gray-700"><i class="fa-solid fa-circle-check text-emerald-600 mt-1 shrink-0 text-xs"></i><span>${s}</span></li>`)
+        .map(s => `<li class="flex items-start gap-2 text-sm text-gray-700"><i class="fa-solid fa-circle-check text-emerald-600 mt-1 shrink-0 text-xs"></i><span>${escapeHtml(s)}</span></li>`)
         .join('');
     }
 
     const concernsList = screen.concerns || screen.cons || [];
     if (concernsEl) {
       concernsEl.innerHTML = concernsList
-        .map(c => `<li class="flex items-start gap-2 text-sm text-gray-700"><i class="fa-solid fa-circle-question text-amber-500 mt-1 shrink-0 text-xs"></i><span>${c}</span></li>`)
+        .map(c => `<li class="flex items-start gap-2 text-sm text-gray-700"><i class="fa-solid fa-circle-question text-amber-500 mt-1 shrink-0 text-xs"></i><span>${escapeHtml(c)}</span></li>`)
         .join('');
     }
 
@@ -560,7 +570,7 @@ window.openAiMarketInsights = async function () {
     if (hotSkillsDiv) {
       const skills = Array.isArray(insights.hotSkills) ? insights.hotSkills : [];
       hotSkillsDiv.innerHTML = skills
-        .map(sk => `<span class="px-3 py-1 rounded-full bg-blue-50 text-[#0088FF] border border-blue-200 text-xs font-bold inline-flex items-center gap-1.5"><i class="fa-solid fa-fire text-amber-500"></i> ${sk}</span>`)
+        .map(sk => `<span class="px-3 py-1 rounded-full bg-blue-50 text-[#0088FF] border border-blue-200 text-xs font-bold inline-flex items-center gap-1.5"><i class="fa-solid fa-fire text-amber-500"></i> ${escapeHtml(sk)}</span>`)
         .join(' ');
     }
 

@@ -153,13 +153,16 @@ async function searchJobs(query = {}) {
   let suggestedKeyword = "";
   let didYouMean = null;
 
-  if (keyword && keyword.trim()) {
-    originalKeyword = keyword.trim();
-    const normalized = normalizeVi(originalKeyword);
-    filter.searchText = { $regex: normalized, $options: "i" };
+  if (typeof keyword === "string" && keyword.trim()) {
+    const { escapeRegex } = require("../utils/securityHelpers");
+    originalKeyword = keyword.trim().slice(0, 100);
+    const normalized = escapeRegex(normalizeVi(originalKeyword));
+    if (normalized) {
+      filter.searchText = { $regex: normalized, $options: "i" };
+    }
   }
 
-  const pageNum = parseInt(page, 10) || 1;
+  const pageNum = Math.max(parseInt(page, 10) || 1, 1);
   const skip = (pageNum - 1) * 9;
 
   // Thực thi song song truy vấn đếm và lấy dữ liệu trang (giảm 50% độ trễ network)
@@ -187,7 +190,8 @@ async function searchJobs(query = {}) {
       // 0 kết quả chính xác và người dùng không chọn chế độ bắt buộc tìm chính xác (&exact=true)
       // Tự động kích hoạt Fuzzy Typo Tolerance:
       if (suggestionInfo && suggestionInfo.suggestion) {
-        const fuzzyNormalized = normalizeVi(suggestionInfo.suggestion);
+        const { escapeRegex } = require("../utils/securityHelpers");
+        const fuzzyNormalized = escapeRegex(normalizeVi(suggestionInfo.suggestion));
         const fuzzyFilter = {
           ...baseFilter,
           searchText: { $regex: fuzzyNormalized, $options: "i" },
@@ -240,8 +244,9 @@ async function getCompanyList(page = 1, limit = 9) {
     deletedAt: null,
   };
 
-  const pageNum = parseInt(page, 10) || 1;
-  const skip = (pageNum - 1) * limit;
+  const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 9, 1), 50);
+  const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+  const skip = (pageNum - 1) * safeLimit;
 
   // Truy vấn song song đếm tổng số công ty và dữ liệu phân trang
   const [total, employers] = await Promise.all([
@@ -249,12 +254,12 @@ async function getCompanyList(page = 1, limit = 9) {
     Employer.find(filter)
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limit)
+      .limit(safeLimit)
       .select("companyName slug logo city")
       .lean(),
   ]);
 
-  const pagination = paginate(total, pageNum, limit);
+  const pagination = paginate(total, pageNum, safeLimit);
 
   if (employers.length === 0) {
     return { employers: [], pagination };
@@ -290,15 +295,21 @@ async function getCompanyList(page = 1, limit = 9) {
   return { employers: result, pagination };
 }
 
+const PUBLIC_EMPLOYER_FIELDS =
+  "companyName slug email phone logo city address googleMapsUrl companyModel companySize workingTime overtime description website createdAt";
+
 /**
  * Chi tiết công ty và danh sách việc làm
  */
 async function getCompanyDetails(slug) {
+  if (typeof slug !== "string" || !slug.trim()) return null;
   const company = await Employer.findOne({
-    slug,
+    slug: slug.trim(),
     status: EMPLOYER_STATUS.ACTIVE,
     deletedAt: null,
-  }).lean();
+  })
+    .select(PUBLIC_EMPLOYER_FIELDS)
+    .lean();
 
   if (!company) return null;
 
@@ -320,13 +331,14 @@ async function getCompanyDetails(slug) {
  * Chi tiết công việc
  */
 async function getJobDetails(slug) {
+  if (typeof slug !== "string" || !slug.trim()) return null;
   const job = await Job.findOne({
-    slug,
+    slug: slug.trim(),
     employerActive: true,
     moderation: JOB_MODERATION.VISIBLE,
     deletedAt: null,
   })
-    .populate("employerId")
+    .populate("employerId", PUBLIC_EMPLOYER_FIELDS)
     .lean();
 
   if (!job) return null;

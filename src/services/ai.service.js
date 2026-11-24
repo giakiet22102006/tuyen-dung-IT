@@ -1075,7 +1075,7 @@ Vui lòng trả về DUY NHẤT một chuỗi JSON hợp lệ theo cấu trúc:
         category: parsed.category || category,
         targetAudience: parsed.targetAudience || targetAudience,
         summary: parsed.summary || "",
-        content: parsed.content,
+        content: sanitizeArticleHtml(parsed.content),
         tags: Array.isArray(parsed.tags) ? parsed.tags : ["IT", "KinhNghiem"],
         readingTime: parseInt(parsed.readingTime, 10) || 5,
         isOriginal: true,
@@ -1112,31 +1112,141 @@ Vui lòng trả về DUY NHẤT một chuỗi JSON hợp lệ theo cấu trúc:
   };
 }
 
+const net = require("net");
+const { sanitizeArticleHtml } = require("../utils/sanitizeHtml");
+const { escapeHtml, safeUrl } = require("../utils/securityHelpers");
+
+/**
+ * Kiểm tra IP (IPv4 / IPv6 / IPv4-mapped IPv6) có thuộc dải nội bộ, loopback, link-local,
+ * CGNAT, multicast hay cloud metadata không — dùng để chống SSRF kể cả qua DNS rebinding / redirect.
+ */
+function isPrivateOrReservedIp(ip) {
+  if (!ip || typeof ip !== "string") return true;
+  let addr = ip.trim().toLowerCase().replace(/^\[|\]$/g, "");
+
+  // Chuyển IPv4-mapped IPv6 (vd ::ffff:127.0.0.1 hoặc ::ffff:7f00:1) về IPv4
+  if (addr.startsWith("::ffff:")) {
+    const mapped = addr.slice(7);
+    if (net.isIPv4(mapped)) {
+      addr = mapped;
+    } else if (/^[0-9a-f]{1,4}:[0-9a-f]{1,4}$/.test(mapped)) {
+      const [hi, lo] = mapped.split(":").map((h) => parseInt(h, 16));
+      addr = `${(hi >> 8) & 255}.${hi & 255}.${(lo >> 8) & 255}.${lo & 255}`;
+    }
+  }
+
+  if (net.isIPv4(addr)) {
+    const parts = addr.split(".").map(Number);
+    const [a, b] = parts;
+    if (a === 0) return true; // 0.0.0.0/8
+    if (a === 10) return true; // 10.0.0.0/8 (RFC 1918)
+    if (a === 100 && b >= 64 && b <= 127) return true; // 100.64.0.0/10 (CGNAT)
+    if (a === 127) return true; // 127.0.0.0/8 (Loopback)
+    if (a === 169 && b === 254) return true; // 169.254.0.0/16 (Link-local & Cloud Metadata)
+    if (a === 172 && b >= 16 && b <= 31) return true; // 172.16.0.0/12
+    if (a === 192 && b === 168) return true; // 192.168.0.0/16
+    if (a === 192 && b === 0 && (parts[2] === 0 || parts[2] === 2)) return true;
+    if (a === 198 && (b === 18 || b === 19)) return true; // Benchmark
+    if (a >= 224) return true; // Multicast & Reserved
+    return false;
+  }
+
+  if (net.isIPv6(addr)) {
+    if (addr === "::" || addr === "::1") return true; // Unspecified / Loopback
+    if (addr.startsWith("fc") || addr.startsWith("fd")) return true; // fc00::/7 ULA
+    if (/^fe[89ab]/.test(addr)) return true; // fe80::/10 Link-local
+    if (addr.startsWith("ff")) return true; // Multicast
+    if (addr.startsWith("64:ff9b:")) return true; // NAT64
+    return false;
+  }
+
+  return true;
+}
+
 function isSafeExternalUrl(urlStr) {
   try {
     const parsed = new URL(urlStr);
     if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return false;
-    const host = parsed.hostname.toLowerCase();
+    if (parsed.username || parsed.password) return false;
+    const host = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, "");
     if (
+      !host ||
       host === "localhost" ||
-      host === "127.0.0.1" ||
-      host === "::1" ||
-      host === "0.0.0.0" ||
+      host.endsWith(".localhost") ||
       host.endsWith(".local") ||
       host.endsWith(".internal") ||
-      host === "169.254.169.254" ||
-      host === "metadata.google.internal"
+      host === "metadata.google.internal" ||
+      host === "metadata"
     ) {
       return false;
     }
-    // Chặn dải IP nội bộ RFC 1918 & link-local
-    if (/^(10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|192\.168\.|169\.254\.)/.test(host)) {
+    if (net.isIP(host)) {
+      return !isPrivateOrReservedIp(host);
+    }
+    // Chặn IP viết dạng số thập phân / bát phân / hex (vd http://2130706433 hoặc http://0x7f000001)
+    if (/^(0x[0-9a-f]+|0[0-7]+|\d+)$/i.test(host)) {
       return false;
     }
     return true;
   } catch {
     return false;
   }
+}
+
+/**
+ * Kiểm tra sâu SSRF bằng phân giải DNS thực tế (dns.promises.lookup all:true)
+ * để đảm bảo mọi địa chỉ IP được phân giải đều là IP public hợp lệ.
+ */
+async function resolveAndVerifySafeExternalUrl(urlStr) {
+  if (!isSafeExternalUrl(urlStr)) return false;
+  try {
+    const parsed = new URL(urlStr);
+    const host = parsed.hostname.replace(/^\[|\]$/g, "");
+    if (net.isIP(host)) {
+      return !isPrivateOrReservedIp(host);
+    }
+    const records = await dns.promises.lookup(host, { all: true });
+    if (!records || records.length === 0) return false;
+    return records.every((rec) => !isPrivateOrReservedIp(rec.address));
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Fetch an toàn chống SSRF Redirect: tự kiểm tra DNS & IP cho từng bước chuyển hướng 3xx (tối đa 3 hop)
+ */
+async function safeExternalFetch(startUrl, { timeoutMs = 4000, headers = {}, maxRedirects = 3 } = {}) {
+  let currentUrl = startUrl;
+  for (let hop = 0; hop <= maxRedirects; hop++) {
+    const ok = await resolveAndVerifySafeExternalUrl(currentUrl);
+    if (!ok) {
+      throw new Error("URL bị chặn bởi chính sách chống SSRF (địa chỉ nội bộ hoặc không hợp lệ).");
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    let res;
+    try {
+      res = await fetch(currentUrl, {
+        signal: controller.signal,
+        redirect: "manual",
+        headers,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
+
+    if (res.status >= 300 && res.status < 400) {
+      const location = res.headers.get("location");
+      if (!location) return res;
+      currentUrl = new URL(location, currentUrl).href;
+      continue;
+    }
+
+    return res;
+  }
+  throw new Error("Quá số lần chuyển hướng (redirect) cho phép.");
 }
 
 /**
@@ -1169,25 +1279,22 @@ async function curateArticleFromSourceWithAi({ sourceUrl = "", rawContent = "", 
     }
   }
 
-  // 2. Tải nội dung bài viết từ URL: Kiểm tra SSRF an toàn trước khi fetch
-  if (sourceUrl && isSafeExternalUrl(sourceUrl.trim())) {
+  // 2. Tải nội dung bài viết từ URL: Kiểm tra SSRF + DNS + Redirect an toàn trước khi fetch
+  if (sourceUrl && (await resolveAndVerifySafeExternalUrl(sourceUrl.trim()))) {
     const trimmedUrl = sourceUrl.trim();
     let rawHtml = "";
     let isJinaContent = false;
 
-    // Bước 2.1: Thử fetch trực tiếp với User-Agent mô phỏng browser
+    // Bước 2.1: Thử fetch trực tiếp với redirect: "manual" (kiểm tra từng hop chống SSRF redirect)
     try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 4000);
-      const res = await fetch(trimmedUrl, {
-        signal: controller.signal,
+      const res = await safeExternalFetch(trimmedUrl, {
+        timeoutMs: 4000,
         headers: {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
           "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
           "Accept-Language": "vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7",
         },
       });
-      clearTimeout(timeout);
       if (res.ok) {
         rawHtml = await res.text();
       } else {
@@ -1205,6 +1312,7 @@ async function curateArticleFromSourceWithAi({ sourceUrl = "", rawContent = "", 
         const jinaTimeout = setTimeout(() => jinaCtrl.abort(), 22000);
         const jinaRes = await fetch(jinaUrl, {
           signal: jinaCtrl.signal,
+          redirect: "manual",
           headers: {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
             "Accept": "text/plain,text/markdown,*/*",
@@ -1465,12 +1573,12 @@ Vui lòng trả về DUY NHẤT định dạng JSON:
         category: parsed.category || "career_roadmap",
         targetAudience: parsed.targetAudience || targetAudience,
         summary: parsed.summary || "",
-        content: parsed.content,
-        thumbnail: parsed.thumbnail || extractedThumbnail || "",
+        content: sanitizeArticleHtml(parsed.content),
+        thumbnail: safeUrl(parsed.thumbnail || extractedThumbnail || "", { allowRelative: true }),
         tags: Array.isArray(parsed.tags) ? parsed.tags : ["CongNghe", "TríchNguồn"],
         readingTime: parseInt(parsed.readingTime, 10) || 7,
         sourceName: parsed.sourceName || sourceName || "Nguồn tham khảo",
-        sourceUrl: sourceUrl.trim(),
+        sourceUrl: safeUrl(sourceUrl.trim()),
         originalAuthor: parsed.originalAuthor || extractedOriginalAuthor || "",
         isOriginal: false,
       };
@@ -1491,20 +1599,23 @@ Vui lòng trả về DUY NHẤT định dạng JSON:
     }
   }
 
+  const safeImg0 = extractedImages[0] && safeUrl(extractedImages[0].src) ? extractedImages[0] : null;
+  const safeImg1 = extractedImages[1] && safeUrl(extractedImages[1].src) ? extractedImages[1] : null;
+
   return {
     title: fallbackTopic,
     slug: slugify(fallbackTopic),
     category: targetAudience === "employer" ? "Kinh Nghiệm Tuyển Dụng" : "Cẩm Nang Sinh Viên IT",
     targetAudience,
     summary: `Phân tích chuyên sâu và cẩm nang hướng dẫn thực chiến được tổng hợp và biên tập từ ${sourceName || "nguồn công nghệ uy tín"}.`,
-    thumbnail: extractedThumbnail || "",
-    content: `
+    thumbnail: safeUrl(extractedThumbnail || "", { allowRelative: true }),
+    content: sanitizeArticleHtml(`
       <h2>1. Giới thiệu & Bối cảnh ngành IT hiện nay</h2>
-      <p>Trong bối cảnh công nghệ thông tin phát triển với tốc độ chóng mặt, yêu cầu từ các doanh nghiệp tuyển dụng không ngừng gia tăng. Bài viết này được tổng hợp và biên tập từ <strong>${sourceName || "nguồn công nghệ"}</strong> nhằm mang đến góc nhìn toàn diện, giúp độc giả nắm vững quy trình bài bản và giảm thiểu rủi ro trên con đường phát triển sự nghiệp.</p>
-      ${extractedImages.length > 0 ? `
+      <p>Trong bối cảnh công nghệ thông tin phát triển với tốc độ chóng mặt, yêu cầu từ các doanh nghiệp tuyển dụng không ngừng gia tăng. Bài viết này được tổng hợp và biên tập từ <strong>${escapeHtml(sourceName || "nguồn công nghệ")}</strong> nhằm mang đến góc nhìn toàn diện, giúp độc giả nắm vững quy trình bài bản và giảm thiểu rủi ro trên con đường phát triển sự nghiệp.</p>
+      ${safeImg0 ? `
       <figure class="my-6 text-center">
-        <img src="${extractedImages[0].src}" alt="${extractedImages[0].alt || fallbackTopic}" class="rounded-xl shadow-md mx-auto max-h-[480px] object-cover" />
-        <figcaption class="text-[13px] text-gray-500 italic mt-2">${extractedImages[0].alt || "Hình ảnh minh họa thực tế"}</figcaption>
+        <img src="${escapeHtml(safeUrl(safeImg0.src))}" alt="${escapeHtml(safeImg0.alt || fallbackTopic)}" class="rounded-xl shadow-md mx-auto max-h-[480px] object-cover" />
+        <figcaption class="text-[13px] text-gray-500 italic mt-2">${escapeHtml(safeImg0.alt || "Hình ảnh minh họa thực tế")}</figcaption>
       </figure>
       ` : ''}
       <h2>2. Những năng lực và tư duy cốt lõi cần chuẩn bị</h2>
@@ -1520,10 +1631,10 @@ Vui lòng trả về DUY NHẤT định dạng JSON:
       </blockquote>
 
       <h2>3. Lộ trình hành động từng bước để bứt phá</h2>
-      ${extractedImages.length > 1 ? `
+      ${safeImg1 ? `
       <figure class="my-6 text-center">
-        <img src="${extractedImages[1].src}" alt="${extractedImages[1].alt || fallbackTopic}" class="rounded-xl shadow-md mx-auto max-h-[480px] object-cover" />
-        <figcaption class="text-[13px] text-gray-500 italic mt-2">${extractedImages[1].alt || "Phân tích quy trình và lộ trình hành động"}</figcaption>
+        <img src="${escapeHtml(safeUrl(safeImg1.src))}" alt="${escapeHtml(safeImg1.alt || fallbackTopic)}" class="rounded-xl shadow-md mx-auto max-h-[480px] object-cover" />
+        <figcaption class="text-[13px] text-gray-500 italic mt-2">${escapeHtml(safeImg1.alt || "Phân tích quy trình và lộ trình hành động")}</figcaption>
       </figure>
       ` : ''}
       <h3>3.1. Giai đoạn 1: Chuẩn hóa tiêu chí và xây dựng quy trình chuẩn mực</h3>
@@ -1544,11 +1655,11 @@ Vui lòng trả về DUY NHẤT định dạng JSON:
 
       <h2>5. Tổng kết và kế hoạch hành động</h2>
       <p>Hy vọng cẩm nang này sẽ trở thành kim chỉ nam hữu ích đồng hành cùng bạn trên chặng đường chinh phục các mục tiêu nghề nghiệp và tuyển dụng. Hãy bắt tay vào hành động ngay hôm nay bằng cách vạch ra kế hoạch cụ thể cho từng giai đoạn!</p>
-    `,
+    `),
     tags: ["CamNangIT", "TríchNguồn", "KyNangIT", "DinhHuong"],
     readingTime: 8,
     sourceName: sourceName || "Nguồn tham khảo",
-    sourceUrl: sourceUrl.trim(),
+    sourceUrl: safeUrl(sourceUrl.trim()),
     originalAuthor: extractedOriginalAuthor || "",
     isOriginal: false,
   };
@@ -1869,4 +1980,7 @@ module.exports = {
   generateArticleWithAi,
   curateArticleFromSourceWithAi,
   chatWithSupportAssistant,
+  isPrivateOrReservedIp,
+  isSafeExternalUrl,
+  resolveAndVerifySafeExternalUrl,
 };

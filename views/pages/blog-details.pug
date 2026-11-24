@@ -62,9 +62,10 @@ block main
                             div(class="text-[13px] text-gray-700 leading-relaxed")
                                 div(class="font-[700] text-gray-900 mb-[2px]") Trích dẫn & Nguồn tham khảo
                                 p Bài viết được Ban Biên Tập VN.ITJobs tổng hợp và biên tập từ #[strong #{article.sourceName || "Nguồn internet"}]#{article.originalAuthor ? ` của tác giả ${article.originalAuthor}` : ''} nhằm mục đích chia sẻ kiến thức công nghệ hữu ích cho cộng đồng.
-                                if article.sourceUrl
+                                - const safeSourceUrl = safeUrl(article.sourceUrl)
+                                if safeSourceUrl
                                     div(class="mt-[6px]")
-                                        a(href=article.sourceUrl target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-[4px] text-[#0088FF] font-[600] hover:underline")
+                                        a(href=safeSourceUrl target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-[4px] text-[#0088FF] font-[600] hover:underline")
                                             span Xem bài viết gốc trên #{article.sourceName || "trang nguồn"}
                                             <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
 

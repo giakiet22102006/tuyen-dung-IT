@@ -10,9 +10,12 @@ const { clearMenuCache } = require("../../services/menu.service");
 const slugify = require("../../utils/slugify");
 const paginate = require("../../utils/pagination");
 const env = require("../../config/env");
+const { escapeRegex, isValidObjectId, getSafeBackRedirect } = require("../../utils/securityHelpers");
+
+const ALLOWED_CITY_VALUES = new Set(CITIES.map((c) => c.value));
 
 const renderList = async (req, res) => {
-  const page = parseInt(req.query.page, 10) || 1;
+  const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
   const { keyword, status, city, sort } = req.query;
 
   const filter = {};
@@ -27,14 +30,14 @@ const renderList = async (req, res) => {
     }
   }
 
-  // Lọc theo thành phố
-  if (city) {
+  // Lọc theo thành phố (allowlist chặt chẽ)
+  if (typeof city === "string" && ALLOWED_CITY_VALUES.has(city)) {
     filter.city = city;
   }
 
-  // Lọc theo từ khóa
-  if (keyword && keyword.trim()) {
-    const reg = new RegExp(keyword.trim(), "i");
+  // Lọc theo từ khóa (escapeRegex chống ReDoS)
+  if (typeof keyword === "string" && keyword.trim()) {
+    const reg = new RegExp(escapeRegex(keyword), "i");
     filter.$or = [{ companyName: reg }, { email: reg }, { phone: reg }];
   }
 
@@ -132,7 +135,10 @@ const postCreate = async (req, res) => {
     });
   }
 
-  const existing = await Employer.findOne({ email: email.toLowerCase().trim() });
+  const cleanEmail = email.toLowerCase().trim();
+  const existing = await Employer.exists({
+    $or: [{ email: cleanEmail }, { "teamMembers.email": cleanEmail }],
+  });
   if (existing) {
     return res.status(400).render("admin/employers/create", {
       title: "Thêm mới Nhà tuyển dụng - VN.ITJobs Admin",
@@ -274,7 +280,7 @@ const postApprove = async (req, res) => {
   clearMenuCache();
 
   req.flash("success", `Đã phê duyệt tài khoản công ty ${employer.companyName}!`);
-  res.redirect(req.headers.referer || `/${adminPath}/employers/${employer._id}`);
+  res.redirect(getSafeBackRedirect(req, `/${adminPath}/employers/${employer._id}`));
 };
 
 const postBan = async (req, res) => {
@@ -282,7 +288,7 @@ const postBan = async (req, res) => {
   const { reason } = req.body;
   if (!reason || !reason.trim()) {
     req.flash("error", "Vui lòng nhập lý do khóa tài khoản bắt buộc.");
-    return res.redirect(req.headers.referer || `/${adminPath}/employers`);
+    return res.redirect(getSafeBackRedirect(req, `/${adminPath}/employers`));
   }
 
   const employer = await Employer.findById(req.params.id);
@@ -312,7 +318,7 @@ const postBan = async (req, res) => {
   clearMenuCache();
 
   req.flash("success", `Đã khóa tài khoản công ty ${employer.companyName}.`);
-  res.redirect(req.headers.referer || `/${adminPath}/employers/${employer._id}`);
+  res.redirect(getSafeBackRedirect(req, `/${adminPath}/employers/${employer._id}`));
 };
 
 const postUnban = async (req, res) => {
@@ -343,7 +349,7 @@ const postUnban = async (req, res) => {
   clearMenuCache();
 
   req.flash("success", `Đã mở khóa tài khoản công ty ${employer.companyName}.`);
-  res.redirect(req.headers.referer || `/${adminPath}/employers/${employer._id}`);
+  res.redirect(getSafeBackRedirect(req, `/${adminPath}/employers/${employer._id}`));
 };
 
 const postResetPassword = async (req, res) => {
@@ -372,7 +378,7 @@ const postResetPassword = async (req, res) => {
     "success",
     `Đặt lại mật khẩu thành công! Mật khẩu tạm mới (chỉ hiển thị một lần): ${tempPassword}`
   );
-  res.redirect(req.headers.referer || `/${adminPath}/employers/${employer._id}`);
+  res.redirect(getSafeBackRedirect(req, `/${adminPath}/employers/${employer._id}`));
 };
 
 const postSoftDelete = async (req, res) => {
@@ -482,10 +488,11 @@ const postHardDelete = async (req, res) => {
 const postBulkAction = async (req, res) => {
   const adminPath = env.ADMIN_PATH || "admin";
   const { action, ids } = req.body;
-  const targetIds = Array.isArray(ids) ? ids : [ids].filter(Boolean);
+  const rawIds = Array.isArray(ids) ? ids : [ids].filter(Boolean);
+  const targetIds = rawIds.filter(isValidObjectId);
 
   if (!targetIds.length) {
-    req.flash("error", "Vui lòng chọn ít nhất một Nhà tuyển dụng.");
+    req.flash("error", "Vui lòng chọn ít nhất một Nhà tuyển dụng hợp lệ.");
     return res.redirect(`/${adminPath}/employers`);
   }
 
@@ -534,7 +541,7 @@ const postToggleJobModeration = async (req, res) => {
   const job = await Job.findById(req.params.id);
   if (!job) {
     req.flash("error", "Không tìm thấy việc làm.");
-    return res.redirect(req.headers.referer || `/${adminPath}/employers`);
+    return res.redirect(getSafeBackRedirect(req, `/${adminPath}/employers`));
   }
 
   job.moderation = job.moderation === JOB_MODERATION.VISIBLE ? JOB_MODERATION.HIDDEN : JOB_MODERATION.VISIBLE;
@@ -553,7 +560,7 @@ const postToggleJobModeration = async (req, res) => {
   clearMenuCache();
 
   req.flash("success", `Đã chuyển trạng thái việc làm sang: ${job.moderation === JOB_MODERATION.VISIBLE ? "Hiển thị" : "Đã ẩn"}.`);
-  res.redirect(req.headers.referer || `/${adminPath}/employers/${job.employerId}`);
+  res.redirect(getSafeBackRedirect(req, `/${adminPath}/employers/${job.employerId}`));
 };
 
 module.exports = {

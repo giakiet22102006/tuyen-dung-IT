@@ -118,7 +118,7 @@ block main
                                     <i class="fa-solid fa-location-dot text-gray-400"></i>
                                     span #{labels.getCityLabel(it.preferredCity || 'ha-noi')}
                                 
-                                button(type="button" onclick=`openInviteModal('${cand._id}', '${cand.fullName}')` class="inline-flex items-center gap-[6px] bg-[#0088FF] hover:bg-[#0070d6] text-white font-[700] text-[13px] px-[14px] py-[8px] rounded-[8px] transition-all cursor-pointer shadow-xs")
+                                button(type="button" data-candidate-id=cand._id data-candidate-name=cand.fullName class="btn-open-invite-modal inline-flex items-center gap-[6px] bg-[#0088FF] hover:bg-[#0070d6] text-white font-[700] text-[13px] px-[14px] py-[8px] rounded-[8px] transition-all cursor-pointer shadow-xs")
                                     <i class="fa-solid fa-paper-plane text-[11px]"></i>
                                     span Mời Ứng Tuyển
 
@@ -202,3 +202,8 @@ block main
                 modal.classList.remove('flex');
             }
         }
+        document.querySelectorAll('.btn-open-invite-modal').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                openInviteModal(btn.dataset.candidateId || '', btn.dataset.candidateName || '');
+            });
+        });

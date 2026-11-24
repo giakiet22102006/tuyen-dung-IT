@@ -44,8 +44,9 @@ block main
                                 a(href="tel:" + company.phone class="inline-flex items-center gap-1.5 hover:text-[#0088FF] transition-colors")
                                     i(class="fa-solid fa-phone text-[14px] text-[#0088FF]")
                                     span #{company.phone}
-                            if company.website
-                                a(href=company.website target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 hover:text-[#0088FF] transition-colors")
+                            - const safeWebsite = safeUrl(company.website)
+                            if safeWebsite
+                                a(href=safeWebsite target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 hover:text-[#0088FF] transition-colors")
                                     i(class="fa-solid fa-globe text-[14px] text-[#0088FF]")
                                     span #{company.website}
  

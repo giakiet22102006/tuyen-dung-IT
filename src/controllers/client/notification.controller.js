@@ -5,6 +5,7 @@ const {
   markAsRead,
   markAllAsRead,
 } = require("../../services/notification.service");
+const { isValidObjectId } = require("../../utils/securityHelpers");
 
 /**
  * Lấy danh sách thông báo và số lượng chưa đọc
@@ -35,6 +36,9 @@ const markReadApi = async (req, res) => {
   }
 
   const { id } = req.params;
+  if (!isValidObjectId(id)) {
+    return res.status(400).json({ success: false, message: "Mã thông báo không hợp lệ." });
+  }
   await markAsRead(id, req.user._id);
 
   const unreadCount = await getUnreadCount(req.user._id, req.role);

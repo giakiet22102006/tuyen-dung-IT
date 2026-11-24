@@ -1,5 +1,6 @@
 // src/controllers/client/jobAlert.controller.js
 const { JobAlert } = require("../../models");
+const { getSafeBackRedirect } = require("../../utils/securityHelpers");
 
 /**
  * Đăng ký nhận thông báo việc làm mới (Hỗ trợ cả AJAX và submit form)
@@ -8,22 +9,26 @@ async function postSubscribeJobAlert(req, res) {
   try {
     const { email, keyword = "", city = "", position = "", frequency = "instant" } = req.body;
 
-    if (!email || !email.includes("@")) {
+    if (typeof email !== "string" || !email.trim() || !email.includes("@")) {
       if (req.xhr || req.headers.accept?.includes("application/json")) {
         return res.status(400).json({ success: false, message: "Vui lòng nhập địa chỉ email hợp lệ!" });
       }
       req.flash("error", "Vui lòng nhập địa chỉ email hợp lệ!");
-      return res.redirect("back");
+      return res.redirect(getSafeBackRedirect(req, "/"));
     }
 
-    const cleanEmail = email.toLowerCase().trim();
-    const candidateId = req.user && req.userType === "candidate" ? req.user._id : null;
+    const cleanEmail = email.toLowerCase().trim().slice(0, 150);
+    const cleanKeyword = typeof keyword === "string" ? keyword.trim().slice(0, 100) : "";
+    const cleanCity = typeof city === "string" ? city.trim().slice(0, 50) : "";
+    const cleanPosition = typeof position === "string" ? position.trim().slice(0, 50) : "";
+    const cleanFrequency = ["instant", "daily", "weekly"].includes(frequency) ? frequency : "instant";
+    const candidateId = req.user && req.role === "candidate" ? req.user._id : null;
 
     let alert = await JobAlert.findOne({
       email: cleanEmail,
-      keyword: keyword.trim(),
-      city: city.trim(),
-      position: position.trim(),
+      keyword: cleanKeyword,
+      city: cleanCity,
+      position: cleanPosition,
     });
 
     if (alert) {
@@ -33,10 +38,10 @@ async function postSubscribeJobAlert(req, res) {
     } else {
       alert = await JobAlert.create({
         email: cleanEmail,
-        keyword: keyword.trim(),
-        city: city.trim(),
-        position: position.trim(),
-        frequency,
+        keyword: cleanKeyword,
+        city: cleanCity,
+        position: cleanPosition,
+        frequency: cleanFrequency,
         candidateId,
         isActive: true,
       });
@@ -49,14 +54,14 @@ async function postSubscribeJobAlert(req, res) {
     }
 
     req.flash("success", successMsg);
-    return res.redirect("back");
+    return res.redirect(getSafeBackRedirect(req, "/"));
   } catch (error) {
     console.error("Lỗi đăng ký Job Alert:", error);
     if (req.xhr || req.headers.accept?.includes("application/json")) {
       return res.status(500).json({ success: false, message: "Có lỗi xảy ra, vui lòng thử lại sau!" });
     }
     req.flash("error", "Có lỗi xảy ra khi đăng ký thông báo!");
-    return res.redirect("back");
+    return res.redirect(getSafeBackRedirect(req, "/"));
   }
 }
 
@@ -66,7 +71,9 @@ async function postSubscribeJobAlert(req, res) {
 async function getUnsubscribeJobAlert(req, res) {
   try {
     const { token } = req.params;
-    const alert = await JobAlert.findOne({ unsubscribeToken: token });
+    const alert = typeof token === "string" && token.trim()
+      ? await JobAlert.findOne({ unsubscribeToken: token.trim() })
+      : null;
 
     if (!alert) {
       return res.render("pages/job-alert-unsubscribed", {

@@ -45,6 +45,7 @@ block main
                 div(class="bg-[#F8FAFC] border border-gray-200 p-[24px] sm:p-[32px] rounded-[16px]")
                     h2(class="font-[700] text-[20px] text-[#121212] mb-[16px]") Gửi tin nhắn trực tiếp
                     form(action="/api/feedback" method="POST" class="space-y-[16px]")
+                        input(type="hidden" name="_csrf" value=csrfToken)
                         input(type="hidden" name="type" value="other")
                         div
                             label(class="block text-[13px] font-[600] text-gray-700 mb-[4px]") Họ và tên

@@ -1,9 +1,17 @@
 // src/controllers/ai/ai.controller.js
 const fs = require("fs");
-const mongoose = require("mongoose");
 const { Job, Application, Employer, Candidate } = require("../../models");
+const { JOB_MODERATION } = require("../../config/constants");
 const aiService = require("../../services/ai.service");
 const { getCVPath, checkPdf } = require("../../services/storage.service");
+const { isValidObjectId } = require("../../utils/securityHelpers");
+const env = require("../../config/env");
+
+function formatAiError(err) {
+  return env.NODE_ENV === "production"
+    ? "Đã xảy ra lỗi khi xử lý yêu cầu AI. Vui lòng thử lại sau."
+    : "Lỗi xử lý AI: " + err.message;
+}
 
 /**
  * 1. AI CV Match & Gap Analysis (Candidate / Public)
@@ -11,7 +19,7 @@ const { getCVPath, checkPdf } = require("../../services/storage.service");
 const postMatchCv = async (req, res) => {
   try {
     const { jobId, cvText: directCvText } = req.body;
-    if (!jobId || !mongoose.Types.ObjectId.isValid(jobId)) {
+    if (!isValidObjectId(jobId)) {
       return res.status(400).json({ success: false, message: "Mã việc làm (jobId) không hợp lệ." });
     }
 
@@ -22,7 +30,13 @@ const postMatchCv = async (req, res) => {
       return res.status(400).json({ success: false, message: "Nội dung CV vượt quá giới hạn cho phép (tối đa 20.000 ký tự)." });
     }
 
-    const job = await Job.findById(jobId).lean();
+    // Chỉ cho phép khớp CV với tin tuyển dụng đang hiển thị công khai (không lộ tin ẩn/đã xóa)
+    const job = await Job.findOne({
+      _id: jobId,
+      employerActive: true,
+      moderation: JOB_MODERATION.VISIBLE,
+      deletedAt: null,
+    }).lean();
     if (!job) {
       return res.status(404).json({ success: false, message: "Không tìm thấy việc làm yêu cầu." });
     }
@@ -53,7 +67,7 @@ const postMatchCv = async (req, res) => {
     return res.status(200).json({ success: true, data: result });
   } catch (err) {
     console.error("AI postMatchCv error:", err);
-    return res.status(500).json({ success: false, message: "Lỗi xử lý AI: " + err.message });
+    return res.status(500).json({ success: false, message: formatAiError(err) });
   }
 };
 
@@ -63,11 +77,16 @@ const postMatchCv = async (req, res) => {
 const postInterviewPrep = async (req, res) => {
   try {
     const { jobId } = req.body;
-    if (!jobId || !mongoose.Types.ObjectId.isValid(jobId)) {
+    if (!isValidObjectId(jobId)) {
       return res.status(400).json({ success: false, message: "Mã việc làm (jobId) không hợp lệ." });
     }
 
-    const job = await Job.findById(jobId).lean();
+    const job = await Job.findOne({
+      _id: jobId,
+      employerActive: true,
+      moderation: JOB_MODERATION.VISIBLE,
+      deletedAt: null,
+    }).lean();
     if (!job) {
       return res.status(404).json({ success: false, message: "Không tìm thấy việc làm yêu cầu." });
     }
@@ -76,7 +95,7 @@ const postInterviewPrep = async (req, res) => {
     return res.status(200).json({ success: true, data: result });
   } catch (err) {
     console.error("AI postInterviewPrep error:", err);
-    return res.status(500).json({ success: false, message: "Lỗi xử lý AI: " + err.message });
+    return res.status(500).json({ success: false, message: formatAiError(err) });
   }
 };
 
@@ -98,17 +117,17 @@ const postGenerateJobDescription = async (req, res) => {
       : [];
 
     const result = await aiService.generateJobDescription({
-      title,
-      position: position || "middle",
+      title: title.trim(),
+      position: typeof position === "string" ? position.trim().slice(0, 40) : "middle",
       skills: skillsArray,
-      workingForm: workingForm || "office",
-      city: city || "hanoi",
+      workingForm: typeof workingForm === "string" ? workingForm.trim().slice(0, 40) : "office",
+      city: typeof city === "string" ? city.trim().slice(0, 40) : "hanoi",
     });
 
     return res.status(200).json({ success: true, data: result });
   } catch (err) {
     console.error("AI postGenerateJobDescription error:", err);
-    return res.status(500).json({ success: false, message: "Lỗi xử lý AI: " + err.message });
+    return res.status(500).json({ success: false, message: formatAiError(err) });
   }
 };
 
@@ -118,8 +137,8 @@ const postGenerateJobDescription = async (req, res) => {
 const postScreenCv = async (req, res) => {
   try {
     const applicationId = req.params.applicationId || req.body.applicationId;
-    if (!applicationId) {
-      return res.status(400).json({ success: false, message: "Thiếu thông tin applicationId." });
+    if (!isValidObjectId(applicationId)) {
+      return res.status(400).json({ success: false, message: "Mã hồ sơ (applicationId) không hợp lệ." });
     }
 
     const application = await Application.findOne({
@@ -150,7 +169,7 @@ const postScreenCv = async (req, res) => {
     return res.status(200).json({ success: true, data: result });
   } catch (err) {
     console.error("AI postScreenCv error:", err);
-    return res.status(500).json({ success: false, message: "Lỗi xử lý AI: " + err.message });
+    return res.status(500).json({ success: false, message: formatAiError(err) });
   }
 };
 
@@ -162,11 +181,16 @@ const postModerateJob = async (req, res) => {
     const jobId = req.params.jobId || req.body.jobId;
     let jobData = null;
 
-    if (jobId && jobId !== "custom" && require("mongoose").isValidObjectId(jobId)) {
-      jobData = await Job.findById(jobId).populate("employerId").lean();
+    if (jobId && jobId !== "custom" && isValidObjectId(jobId)) {
+      jobData = await Job.findById(jobId).populate("employerId", "companyName slug city").lean();
     }
     if (!jobData && req.body && (req.body.title || req.body.description)) {
-      jobData = req.body;
+      jobData = {
+        title: typeof req.body.title === "string" ? req.body.title.slice(0, 300) : "",
+        description: typeof req.body.description === "string" ? req.body.description.slice(0, 10000) : "",
+        salaryMin: req.body.salaryMin,
+        salaryMax: req.body.salaryMax,
+      };
     }
 
     if (!jobData) {
@@ -177,7 +201,7 @@ const postModerateJob = async (req, res) => {
     return res.status(200).json({ success: true, data: result });
   } catch (err) {
     console.error("AI postModerateJob error:", err);
-    return res.status(500).json({ success: false, message: "Lỗi xử lý AI: " + err.message });
+    return res.status(500).json({ success: false, message: formatAiError(err) });
   }
 };
 
@@ -233,7 +257,7 @@ const getMarketInsights = async (req, res) => {
     });
   } catch (err) {
     console.error("AI getMarketInsights error:", err);
-    return res.status(500).json({ success: false, message: "Lỗi xử lý AI: " + err.message });
+    return res.status(500).json({ success: false, message: formatAiError(err) });
   }
 };
 

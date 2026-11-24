@@ -1,16 +1,10 @@
 // src/services/mail.service.js
 const nodemailer = require("nodemailer");
 const env = require("../config/env");
+const { escapeHtml, sanitizeSingleLine, safeUrl } = require("../utils/securityHelpers");
 
-function escapeHtml(text) {
-  if (!text || typeof text !== "string") return "";
-  return text.replace(/[&<>"']/g, (c) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;",
-  }[c] || c));
+function sanitizeEmailHeader(addr) {
+  return sanitizeSingleLine(addr, 254).replace(/[<>,"']/g, "").trim();
 }
 
 let transporter = null;
@@ -41,6 +35,8 @@ function getTransporter() {
 async function sendOtpEmail(toEmail, otpCode, userType = "candidate") {
   const mailTransporter = getTransporter();
   const roleName = userType === "employer" ? "Nhà tuyển dụng" : "Ứng viên";
+  const safeToEmail = sanitizeEmailHeader(toEmail);
+  const safeOtpCode = sanitizeSingleLine(otpCode, 20);
 
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 580px; margin: 0 auto; border: 1px solid #E0E0E0; border-radius: 8px; overflow: hidden;">
@@ -49,16 +45,16 @@ async function sendOtpEmail(toEmail, otpCode, userType = "candidate") {
         <p style="color: #A6A6A6; margin: 6px 0 0; font-size: 14px;">Cổng thông tin việc làm IT hàng đầu Việt Nam</p>
       </div>
       <div style="padding: 30px; background-color: #ffffff;">
-        <h2 style="color: #121212; font-size: 18px; margin-top: 0;">Yêu cầu đặt lại mật khẩu (${roleName})</h2>
+        <h2 style="color: #121212; font-size: 18px; margin-top: 0;">Yêu cầu đặt lại mật khẩu (${escapeHtml(roleName)})</h2>
         <p style="color: #555555; font-size: 14px; line-height: 1.6;">
-          Chào bạn, chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản liên kết với địa chỉ email: <strong>${toEmail}</strong>.
+          Chào bạn, chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản liên kết với địa chỉ email: <strong>${escapeHtml(safeToEmail)}</strong>.
         </p>
         <p style="color: #555555; font-size: 14px; line-height: 1.6;">
           Dưới đây là mã xác thực OTP của bạn:
         </p>
         <div style="text-align: center; margin: 28px 0;">
           <span style="display: inline-block; background-color: #F0F7FF; border: 2px dashed #0088FF; color: #000071; font-size: 32px; font-weight: bold; letter-spacing: 6px; padding: 14px 28px; border-radius: 8px;">
-            ${otpCode}
+            ${escapeHtml(safeOtpCode)}
           </span>
         </div>
         <p style="color: #777777; font-size: 13px; line-height: 1.5;">
@@ -78,9 +74,9 @@ async function sendOtpEmail(toEmail, otpCode, userType = "candidate") {
     try {
       const info = await mailTransporter.sendMail({
         from: env.SMTP_FROM,
-        to: toEmail,
-        subject: `[VN.ITJobs] Mã xác thực đặt lại mật khẩu: ${otpCode}`,
-        text: `Mã xác thực OTP của bạn là: ${otpCode}. Mã này có hiệu lực trong 10 phút.`,
+        to: safeToEmail,
+        subject: sanitizeSingleLine(`[VN.ITJobs] Mã xác thực đặt lại mật khẩu: ${safeOtpCode}`, 200),
+        text: `Mã xác thực OTP của bạn là: ${safeOtpCode}. Mã này có hiệu lực trong 10 phút.`,
         html: htmlContent,
       });
       console.log(`📧 Đã gửi email OTP tới ${toEmail}: ${info.messageId}`);
@@ -109,6 +105,8 @@ async function sendOtpEmail(toEmail, otpCode, userType = "candidate") {
 async function sendRegistrationOtpEmail(toEmail, otpCode, userType = "candidate") {
   const mailTransporter = getTransporter();
   const roleName = userType === "employer" ? "Nhà tuyển dụng" : "Ứng viên";
+  const safeToEmail = sanitizeEmailHeader(toEmail);
+  const safeOtpCode = sanitizeSingleLine(otpCode, 20);
 
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 580px; margin: 0 auto; border: 1px solid #E0E0E0; border-radius: 8px; overflow: hidden;">
@@ -117,16 +115,16 @@ async function sendRegistrationOtpEmail(toEmail, otpCode, userType = "candidate"
         <p style="color: #A6A6A6; margin: 6px 0 0; font-size: 14px;">Cổng thông tin việc làm IT hàng đầu Việt Nam</p>
       </div>
       <div style="padding: 30px; background-color: #ffffff;">
-        <h2 style="color: #121212; font-size: 18px; margin-top: 0;">Xác thực kích hoạt tài khoản (${roleName})</h2>
+        <h2 style="color: #121212; font-size: 18px; margin-top: 0;">Xác thực kích hoạt tài khoản (${escapeHtml(roleName)})</h2>
         <p style="color: #555555; font-size: 14px; line-height: 1.6;">
-          Chào mừng bạn đến với <strong>VN.ITJobs</strong>! Cảm ơn bạn đã đăng ký tài khoản với email: <strong>${toEmail}</strong>.
+          Chào mừng bạn đến với <strong>VN.ITJobs</strong>! Cảm ơn bạn đã đăng ký tài khoản với email: <strong>${escapeHtml(safeToEmail)}</strong>.
         </p>
         <p style="color: #555555; font-size: 14px; line-height: 1.6;">
           Để xác thực bạn là chủ sở hữu hợp pháp của hòm thư này và kích hoạt tài khoản, vui lòng sử dụng mã xác thực OTP sau:
         </p>
         <div style="text-align: center; margin: 28px 0;">
           <span style="display: inline-block; background-color: #EBF8FF; border: 2px dashed #0088FF; color: #000071; font-size: 32px; font-weight: bold; letter-spacing: 6px; padding: 14px 28px; border-radius: 8px;">
-            ${otpCode}
+            ${escapeHtml(safeOtpCode)}
           </span>
         </div>
         <p style="color: #777777; font-size: 13px; line-height: 1.5;">
@@ -143,9 +141,9 @@ async function sendRegistrationOtpEmail(toEmail, otpCode, userType = "candidate"
     try {
       const info = await mailTransporter.sendMail({
         from: env.SMTP_FROM,
-        to: toEmail,
-        subject: `[VN.ITJobs] Mã xác thực đăng ký tài khoản: ${otpCode}`,
-        text: `Mã xác thực đăng ký tài khoản của bạn là: ${otpCode}. Mã này có hiệu lực trong 10 phút.`,
+        to: safeToEmail,
+        subject: sanitizeSingleLine(`[VN.ITJobs] Mã xác thực đăng ký tài khoản: ${safeOtpCode}`, 200),
+        text: `Mã xác thực đăng ký tài khoản của bạn là: ${safeOtpCode}. Mã này có hiệu lực trong 10 phút.`,
         html: htmlContent,
       });
       console.log(`📧 Đã gửi email kích hoạt tới ${toEmail}: ${info.messageId}`);
@@ -180,7 +178,20 @@ async function sendInterviewInvitationEmail({
   icsContent,
 }) {
   const mailTransporter = getTransporter();
-  const safeSubject = subject || `[VN.ITJobs] Thư mời phỏng vấn vị trí ${jobTitle} - ${companyName}`;
+  const safeToEmail = sanitizeEmailHeader(toEmail);
+  const safeReplyTo = replyTo ? sanitizeEmailHeader(replyTo) : "";
+  const safeSubject = sanitizeSingleLine(
+    subject || `[VN.ITJobs] Thư mời phỏng vấn vị trí ${jobTitle} - ${companyName}`,
+    200
+  );
+  const escJobTitle = escapeHtml(jobTitle || "");
+  const escCandidateName = escapeHtml(candidateName || "");
+  const escCompanyName = escapeHtml(companyName || "");
+  const escInterviewDate = escapeHtml(interviewDate || "");
+  const escLocation = escapeHtml(location || "");
+  const escReplyTo = escapeHtml(safeReplyTo);
+  const escContactPhone = escapeHtml(contactPhone || "");
+  const mailtoSubject = encodeURIComponent(`Re: [Phản hồi phỏng vấn] ${jobTitle || ""} - ${candidateName || ""}`);
 
   // Format content newlines to HTML <p> / <br> với HTML entity escaping an toàn
   const formattedContent = String(content || "")
@@ -200,19 +211,19 @@ async function sendInterviewInvitationEmail({
         <div style="display: inline-block; background-color: #E8F5E9; color: #2E7D32; font-size: 12px; font-weight: bold; padding: 4px 10px; border-radius: 4px; margin-bottom: 12px;">
           🎉 HỒ SƠ ĐÃ ĐƯỢC DUYỆT PHÙ HỢP
         </div>
-        <h2 style="color: #121212; font-size: 19px; margin: 0 0 16px 0;">Thư Mời Phỏng Vấn: ${jobTitle}</h2>
+        <h2 style="color: #121212; font-size: 19px; margin: 0 0 16px 0;">Thư Mời Phỏng Vấn: ${escJobTitle}</h2>
         <p style="color: #555555; font-size: 14px; line-height: 1.5; margin-bottom: 20px;">
-          Kính gửi bạn <strong>${candidateName}</strong>,<br/>
-          Công ty <strong>${companyName}</strong> đã xem xét hồ sơ ứng tuyển của bạn trên VN.ITJobs và trân trọng gửi lời mời tham dự buổi phỏng vấn.
+          Kính gửi bạn <strong>${escCandidateName}</strong>,<br/>
+          Công ty <strong>${escCompanyName}</strong> đã xem xét hồ sơ ứng tuyển của bạn trên VN.ITJobs và trân trọng gửi lời mời tham dự buổi phỏng vấn.
         </p>
 
         <!-- Chi tiết lịch hẹn -->
         <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 16px; margin-bottom: 24px;">
           <h3 style="margin: 0 0 12px 0; font-size: 14px; color: #1E293B; text-transform: uppercase; letter-spacing: 0.5px;">THÔNG TIN PHỎNG VẤN</h3>
-          ${interviewDate ? `<div style="margin-bottom: 8px; font-size: 14px; color: #334155;"><strong>⏱️ Thời gian:</strong> ${interviewDate}</div>` : ""}
-          ${location ? `<div style="margin-bottom: 8px; font-size: 14px; color: #334155;"><strong>📍 Hình thức / Địa điểm:</strong> ${location}</div>` : ""}
-          ${replyTo ? `<div style="margin-bottom: 8px; font-size: 14px; color: #334155;"><strong>📧 Email Nhà tuyển dụng:</strong> <a href="mailto:${replyTo}" style="color: #0088FF; text-decoration: none;">${replyTo}</a></div>` : ""}
-          ${contactPhone ? `<div style="margin-bottom: 4px; font-size: 14px; color: #334155;"><strong>📞 Số điện thoại liên hệ:</strong> ${contactPhone}</div>` : ""}
+          ${escInterviewDate ? `<div style="margin-bottom: 8px; font-size: 14px; color: #334155;"><strong>⏱️ Thời gian:</strong> ${escInterviewDate}</div>` : ""}
+          ${escLocation ? `<div style="margin-bottom: 8px; font-size: 14px; color: #334155;"><strong>📍 Hình thức / Địa điểm:</strong> ${escLocation}</div>` : ""}
+          ${escReplyTo ? `<div style="margin-bottom: 8px; font-size: 14px; color: #334155;"><strong>📧 Email Nhà tuyển dụng:</strong> <a href="mailto:${encodeURIComponent(safeReplyTo)}" style="color: #0088FF; text-decoration: none;">${escReplyTo}</a></div>` : ""}
+          ${escContactPhone ? `<div style="margin-bottom: 4px; font-size: 14px; color: #334155;"><strong>📞 Số điện thoại liên hệ:</strong> ${escContactPhone}</div>` : ""}
         </div>
 
         <!-- Lời nhắn từ NTD -->
@@ -222,7 +233,7 @@ async function sendInterviewInvitationEmail({
         </div>
 
         <div style="text-align: center; margin: 28px 0 10px;">
-          <a href="mailto:${replyTo || ""}?subject=Re: [Phản hồi phỏng vấn] ${jobTitle} - ${candidateName}" style="display: inline-block; background-color: #0088FF; color: #ffffff; font-weight: bold; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-size: 14px;">
+          <a href="mailto:${encodeURIComponent(safeReplyTo)}?subject=${mailtoSubject}" style="display: inline-block; background-color: #0088FF; color: #ffffff; font-weight: bold; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-size: 14px;">
             ✉️ Trả Lời Email Nhà Tuyển Dụng
           </a>
         </div>
@@ -232,7 +243,7 @@ async function sendInterviewInvitationEmail({
       </div>
 
       <div style="background-color: #F7F7F7; padding: 16px; text-align: center; color: #888888; font-size: 12px;">
-        Thư mời được gửi từ <strong>${companyName}</strong> thông qua cổng tuyển dụng <strong>VN.ITJobs</strong>.<br/>
+        Thư mời được gửi từ <strong>${escCompanyName}</strong> thông qua cổng tuyển dụng <strong>VN.ITJobs</strong>.<br/>
         © 2026 VN.ITJobs. Mọi quyền được bảo lưu.
       </div>
     </div>
@@ -242,8 +253,8 @@ async function sendInterviewInvitationEmail({
     try {
       const mailOptions = {
         from: env.SMTP_FROM,
-        to: toEmail,
-        replyTo: replyTo || undefined,
+        to: safeToEmail,
+        replyTo: safeReplyTo || undefined,
         subject: safeSubject,
         text: `Chào ${candidateName}, Công ty ${companyName} mời bạn tham gia phỏng vấn vị trí ${jobTitle}. Thời gian: ${interviewDate || "Thỏa thuận"}. Địa điểm: ${location || "Trao đổi qua email"}. Chi tiết: ${content}`,
         html: htmlContent,
@@ -295,8 +306,17 @@ async function sendRejectionEmail({
   replyTo,
 }) {
   const mailTransporter = getTransporter();
-  const safeSubject = `[VN.ITJobs] Thông báo kết quả ứng tuyển vị trí ${jobTitle} - ${companyName}`;
+  const safeToEmail = sanitizeEmailHeader(toEmail);
+  const safeReplyTo = replyTo ? sanitizeEmailHeader(replyTo) : "";
+  const safeSubject = sanitizeSingleLine(
+    `[VN.ITJobs] Thông báo kết quả ứng tuyển vị trí ${jobTitle} - ${companyName}`,
+    200
+  );
   const defaultReason = reason || "Chưa phù hợp với yêu cầu của vị trí tại thời điểm này";
+  const escJobTitle = escapeHtml(jobTitle || "");
+  const escCandidateName = escapeHtml(candidateName || "");
+  const escCompanyName = escapeHtml(companyName || "");
+  const escReason = escapeHtml(defaultReason);
 
   const formattedNote = note
     ? String(note)
@@ -317,17 +337,17 @@ async function sendRejectionEmail({
         <div style="display: inline-block; background-color: #FEE2E2; color: #991B1B; font-size: 12px; font-weight: bold; padding: 4px 10px; border-radius: 4px; margin-bottom: 12px;">
           📋 THÔNG BÁO KẾT QUẢ ỨNG TUYỂN
         </div>
-        <h2 style="color: #121212; font-size: 19px; margin: 0 0 16px 0;">Kết Quả Ứng Tuyển: ${jobTitle}</h2>
+        <h2 style="color: #121212; font-size: 19px; margin: 0 0 16px 0;">Kết Quả Ứng Tuyển: ${escJobTitle}</h2>
         <p style="color: #475569; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
-          Kính gửi bạn <strong>${candidateName}</strong>,<br/>
-          Lời đầu tiên, Ban Tuyển dụng công ty <strong>${companyName}</strong> chân thành cảm ơn bạn đã quan tâm và dành thời gian gửi hồ sơ ứng tuyển cho vị trí <strong>${jobTitle}</strong>.
+          Kính gửi bạn <strong>${escCandidateName}</strong>,<br/>
+          Lời đầu tiên, Ban Tuyển dụng công ty <strong>${escCompanyName}</strong> chân thành cảm ơn bạn đã quan tâm và dành thời gian gửi hồ sơ ứng tuyển cho vị trí <strong>${escJobTitle}</strong>.
         </p>
 
         <!-- Lý do từ chối -->
         <div style="background-color: #FFF5F5; border-left: 4px solid #EF4444; border-radius: 4px; padding: 14px 16px; margin-bottom: 20px;">
           <h4 style="margin: 0 0 8px 0; font-size: 13px; color: #991B1B; text-transform: uppercase; letter-spacing: 0.5px;">Phản hồi từ Nhà tuyển dụng:</h4>
           <div style="font-size: 14px; color: #7F1D1D; font-weight: 600; margin-bottom: ${note ? '8px' : '0'};">
-            • Lý do: ${defaultReason}
+            • Lý do: ${escReason}
           </div>
           ${formattedNote ? `<div style="font-size: 13px; color: #475569; font-style: italic; border-top: 1px dashed #FECACA; padding-top: 8px; margin-top: 8px;">${formattedNote}</div>` : ""}
         </div>
@@ -348,7 +368,7 @@ async function sendRejectionEmail({
       </div>
 
       <div style="background-color: #F7F7F7; padding: 16px; text-align: center; color: #888888; font-size: 12px;">
-        Thông báo được gửi từ <strong>${companyName}</strong> thông qua cổng tuyển dụng <strong>VN.ITJobs</strong>.<br/>
+        Thông báo được gửi từ <strong>${escCompanyName}</strong> thông qua cổng tuyển dụng <strong>VN.ITJobs</strong>.<br/>
         © 2026 VN.ITJobs. Mọi quyền được bảo lưu.
       </div>
     </div>
@@ -358,8 +378,8 @@ async function sendRejectionEmail({
     try {
       const info = await mailTransporter.sendMail({
         from: env.SMTP_FROM,
-        to: toEmail,
-        replyTo: replyTo || undefined,
+        to: safeToEmail,
+        replyTo: safeReplyTo || undefined,
         subject: safeSubject,
         text: `Chào ${candidateName}, Công ty ${companyName} cảm ơn bạn đã ứng tuyển vị trí ${jobTitle}. Sau khi xem xét, rất tiếc hồ sơ của bạn chưa phù hợp ở thời điểm này: ${defaultReason}. Lời nhắn: ${note || ""}`,
         html: htmlContent,
@@ -387,6 +407,7 @@ async function sendRejectionEmail({
  */
 async function sendJobAlertEmail({ toEmail, alert, job, companyName }) {
   const mailTransporter = getTransporter();
+  const safeToEmail = sanitizeEmailHeader(toEmail);
   const safeTitle = job.title || "Việc làm IT mới";
   const salaryDisplay =
     job.salaryMin && job.salaryMax
@@ -395,9 +416,10 @@ async function sendJobAlertEmail({ toEmail, alert, job, companyName }) {
       ? `Từ ${(job.salaryMin / 1000000).toFixed(0)} Triệu VNĐ`
       : "Thương lượng";
 
-  const appUrl = env.APP_URL || "https://tuyen-dung-it.vercel.app";
-  const jobUrl = `${appUrl}/jobs/${job.slug}`;
-  const unsubUrl = `${appUrl}/job-alerts/unsubscribe/${alert.unsubscribeToken}`;
+  const appUrl = safeUrl(env.APP_URL) || "https://tuyen-dung-it.vercel.app";
+  const cleanAppUrl = appUrl.replace(/\/+$/, "");
+  const jobUrl = `${cleanAppUrl}/jobs/${encodeURIComponent(job.slug || "")}`;
+  const unsubUrl = `${cleanAppUrl}/job-alerts/unsubscribe/${encodeURIComponent(alert.unsubscribeToken || "")}`;
 
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #E2E8F0; border-radius: 8px; overflow: hidden;">
@@ -413,28 +435,28 @@ async function sendJobAlertEmail({ toEmail, alert, job, companyName }) {
 
         <div style="background-color: #F8FAFC; border: 1px solid #CBD5E1; border-left: 4px solid #0088FF; border-radius: 6px; padding: 18px; margin: 20px 0;">
           <h2 style="font-size: 17px; font-weight: bold; margin: 0 0 8px; color: #000071;">
-            <a href="${jobUrl}" style="color: #000071; text-decoration: none;">${safeTitle}</a>
+            <a href="${escapeHtml(jobUrl)}" style="color: #000071; text-decoration: none;">${escapeHtml(safeTitle)}</a>
           </h2>
           <div style="font-size: 14px; color: #475569; font-weight: 600; margin-bottom: 6px;">
-            🏢 ${companyName || "Công ty công nghệ hàng đầu"}
+            🏢 ${escapeHtml(companyName || "Công ty công nghệ hàng đầu")}
           </div>
           <div style="font-size: 14px; color: #EA1E30; font-weight: bold; margin-bottom: 8px;">
-            💰 Mức lương: ${salaryDisplay}
+            💰 Mức lương: ${escapeHtml(salaryDisplay)}
           </div>
           <div style="font-size: 13px; color: #64748B;">
-            📍 Khu vực: ${job.city || "Toàn quốc"} • Cấp bậc: ${job.position || "Tất cả cấp bậc"}
+            📍 Khu vực: ${escapeHtml(job.city || "Toàn quốc")} • Cấp bậc: ${escapeHtml(job.position || "Tất cả cấp bậc")}
           </div>
         </div>
 
         <div style="text-align: center; margin: 24px 0 16px;">
-          <a href="${jobUrl}" style="display: inline-block; background-color: #0088FF; color: #ffffff; font-weight: bold; text-decoration: none; padding: 12px 28px; border-radius: 6px; font-size: 14px;">
+          <a href="${escapeHtml(jobUrl)}" style="display: inline-block; background-color: #0088FF; color: #ffffff; font-weight: bold; text-decoration: none; padding: 12px 28px; border-radius: 6px; font-size: 14px;">
             👉 Xem Chi Tiết & Ứng Tuyển Ngay
           </a>
         </div>
 
         <p style="color: #94A3B8; font-size: 12px; margin-top: 24px; border-top: 1px solid #E2E8F0; padding-top: 14px; text-align: center;">
           Bạn nhận được email này vì đã đăng ký thông báo việc làm trên VN.ITJobs.<br/>
-          Nếu không muốn nhận thông báo này nữa, bạn có thể <a href="${unsubUrl}" style="color: #0088FF; text-decoration: underline;">hủy đăng ký tại đây</a> bất kỳ lúc nào.
+          Nếu không muốn nhận thông báo này nữa, bạn có thể <a href="${escapeHtml(unsubUrl)}" style="color: #0088FF; text-decoration: underline;">hủy đăng ký tại đây</a> bất kỳ lúc nào.
         </p>
       </div>
 
@@ -448,8 +470,8 @@ async function sendJobAlertEmail({ toEmail, alert, job, companyName }) {
     try {
       const info = await mailTransporter.sendMail({
         from: env.SMTP_FROM,
-        to: toEmail,
-        subject: `[VN.ITJobs] Việc làm IT mới: ${safeTitle} - ${companyName || ""}`,
+        to: safeToEmail,
+        subject: sanitizeSingleLine(`[VN.ITJobs] Việc làm IT mới: ${safeTitle} - ${companyName || ""}`, 200),
         html: htmlContent,
       });
       console.log(`📧 Đã gửi Job Alert tới ${toEmail}: ${info.messageId}`);
@@ -474,8 +496,12 @@ async function sendJobAlertEmail({ toEmail, alert, job, companyName }) {
  */
 async function sendSecurityAlertEmail({ toEmail, fullName, userType, ip, userAgent, loginTime }) {
   const mailTransporter = getTransporter();
+  const safeToEmail = sanitizeEmailHeader(toEmail);
   const title = userType === "employer" ? "Nhà tuyển dụng" : "Ứng viên";
   const formattedTime = loginTime ? new Date(loginTime).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }) : new Date().toLocaleString("vi-VN");
+  const escName = escapeHtml(fullName || safeToEmail);
+  const escIp = escapeHtml(String(ip || "Không xác định").slice(0, 100));
+  const escUa = escapeHtml(String(userAgent || "Không xác định").slice(0, 300));
 
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #E5E7EB; border-radius: 8px; background-color: #ffffff;">
@@ -488,15 +514,15 @@ async function sendSecurityAlertEmail({ toEmail, fullName, userType, ip, userAge
         <p style="color: #78350F; margin: 0; font-size: 13px;">Phiên làm việc trên các thiết bị cũ đã tự động bị vô hiệu hóa để bảo vệ an toàn cho tài khoản của bạn.</p>
       </div>
       <p style="color: #374151; font-size: 14px; line-height: 1.6;">
-        Xin chào <strong>${fullName || toEmail}</strong>,
+        Xin chào <strong>${escName}</strong>,
       </p>
       <p style="color: #374151; font-size: 14px; line-height: 1.6;">
-        Tài khoản ${title} của bạn trên hệ thống <strong>VN.ITJobs</strong> vừa được đăng nhập thành công với thông tin sau:
+        Tài khoản ${escapeHtml(title)} của bạn trên hệ thống <strong>VN.ITJobs</strong> vừa được đăng nhập thành công với thông tin sau:
       </p>
       <div style="background-color: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 6px; padding: 16px; margin: 18px 0; font-size: 13.5px; line-height: 1.8;">
-        <div>⏰ <strong>Thời gian:</strong> ${formattedTime} (Giờ Việt Nam)</div>
-        <div>🌐 <strong>Địa chỉ IP:</strong> <code style="background-color: #E5E7EB; padding: 2px 6px; border-radius: 4px;">${ip || "Không xác định"}</code></div>
-        <div>💻 <strong>Thiết bị / Trình duyệt:</strong> ${userAgent || "Không xác định"}</div>
+        <div>⏰ <strong>Thời gian:</strong> ${escapeHtml(formattedTime)} (Giờ Việt Nam)</div>
+        <div>🌐 <strong>Địa chỉ IP:</strong> <code style="background-color: #E5E7EB; padding: 2px 6px; border-radius: 4px;">${escIp}</code></div>
+        <div>💻 <strong>Thiết bị / Trình duyệt:</strong> ${escUa}</div>
       </div>
       <p style="color: #EF4444; font-size: 13.5px; font-weight: bold; line-height: 1.6;">
         Nếu đây KHÔNG PHẢI là bạn, rất có thể mật khẩu tài khoản của bạn đã bị lộ. Vui lòng đăng nhập lại và thực hiện ĐỔI MẬT KHẨU ngay lập tức để bảo vệ tài khoản!
@@ -512,8 +538,8 @@ async function sendSecurityAlertEmail({ toEmail, fullName, userType, ip, userAge
     try {
       const info = await mailTransporter.sendMail({
         from: env.SMTP_FROM,
-        to: toEmail,
-        subject: `[Cảnh báo bảo mật VN.ITJobs] Phát hiện đăng nhập mới cho tài khoản ${fullName || toEmail}`,
+        to: safeToEmail,
+        subject: sanitizeSingleLine(`[Cảnh báo bảo mật VN.ITJobs] Phát hiện đăng nhập mới cho tài khoản ${fullName || safeToEmail}`, 200),
         html: htmlContent,
       });
       console.log(`📧 Đã gửi cảnh báo đăng nhập tới ${toEmail}: ${info.messageId}`);
@@ -538,6 +564,9 @@ async function sendSecurityAlertEmail({ toEmail, fullName, userType, ip, userAge
  */
 async function sendAdmin2faOtpEmail(toEmail, otpCode, adminName) {
   const mailTransporter = getTransporter();
+  const safeToEmail = sanitizeEmailHeader(toEmail);
+  const safeOtpCode = sanitizeSingleLine(otpCode, 20);
+  const escAdminName = escapeHtml(adminName || safeToEmail);
 
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #E5E7EB; border-radius: 8px; background-color: #ffffff;">
@@ -546,14 +575,14 @@ async function sendAdmin2faOtpEmail(toEmail, otpCode, adminName) {
         <p style="color: #6B7280; font-size: 14px; margin-top: 4px;">Hệ thống Quản trị viên An toàn Cấp cao</p>
       </div>
       <p style="color: #374151; font-size: 15px; line-height: 1.6;">
-        Xin chào Quản trị viên <strong>${adminName || toEmail}</strong>,
+        Xin chào Quản trị viên <strong>${escAdminName}</strong>,
       </p>
       <p style="color: #374151; font-size: 14px; line-height: 1.6;">
         Bạn vừa yêu cầu đăng nhập vào Bảng điều khiển Quản trị viên <strong>VN.ITJobs</strong>. Dưới đây là mã xác thực 2 bước (2FA) của bạn:
       </p>
       <div style="text-align: center; margin: 28px 0;">
         <span style="display: inline-block; font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #000065; background-color: #EEF2FF; border: 2px dashed #6366F1; padding: 12px 28px; border-radius: 8px;">
-          ${otpCode}
+          ${escapeHtml(safeOtpCode)}
         </span>
       </div>
       <div style="background-color: #FEF2F2; border-left: 4px solid #EF4444; padding: 12px 16px; border-radius: 4px; font-size: 13px; color: #991B1B; margin-bottom: 18px;">
@@ -570,8 +599,8 @@ async function sendAdmin2faOtpEmail(toEmail, otpCode, adminName) {
     try {
       const info = await mailTransporter.sendMail({
         from: env.SMTP_FROM,
-        to: toEmail,
-        subject: `[VN.ITJobs Admin] Mã xác thực 2 bước (2FA): ${otpCode}`,
+        to: safeToEmail,
+        subject: sanitizeSingleLine(`[VN.ITJobs Admin] Mã xác thực 2 bước (2FA): ${safeOtpCode}`, 200),
         html: htmlContent,
       });
       console.log(`📧 Đã gửi mã 2FA tới Admin ${toEmail}: ${info.messageId}`);

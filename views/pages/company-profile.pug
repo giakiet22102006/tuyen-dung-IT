@@ -104,7 +104,7 @@ block main
 
                     div(class="mb-[20px]")
                         label(for="companyDescription" class="font-[500] text-[14px]") Mô tả chi tiết
-                        textarea(id="companyDescription" name="description" placeholder="Giới thiệu về công ty, môi trường làm việc..." class="border border-[#DEDEDE] rounded-[4px] py-[11px] px-[20px] mt-[5px] block w-full min-h-[200px]") !{company ? company.description : ""}
+                        textarea(id="companyDescription" name="description" placeholder="Giới thiệu về công ty, môi trường làm việc..." class="border border-[#DEDEDE] rounded-[4px] py-[11px] px-[20px] mt-[5px] block w-full min-h-[200px]")= company ? company.description : ""
 
                     div(class="")
                         button(type="submit" class="bg-[#0088FF] py-[14px] px-[30px] rounded-[4px] font-[700] text-[16px] text-white cursor-pointer") Cập nhật

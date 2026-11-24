@@ -145,10 +145,11 @@ block main
                                     div(class="flex items-start justify-between gap-[12px]")
                                         div(class="font-[400] text-[15px] text-[#A6A6A6] whitespace-nowrap shrink-0") Số điện thoại
                                         a(href="tel:" + company.phone class="font-[400] text-[15px] text-[#121212] hover:text-[#0088FF] text-right whitespace-nowrap") #{company.phone}
-                                if company.website
+                                - const safeWebsite = safeUrl(company.website)
+                                if safeWebsite
                                     div(class="flex items-start justify-between gap-[12px]")
                                         div(class="font-[400] text-[15px] text-[#A6A6A6] whitespace-nowrap shrink-0") Website
-                                        a(href=company.website target="_blank" rel="noopener noreferrer" class="font-[400] text-[15px] text-[#0088FF] hover:underline text-right truncate min-w-0") #{company.website}
+                                        a(href=safeWebsite target="_blank" rel="noopener noreferrer" class="font-[400] text-[15px] text-[#0088FF] hover:underline text-right truncate min-w-0") #{company.website}
                                 div(class="flex items-start justify-between gap-[12px]")
                                     div(class="font-[400] text-[15px] text-[#A6A6A6] whitespace-nowrap shrink-0") Mô hình công ty
                                     div(class="font-[400] text-[15px] text-[#121212] text-right") #{company.companyModel || "Sản phẩm & Dịch vụ"}
@@ -292,7 +293,7 @@ block modals
                                 span Tự động tổng hợp hồ sơ IT Profile (1-Click)
                             p(class="text-[12.5px] text-emerald-800 leading-relaxed")
                                 | Hệ thống sẽ tự động chuyển đổi toàn bộ học vấn, kinh nghiệm, dự án và kỹ năng từ Hồ sơ IT Profile của bạn thành bản CV điện tử chuyên nghiệp gửi trực tiếp tới Nhà tuyển dụng.
-                            a(href="/candidate/it-profile" target="_blank" class="inline-block text-[#0088FF] font-[600] text-[12.5px] underline hover:text-[#0066CC]")
+                            a(href="/candidate/it-profile" target="_blank" rel="noopener noreferrer" class="inline-block text-[#0088FF] font-[600] text-[12.5px] underline hover:text-[#0066CC]")
                                 | Xem lại hoặc cập nhật IT Profile trước khi nộp →
 
                         div(class="pt-[4px]")

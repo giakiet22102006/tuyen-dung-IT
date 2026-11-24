@@ -20,8 +20,8 @@ function formatJobDescription(raw) {
   // Tiền xử lý: loại bỏ bọc markdown code block nếu có
   text = text.replace(/^```html\s*/i, "").replace(/^```\s*/i, "").replace(/```$/i, "").trim();
 
-  // Danh sách các regex nhận diện tiêu đề phân mục phổ biến trong JD IT
-  const sectionHeaderRegex = /^(?:<[a-z0-9]+[^>]*>|\s*)*(?:[-*•#]+\s*)?(Trách nhiệm công việc|Mô tả công việc|Nhiệm vụ chính|Công việc của bạn|Yêu cầu ứng viên|Yêu cầu công việc|Yêu cầu kỹ năng|Kỹ năng yêu cầu|Yêu cầu chuyên môn|Quyền lợi được hưởng|Quyền lợi ứng viên|Quyền lợi|Chế độ đãi ngộ|Phúc lợi nổi bật|Phúc lợi|Địa điểm làm việc|Thời gian làm việc|Thông tin chung|Về dự án)(?:\s*:)?(?:\s*<\/[a-z0-9]+>|\s*)*$/i;
+  // Regex tuyến tính O(N) (không dùng nested quantifier) sau khi đã tách sạch thẻ HTML ở bước so khớp
+  const sectionHeaderRegex = /^(?:[-*•#]+\s*)?(Trách nhiệm công việc|Mô tả công việc|Nhiệm vụ chính|Công việc của bạn|Yêu cầu ứng viên|Yêu cầu công việc|Yêu cầu kỹ năng|Kỹ năng yêu cầu|Yêu cầu chuyên môn|Quyền lợi được hưởng|Quyền lợi ứng viên|Quyền lợi|Chế độ đãi ngộ|Phúc lợi nổi bật|Phúc lợi|Địa điểm làm việc|Thời gian làm việc|Thông tin chung|Về dự án)\s*:?$/i;
 
   // Tách từng dòng theo newline hoặc thẻ ngắt đoạn <p>, <br>, <div>
   const rawLines = text
@@ -42,9 +42,11 @@ function formatJobDescription(raw) {
     // Loại bỏ markdown heading `#`, `##`, `###`
     const isMdHeading = line.startsWith("#");
     const cleanLine = line.replace(/^#{1,6}\s*/, "").trim();
+    // Strip thẻ HTML bằng mẫu không chồng lấn tuyến tính trước khi kiểm tra tiêu đề (chống ReDoS)
+    const plainLine = cleanLine.replace(/<[^>]*>/g, "").trim();
 
     // Kiểm tra xem dòng này có phải là tiêu đề phân mục không
-    const isSectionHeader = isMdHeading || sectionHeaderRegex.test(cleanLine) || (cleanLine.endsWith(":") && cleanLine.length <= 50 && !cleanLine.startsWith("-") && !cleanLine.startsWith("•"));
+    const isSectionHeader = isMdHeading || sectionHeaderRegex.test(plainLine) || (plainLine.endsWith(":") && plainLine.length <= 50 && !plainLine.startsWith("-") && !plainLine.startsWith("•"));
 
     if (isSectionHeader) {
       if (inList) {
@@ -52,7 +54,7 @@ function formatJobDescription(raw) {
         inList = false;
       }
       // Chuẩn hóa tiêu đề: bỏ dấu ":" ở cuối nếu có rồi thêm lại đồng nhất
-      let headerText = cleanLine.replace(/<\/?[^>]+(>|$)/g, "").replace(/[:\s]+$/, "").trim();
+      let headerText = plainLine.replace(/[:\s]+$/, "").trim();
       outputHtml += `<h3>${headerText}:</h3>\n`;
     } else {
       // Dòng nội dung chi tiết: loại bỏ gạch đầu dòng cũ (- , • , * , 1. )

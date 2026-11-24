@@ -8,6 +8,8 @@ const {
 } = require("../models/article.model");
 const paginate = require("../utils/pagination");
 const slugify = require("../utils/slugify");
+const { sanitizeArticleHtml } = require("../utils/sanitizeHtml");
+const { escapeRegex, safeUrl } = require("../utils/securityHelpers");
 
 // Dữ liệu mẫu chuyên sâu chuẩn ITviec Blog
 const now = Date.now();
@@ -224,16 +226,17 @@ async function getArticles({ category = "", audience = "", search = "", page = 1
   const filter = { isPublished: true };
   const andConditions = [];
 
-  if (category) {
-    const normalizedCat = normalizeCategory(category);
+  if (typeof category === "string" && category.trim()) {
+    const cleanCat = category.trim().slice(0, 80);
+    const normalizedCat = normalizeCategory(cleanCat);
     const labelForCat = ARTICLE_CATEGORY_LABELS[normalizedCat];
     const categoryOrConditions = [
       { category: normalizedCat },
-      { category: category },
+      { category: cleanCat },
     ];
     if (labelForCat) {
       categoryOrConditions.push({ category: labelForCat });
-      categoryOrConditions.push({ category: new RegExp(labelForCat, "i") });
+      categoryOrConditions.push({ category: new RegExp(escapeRegex(labelForCat), "i") });
     }
     andConditions.push({ $or: categoryOrConditions });
   }
@@ -246,16 +249,18 @@ async function getArticles({ category = "", audience = "", search = "", page = 1
     }
   }
 
-  if (search && search.trim()) {
-    const s = search.trim();
-    andConditions.push({
-      $or: [
-        { title: { $regex: s, $options: "i" } },
-        { summary: { $regex: s, $options: "i" } },
-        { tags: { $in: [new RegExp(s, "i")] } },
-        { sourceName: { $regex: s, $options: "i" } },
-      ],
-    });
+  if (typeof search === "string" && search.trim()) {
+    const s = escapeRegex(search);
+    if (s) {
+      andConditions.push({
+        $or: [
+          { title: { $regex: s, $options: "i" } },
+          { summary: { $regex: s, $options: "i" } },
+          { tags: { $in: [new RegExp(s, "i")] } },
+          { sourceName: { $regex: s, $options: "i" } },
+        ],
+      });
+    }
   }
 
   if (andConditions.length > 0) {
@@ -283,12 +288,18 @@ async function getArticles({ category = "", audience = "", search = "", page = 1
  */
 async function getArticleBySlug(slug) {
   await ensureSeedArticles();
+  if (typeof slug !== "string" || !slug.trim()) return null;
 
   const article = await Article.findOneAndUpdate(
-    { slug, isPublished: true },
+    { slug: slug.trim(), isPublished: true },
     { $inc: { views: 1 } },
     { new: true }
   ).lean();
+
+  if (article) {
+    article.content = sanitizeArticleHtml(article.content);
+    article.sourceUrl = safeUrl(article.sourceUrl);
+  }
 
   return article;
 }
@@ -322,16 +333,18 @@ async function getAdminArticles({ search = "", category = "", audience = "", isP
   await ensureSeedArticles();
 
   const filter = {};
+  const andConditions = [];
 
-  if (category) {
-    const normalizedCat = normalizeCategory(category);
+  if (typeof category === "string" && category.trim()) {
+    const cleanCat = category.trim().slice(0, 80);
+    const normalizedCat = normalizeCategory(cleanCat);
     const labelForCat = ARTICLE_CATEGORY_LABELS[normalizedCat];
     const categoryOrConditions = [
       { category: normalizedCat },
-      { category: category },
+      { category: cleanCat },
     ];
     if (labelForCat) categoryOrConditions.push({ category: labelForCat });
-    filter.$or = categoryOrConditions;
+    andConditions.push({ $or: categoryOrConditions });
   }
 
   if (audience && Object.values(TARGET_AUDIENCES).includes(audience)) {
@@ -342,14 +355,22 @@ async function getAdminArticles({ search = "", category = "", audience = "", isP
     filter.isPublished = isPublished === "true" || isPublished === true;
   }
 
-  if (search && search.trim()) {
-    const s = search.trim();
-    filter.$or = [
-      { title: { $regex: s, $options: "i" } },
-      { summary: { $regex: s, $options: "i" } },
-      { sourceName: { $regex: s, $options: "i" } },
-      { tags: { $in: [new RegExp(s, "i")] } },
-    ];
+  if (typeof search === "string" && search.trim()) {
+    const s = escapeRegex(search);
+    if (s) {
+      andConditions.push({
+        $or: [
+          { title: { $regex: s, $options: "i" } },
+          { summary: { $regex: s, $options: "i" } },
+          { sourceName: { $regex: s, $options: "i" } },
+          { tags: { $in: [new RegExp(s, "i")] } },
+        ],
+      });
+    }
+  }
+
+  if (andConditions.length > 0) {
+    filter.$and = andConditions;
   }
 
   const total = await Article.countDocuments(filter);
@@ -406,13 +427,13 @@ async function createArticle(data) {
     targetAudience: data.targetAudience || TARGET_AUDIENCES.ALL,
     isGated,
     summary: data.summary.trim(),
-    content: data.content,
-    thumbnail: data.thumbnail || "/assets/images/demo/demo1.png",
+    content: sanitizeArticleHtml(data.content),
+    thumbnail: safeUrl(data.thumbnail, { allowRelative: true }) || "/assets/images/demo/demo1.png",
     tags,
     readingTime: parseInt(data.readingTime, 10) || 5,
     isOriginal: data.isOriginal === "false" || data.isOriginal === false ? false : true,
     sourceName: data.sourceName ? data.sourceName.trim() : "",
-    sourceUrl: data.sourceUrl ? data.sourceUrl.trim() : "",
+    sourceUrl: data.sourceUrl ? safeUrl(data.sourceUrl.trim()) : "",
     originalAuthor: data.originalAuthor ? data.originalAuthor.trim() : "",
     isPublished: data.isPublished === "false" || data.isPublished === false ? false : true,
     publishedAt: data.isPublished === false ? null : new Date(),
@@ -442,8 +463,11 @@ async function updateArticle(id, data) {
   if (data.category) article.category = normalizeCategory(data.category);
   if (data.targetAudience) article.targetAudience = data.targetAudience;
   if (data.summary) article.summary = data.summary.trim();
-  if (data.content) article.content = data.content;
-  if (data.thumbnail) article.thumbnail = data.thumbnail.trim();
+  if (data.content) article.content = sanitizeArticleHtml(data.content);
+  if (data.thumbnail) {
+    const cleanThumb = safeUrl(data.thumbnail.trim(), { allowRelative: true });
+    if (cleanThumb) article.thumbnail = cleanThumb;
+  }
 
   if (data.tags !== undefined) {
     article.tags = Array.isArray(data.tags)
@@ -457,7 +481,7 @@ async function updateArticle(id, data) {
 
   article.isOriginal = data.isOriginal === "false" || data.isOriginal === false ? false : true;
   article.sourceName = data.sourceName ? data.sourceName.trim() : "";
-  article.sourceUrl = data.sourceUrl ? data.sourceUrl.trim() : "";
+  article.sourceUrl = data.sourceUrl ? safeUrl(data.sourceUrl.trim()) : "";
   article.originalAuthor = data.originalAuthor ? data.originalAuthor.trim() : "";
 
   if (data.isGated !== undefined || data.targetAudience !== undefined) {

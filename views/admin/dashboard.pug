@@ -155,7 +155,7 @@ block main
                                 td(colspan="5" class="py-[32px] text-center text-[#6B7280]") Hiện tại không có Nhà tuyển dụng nào đang chờ phê duyệt.
 
     script.
-        const chartData = !{JSON.stringify(chartData)};
+        const chartData = !{safeJson(chartData)};
         const ctx = document.getElementById('registrationChart');
         if (ctx && chartData && typeof Chart !== 'undefined') {
             new Chart(ctx, {

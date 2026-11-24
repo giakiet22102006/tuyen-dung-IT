@@ -8,7 +8,7 @@ const { notifyMatchingSubscribers } = require("../../services/jobAlert.service")
 const sanitizeHtml = require("../../utils/sanitizeHtml");
 const slugify = require("../../utils/slugify");
 const paginate = require("../../utils/pagination");
-const { getCompanyMapData } = require("../../utils/googleMaps");
+const { getCompanyMapData, sanitizeGoogleMapsInput } = require("../../utils/googleMaps");
 
 // 1. Hồ sơ công ty
 const renderCompanyProfile = async (req, res) => {
@@ -54,7 +54,7 @@ const postCompanyProfile = async (req, res) => {
   company.companyName = companyName.trim();
   company.city = city || company.city;
   company.address = (address || "").trim();
-  company.googleMapsUrl = (googleMapsUrl || "").trim();
+  company.googleMapsUrl = sanitizeGoogleMapsInput(googleMapsUrl || "");
   company.companyModel = (companyModel || "").trim();
   company.companySize = (companySize || "").trim();
   company.workingTime = (workingTime || "").trim();
@@ -97,7 +97,7 @@ const postCompanyProfile = async (req, res) => {
 
 // 2. Quản lý việc làm
 const renderManageJobs = async (req, res) => {
-  const page = req.query.page || 1;
+  const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
   const filter = {
     employerId: req.user._id,
     deletedAt: null,

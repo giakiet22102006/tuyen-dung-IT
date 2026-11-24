@@ -1,6 +1,36 @@
 // public/assets/js/main.js
 
 /**
+ * Helper chống DOM XSS: escape HTML entities & kiểm tra URL an toàn (chỉ cho phép / hoặc http(s)://)
+ */
+window.itjEscapeHtml = function (str) {
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+};
+
+window.itjSafeHref = function (rawUrl) {
+  if (!rawUrl || typeof rawUrl !== "string") return "#";
+  const trimmed = rawUrl.trim();
+  if (trimmed.startsWith("/") && !trimmed.startsWith("//") && !trimmed.startsWith("/\\")) {
+    return trimmed;
+  }
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+      return parsed.href;
+    }
+  } catch {
+    // ignore invalid URL
+  }
+  return "#";
+};
+
+/**
  * =========================================================================
  * TOAST NOTIFICATION SYSTEM (Hệ thống thông báo Toast Popup nhẹ nhàng)
  * =========================================================================
@@ -37,7 +67,7 @@ window.showToast = function (message, type = "success", duration = 3500) {
   toast.innerHTML = `
     ${iconHtml}
     <div class="flex-1 text-[13.5px] sm:text-[14px] font-[500] leading-snug break-words">
-      ${message}
+      ${window.itjEscapeHtml(message)}
     </div>
     <button type="button" class="text-gray-400 hover:text-gray-700 p-0.5 ml-1 cursor-pointer transition-colors" aria-label="Đóng">
       <i class="fa-solid fa-xmark text-[14px]"></i>
@@ -260,12 +290,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
           // Mục "Có phải bạn muốn tìm..." nếu gõ sai chính tả
           if (hasDidYouMean) {
+            const safeSug = window.itjEscapeHtml(data.didYouMean.suggestion);
+            const safeDisp = window.itjEscapeHtml(data.didYouMean.displayText);
             html += `
-              <div class="px-4 py-2.5 bg-amber-50 hover:bg-amber-100 cursor-pointer border-b border-gray-100 flex items-center gap-2 suggestion-item" data-query="${data.didYouMean.suggestion}">
+              <div class="px-4 py-2.5 bg-amber-50 hover:bg-amber-100 cursor-pointer border-b border-gray-100 flex items-center gap-2 suggestion-item" data-query="${safeSug}">
                 <i class="fa-regular fa-lightbulb text-amber-500 text-sm"></i>
                 <div class="text-sm text-gray-700">
                   <span>Có phải bạn muốn tìm: </span>
-                  <strong class="text-[#0088FF] font-semibold">${data.didYouMean.displayText}</strong>?
+                  <strong class="text-[#0088FF] font-semibold">${safeDisp}</strong>?
                 </div>
               </div>
             `;
@@ -275,11 +307,12 @@ document.addEventListener("DOMContentLoaded", () => {
           if (hasSuggestions) {
             html += `<div class="py-1">`;
             data.suggestions.forEach((item) => {
+              const safeText = window.itjEscapeHtml(item.text);
               html += `
-                <div class="px-4 py-2.5 hover:bg-blue-50 cursor-pointer flex items-center justify-between text-sm text-gray-800 suggestion-item transition-colors" data-query="${item.text}">
+                <div class="px-4 py-2.5 hover:bg-blue-50 cursor-pointer flex items-center justify-between text-sm text-gray-800 suggestion-item transition-colors" data-query="${safeText}">
                   <div class="flex items-center gap-2.5">
                     <i class="fa-solid fa-magnifying-glass text-gray-400 text-xs"></i>
-                    <span>${item.text}</span>
+                    <span>${safeText}</span>
                   </div>
                   <span class="text-xs text-gray-400">Tìm việc làm</span>
                 </div>
@@ -528,19 +561,26 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         notifListContainer.innerHTML = data.notifications
-          .map((n) => `
-            <a href="${n.link || '#'}" class="notif-item flex items-start gap-3 p-3.5 hover:bg-gray-50 transition-colors ${!n.isRead ? 'bg-blue-50/50' : ''}" data-id="${n._id}">
+          .map((n) => {
+            const safeLink = window.itjEscapeHtml(window.itjSafeHref(n.link || "#"));
+            const safeId = window.itjEscapeHtml(n._id || "");
+            const safeTitle = window.itjEscapeHtml(n.title || "");
+            const safeMessage = window.itjEscapeHtml(n.message || "");
+            const safeTime = window.itjEscapeHtml(formatRelativeTime(n.createdAt));
+            return `
+            <a href="${safeLink}" class="notif-item flex items-start gap-3 p-3.5 hover:bg-gray-50 transition-colors ${!n.isRead ? 'bg-blue-50/50' : ''}" data-id="${safeId}">
               ${getIconForType(n.type)}
               <div class="flex-1 min-w-0">
                 <div class="text-[13px] font-[600] text-gray-900 leading-snug flex items-center justify-between">
-                  <span class="truncate">${n.title}</span>
+                  <span class="truncate">${safeTitle}</span>
                   ${!n.isRead ? '<span class="w-2 h-2 rounded-full bg-blue-600 shrink-0 ml-1"></span>' : ''}
                 </div>
-                <div class="text-[12px] text-gray-600 mt-0.5 line-clamp-2 leading-relaxed">${n.message}</div>
-                <div class="text-[10.5px] text-gray-400 mt-1">${formatRelativeTime(n.createdAt)}</div>
+                <div class="text-[12px] text-gray-600 mt-0.5 line-clamp-2 leading-relaxed">${safeMessage}</div>
+                <div class="text-[10.5px] text-gray-400 mt-1">${safeTime}</div>
               </div>
             </a>
-          `)
+          `;
+          })
           .join("");
 
         // Bắt sự kiện click vào từng thông báo để đánh dấu đã đọc

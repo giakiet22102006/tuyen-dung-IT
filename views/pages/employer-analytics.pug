@@ -117,7 +117,7 @@ block main
                                 each j in jobs
                                     tr(class="hover:bg-gray-50/80 transition-colors")
                                         td(class="py-[14px] px-[18px]")
-                                            a(href=`/jobs/${j.slug}` target="_blank" class="font-[700] text-gray-900 hover:text-[#0088FF] transition-colors block line-clamp-1") #{j.title}
+                                            a(href=`/jobs/${j.slug}` target="_blank" rel="noopener noreferrer" class="font-[700] text-gray-900 hover:text-[#0088FF] transition-colors block line-clamp-1") #{j.title}
                                             div(class="text-[12px] text-gray-400 mt-[2px]") Đăng ngày #{formatDate(j.createdAt)} • #{labels.getCityLabel(j.city)}
                                         td(class="py-[14px] px-[14px] text-center")
                                             span(class="px-[8px] py-[2px] rounded-full bg-gray-100 text-gray-700 text-[11.5px] font-[600]") #{labels.getPositionLabel(j.position)}

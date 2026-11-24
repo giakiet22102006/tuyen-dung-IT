@@ -275,7 +275,8 @@ function findClosestWord(word, vocabularyTerms) {
 async function findDidYouMean(rawQuery) {
   if (!rawQuery || typeof rawQuery !== "string") return null;
   const trimmed = rawQuery.trim();
-  if (trimmed.length < 2) return null;
+  // Giới hạn độ dài để ngăn Algorithmic Complexity DoS trên Damerau-Levenshtein O(N*M)
+  if (trimmed.length < 2 || trimmed.length > 100) return null;
 
   const normQuery = normalizeVi(trimmed);
   const { terms, displayMap } = await getVocabulary();
@@ -286,7 +287,7 @@ async function findDidYouMean(rawQuery) {
   let minPhraseDist = Infinity;
 
   for (const term of terms) {
-    if (term.includes(" ")) {
+    if (term.includes(" ") && Math.abs(term.length - normQuery.length) <= maxPhraseDist) {
       const dist = damerauLevenshtein(normQuery, term);
       if (dist <= maxPhraseDist && dist < minPhraseDist) {
         minPhraseDist = dist;
@@ -305,8 +306,8 @@ async function findDidYouMean(rawQuery) {
     };
   }
 
-  // 2. Xử lý từng từ trong cụm từ (Token-based correction)
-  const tokens = normQuery.split(/\s+/).filter(Boolean);
+  // 2. Xử lý từng từ trong cụm từ (Token-based correction, giới hạn tối đa 10 token)
+  const tokens = normQuery.split(/\s+/).filter(Boolean).slice(0, 10);
   const correctedTokens = [];
   let hasCorrection = false;
   let totalDistance = 0;

@@ -7,9 +7,10 @@ const { logAdminAction } = require("../../services/audit.service");
 const { deleteFile } = require("../../services/storage.service");
 const paginate = require("../../utils/pagination");
 const env = require("../../config/env");
+const { escapeRegex, isValidObjectId, getSafeBackRedirect } = require("../../utils/securityHelpers");
 
 const renderList = async (req, res) => {
-  const page = parseInt(req.query.page, 10) || 1;
+  const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
   const { keyword, status, sort } = req.query;
 
   const filter = {};
@@ -23,8 +24,8 @@ const renderList = async (req, res) => {
     }
   }
 
-  if (keyword && keyword.trim()) {
-    const reg = new RegExp(keyword.trim(), "i");
+  if (typeof keyword === "string" && keyword.trim()) {
+    const reg = new RegExp(escapeRegex(keyword), "i");
     filter.$or = [{ fullName: reg }, { email: reg }, { phone: reg }];
   }
 
@@ -209,7 +210,7 @@ const postBan = async (req, res) => {
   const { reason } = req.body;
   if (!reason || !reason.trim()) {
     req.flash("error", "Vui lòng nhập lý do khóa tài khoản bắt buộc.");
-    return res.redirect(req.headers.referer || `/${adminPath}/candidates`);
+    return res.redirect(getSafeBackRedirect(req, `/${adminPath}/candidates`));
   }
 
   const candidate = await Candidate.findById(req.params.id);
@@ -233,7 +234,7 @@ const postBan = async (req, res) => {
   });
 
   req.flash("success", `Đã khóa tài khoản ứng viên ${candidate.fullName}.`);
-  res.redirect(req.headers.referer || `/${adminPath}/candidates/${candidate._id}`);
+  res.redirect(getSafeBackRedirect(req, `/${adminPath}/candidates/${candidate._id}`));
 };
 
 const postUnban = async (req, res) => {
@@ -258,7 +259,7 @@ const postUnban = async (req, res) => {
   });
 
   req.flash("success", `Đã mở khóa tài khoản ứng viên ${candidate.fullName}.`);
-  res.redirect(req.headers.referer || `/${adminPath}/candidates/${candidate._id}`);
+  res.redirect(getSafeBackRedirect(req, `/${adminPath}/candidates/${candidate._id}`));
 };
 
 const postResetPassword = async (req, res) => {
@@ -287,7 +288,7 @@ const postResetPassword = async (req, res) => {
     "success",
     `Đặt lại mật khẩu thành công! Mật khẩu tạm mới (chỉ hiển thị một lần): ${tempPassword}`
   );
-  res.redirect(req.headers.referer || `/${adminPath}/candidates/${candidate._id}`);
+  res.redirect(getSafeBackRedirect(req, `/${adminPath}/candidates/${candidate._id}`));
 };
 
 const postSoftDelete = async (req, res) => {
@@ -378,10 +379,11 @@ const postHardDelete = async (req, res) => {
 const postBulkAction = async (req, res) => {
   const adminPath = env.ADMIN_PATH || "admin";
   const { action, ids } = req.body;
-  const targetIds = Array.isArray(ids) ? ids : [ids].filter(Boolean);
+  const rawIds = Array.isArray(ids) ? ids : [ids].filter(Boolean);
+  const targetIds = rawIds.filter(isValidObjectId);
 
   if (!targetIds.length) {
-    req.flash("error", "Vui lòng chọn ít nhất một Ứng viên.");
+    req.flash("error", "Vui lòng chọn ít nhất một Ứng viên hợp lệ.");
     return res.redirect(`/${adminPath}/candidates`);
   }
 

@@ -14,6 +14,7 @@ const { uploadCV, saveCvBuffer } = require("../../services/storage.service");
 const { generateItProfilePdf } = require("../../services/pdfGenerator.service");
 const { getCompanyMapData } = require("../../utils/googleMaps");
 const { chatWithSupportAssistant } = require("../../services/ai.service");
+const env = require("../../config/env");
 
 const wantsMarkdown = (req) => {
   const accept = req.get("accept") || "";
@@ -385,6 +386,25 @@ const postCompanyReview = async (req, res) => {
     return res.redirect(`/companies/${slug}`);
   }
 
+  // Chặn doanh nghiệp tự đánh giá chính công ty mình
+  if (req.role === "employer" && req.user._id.toString() === company._id.toString()) {
+    req.flash("error", "Bạn không thể tự gửi đánh giá cho chính công ty của mình.");
+    return res.redirect(`/companies/${slug}#review-section`);
+  }
+
+  // Chặn spam: mỗi tài khoản chỉ gửi 1 đánh giá cho cùng một công ty
+  const duplicateQuery = { employerId: company._id };
+  if (req.role === "employer") {
+    duplicateQuery.authorEmployerId = req.user._id;
+  } else {
+    duplicateQuery.authorCandidateId = req.user._id;
+  }
+  const existingReview = await Review.exists(duplicateQuery);
+  if (existingReview) {
+    req.flash("error", "Bạn đã gửi đánh giá cho công ty này trước đó rồi.");
+    return res.redirect(`/companies/${slug}#review-section`);
+  }
+
   const { rating, title, pros, cons } = req.body;
   const numRating = Number(rating);
 
@@ -469,37 +489,13 @@ const postSubmitFeedback = async (req, res) => {
     });
   } catch (err) {
     console.error("Lỗi gửi feedback:", err.message);
-    return res.status(500).json({ success: false, message: "Không thể gửi phản hồi: " + err.message });
+    const errMsg = env.NODE_ENV === "production" ? "Không thể gửi phản hồi lúc này. Vui lòng thử lại sau." : "Không thể gửi phản hồi: " + err.message;
+    return res.status(500).json({ success: false, message: errMsg });
   }
 };
 
-// Lưu lịch sử rate-limit gửi chat hỗ trợ (chống spam)
-const chatRateLimitMap = new Map();
-
 const postChatAssistant = async (req, res) => {
   try {
-    const ip = req.ip || req.headers["x-forwarded-for"] || "127.0.0.1";
-    const now = Date.now();
-    const userWindow = chatRateLimitMap.get(ip) || [];
-    const recentRequests = userWindow.filter((ts) => now - ts < 60 * 1000);
-
-    if (recentRequests.length >= 25) {
-      return res.status(429).json({
-        success: false,
-        message: "Bạn đang gửi tin nhắn quá nhanh. Vui lòng đợi một lát rồi thử lại nhé!",
-      });
-    }
-
-    recentRequests.push(now);
-    chatRateLimitMap.set(ip, recentRequests);
-
-    // Dọn dẹp bộ nhớ định kỳ nếu Map quá lớn
-    if (chatRateLimitMap.size > 5000) {
-      for (const [k, v] of chatRateLimitMap.entries()) {
-        if (v.every((ts) => now - ts > 60 * 1000)) chatRateLimitMap.delete(k);
-      }
-    }
-
     const { message, history, pageContext } = req.body;
     if (!message || typeof message !== "string" || !message.trim()) {
       return res.status(400).json({ success: false, message: "Vui lòng nhập nội dung câu hỏi." });
@@ -545,9 +541,10 @@ const postChatAssistant = async (req, res) => {
     });
   } catch (err) {
     console.error("Lỗi xử lý chat trợ lý:", err.message);
+    const errMsg = env.NODE_ENV === "production" ? "Có lỗi khi xử lý tin nhắn của bạn. Vui lòng thử lại sau." : "Có lỗi khi xử lý tin nhắn của bạn: " + err.message;
     return res.status(500).json({
       success: false,
-      message: "Có lỗi khi xử lý tin nhắn của bạn: " + err.message,
+      message: errMsg,
     });
   }
 };

@@ -83,7 +83,7 @@ async function authenticateUser(req, res, next) {
       }
     } else if (payload.role === "employer") {
       user = await Employer.findOne({ _id: payload.id, deletedAt: null })
-        .select("-password")
+        .select("-password -teamMembers.password")
         .lean();
 
       if (!user || user.status === EMPLOYER_STATUS.BANNED) {
@@ -236,6 +236,29 @@ function requireEmployer(req, res, next) {
 }
 
 /**
+ * Bắt buộc quyền Quản trị viên công ty (chủ tài khoản Employer hoặc team member có role === "admin")
+ * Chặn chuyên viên tuyển dụng (role === "recruiter") tự quản lý đội ngũ hoặc leo thang đặc quyền (BFLA)
+ */
+function requireEmployerAdmin(req, res, next) {
+  if (!req.user || req.role !== "employer") {
+    return requireEmployer(req, res, next);
+  }
+  if (req.user.currentMember && req.user.currentMember.role !== "admin") {
+    if (isApiRequest(req)) {
+      return res.status(403).json({
+        success: false,
+        message: "Chỉ Quản trị viên công ty mới có quyền quản lý đội ngũ tuyển dụng.",
+      });
+    }
+    if (req.flash) {
+      req.flash("error", "Chỉ Quản trị viên công ty mới có quyền quản lý đội ngũ tuyển dụng.");
+    }
+    return res.redirect("/employer/company-profile");
+  }
+  next();
+}
+
+/**
  * Bắt buộc quyền Quản trị viên (Admin)
  */
 function requireAdmin(req, res, next) {
@@ -321,6 +344,7 @@ module.exports = {
   authenticateAdmin,
   requireCandidate,
   requireEmployer,
+  requireEmployerAdmin,
   requireAdmin,
   requireSuperAdmin,
   adminSecurityHeaders,

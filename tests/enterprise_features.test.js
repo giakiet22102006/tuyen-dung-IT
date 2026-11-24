@@ -161,11 +161,11 @@ describe("Enterprise Feature Expansion Tests", () => {
     });
     await employer.save();
 
-    // Tìm employer bằng email của chuyên viên
+    // Tìm employer bằng email của chuyên viên (chỉ định rõ +teamMembers.password do đã bật select: false)
     const empWithMember = await Employer.findOne({
       "teamMembers.email": memberEmail,
       deletedAt: null,
-    });
+    }).select("+teamMembers.password");
     expect(empWithMember).toBeDefined();
 
     const member = empWithMember.teamMembers.find((m) => m.email === memberEmail);

@@ -1,6 +1,7 @@
 // src/controllers/employer/employerOps.controller.js
 const bcrypt = require("bcryptjs");
 const { Job, Application, Employer } = require("../../models");
+const { isValidObjectId } = require("../../utils/securityHelpers");
 
 /**
  * Báo cáo & Phân tích tuyển dụng (Recruitment Analytics Dashboard)
@@ -94,30 +95,41 @@ const renderTeam = async (req, res) => {
  */
 const postAddTeamMember = async (req, res) => {
   const { fullName, email, password, role } = req.body;
-  if (!fullName || !fullName.trim() || !email || !email.trim() || !password) {
-    req.flash("error", "Vui lòng nhập đầy đủ họ tên, email và mật khẩu khởi tạo cho chuyên viên.");
+  if (
+    typeof fullName !== "string" || !fullName.trim() ||
+    typeof email !== "string" || !email.trim() || !email.includes("@") ||
+    typeof password !== "string" || !password
+  ) {
+    req.flash("error", "Vui lòng nhập đầy đủ họ tên, email hợp lệ và mật khẩu khởi tạo cho chuyên viên.");
     return res.redirect("/employer/team");
   }
 
-  if (password.length < 8) {
-    req.flash("error", "Mật khẩu khởi tạo phải có độ dài tối thiểu 8 ký tự.");
+  if (password.length < 8 || !/(?=.*[a-zA-Z])(?=.*[0-9])/.test(password)) {
+    req.flash("error", "Mật khẩu khởi tạo phải có tối thiểu 8 ký tự, gồm cả chữ và số.");
     return res.redirect("/employer/team");
   }
 
   const cleanEmail = email.trim().toLowerCase();
   const employer = await Employer.findById(req.user._id);
 
-  // Kiểm tra trùng email trong nhóm hoặc với email công ty
-  const isExist = (employer.teamMembers || []).some((m) => m.email === cleanEmail);
-  if (isExist || employer.email === cleanEmail) {
-    req.flash("error", "Email này đã tồn tại trong danh sách nhóm tuyển dụng.");
+  if ((employer.teamMembers || []).length >= 50) {
+    req.flash("error", "Đã đạt giới hạn tối đa 50 thành viên trong nhóm tuyển dụng.");
+    return res.redirect("/employer/team");
+  }
+
+  // Kiểm tra trùng email trên toàn hệ thống Nhà tuyển dụng (chặn xung đột chéo giữa các công ty khi đăng nhập)
+  const globalEmailConflict = await Employer.exists({
+    $or: [{ email: cleanEmail }, { "teamMembers.email": cleanEmail }],
+  });
+  if (globalEmailConflict) {
+    req.flash("error", "Email này đã được sử dụng trên hệ thống Nhà tuyển dụng.");
     return res.redirect("/employer/team");
   }
 
   const hashedPassword = await bcrypt.hash(password, 12);
 
   employer.teamMembers.push({
-    fullName: fullName.trim(),
+    fullName: fullName.trim().slice(0, 120),
     email: cleanEmail,
     password: hashedPassword,
     role: role === "admin" ? "admin" : "recruiter",
@@ -135,6 +147,16 @@ const postAddTeamMember = async (req, res) => {
  */
 const postRemoveTeamMember = async (req, res) => {
   const { memberId } = req.params;
+  if (!isValidObjectId(memberId)) {
+    req.flash("error", "Mã thành viên không hợp lệ.");
+    return res.redirect("/employer/team");
+  }
+
+  if (req.user.currentMember && req.user.currentMember._id.toString() === memberId) {
+    req.flash("error", "Bạn không thể tự xóa chính tài khoản đang đăng nhập.");
+    return res.redirect("/employer/team");
+  }
+
   const employer = await Employer.findById(req.user._id);
 
   employer.teamMembers = (employer.teamMembers || []).filter(

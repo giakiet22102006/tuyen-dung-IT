@@ -38,6 +38,14 @@ const postSignup = async (req, res) => {
 
   const { companyName, email, password } = result.data;
   const cleanEmail = email.toLowerCase().trim();
+  const existingTeamConflict = await Employer.exists({ "teamMembers.email": cleanEmail });
+  if (existingTeamConflict) {
+    return res.status(400).render("pages/employer-signup", {
+      title: "Đăng ký (Nhà tuyển dụng)",
+      errors: { email: "Email này đã được sử dụng. Vui lòng chọn email khác hoặc Đăng nhập." },
+      old: req.body,
+    });
+  }
   const existing = await Employer.findOne({ email: cleanEmail });
 
   if (existing) {
@@ -144,37 +152,46 @@ const postVerifyRegistration = async (req, res) => {
     });
   }
 
-  const otpRecord = await Otp.findOne({
-    email: cleanEmail,
-    userType: "employer",
-    type: "register",
-    expiresAt: { $gt: new Date() },
-  });
+  // Tăng attempts nguyên tử TRƯỚC khi chạy bcrypt.compare để chống Race Condition brute-force
+  const otpRecord = await Otp.findOneAndUpdate(
+    {
+      email: cleanEmail,
+      userType: "employer",
+      type: "register",
+      expiresAt: { $gt: new Date() },
+      attempts: { $lt: 5 },
+    },
+    { $inc: { attempts: 1 } },
+    { new: true }
+  );
 
   if (!otpRecord) {
-    return res.status(400).render("pages/verify-registration", {
-      title: "Xác thực Email đăng ký (Nhà tuyển dụng)",
-      userRole: "employer",
+    await Otp.deleteMany({
       email: cleanEmail,
-      errors: { otp: "Mã OTP đã hết hạn hoặc không tồn tại. Vui lòng bấm 'Gửi lại mã OTP'." },
+      userType: "employer",
+      type: "register",
+      attempts: { $gte: 5 },
     });
-  }
-
-  if (otpRecord.attempts >= 5) {
-    await Otp.deleteOne({ _id: otpRecord._id });
     return res.status(400).render("pages/verify-registration", {
       title: "Xác thực Email đăng ký (Nhà tuyển dụng)",
       userRole: "employer",
       email: cleanEmail,
-      errors: { otp: "Bạn đã nhập sai mã quá 5 lần. Vui lòng bấm gửi lại mã mới." },
+      errors: { otp: "Mã OTP đã hết hạn, không tồn tại hoặc đã vượt quá 5 lần thử. Vui lòng bấm 'Gửi lại mã OTP'." },
     });
   }
 
   const isMatch = await bcrypt.compare(cleanOtp, otpRecord.otpHash);
   if (!isMatch) {
-    otpRecord.attempts += 1;
-    await otpRecord.save();
-    const remaining = 5 - otpRecord.attempts;
+    if (otpRecord.attempts >= 5) {
+      await Otp.deleteOne({ _id: otpRecord._id });
+      return res.status(400).render("pages/verify-registration", {
+        title: "Xác thực Email đăng ký (Nhà tuyển dụng)",
+        userRole: "employer",
+        email: cleanEmail,
+        errors: { otp: "Bạn đã nhập sai mã quá 5 lần. Vui lòng bấm gửi lại mã mới." },
+      });
+    }
+    const remaining = Math.max(0, 5 - otpRecord.attempts);
     return res.status(400).render("pages/verify-registration", {
       title: "Xác thực Email đăng ký (Nhà tuyển dụng)",
       userRole: "employer",
@@ -246,7 +263,12 @@ const postResendRegistrationOtp = async (req, res) => {
 
 const renderLogin = (req, res) => {
   if (req.cookies?.itj_session_conflict) {
-    res.clearCookie("itj_session_conflict");
+    res.clearCookie("itj_session_conflict", {
+      httpOnly: true,
+      secure: env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+    });
     if (req.flash) {
       req.flash("error", "⚠️ Phiên làm việc đã kết thúc do tài khoản vừa đăng nhập trên một thiết bị/trình duyệt khác. Nếu không phải bạn, hãy đổi mật khẩu ngay!");
     }
@@ -277,11 +299,11 @@ const postLogin = async (req, res) => {
   let loggedInMember = null;
 
   if (!employer) {
-    // Tìm kiếm trong danh sách Chuyên viên tuyển dụng (Team members)
+    // Tìm kiếm trong danh sách Chuyên viên tuyển dụng (Team members) — cần select rõ +teamMembers.password
     employer = await Employer.findOne({
       "teamMembers.email": cleanEmail,
       deletedAt: null,
-    });
+    }).select("+teamMembers.password");
 
     if (employer) {
       loggedInMember = (employer.teamMembers || []).find((m) => m.email === cleanEmail);
@@ -402,8 +424,23 @@ const postLogin = async (req, res) => {
   res.redirect(redirectUrl);
 };
 
-const postLogout = (req, res) => {
-  res.clearCookie("itj_token");
+const postLogout = async (req, res) => {
+  if (req.user && req.user._id && req.role === "employer") {
+    if (req.user.currentMember && req.user.currentMember._id) {
+      await Employer.updateOne(
+        { _id: req.user._id, "teamMembers._id": req.user.currentMember._id },
+        { $inc: { "teamMembers.$.tokenVersion": 1 } }
+      ).catch(() => {});
+    } else {
+      await Employer.updateOne({ _id: req.user._id }, { $inc: { tokenVersion: 1 } }).catch(() => {});
+    }
+  }
+  res.clearCookie("itj_token", {
+    httpOnly: true,
+    secure: env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+  });
   req.flash("success", "Đăng xuất thành công!");
   res.redirect("/");
 };
@@ -433,6 +470,50 @@ const postChangePassword = async (req, res) => {
   }
 
   const { currentPassword, newPassword } = result.data;
+
+  // Nếu đang đăng nhập bằng tài khoản Chuyên viên tuyển dụng (teamMember) -> chỉ đổi mật khẩu riêng của thành viên đó
+  if (req.user.currentMember && req.user.currentMember._id) {
+    const employer = await Employer.findById(req.user._id).select("+teamMembers.password");
+    const member = employer && (employer.teamMembers || []).find(
+      (m) => m._id.toString() === req.user.currentMember._id.toString()
+    );
+    if (!member) {
+      req.flash("error", "Không tìm thấy thông tin thành viên.");
+      return res.redirect("/employer/login");
+    }
+
+    const isMemberMatch = await comparePassword(currentPassword, member.password || "");
+    if (!isMemberMatch) {
+      return res.status(400).render("pages/change-password", {
+        title: "Đổi mật khẩu (Nhà tuyển dụng)",
+        userRole: "employer",
+        errors: { currentPassword: "Mật khẩu hiện tại không chính xác" },
+        old: req.body,
+      });
+    }
+
+    member.password = await hashPassword(newPassword);
+    member.tokenVersion = (member.tokenVersion || 0) + 1;
+    await employer.save();
+
+    const newToken = signUserToken(employer, "employer", {
+      memberId: member._id.toString(),
+      memberName: member.fullName,
+      memberEmail: member.email,
+      memberRole: member.role,
+      tv: member.tokenVersion,
+    });
+    res.cookie("itj_token", newToken, {
+      httpOnly: true,
+      secure: env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    req.flash("success", "Đổi mật khẩu thành công!");
+    return res.redirect("/employer/company-profile");
+  }
+
   const employer = await Employer.findById(req.user._id).select("+password");
 
   const isMatch = await comparePassword(currentPassword, employer.password);
@@ -471,7 +552,7 @@ const redirectToGoogle = (req, res) => {
   }
 
   const nextUrl = isSafeRedirect(req.query.next) ? req.query.next : "/employer/company-profile";
-  const authUrl = googleAuthService.getGoogleAuthUrl("employer", nextUrl, req);
+  const authUrl = googleAuthService.getGoogleAuthUrl("employer", nextUrl, req, res);
   res.redirect(authUrl);
 };
 
@@ -480,38 +561,47 @@ const handleGoogleCallback = async (req, res) => {
   const googleAuthService = require("../../services/googleAuth.service");
   const { code, state, error } = req.query;
 
-  if (error || !code) {
+  if (error || !code || typeof code !== "string") {
+    googleAuthService.verifyOAuthState(null, "employer", req, res, "/employer/company-profile");
     req.flash("error", "Đăng nhập Google bị hủy hoặc gặp lỗi xác thực.");
     return res.redirect("/employer/login");
   }
 
-  let nextUrl = "/employer/company-profile";
-  if (state) {
-    try {
-      const decoded = JSON.parse(Buffer.from(state, "base64url").toString("utf8"));
-      if (decoded && isSafeRedirect(decoded.next)) {
-        nextUrl = decoded.next;
-      }
-    } catch (e) {}
+  // Xác thực state nonce cookie để chống OAuth Login CSRF
+  const stateCheck = googleAuthService.verifyOAuthState(state, "employer", req, res, "/employer/company-profile");
+  if (!stateCheck.valid) {
+    req.flash("error", "Phiên xác thực Google không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.");
+    return res.redirect("/employer/login");
   }
+  const nextUrl = stateCheck.next;
 
   try {
     const redirectUri = googleAuthService.getCallbackUrl("employer", req);
     const tokens = await googleAuthService.exchangeCodeForTokens(code, redirectUri);
     const profile = await googleAuthService.fetchGoogleUserInfo(tokens.access_token);
 
-    if (!profile || !profile.email) {
+    if (!profile || !profile.email || !profile.sub) {
       req.flash("error", "Không lấy được địa chỉ email từ tài khoản Google.");
+      return res.redirect("/employer/login");
+    }
+
+    // Bắt buộc email đã được Google xác minh để chống chiếm đoạt tài khoản qua OAuth
+    if (profile.email_verified !== true) {
+      req.flash("error", "Tài khoản Google của bạn chưa xác minh email nên không thể đăng nhập.");
       return res.redirect("/employer/login");
     }
 
     const cleanEmail = profile.email.toLowerCase().trim();
 
-    // Tìm nhà tuyển dụng theo googleId hoặc email đã tồn tại
-    let employer = await Employer.findOne({
-      $or: [{ googleId: profile.sub }, { email: cleanEmail }],
-      deletedAt: null,
-    });
+    // Tìm nhà tuyển dụng theo googleId trước, sau đó mới theo email
+    let employer = await Employer.findOne({ googleId: profile.sub, deletedAt: null });
+    if (!employer) {
+      employer = await Employer.findOne({ email: cleanEmail, deletedAt: null });
+      if (employer && employer.googleId && employer.googleId !== profile.sub) {
+        req.flash("error", "Email công ty này đã được liên kết với một tài khoản Google khác.");
+        return res.redirect("/employer/login");
+      }
+    }
 
     if (employer) {
       if (employer.status === EMPLOYER_STATUS.BANNED) {
@@ -520,7 +610,9 @@ const handleGoogleCallback = async (req, res) => {
         return res.redirect("/employer/login");
       }
 
-      employer.googleId = profile.sub;
+      if (!employer.googleId) {
+        employer.googleId = profile.sub;
+      }
       employer.isEmailVerified = true;
       if (!employer.logo || !employer.logo.url) {
         employer.logo = { url: profile.picture || "", key: "" };
@@ -572,7 +664,8 @@ const handleGoogleCallback = async (req, res) => {
     res.redirect(nextUrl);
   } catch (err) {
     console.error("Lỗi Google Auth Employer Callback:", err);
-    req.flash("error", "Đăng nhập Google thất bại: " + err.message);
+    const errMsg = env.NODE_ENV === "production" ? "Đăng nhập Google thất bại. Vui lòng thử lại." : "Đăng nhập Google thất bại: " + err.message;
+    req.flash("error", errMsg);
     res.redirect("/employer/login");
   }
 };

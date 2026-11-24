@@ -32,9 +32,9 @@ footer(class="site-footer bg-[#000065] pt-[36px] pb-[84px] sm:pb-[88px] mt-auto 
                 div(class="font-[700] text-white mb-[10px] text-[15px]") Dành cho Lập trình viên &amp; AI
                 ul(class="space-y-[8px] text-white/75 text-[13px]")
                     li: a(href="/docs" class="hover:text-white transition-colors") Tài liệu API &amp; Agent Portal
-                    li: a(href="/openapi.json" class="hover:text-white transition-colors" target="_blank") OpenAPI 3.1 Specification
+                    li: a(href="/openapi.json" class="hover:text-white transition-colors" target="_blank" rel="noopener noreferrer") OpenAPI 3.1 Specification
                     li: a(href="/mcp" class="hover:text-white transition-colors") Model Context Protocol (MCP)
-                    li: a(href="/llms.txt" class="hover:text-white transition-colors" target="_blank") Hướng dẫn AI Agent (llms.txt)
+                    li: a(href="/llms.txt" class="hover:text-white transition-colors" target="_blank" rel="noopener noreferrer") Hướng dẫn AI Agent (llms.txt)
 
         div(class="pt-[20px] border-t border-white/10 text-center text-[13px] text-white/60")
             | Copyright © 2026 #{(siteSetting && siteSetting.companyName) || "VN.ITJobs"}. Nền tảng tuyển dụng IT và Việc làm Developer hàng đầu Việt Nam. #{(siteSetting && siteSetting.businessCode ? "Giấy phép ĐKDN " + siteSetting.businessCode : "Giấy phép ĐKDN số 0109988776.")}

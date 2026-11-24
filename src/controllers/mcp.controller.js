@@ -8,11 +8,45 @@ const SERVER_INFO = {
   description: "Model Context Protocol (MCP) Server for VN.ITJobs - Vietnam's Leading IT Job Board & Developer Career Platform",
 };
 
+const MAX_BATCH_SIZE = 10;
+const SSE_TIMEOUT_MS = 60 * 1000;
+
 /**
  * Xử lý yêu cầu JSON-RPC 2.0 cho MCP Protocol
  */
 async function handleJsonRpc(reqBody) {
-  const { id, method, params } = reqBody;
+  if (!reqBody || typeof reqBody !== "object" || Array.isArray(reqBody)) {
+    return {
+      jsonrpc: "2.0",
+      id: null,
+      error: {
+        code: -32600,
+        message: "Invalid Request: JSON-RPC payload must be an object",
+      },
+    };
+  }
+
+  const { id, method, params, jsonrpc } = reqBody;
+  if (jsonrpc !== undefined && jsonrpc !== "2.0") {
+    return {
+      jsonrpc: "2.0",
+      id: id !== undefined ? id : null,
+      error: {
+        code: -32600,
+        message: "Invalid Request: jsonrpc version must be '2.0'",
+      },
+    };
+  }
+  if (typeof method !== "string" || !method.trim()) {
+    return {
+      jsonrpc: "2.0",
+      id: id !== undefined ? id : null,
+      error: {
+        code: -32600,
+        message: "Invalid Request: 'method' must be a non-empty string",
+      },
+    };
+  }
 
   if (method === "initialize") {
     return {
@@ -121,8 +155,25 @@ const postMcp = async (req, res) => {
     });
   }
 
-  // Handle single request or batch array
+  // Handle single request or bounded batch array (chặn Batch Amplification DoS)
   if (Array.isArray(body)) {
+    if (body.length === 0) {
+      return res.status(400).json({
+        jsonrpc: "2.0",
+        error: { code: -32600, message: "Invalid Request: batch array cannot be empty" },
+        id: null,
+      });
+    }
+    if (body.length > MAX_BATCH_SIZE) {
+      return res.status(400).json({
+        jsonrpc: "2.0",
+        error: {
+          code: -32600,
+          message: `Invalid Request: batch size exceeds maximum allowed (${MAX_BATCH_SIZE})`,
+        },
+        id: null,
+      });
+    }
     const responses = await Promise.all(body.map((item) => handleJsonRpc(item)));
     return res.json(responses);
   }
@@ -134,7 +185,7 @@ const postMcp = async (req, res) => {
 const getMcp = (req, res) => {
   const accept = req.get("accept") || "";
 
-  // Support Streamable HTTP / Server-Sent Events (SSE) handshake
+  // Support Streamable HTTP / Server-Sent Events (SSE) handshake với timeout & cleanup chống cạn kiệt socket
   if (accept.includes("text/event-stream")) {
     res.writeHead(200, {
       "Content-Type": "text/event-stream; charset=utf-8",
@@ -142,6 +193,26 @@ const getMcp = (req, res) => {
       Connection: "keep-alive",
     });
     res.write("event: endpoint\ndata: /mcp\n\n");
+
+    const keepAliveTimer = setInterval(() => {
+      if (!res.writableEnded) {
+        res.write(": ping\n\n");
+      }
+    }, 15000);
+    if (typeof keepAliveTimer.unref === "function") keepAliveTimer.unref();
+
+    const closeTimer = setTimeout(() => {
+      clearInterval(keepAliveTimer);
+      if (!res.writableEnded) {
+        res.end();
+      }
+    }, SSE_TIMEOUT_MS);
+    if (typeof closeTimer.unref === "function") closeTimer.unref();
+
+    req.on("close", () => {
+      clearInterval(keepAliveTimer);
+      clearTimeout(closeTimer);
+    });
     return;
   }
 

@@ -178,6 +178,16 @@ block main
             var projectContainer = document.getElementById("projectListContainer");
             var eduContainer = document.getElementById("eduListContainer");
 
+            function esc(str) {
+                if (str === null || str === undefined) return "";
+                return String(str)
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#39;");
+            }
+
             function renderWorks() {
                 if (!workContainer) return;
                 workContainer.innerHTML = "";
@@ -195,21 +205,21 @@ block main
                         <div class="grid sm:grid-cols-2 grid-cols-1 gap-[10px]">
                             <div>
                                 <label class="block text-[12px] font-[600] text-gray-600 mb-[2px]">Tên Công ty</label>
-                                <input type="text" class="w-full border border-gray-300 rounded-[4px] px-[10px] py-[6px] text-[13px] bg-white inp-work-company" value="${w.company || ''}" placeholder="FPT Software, VNG, VNPT...">
+                                <input type="text" class="w-full border border-gray-300 rounded-[4px] px-[10px] py-[6px] text-[13px] bg-white inp-work-company" value="${esc(w.company || '')}" placeholder="FPT Software, VNG, VNPT...">
                             </div>
                             <div>
                                 <label class="block text-[12px] font-[600] text-gray-600 mb-[2px]">Vị trí / Chức danh</label>
-                                <input type="text" class="w-full border border-gray-300 rounded-[4px] px-[10px] py-[6px] text-[13px] bg-white inp-work-pos" value="${w.position || ''}" placeholder="Frontend Developer, QA...">
+                                <input type="text" class="w-full border border-gray-300 rounded-[4px] px-[10px] py-[6px] text-[13px] bg-white inp-work-pos" value="${esc(w.position || '')}" placeholder="Frontend Developer, QA...">
                             </div>
                         </div>
                         <div class="grid sm:grid-cols-3 grid-cols-1 gap-[10px]">
                             <div>
                                 <label class="block text-[12px] font-[600] text-gray-600 mb-[2px]">Bắt đầu</label>
-                                <input type="text" class="w-full border border-gray-300 rounded-[4px] px-[10px] py-[6px] text-[13px] bg-white inp-work-start" value="${w.startDate || ''}" placeholder="06/2023">
+                                <input type="text" class="w-full border border-gray-300 rounded-[4px] px-[10px] py-[6px] text-[13px] bg-white inp-work-start" value="${esc(w.startDate || '')}" placeholder="06/2023">
                             </div>
                             <div>
                                 <label class="block text-[12px] font-[600] text-gray-600 mb-[2px]">Kết thúc</label>
-                                <input type="text" class="w-full border border-gray-300 rounded-[4px] px-[10px] py-[6px] text-[13px] bg-white inp-work-end" value="${w.endDate || ''}" placeholder="Hien tai hoặc 08/2025">
+                                <input type="text" class="w-full border border-gray-300 rounded-[4px] px-[10px] py-[6px] text-[13px] bg-white inp-work-end" value="${esc(w.endDate || '')}" placeholder="Hien tai hoặc 08/2025">
                             </div>
                             <div class="flex items-center pt-[18px]">
                                 <label class="flex items-center gap-[6px] text-[12px] text-gray-700 cursor-pointer select-none">
@@ -219,7 +229,7 @@ block main
                         </div>
                         <div>
                             <label class="block text-[12px] font-[600] text-gray-600 mb-[2px]">Mô tả công việc & Thành tích</label>
-                            <textarea class="w-full border border-gray-300 rounded-[4px] px-[10px] py-[6px] text-[13px] bg-white inp-work-desc" rows="2" placeholder="Xây dựng giao diện Web App, tối ưu hiệu năng Lighthouse, tham gia sprint Scrum...">${w.description || ''}</textarea>
+                            <textarea class="w-full border border-gray-300 rounded-[4px] px-[10px] py-[6px] text-[13px] bg-white inp-work-desc" rows="2" placeholder="Xây dựng giao diện Web App, tối ưu hiệu năng Lighthouse, tham gia sprint Scrum...">${esc(w.description || '')}</textarea>
                         </div>
                     `;
                     workContainer.appendChild(card);
@@ -272,26 +282,26 @@ block main
                         <div class="grid sm:grid-cols-2 grid-cols-1 gap-[10px]">
                             <div>
                                 <label class="block text-[12px] font-[600] text-gray-600 mb-[2px]">Tên Dự án</label>
-                                <input type="text" class="w-full border border-gray-300 rounded-[4px] px-[10px] py-[6px] text-[13px] bg-white inp-proj-name" value="${p.name || ''}" placeholder="E-commerce Web App, Chatbot AI...">
+                                <input type="text" class="w-full border border-gray-300 rounded-[4px] px-[10px] py-[6px] text-[13px] bg-white inp-proj-name" value="${esc(p.name || '')}" placeholder="E-commerce Web App, Chatbot AI...">
                             </div>
                             <div>
                                 <label class="block text-[12px] font-[600] text-gray-600 mb-[2px]">Vai trò của bạn</label>
-                                <input type="text" class="w-full border border-gray-300 rounded-[4px] px-[10px] py-[6px] text-[13px] bg-white inp-proj-role" value="${p.role || ''}" placeholder="Team Leader, Frontend Developer...">
+                                <input type="text" class="w-full border border-gray-300 rounded-[4px] px-[10px] py-[6px] text-[13px] bg-white inp-proj-role" value="${esc(p.role || '')}" placeholder="Team Leader, Frontend Developer...">
                             </div>
                         </div>
                         <div class="grid sm:grid-cols-2 grid-cols-1 gap-[10px]">
                             <div>
                                 <label class="block text-[12px] font-[600] text-gray-600 mb-[2px]">Tech Stack sử dụng</label>
-                                <input type="text" class="w-full border border-gray-300 rounded-[4px] px-[10px] py-[6px] text-[13px] bg-white inp-proj-stack" value="${p.techStack || ''}" placeholder="React, Node.js, Tailwind, MongoDB...">
+                                <input type="text" class="w-full border border-gray-300 rounded-[4px] px-[10px] py-[6px] text-[13px] bg-white inp-proj-stack" value="${esc(p.techStack || '')}" placeholder="React, Node.js, Tailwind, MongoDB...">
                             </div>
                             <div>
                                 <label class="block text-[12px] font-[600] text-gray-600 mb-[2px]">Link Demo / GitHub</label>
-                                <input type="text" class="w-full border border-gray-300 rounded-[4px] px-[10px] py-[6px] text-[13px] bg-white inp-proj-link" value="${p.link || ''}" placeholder="https://github.com/my-repo">
+                                <input type="text" class="w-full border border-gray-300 rounded-[4px] px-[10px] py-[6px] text-[13px] bg-white inp-proj-link" value="${esc(p.link || '')}" placeholder="https://github.com/my-repo">
                             </div>
                         </div>
                         <div>
                             <label class="block text-[12px] font-[600] text-gray-600 mb-[2px]">Mô tả tóm tắt tính năng</label>
-                            <textarea class="w-full border border-gray-300 rounded-[4px] px-[10px] py-[6px] text-[13px] bg-white inp-proj-desc" rows="2" placeholder="Hệ thống phục vụ 5.000 người dùng hàng ngày, tích hợp thanh toán VnPay...">${p.description || ''}</textarea>
+                            <textarea class="w-full border border-gray-300 rounded-[4px] px-[10px] py-[6px] text-[13px] bg-white inp-proj-desc" rows="2" placeholder="Hệ thống phục vụ 5.000 người dùng hàng ngày, tích hợp thanh toán VnPay...">${esc(p.description || '')}</textarea>
                         </div>
                     `;
                     projectContainer.appendChild(card);
@@ -338,9 +348,9 @@ block main
                     card.className = "p-[12px] bg-gray-50 border border-gray-200 rounded-[8px] flex items-center justify-between gap-[10px]";
                     card.innerHTML = `
                         <div class="grid sm:grid-cols-3 grid-cols-1 gap-[8px] flex-1">
-                            <input type="text" class="border border-gray-300 rounded-[4px] px-[8px] py-[5px] text-[13px] bg-white inp-edu-school" value="${e.school || ''}" placeholder="Trường ĐH / Học viện">
-                            <input type="text" class="border border-gray-300 rounded-[4px] px-[8px] py-[5px] text-[13px] bg-white inp-edu-major" value="${e.major || ''}" placeholder="Chuyên ngành (CNTT, HTTT...)">
-                            <input type="text" class="border border-gray-300 rounded-[4px] px-[8px] py-[5px] text-[13px] bg-white inp-edu-year" value="${e.gradYear || ''}" placeholder="Năm tốt nghiệp (VD: 2024)">
+                            <input type="text" class="border border-gray-300 rounded-[4px] px-[8px] py-[5px] text-[13px] bg-white inp-edu-school" value="${esc(e.school || '')}" placeholder="Trường ĐH / Học viện">
+                            <input type="text" class="border border-gray-300 rounded-[4px] px-[8px] py-[5px] text-[13px] bg-white inp-edu-major" value="${esc(e.major || '')}" placeholder="Chuyên ngành (CNTT, HTTT...)">
+                            <input type="text" class="border border-gray-300 rounded-[4px] px-[8px] py-[5px] text-[13px] bg-white inp-edu-year" value="${esc(e.gradYear || '')}" placeholder="Năm tốt nghiệp (VD: 2024)">
                         </div>
                         <button type="button" class="btn-del-edu text-red-500 hover:text-red-700 text-[14px] p-[4px] cursor-pointer" data-idx="${idx}" title="Xóa">
                             <i class="fa-solid fa-trash-can"></i>

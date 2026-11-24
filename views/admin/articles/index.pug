@@ -78,7 +78,7 @@ block main
                                         div(class="flex items-start gap-[12px]")
                                             img(src=art.thumbnail alt=art.title class="w-[50px] h-[50px] rounded-[6px] object-cover shrink-0 border border-gray-200")
                                             div(class="min-w-0")
-                                                a(href=`/blog/${art.slug}` target="_blank" class="font-[600] text-gray-900 hover:text-[#0088FF] line-clamp-2 leading-snug transition") #{art.title}
+                                                a(href=`/blog/${art.slug}` target="_blank" rel="noopener noreferrer" class="font-[600] text-gray-900 hover:text-[#0088FF] line-clamp-2 leading-snug transition") #{art.title}
                                                 p(class="text-[12px] text-gray-400 mt-[2px]") Slug: #{art.slug}
                                                 if art.tags && art.tags.length > 0
                                                     div(class="flex flex-wrap gap-[4px] mt-[4px]")
@@ -143,7 +143,7 @@ block main
 
                                     //- Cột Thao tác
                                     td(class="px-[16px] py-[14px] whitespace-nowrap text-right space-x-[6px]")
-                                        a(href=`/blog/${art.slug}` target="_blank" class="p-[6px] text-gray-500 hover:text-[#0088FF] rounded transition" title="Xem bài viết trên web")
+                                        a(href=`/blog/${art.slug}` target="_blank" rel="noopener noreferrer" class="p-[6px] text-gray-500 hover:text-[#0088FF] rounded transition" title="Xem bài viết trên web")
                                             <i class="fa-solid fa-arrow-up-right-from-square"></i>
                                         a(href=`/${adminPath}/articles/${art._id}/edit` class="p-[6px] text-blue-600 hover:text-blue-800 rounded transition" title="Chỉnh sửa")
                                             <i class="fa-solid fa-pen-to-square"></i>

@@ -87,9 +87,21 @@ describe("Phase 3: Public Pages Integration Tests", () => {
   });
 
   describe("Feedback & Bug Reporting API", () => {
+    async function getCsrfContext() {
+      const pageRes = await request(app).get("/contact");
+      const match = pageRes.text.match(/name="_csrf"\s+value="([^"]+)"/);
+      return {
+        csrfToken: match ? match[1] : "",
+        cookies: pageRes.headers["set-cookie"] || [],
+      };
+    }
+
     test("POST /api/feedback - gửi báo cáo lỗi thành công", async () => {
+      const { csrfToken, cookies } = await getCsrfContext();
       const res = await request(app)
         .post("/api/feedback")
+        .set("Cookie", cookies)
+        .set("x-csrf-token", csrfToken)
         .send({
           type: "bug",
           title: "Lỗi hiển thị font",
@@ -103,14 +115,27 @@ describe("Phase 3: Public Pages Integration Tests", () => {
     });
 
     test("POST /api/feedback - từ chối nếu thiếu content", async () => {
+      const { csrfToken, cookies } = await getCsrfContext();
       const res = await request(app)
         .post("/api/feedback")
+        .set("Cookie", cookies)
+        .set("x-csrf-token", csrfToken)
         .send({
           type: "bug",
           content: "",
         });
       expect(res.status).toBe(400);
       expect(res.body.success).toBe(false);
+    });
+
+    test("POST /api/feedback - từ chối 403 nếu thiếu CSRF token", async () => {
+      const res = await request(app)
+        .post("/api/feedback")
+        .send({
+          type: "bug",
+          content: "CSRF test payload",
+        });
+      expect(res.status).toBe(403);
     });
   });
 

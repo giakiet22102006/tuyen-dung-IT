@@ -110,9 +110,11 @@ block main
                                         if fb.title
                                             div(class="font-[700] text-gray-900 mb-[2px]") #{fb.title}
                                         p(class="text-gray-700 whitespace-pre-line text-[13px] leading-relaxed line-clamp-3") #{fb.content}
-                                        if fb.url
+                                        - const safeFbUrl = safeUrl(fb.url)
+                                        if safeFbUrl
                                             div(class="text-[11px] text-gray-400 mt-[4px] truncate")
-                                                span URL lỗi: <a href=fb.url target="_blank" class="text-blue-600 hover:underline">#{fb.url}</a>
+                                                span URL lỗi: 
+                                                a(href=safeFbUrl target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline") #{safeFbUrl}
                                         if fb.adminNote
                                             div(class="mt-[6px] p-[6px] bg-yellow-50 text-yellow-800 text-[11px] rounded border border-yellow-200")
                                                 span <strong>Ghi chú Admin:</strong> #{fb.adminNote}

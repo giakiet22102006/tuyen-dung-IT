@@ -8,6 +8,9 @@ const { sendOtpEmail } = require("../../services/mail.service");
 // Helper lấy tên hiển thị role
 const getRoleLabel = (userType) => (userType === "employer" ? "Nhà tuyển dụng" : "Ứng viên");
 
+const HEX_TOKEN_REGEX = /^[a-f0-9]{64}$/i;
+const hashResetToken = (token) => crypto.createHash("sha256").update(token).digest("hex");
+
 // 1. Giao diện Nhập Email quên mật khẩu
 const renderForgotPassword = (userType) => (req, res) => {
   res.render("pages/forgot-password", {
@@ -22,7 +25,7 @@ const renderForgotPassword = (userType) => (req, res) => {
 const postForgotPassword = (userType) => async (req, res) => {
   const { email } = req.body;
 
-  if (!email || !email.includes("@")) {
+  if (typeof email !== "string" || !email.includes("@")) {
     return res.status(400).render("pages/forgot-password", {
       title: `Quên mật khẩu (${getRoleLabel(userType)})`,
       userRole: userType,
@@ -60,14 +63,15 @@ const postForgotPassword = (userType) => async (req, res) => {
   const salt = await bcrypt.genSalt(10);
   const otpHash = await bcrypt.hash(otpCode, salt);
 
-  // Xóa các OTP cũ của email này
-  await Otp.deleteMany({ email: cleanEmail, userType });
+  // Xóa các OTP quên mật khẩu cũ của email này (không đụng OTP mục đích khác)
+  await Otp.deleteMany({ email: cleanEmail, userType, type: "forgot_password" });
 
   // Lưu OTP mới với hạn sử dụng 10 phút
   await Otp.create({
     email: cleanEmail,
     otpHash,
     userType,
+    type: "forgot_password",
     expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 phút
   });
 
@@ -89,7 +93,7 @@ const postForgotPassword = (userType) => async (req, res) => {
 
 // 3. Giao diện Nhập mã OTP
 const renderVerifyOtp = (userType) => (req, res) => {
-  const email = req.query.email || "";
+  const email = typeof req.query.email === "string" ? req.query.email.trim() : "";
   if (!email) {
     return res.redirect(`/${userType}/forgot-password`);
   }
@@ -105,10 +109,10 @@ const renderVerifyOtp = (userType) => (req, res) => {
 // 4. Xử lý Xác thực mã OTP
 const postVerifyOtp = (userType) => async (req, res) => {
   const { email, otp } = req.body;
-  const cleanEmail = (email || "").toLowerCase().trim();
-  const cleanOtp = (otp || "").trim();
+  const cleanEmail = typeof email === "string" ? email.toLowerCase().trim() : "";
+  const cleanOtp = typeof otp === "string" ? otp.trim() : "";
 
-  if (!cleanOtp || cleanOtp.length !== 6 || !/^\d{6}$/.test(cleanOtp)) {
+  if (!cleanEmail || !cleanOtp || cleanOtp.length !== 6 || !/^\d{6}$/.test(cleanOtp)) {
     return res.status(400).render("pages/verify-otp", {
       title: `Xác thực mã OTP (${getRoleLabel(userType)})`,
       userRole: userType,
@@ -117,37 +121,47 @@ const postVerifyOtp = (userType) => async (req, res) => {
     });
   }
 
-  const otpRecord = await Otp.findOne({
-    email: cleanEmail,
-    userType,
-    expiresAt: { $gt: new Date() },
-  });
+  // Tăng attempts nguyên tử TRƯỚC khi chạy bcrypt.compare để chống Race Condition brute-force
+  const otpRecord = await Otp.findOneAndUpdate(
+    {
+      email: cleanEmail,
+      userType,
+      type: "forgot_password",
+      isVerified: { $ne: true },
+      expiresAt: { $gt: new Date() },
+      attempts: { $lt: 5 },
+    },
+    { $inc: { attempts: 1 } },
+    { new: true }
+  );
 
   if (!otpRecord) {
-    return res.status(400).render("pages/verify-otp", {
-      title: `Xác thực mã OTP (${getRoleLabel(userType)})`,
-      userRole: userType,
+    await Otp.deleteMany({
       email: cleanEmail,
-      errors: { otp: "Mã OTP đã hết hạn hoặc không tồn tại. Vui lòng yêu cầu mã mới." },
+      userType,
+      type: "forgot_password",
+      attempts: { $gte: 5 },
     });
-  }
-
-  // Kiểm tra số lần thử sai
-  if (otpRecord.attempts >= 5) {
-    await Otp.deleteOne({ _id: otpRecord._id });
     return res.status(400).render("pages/verify-otp", {
       title: `Xác thực mã OTP (${getRoleLabel(userType)})`,
       userRole: userType,
       email: cleanEmail,
-      errors: { otp: "Bạn đã nhập sai mã quá 5 lần. Vui lòng yêu cầu gửi mã mới." },
+      errors: { otp: "Mã OTP đã hết hạn, không tồn tại hoặc đã vượt quá 5 lần thử. Vui lòng yêu cầu mã mới." },
     });
   }
 
   const isMatch = await bcrypt.compare(cleanOtp, otpRecord.otpHash);
   if (!isMatch) {
-    otpRecord.attempts += 1;
-    await otpRecord.save();
-    const remaining = 5 - otpRecord.attempts;
+    if (otpRecord.attempts >= 5) {
+      await Otp.deleteOne({ _id: otpRecord._id });
+      return res.status(400).render("pages/verify-otp", {
+        title: `Xác thực mã OTP (${getRoleLabel(userType)})`,
+        userRole: userType,
+        email: cleanEmail,
+        errors: { otp: "Bạn đã nhập sai mã quá 5 lần. Vui lòng yêu cầu gửi mã mới." },
+      });
+    }
+    const remaining = Math.max(0, 5 - otpRecord.attempts);
     return res.status(400).render("pages/verify-otp", {
       title: `Xác thực mã OTP (${getRoleLabel(userType)})`,
       userRole: userType,
@@ -156,10 +170,10 @@ const postVerifyOtp = (userType) => async (req, res) => {
     });
   }
 
-  // Khớp OTP thành công -> Tạo resetToken tạm thời
+  // Khớp OTP thành công -> Tạo resetToken ngẫu nhiên 256-bit và lưu dạng SHA-256 hash vào DB
   const resetToken = crypto.randomBytes(32).toString("hex");
   otpRecord.isVerified = true;
-  otpRecord.resetToken = resetToken;
+  otpRecord.resetToken = hashResetToken(resetToken);
   await otpRecord.save();
 
   res.redirect(`/${userType}/reset-password?email=${encodeURIComponent(cleanEmail)}&token=${resetToken}`);
@@ -169,16 +183,22 @@ const postVerifyOtp = (userType) => async (req, res) => {
 const renderResetPassword = (userType) => async (req, res) => {
   const { email, token } = req.query;
 
-  if (!email || !token) {
+  // Chặn rò rỉ resetToken qua Referer header hoặc cache trình duyệt
+  res.set("Referrer-Policy", "no-referrer");
+  res.set("Cache-Control", "no-store");
+
+  if (typeof email !== "string" || typeof token !== "string" || !HEX_TOKEN_REGEX.test(token)) {
     req.flash("error", "Đường dẫn không hợp lệ hoặc đã hết hạn.");
     return res.redirect(`/${userType}/forgot-password`);
   }
 
   const cleanEmail = email.toLowerCase().trim();
+  const tokenHash = hashResetToken(token);
   const otpRecord = await Otp.findOne({
     email: cleanEmail,
     userType,
-    resetToken: token,
+    type: "forgot_password",
+    resetToken: tokenHash,
     isVerified: true,
     expiresAt: { $gt: new Date() },
   });
@@ -200,19 +220,25 @@ const renderResetPassword = (userType) => async (req, res) => {
 // 6. Xử lý Đặt lại mật khẩu mới
 const postResetPassword = (userType) => async (req, res) => {
   const { email, token, newPassword, confirmPassword } = req.body;
-  const cleanEmail = (email || "").toLowerCase().trim();
+  const cleanEmail = typeof email === "string" ? email.toLowerCase().trim() : "";
+  const safeToken = typeof token === "string" && HEX_TOKEN_REGEX.test(token) ? token : "";
+
+  if (!cleanEmail || !safeToken) {
+    req.flash("error", "Yêu cầu đặt lại mật khẩu không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.");
+    return res.redirect(`/${userType}/forgot-password`);
+  }
 
   const renderWithError = (errMsg) => {
     return res.status(400).render("pages/reset-password", {
       title: `Đặt lại mật khẩu mới (${getRoleLabel(userType)})`,
       userRole: userType,
       email: cleanEmail,
-      token,
+      token: safeToken,
       errors: { newPassword: errMsg },
     });
   };
 
-  if (!newPassword || newPassword.length < 8) {
+  if (typeof newPassword !== "string" || newPassword.length < 8) {
     return renderWithError("Mật khẩu mới phải có ít nhất 8 ký tự.");
   }
 
@@ -224,10 +250,13 @@ const postResetPassword = (userType) => async (req, res) => {
     return renderWithError("Mật khẩu xác nhận không khớp.");
   }
 
-  const otpRecord = await Otp.findOne({
+  // Tiêu thụ nguyên tử (one-time use) resetToken để chặn replay hoặc double-submit đồng thời
+  const tokenHash = hashResetToken(safeToken);
+  const otpRecord = await Otp.findOneAndDelete({
     email: cleanEmail,
     userType,
-    resetToken: token,
+    type: "forgot_password",
+    resetToken: tokenHash,
     isVerified: true,
     expiresAt: { $gt: new Date() },
   });
@@ -237,12 +266,13 @@ const postResetPassword = (userType) => async (req, res) => {
     return res.redirect(`/${userType}/forgot-password`);
   }
 
-  // Cập nhật mật khẩu tài khoản
+  // Cập nhật mật khẩu tài khoản (từ chối tài khoản đã xóa mềm hoặc bị khóa)
   const Model = userType === "employer" ? Employer : Candidate;
-  const user = await Model.findOne({ email: cleanEmail });
+  const user = await Model.findOne({ email: cleanEmail, deletedAt: null });
 
-  if (!user) {
-    req.flash("error", "Không tìm thấy thông tin tài khoản.");
+  if (!user || user.status === "banned") {
+    await Otp.deleteMany({ email: cleanEmail, userType, type: "forgot_password" });
+    req.flash("error", "Tài khoản không tồn tại hoặc đã bị khóa.");
     return res.redirect(`/${userType}/login`);
   }
 
@@ -250,8 +280,8 @@ const postResetPassword = (userType) => async (req, res) => {
   user.tokenVersion = (user.tokenVersion || 0) + 1; // Hủy mọi session cũ
   await user.save();
 
-  // Xóa bản ghi OTP sau khi đã sử dụng thành công
-  await Otp.deleteMany({ email: cleanEmail, userType });
+  // Xóa sạch mọi OTP forgot_password còn sót lại của email này
+  await Otp.deleteMany({ email: cleanEmail, userType, type: "forgot_password" });
 
   req.flash("success", "Đặt lại mật khẩu thành công! Vui lòng đăng nhập bằng mật khẩu mới.");
   res.redirect(`/${userType}/login`);

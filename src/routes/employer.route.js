@@ -7,19 +7,34 @@ const employerJob = require("../controllers/employer/employerJob.controller");
 const employerCv = require("../controllers/employer/employerCv.controller");
 const employerTalent = require("../controllers/employer/employerTalent.controller");
 const employerOps = require("../controllers/employer/employerOps.controller");
-const { requireEmployer, requireGuest } = require("../middlewares/auth.middleware");
+const { requireEmployer, requireEmployerAdmin, requireGuest } = require("../middlewares/auth.middleware");
 const { doubleCsrfProtection } = require("../middlewares/csrf.middleware");
 const { loginRateLimiter, otpRateLimiter } = require("../middlewares/rateLimit.middleware");
 const { uploadLogoMiddleware, uploadJobImagesMiddleware } = require("../middlewares/upload.middleware");
 const asyncHandler = require("../utils/asyncHandler");
+const { isValidObjectId } = require("../utils/securityHelpers");
+
+// Validate ObjectId cho mọi tham số :id trên các route Nhà tuyển dụng (tránh CastError 500)
+router.param("id", (req, res, next, id) => {
+  if (!isValidObjectId(id)) {
+    if (req.xhr || req.headers.accept?.includes("application/json")) {
+      return res.status(400).json({ success: false, message: "Mã định danh (ID) không hợp lệ." });
+    }
+    if (req.flash) {
+      req.flash("error", "Mã định danh (ID) không hợp lệ.");
+    }
+    return res.redirect("/employer/jobs");
+  }
+  next();
+});
 
 // Guest routes
 router.get("/signup", requireGuest, employerAuth.renderSignup);
-router.post("/signup", requireGuest, doubleCsrfProtection, asyncHandler(employerAuth.postSignup));
+router.post("/signup", requireGuest, otpRateLimiter, doubleCsrfProtection, asyncHandler(employerAuth.postSignup));
 
 // Xác thực Email kích hoạt tài khoản công ty
 router.get("/verify-registration", requireGuest, employerAuth.renderVerifyRegistration);
-router.post("/verify-registration", requireGuest, doubleCsrfProtection, asyncHandler(employerAuth.postVerifyRegistration));
+router.post("/verify-registration", requireGuest, otpRateLimiter, doubleCsrfProtection, asyncHandler(employerAuth.postVerifyRegistration));
 router.post("/resend-registration-otp", requireGuest, otpRateLimiter, doubleCsrfProtection, asyncHandler(employerAuth.postResendRegistrationOtp));
 
 router.get("/login", requireGuest, employerAuth.renderLogin);
@@ -34,13 +49,13 @@ router.get("/forgot-password", requireGuest, passwordReset.renderForgotPassword(
 router.post("/forgot-password", requireGuest, otpRateLimiter, doubleCsrfProtection, asyncHandler(passwordReset.postForgotPassword("employer")));
 
 router.get("/verify-otp", requireGuest, passwordReset.renderVerifyOtp("employer"));
-router.post("/verify-otp", requireGuest, doubleCsrfProtection, asyncHandler(passwordReset.postVerifyOtp("employer")));
+router.post("/verify-otp", requireGuest, otpRateLimiter, doubleCsrfProtection, asyncHandler(passwordReset.postVerifyOtp("employer")));
 
 router.get("/reset-password", requireGuest, asyncHandler(passwordReset.renderResetPassword("employer")));
-router.post("/reset-password", requireGuest, doubleCsrfProtection, asyncHandler(passwordReset.postResetPassword("employer")));
+router.post("/reset-password", requireGuest, otpRateLimiter, doubleCsrfProtection, asyncHandler(passwordReset.postResetPassword("employer")));
 
 // Authenticated routes
-router.post("/logout", doubleCsrfProtection, employerAuth.postLogout);
+router.post("/logout", doubleCsrfProtection, asyncHandler(employerAuth.postLogout));
 
 router.get("/change-password", requireEmployer, employerAuth.renderChangePassword);
 router.post("/change-password", requireEmployer, doubleCsrfProtection, asyncHandler(employerAuth.postChangePassword));
@@ -79,9 +94,9 @@ router.post("/candidates/:id/invite", requireEmployer, doubleCsrfProtection, asy
 // Báo cáo & Phân tích tuyển dụng (Analytics)
 router.get("/analytics", requireEmployer, asyncHandler(employerOps.renderAnalytics));
 
-// Quản lý Đội ngũ Tuyển dụng (Multi-Recruiter Team)
-router.get("/team", requireEmployer, asyncHandler(employerOps.renderTeam));
-router.post("/team", requireEmployer, doubleCsrfProtection, asyncHandler(employerOps.postAddTeamMember));
-router.post("/team/:memberId/delete", requireEmployer, doubleCsrfProtection, asyncHandler(employerOps.postRemoveTeamMember));
+// Quản lý Đội ngũ Tuyển dụng (Multi-Recruiter Team) — chỉ Admin công ty mới được thao tác
+router.get("/team", requireEmployer, requireEmployerAdmin, asyncHandler(employerOps.renderTeam));
+router.post("/team", requireEmployer, requireEmployerAdmin, doubleCsrfProtection, asyncHandler(employerOps.postAddTeamMember));
+router.post("/team/:memberId/delete", requireEmployer, requireEmployerAdmin, doubleCsrfProtection, asyncHandler(employerOps.postRemoveTeamMember));
 
 module.exports = router;

@@ -6,7 +6,7 @@ mixin kanbanCard(app, currentStatus)
         div(class="flex items-start justify-between gap-[8px] mb-[8px]")
             div(class="min-w-0 flex-1")
                 h4(class="font-[700] text-[14px] text-gray-900 leading-tight truncate")
-                    a(href=`/employer/cvs/${app._id}` class="hover:text-[#0088FF]" target="_blank") #{app.fullName}
+                    a(href=`/employer/cvs/${app._id}` class="hover:text-[#0088FF]" target="_blank" rel="noopener noreferrer") #{app.fullName}
                 div(class="text-[12px] text-gray-500 truncate mt-[2px]")
                     | #{app.jobId ? app.jobId.title : 'Vị trí tuyển dụng'}
             span(class="w-[6px] h-[6px] rounded-full bg-gray-300 shrink-0 mt-[4px]")
@@ -22,7 +22,7 @@ mixin kanbanCard(app, currentStatus)
 
         //- Footer card: Nút xem CV & Menu đổi trạng thái
         div(class="pt-[8px] border-t border-gray-100 flex items-center justify-between text-[11px]")
-            a(href=`/employer/cvs/${app._id}/pdf` target="_blank" class="text-[#0088FF] hover:underline font-[600] flex items-center gap-[3px]")
+            a(href=`/employer/cvs/${app._id}/pdf` target="_blank" rel="noopener noreferrer" class="text-[#0088FF] hover:underline font-[600] flex items-center gap-[3px]")
                 i(class="fa-solid fa-file-pdf text-red-500")
                 | Xem CV
 

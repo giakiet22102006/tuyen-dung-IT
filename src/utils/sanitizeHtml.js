@@ -13,8 +13,11 @@ const ALLOWED_TAGS = [
   "nl", "li", "b", "i", "strong", "em", "strike", "code", "hr", "br", "div",
   "span", "u",
 ];
+const ARTICLE_EXTRA_TAGS = ["pre", "table", "thead", "tbody", "tr", "th", "td", "img", "figure", "figcaption"];
+const ARTICLE_ALLOWED_TAGS = [...ALLOWED_TAGS, ...ARTICLE_EXTRA_TAGS];
 const ALLOWED_TAGS_SET = new Set(ALLOWED_TAGS);
-const VOID_TAGS_SET = new Set(["br", "hr"]);
+const ARTICLE_ALLOWED_TAGS_SET = new Set(ARTICLE_ALLOWED_TAGS);
+const VOID_TAGS_SET = new Set(["br", "hr", "img"]);
 // Các thẻ nguy hiểm cần loại bỏ luôn toàn bộ nội dung bên trong
 const DROP_CONTENT_TAGS_SET = new Set([
   "script", "style", "iframe", "object", "embed", "svg", "math",
@@ -76,7 +79,9 @@ function isSafeHref(rawHref) {
  * Đảm bảo hành vi bảo mật đồng nhất: loại bỏ toàn bộ style/class tùy ý, event handler on*, javascript:/data: URI,
  * đóng gói chống Reverse Tabnabbing (rel="noopener noreferrer") và chống ReDoS / mXSS thẻ mở dở.
  */
-function strictFallbackSanitize(dirty) {
+function strictFallbackSanitize(dirty, options = {}) {
+  const { allowArticleTags = false } = options;
+  const activeAllowedTags = allowArticleTags ? ARTICLE_ALLOWED_TAGS_SET : ALLOWED_TAGS_SET;
   // Xóa HTML comments
   const withoutComments = dirty.replace(/<!--[\s\S]*?-->/g, "");
   const len = withoutComments.length;
@@ -135,7 +140,7 @@ function strictFallbackSanitize(dirty) {
       continue;
     }
 
-    if (!ALLOWED_TAGS_SET.has(tagName)) {
+    if (!activeAllowedTags.has(tagName)) {
       i = gt + 1;
       continue;
     }
@@ -144,6 +149,38 @@ function strictFallbackSanitize(dirty) {
       if (!VOID_TAGS_SET.has(tagName)) {
         out += `</${tagName}>`;
       }
+      i = gt + 1;
+      continue;
+    }
+
+    if (tagName === "img" && allowArticleTags) {
+      const attrSegment = tagContent.slice(nameMatch[0].length).replace(/\/$/, "");
+      const attrRegex = /([a-zA-Z_:][-a-zA-Z0-9_:.]*)\s*(?:=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
+      const extracted = {};
+      let m;
+      while ((m = attrRegex.exec(attrSegment)) !== null) {
+        const attrName = m[1].toLowerCase();
+        const attrVal = m[2] ?? m[3] ?? m[4] ?? "";
+        if (attrName === "src" || attrName === "alt" || attrName === "title") {
+          extracted[attrName] = attrVal;
+        }
+      }
+      const safeImgAttrs = [];
+      if (
+        extracted.src &&
+        isSafeHref(extracted.src) &&
+        !extracted.src.trim().toLowerCase().startsWith("mailto:") &&
+        !extracted.src.trim().startsWith("#")
+      ) {
+        safeImgAttrs.push(`src="${escapeHtmlEntities(extracted.src.trim())}"`);
+      }
+      if (extracted.alt) {
+        safeImgAttrs.push(`alt="${escapeHtmlEntities(String(extracted.alt).slice(0, 300))}"`);
+      }
+      if (extracted.title) {
+        safeImgAttrs.push(`title="${escapeHtmlEntities(String(extracted.title).slice(0, 300))}"`);
+      }
+      out += safeImgAttrs.length > 0 ? `<img ${safeImgAttrs.join(" ")} />` : "<img />";
       i = gt + 1;
       continue;
     }
@@ -253,5 +290,48 @@ function sanitizeHtml(dirtyHtml) {
   return strictFallbackSanitize(dirtyHtml);
 }
 
+const ARTICLE_SANITIZE_OPTIONS = {
+  ...SANITIZE_OPTIONS,
+  allowedTags: ARTICLE_ALLOWED_TAGS,
+  allowedAttributes: {
+    a: ["href", "target", "rel"],
+    img: ["src", "alt", "title"],
+  },
+  allowedSchemesAppliedToAttributes: ["href", "src"],
+  transformTags: {
+    ...SANITIZE_OPTIONS.transformTags,
+    img: (tagName, attribs) => {
+      const safeAttribs = {};
+      if (
+        attribs.src &&
+        isSafeHref(attribs.src) &&
+        !attribs.src.trim().toLowerCase().startsWith("mailto:") &&
+        !attribs.src.trim().startsWith("#")
+      ) {
+        safeAttribs.src = attribs.src.trim();
+      }
+      if (attribs.alt) safeAttribs.alt = String(attribs.alt).slice(0, 300);
+      if (attribs.title) safeAttribs.title = String(attribs.title).slice(0, 300);
+      return { tagName, attribs: safeAttribs };
+    },
+  },
+};
+
+/**
+ * Sanitize HTML cho bài viết Blog/Cẩm nang (cho phép thêm <table>, <pre>, <figure>, <img src="https://..."> an toàn)
+ */
+function sanitizeArticleHtml(dirtyHtml) {
+  if (!dirtyHtml || typeof dirtyHtml !== "string") return "";
+  if (typeof sanitizeHtmlLib === "function") {
+    try {
+      return sanitizeHtmlLib(dirtyHtml, ARTICLE_SANITIZE_OPTIONS);
+    } catch {
+      return strictFallbackSanitize(dirtyHtml, { allowArticleTags: true });
+    }
+  }
+  return strictFallbackSanitize(dirtyHtml, { allowArticleTags: true });
+}
+
 sanitizeHtml.strictFallbackSanitize = strictFallbackSanitize;
+sanitizeHtml.sanitizeArticleHtml = sanitizeArticleHtml;
 module.exports = sanitizeHtml;

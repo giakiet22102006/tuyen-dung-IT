@@ -16,9 +16,26 @@ const { doubleCsrfProtection } = require("../middlewares/csrf.middleware");
 const { uploadArticleThumbnailMiddleware } = require("../middlewares/upload.middleware");
 const { adminLoginRateLimiter } = require("../middlewares/rateLimit.middleware");
 const asyncHandler = require("../utils/asyncHandler");
+const { isValidObjectId } = require("../utils/securityHelpers");
+const env = require("../config/env");
 
 // Áp dụng header bảo mật chống robot cho toàn bộ trang Admin
 router.use(adminSecurityHeaders);
+
+// Validate ObjectId cho mọi tham số :id trên trang Admin (tránh CastError 500)
+router.param("id", (req, res, next, id) => {
+  if (!isValidObjectId(id)) {
+    if (req.xhr || req.headers.accept?.includes("application/json")) {
+      return res.status(400).json({ success: false, message: "Mã định danh (ID) không hợp lệ." });
+    }
+    const adminPath = env.ADMIN_PATH || "admin";
+    if (req.flash) {
+      req.flash("error", "Mã định danh (ID) không hợp lệ.");
+    }
+    return res.redirect(`/${adminPath}`);
+  }
+  next();
+});
 
 // Auth routes
 router.get("/login", adminAuth.renderLogin);
@@ -26,7 +43,7 @@ router.post("/login", adminLoginRateLimiter, doubleCsrfProtection, asyncHandler(
 router.get("/verify-2fa", adminAuth.renderVerify2Fa);
 router.post("/verify-2fa", adminLoginRateLimiter, doubleCsrfProtection, asyncHandler(adminAuth.postVerify2Fa));
 router.post("/resend-2fa", adminLoginRateLimiter, doubleCsrfProtection, asyncHandler(adminAuth.postResend2Fa));
-router.post("/logout", doubleCsrfProtection, adminAuth.postLogout);
+router.post("/logout", doubleCsrfProtection, asyncHandler(adminAuth.postLogout));
 
 // Dashboard
 router.get("/", requireAdmin, asyncHandler(adminDashboard.renderDashboard));
@@ -84,6 +101,6 @@ router.post("/articles/ai-curate", requireAdmin, doubleCsrfProtection, asyncHand
 
 // Cấu hình hệ thống & Trang Về chúng tôi
 router.get("/settings/about", requireAdmin, asyncHandler(adminSetting.renderAboutSettings));
-router.post("/settings/about", requireAdmin, doubleCsrfProtection, asyncHandler(adminSetting.postAboutSettings));
+router.post("/settings/about", requireAdmin, requireSuperAdmin, doubleCsrfProtection, asyncHandler(adminSetting.postAboutSettings));
 
 module.exports = router;

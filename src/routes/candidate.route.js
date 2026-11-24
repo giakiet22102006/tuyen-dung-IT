@@ -13,14 +13,31 @@ const { doubleCsrfProtection } = require("../middlewares/csrf.middleware");
 const { loginRateLimiter, otpRateLimiter } = require("../middlewares/rateLimit.middleware");
 const { uploadAvatarMiddleware } = require("../middlewares/upload.middleware");
 const asyncHandler = require("../utils/asyncHandler");
+const { isValidObjectId } = require("../utils/securityHelpers");
+
+function rejectInvalidParam(req, res, next, val) {
+  if (!isValidObjectId(val)) {
+    if (req.xhr || req.headers.accept?.includes("application/json")) {
+      return res.status(400).json({ success: false, message: "Mã định danh (ID) không hợp lệ." });
+    }
+    if (req.flash) {
+      req.flash("error", "Mã định danh (ID) không hợp lệ.");
+    }
+    return res.redirect("/");
+  }
+  next();
+}
+
+router.param("id", rejectInvalidParam);
+router.param("jobId", rejectInvalidParam);
 
 // Guest routes
 router.get("/signup", requireGuest, candidateAuth.renderSignup);
-router.post("/signup", requireGuest, doubleCsrfProtection, asyncHandler(candidateAuth.postSignup));
+router.post("/signup", requireGuest, otpRateLimiter, doubleCsrfProtection, asyncHandler(candidateAuth.postSignup));
 
 // Xác thực Email kích hoạt tài khoản
 router.get("/verify-registration", requireGuest, candidateAuth.renderVerifyRegistration);
-router.post("/verify-registration", requireGuest, doubleCsrfProtection, asyncHandler(candidateAuth.postVerifyRegistration));
+router.post("/verify-registration", requireGuest, otpRateLimiter, doubleCsrfProtection, asyncHandler(candidateAuth.postVerifyRegistration));
 router.post("/resend-registration-otp", requireGuest, otpRateLimiter, doubleCsrfProtection, asyncHandler(candidateAuth.postResendRegistrationOtp));
 
 router.get("/login", requireGuest, candidateAuth.renderLogin);
@@ -35,13 +52,13 @@ router.get("/forgot-password", requireGuest, passwordReset.renderForgotPassword(
 router.post("/forgot-password", requireGuest, otpRateLimiter, doubleCsrfProtection, asyncHandler(passwordReset.postForgotPassword("candidate")));
 
 router.get("/verify-otp", requireGuest, passwordReset.renderVerifyOtp("candidate"));
-router.post("/verify-otp", requireGuest, doubleCsrfProtection, asyncHandler(passwordReset.postVerifyOtp("candidate")));
+router.post("/verify-otp", requireGuest, otpRateLimiter, doubleCsrfProtection, asyncHandler(passwordReset.postVerifyOtp("candidate")));
 
 router.get("/reset-password", requireGuest, asyncHandler(passwordReset.renderResetPassword("candidate")));
-router.post("/reset-password", requireGuest, doubleCsrfProtection, asyncHandler(passwordReset.postResetPassword("candidate")));
+router.post("/reset-password", requireGuest, otpRateLimiter, doubleCsrfProtection, asyncHandler(passwordReset.postResetPassword("candidate")));
 
 // Authenticated routes
-router.post("/logout", doubleCsrfProtection, candidateAuth.postLogout);
+router.post("/logout", doubleCsrfProtection, asyncHandler(candidateAuth.postLogout));
 
 router.get("/change-password", requireCandidate, candidateAuth.renderChangePassword);
 router.post("/change-password", requireCandidate, doubleCsrfProtection, asyncHandler(candidateAuth.postChangePassword));

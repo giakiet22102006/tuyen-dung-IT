@@ -139,37 +139,46 @@ const postVerifyRegistration = async (req, res) => {
     });
   }
 
-  const otpRecord = await Otp.findOne({
-    email: cleanEmail,
-    userType: "candidate",
-    type: "register",
-    expiresAt: { $gt: new Date() },
-  });
+  // Tăng attempts nguyên tử TRƯỚC khi chạy bcrypt.compare để chống Race Condition brute-force
+  const otpRecord = await Otp.findOneAndUpdate(
+    {
+      email: cleanEmail,
+      userType: "candidate",
+      type: "register",
+      expiresAt: { $gt: new Date() },
+      attempts: { $lt: 5 },
+    },
+    { $inc: { attempts: 1 } },
+    { new: true }
+  );
 
   if (!otpRecord) {
-    return res.status(400).render("pages/verify-registration", {
-      title: "Xác thực Email đăng ký (Ứng viên)",
-      userRole: "candidate",
+    await Otp.deleteMany({
       email: cleanEmail,
-      errors: { otp: "Mã OTP đã hết hạn hoặc không tồn tại. Vui lòng bấm 'Gửi lại mã OTP'." },
+      userType: "candidate",
+      type: "register",
+      attempts: { $gte: 5 },
     });
-  }
-
-  if (otpRecord.attempts >= 5) {
-    await Otp.deleteOne({ _id: otpRecord._id });
     return res.status(400).render("pages/verify-registration", {
       title: "Xác thực Email đăng ký (Ứng viên)",
       userRole: "candidate",
       email: cleanEmail,
-      errors: { otp: "Bạn đã nhập sai mã quá 5 lần. Vui lòng bấm gửi lại mã mới." },
+      errors: { otp: "Mã OTP đã hết hạn, không tồn tại hoặc đã vượt quá 5 lần thử. Vui lòng bấm 'Gửi lại mã OTP'." },
     });
   }
 
   const isMatch = await bcrypt.compare(cleanOtp, otpRecord.otpHash);
   if (!isMatch) {
-    otpRecord.attempts += 1;
-    await otpRecord.save();
-    const remaining = 5 - otpRecord.attempts;
+    if (otpRecord.attempts >= 5) {
+      await Otp.deleteOne({ _id: otpRecord._id });
+      return res.status(400).render("pages/verify-registration", {
+        title: "Xác thực Email đăng ký (Ứng viên)",
+        userRole: "candidate",
+        email: cleanEmail,
+        errors: { otp: "Bạn đã nhập sai mã quá 5 lần. Vui lòng bấm gửi lại mã mới." },
+      });
+    }
+    const remaining = Math.max(0, 5 - otpRecord.attempts);
     return res.status(400).render("pages/verify-registration", {
       title: "Xác thực Email đăng ký (Ứng viên)",
       userRole: "candidate",
@@ -241,7 +250,12 @@ const postResendRegistrationOtp = async (req, res) => {
 
 const renderLogin = (req, res) => {
   if (req.cookies?.itj_session_conflict) {
-    res.clearCookie("itj_session_conflict");
+    res.clearCookie("itj_session_conflict", {
+      httpOnly: true,
+      secure: env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+    });
     if (req.flash) {
       req.flash("error", "⚠️ Phiên làm việc đã kết thúc do tài khoản vừa đăng nhập trên một thiết bị/trình duyệt khác. Nếu không phải bạn, hãy đổi mật khẩu ngay!");
     }
@@ -338,8 +352,17 @@ const postLogin = async (req, res) => {
   res.redirect(redirectUrl);
 };
 
-const postLogout = (req, res) => {
-  res.clearCookie("itj_token");
+const postLogout = async (req, res) => {
+  if (req.user && req.user._id && req.role === "candidate") {
+    // Hủy hiệu lực JWT phía server ngay lập tức
+    await Candidate.updateOne({ _id: req.user._id }, { $inc: { tokenVersion: 1 } }).catch(() => {});
+  }
+  res.clearCookie("itj_token", {
+    httpOnly: true,
+    secure: env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+  });
   req.flash("success", "Đăng xuất thành công!");
   res.redirect("/");
 };
@@ -407,7 +430,7 @@ const redirectToGoogle = (req, res) => {
   }
 
   const nextUrl = isSafeRedirect(req.query.next) ? req.query.next : "/";
-  const authUrl = googleAuthService.getGoogleAuthUrl("candidate", nextUrl, req);
+  const authUrl = googleAuthService.getGoogleAuthUrl("candidate", nextUrl, req, res);
   res.redirect(authUrl);
 };
 
@@ -416,38 +439,48 @@ const handleGoogleCallback = async (req, res) => {
   const googleAuthService = require("../../services/googleAuth.service");
   const { code, state, error } = req.query;
 
-  if (error || !code) {
+  if (error || !code || typeof code !== "string") {
+    googleAuthService.verifyOAuthState(null, "candidate", req, res, "/");
     req.flash("error", "Đăng nhập Google bị hủy hoặc gặp lỗi xác thực.");
     return res.redirect("/candidate/login");
   }
 
-  let nextUrl = "/";
-  if (state) {
-    try {
-      const decoded = JSON.parse(Buffer.from(state, "base64url").toString("utf8"));
-      if (decoded && isSafeRedirect(decoded.next)) {
-        nextUrl = decoded.next;
-      }
-    } catch (e) {}
+  // Xác thực state nonce cookie để chống OAuth Login CSRF
+  const stateCheck = googleAuthService.verifyOAuthState(state, "candidate", req, res, "/");
+  if (!stateCheck.valid) {
+    req.flash("error", "Phiên xác thực Google không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.");
+    return res.redirect("/candidate/login");
   }
+  const nextUrl = stateCheck.next;
 
   try {
     const redirectUri = googleAuthService.getCallbackUrl("candidate", req);
     const tokens = await googleAuthService.exchangeCodeForTokens(code, redirectUri);
     const profile = await googleAuthService.fetchGoogleUserInfo(tokens.access_token);
 
-    if (!profile || !profile.email) {
+    if (!profile || !profile.email || !profile.sub) {
       req.flash("error", "Không lấy được địa chỉ email từ tài khoản Google.");
+      return res.redirect("/candidate/login");
+    }
+
+    // Bắt buộc email đã được Google xác minh để chống chiếm đoạt tài khoản qua OAuth
+    if (profile.email_verified !== true) {
+      req.flash("error", "Tài khoản Google của bạn chưa xác minh email nên không thể đăng nhập.");
       return res.redirect("/candidate/login");
     }
 
     const cleanEmail = profile.email.toLowerCase().trim();
 
-    // Tìm ứng viên theo googleId hoặc email đã tồn tại
-    let candidate = await Candidate.findOne({
-      $or: [{ googleId: profile.sub }, { email: cleanEmail }],
-      deletedAt: null,
-    });
+    // Tìm ứng viên theo googleId trước, sau đó mới theo email
+    let candidate = await Candidate.findOne({ googleId: profile.sub, deletedAt: null });
+    if (!candidate) {
+      candidate = await Candidate.findOne({ email: cleanEmail, deletedAt: null });
+      // Không cho phép ghi đè googleId nếu tài khoản này đã gắn với một tài khoản Google khác
+      if (candidate && candidate.googleId && candidate.googleId !== profile.sub) {
+        req.flash("error", "Email này đã được liên kết với một tài khoản Google khác.");
+        return res.redirect("/candidate/login");
+      }
+    }
 
     if (candidate) {
       if (candidate.status === CANDIDATE_STATUS.BANNED) {
@@ -456,7 +489,9 @@ const handleGoogleCallback = async (req, res) => {
         return res.redirect("/candidate/login");
       }
 
-      candidate.googleId = profile.sub;
+      if (!candidate.googleId) {
+        candidate.googleId = profile.sub;
+      }
       candidate.isEmailVerified = true;
       if (!candidate.avatar || !candidate.avatar.url) {
         candidate.avatar = { url: profile.picture || "", key: "" };
@@ -503,7 +538,8 @@ const handleGoogleCallback = async (req, res) => {
     res.redirect(nextUrl);
   } catch (err) {
     console.error("Lỗi Google Auth Candidate Callback:", err);
-    req.flash("error", "Đăng nhập Google thất bại: " + err.message);
+    const errMsg = env.NODE_ENV === "production" ? "Đăng nhập Google thất bại. Vui lòng thử lại." : "Đăng nhập Google thất bại: " + err.message;
+    req.flash("error", errMsg);
     res.redirect("/candidate/login");
   }
 };

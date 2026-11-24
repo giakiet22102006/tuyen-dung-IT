@@ -10,7 +10,7 @@ const flashMiddleware = require("./middlewares/flash.middleware");
 const { authenticateUser, authenticateAdmin } = require("./middlewares/auth.middleware");
 const localsMiddleware = require("./middlewares/locals.middleware");
 const { apiRateLimiter } = require("./middlewares/rateLimit.middleware");
-const isSafeRedirect = require("./utils/sanitizeRedirect");
+const { noSqlSanitizeMiddleware, getSafeBackRedirect } = require("./utils/securityHelpers");
 
 const clientRoutes = require("./routes/client.route");
 const candidateRoutes = require("./routes/candidate.route");
@@ -147,9 +147,9 @@ app.use(async (req, res, next) => {
           <p><strong>Nguyên nhân phổ biến nhất trên Vercel:</strong></p>
           <p>Trên <strong>MongoDB Atlas</strong>, bạn chưa mở quyền truy cập IP cho Cloud.</p>
           <ol>
-            <li>Vào <a href="https://cloud.mongodb.com/" target="_blank">cloud.mongodb.com</a></li>
+            <li>Vào <a href="https://cloud.mongodb.com/" target="_blank" rel="noopener noreferrer">cloud.mongodb.com</a></li>
             <li>Chọn mục <strong>Network Access</strong> (ở menu bên trái)</li>
-            <li>Bấm <strong>Add IP Address</strong> $\rightarrow$ chọn <strong>ALLOW ACCESS FROM ANYWHERE</strong> (IP <code>0.0.0.0/0</code>)</li>
+            <li>Bấm <strong>Add IP Address</strong> &rarr; chọn <strong>ALLOW ACCESS FROM ANYWHERE</strong> (IP <code>0.0.0.0/0</code>)</li>
             <li>Bấm <strong>Confirm</strong> và đợi 1 phút rồi F5 tải lại trang.</li>
           </ol>
         </div>
@@ -158,9 +158,10 @@ app.use(async (req, res, next) => {
   }
 });
 
-// Body parsing
+// Body parsing & NoSQL operator sanitization
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
+app.use(noSqlSanitizeMiddleware);
 app.use(cookieParser(env.COOKIE_SECRET));
 
 // Static files với maxAge tối ưu
@@ -193,6 +194,8 @@ app.use("/api", (req, res, next) => {
   next();
 }, apiRateLimiter);
 app.use("/mcp", apiRateLimiter);
+app.use("/.well-known/mcp", apiRateLimiter);
+app.use("/.well-known/mcp.json", apiRateLimiter);
 
 // Mount routes
 app.use("/", clientRoutes);
@@ -270,28 +273,16 @@ app.use((err, req, res, _next) => {
     if (req.flash) {
       req.flash("error", "Phiên làm việc đã hết hạn hoặc mã bảo mật (CSRF) không hợp lệ. Vui lòng thử lại.");
     }
-    let safeBackUrl = "/";
-    const rawReferer = req.headers.referer;
-    if (rawReferer && typeof rawReferer === "string") {
-      try {
-        const parsedRef = new URL(rawReferer);
-        const currentHost = req.get("host");
-        if (currentHost && parsedRef.host === currentHost) {
-          const candidatePath = `${parsedRef.pathname}${parsedRef.search}`;
-          if (isSafeRedirect(candidatePath)) {
-            safeBackUrl = candidatePath;
-          }
-        }
-      } catch {
-        // Bỏ qua referer sai định dạng, dùng fallback "/"
-      }
-    }
-    return res.redirect(safeBackUrl);
+    return res.redirect(getSafeBackRedirect(req, "/"));
   }
 
   console.error("Unhandled Error:", err);
   if (req.xhr || req.headers.accept?.includes("json") || req.path.startsWith("/api")) {
-    return res.status(500).json({ success: false, message: "Đã xảy ra lỗi máy chủ nội bộ: " + err.message });
+    const message =
+      env.NODE_ENV === "production"
+        ? "Đã xảy ra lỗi máy chủ nội bộ."
+        : "Đã xảy ra lỗi máy chủ nội bộ: " + err.message;
+    return res.status(500).json({ success: false, message });
   }
   res.status(500).send("Đã xảy ra lỗi máy chủ nội bộ (500)");
 });

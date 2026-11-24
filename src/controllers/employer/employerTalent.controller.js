@@ -1,15 +1,28 @@
 // src/controllers/employer/employerTalent.controller.js
 const { Candidate, Job } = require("../../models");
-const { CITIES, POSITIONS, JOB_MODERATION } = require("../../config/constants");
+const { CITIES, POSITIONS, JOB_MODERATION, EMPLOYER_STATUS } = require("../../config/constants");
 const { createNotification } = require("../../services/notification.service");
 const paginate = require("../../utils/pagination");
+const { escapeRegex, isValidObjectId, getSafeBackRedirect } = require("../../utils/securityHelpers");
+
+const ALLOWED_CITY_VALUES = new Set(CITIES.map((c) => c.value));
+const ALLOWED_POSITION_VALUES = new Set(POSITIONS.map((p) => p.value));
 
 /**
  * Hiển thị Kho Ứng viên IT & Săn đầu người (Talent Pool)
  */
 const renderTalentPool = async (req, res) => {
-  const page = parseInt(req.query.page, 10) || 1;
-  const { skill, level, city, keyword } = req.query;
+  // Chỉ doanh nghiệp đã được phê duyệt (ACTIVE) mới được xem hồ sơ & email ứng viên
+  if (!req.user || req.user.status !== EMPLOYER_STATUS.ACTIVE) {
+    req.flash("error", "Tài khoản công ty của bạn đang chờ phê duyệt. Vui lòng đợi Admin kích hoạt trước khi truy cập Kho Ứng viên IT.");
+    return res.redirect("/employer/company-profile");
+  }
+
+  const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+  const skill = typeof req.query.skill === "string" ? req.query.skill.trim().slice(0, 60) : "";
+  const level = typeof req.query.level === "string" && ALLOWED_POSITION_VALUES.has(req.query.level) ? req.query.level : "";
+  const city = typeof req.query.city === "string" && ALLOWED_CITY_VALUES.has(req.query.city) ? req.query.city : "";
+  const keyword = typeof req.query.keyword === "string" ? req.query.keyword.trim().slice(0, 100) : "";
 
   const filter = {
     deletedAt: null,
@@ -20,10 +33,12 @@ const renderTalentPool = async (req, res) => {
 
   // Bảo vệ quyền riêng tư: Ẩn với công ty hiện tại nếu ứng viên cài đặt
   if (req.user && req.user.companyName) {
-    const currentName = req.user.companyName.trim();
-    filter["itProfile.hideFromCurrentCompany"] = {
-      $not: { $regex: new RegExp(`^${currentName}$`, "i") },
-    };
+    const escapedCompany = escapeRegex(req.user.companyName);
+    if (escapedCompany) {
+      filter["itProfile.hideFromCurrentCompany"] = {
+        $not: { $regex: new RegExp(`^${escapedCompany}$`, "i") },
+      };
+    }
   }
 
   if (level) {
@@ -35,16 +50,16 @@ const renderTalentPool = async (req, res) => {
   }
 
   if (skill) {
-    filter["itProfile.skills"] = { $regex: new RegExp(`^${skill.trim()}$`, "i") };
+    filter["itProfile.skills"] = { $regex: new RegExp(`^${escapeRegex(skill)}$`, "i") };
   }
 
   if (keyword) {
-    const kw = keyword.trim();
+    const escapedKw = escapeRegex(keyword);
     filter.$or = [
-      { fullName: { $regex: kw, $options: "i" } },
-      { "itProfile.title": { $regex: kw, $options: "i" } },
-      { "itProfile.skills": { $regex: kw, $options: "i" } },
-      { "itProfile.bio": { $regex: kw, $options: "i" } },
+      { fullName: { $regex: escapedKw, $options: "i" } },
+      { "itProfile.title": { $regex: escapedKw, $options: "i" } },
+      { "itProfile.skills": { $regex: escapedKw, $options: "i" } },
+      { "itProfile.bio": { $regex: escapedKw, $options: "i" } },
     ];
   }
 
@@ -75,10 +90,10 @@ const renderTalentPool = async (req, res) => {
     pagination,
     cities: CITIES,
     positions: POSITIONS,
-    selectedSkill: skill || "",
-    selectedLevel: level || "",
-    selectedCity: city || "",
-    keyword: keyword || "",
+    selectedSkill: skill,
+    selectedLevel: level,
+    selectedCity: city,
+    keyword,
   });
 };
 
@@ -86,11 +101,36 @@ const renderTalentPool = async (req, res) => {
  * Gửi lời mời ứng tuyển trực tiếp đến Ứng viên (Headhunt Invite)
  */
 const postInviteCandidate = async (req, res) => {
+  if (!req.user || req.user.status !== EMPLOYER_STATUS.ACTIVE) {
+    req.flash("error", "Tài khoản công ty chưa được phê duyệt để gửi lời mời ứng tuyển.");
+    return res.redirect("/employer/company-profile");
+  }
+
   const { jobId, message } = req.body;
   const candidateId = req.params.id;
 
+  if (!isValidObjectId(candidateId) || !isValidObjectId(jobId)) {
+    req.flash("error", "Mã ứng viên hoặc công việc không hợp lệ.");
+    return res.redirect("/employer/candidates");
+  }
+
+  const candidateFilter = {
+    _id: candidateId,
+    deletedAt: null,
+    status: "active",
+    "itProfile.openToWork": { $ne: false },
+  };
+  if (req.user.companyName) {
+    const escapedCompany = escapeRegex(req.user.companyName);
+    if (escapedCompany) {
+      candidateFilter["itProfile.hideFromCurrentCompany"] = {
+        $not: { $regex: new RegExp(`^${escapedCompany}$`, "i") },
+      };
+    }
+  }
+
   const [candidate, job] = await Promise.all([
-    Candidate.findOne({ _id: candidateId, deletedAt: null, status: "active" }),
+    Candidate.findOne(candidateFilter),
     Job.findOne({
       _id: jobId,
       employerId: req.user._id,
@@ -101,12 +141,12 @@ const postInviteCandidate = async (req, res) => {
   ]);
 
   if (!candidate || !job) {
-    req.flash("error", "Không tìm thấy thông tin ứng viên hoặc công việc tuyển dụng.");
+    req.flash("error", "Không tìm thấy ứng viên phù hợp hoặc công việc tuyển dụng.");
     return res.redirect("/employer/candidates");
   }
 
-  const inviteMsg = message && message.trim()
-    ? message.trim()
+  const inviteMsg = typeof message === "string" && message.trim()
+    ? message.trim().slice(0, 1000)
     : `Công ty ${req.user.companyName} rất ấn tượng với hồ sơ của bạn và trân trọng mời bạn tham khảo, ứng tuyển vào vị trí "${job.title}".`;
 
   // Bắn thông báo In-App cho Ứng viên
@@ -123,7 +163,7 @@ const postInviteCandidate = async (req, res) => {
     "success",
     `Đã gửi lời mời ứng tuyển thành công đến ứng viên ${candidate.fullName}!`
   );
-  res.redirect(req.headers.referer || "/employer/candidates");
+  res.redirect(getSafeBackRedirect(req, "/employer/candidates"));
 };
 
 module.exports = {

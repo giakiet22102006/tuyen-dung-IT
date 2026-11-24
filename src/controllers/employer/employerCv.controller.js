@@ -7,17 +7,20 @@ const { sendInterviewInvitationEmail, sendRejectionEmail } = require("../../serv
 const { draftInterviewInvitation, draftRejectionLetter } = require("../../services/ai.service");
 const sanitizeHtml = require("../../utils/sanitizeHtml");
 const paginate = require("../../utils/pagination");
+const env = require("../../config/env");
+const { escapeRegex, isValidObjectId, safeUrl, getSafeBackRedirect } = require("../../utils/securityHelpers");
 
 const renderManageCv = async (req, res) => {
-  const page = req.query.page || 1;
+  const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
   const filter = {
     employerId: req.user._id,
     hiddenByEmployer: false,
   };
 
-  // Lọc theo Job nếu có
-  if (req.query.jobId) {
-    filter.jobId = req.query.jobId;
+  // Lọc theo Job nếu có (validate ObjectId chặt chẽ)
+  const filterJobId = isValidObjectId(req.query.jobId) ? req.query.jobId : "";
+  if (filterJobId) {
+    filter.jobId = filterJobId;
   }
 
   // Lọc theo trạng thái nếu có
@@ -96,7 +99,7 @@ const postCvStatus = async (req, res) => {
       return res.status(400).json({ success: false, message: "Trạng thái tuyển dụng không hợp lệ." });
     }
     req.flash("error", "Trạng thái duyệt không hợp lệ.");
-    return res.redirect(req.headers.referer || "/employer/cvs");
+    return res.redirect(getSafeBackRedirect(req, "/employer/cvs"));
   }
 
   const application = await Application.findOne({
@@ -158,7 +161,7 @@ const postCvStatus = async (req, res) => {
   }
 
   req.flash("success", `Cập nhật trạng thái hồ sơ thành công: ${statusLabel}.`);
-  res.redirect(req.headers.referer || `/employer/cvs/${application._id}`);
+  res.redirect(getSafeBackRedirect(req, `/employer/cvs/${application._id}`));
 };
 
 /**
@@ -170,12 +173,12 @@ const renderHiringPipeline = async (req, res) => {
     hiddenByEmployer: false,
   };
 
-  if (req.query.jobId) {
+  if (isValidObjectId(req.query.jobId)) {
     filter.jobId = req.query.jobId;
   }
 
-  if (req.query.keyword) {
-    const kw = req.query.keyword.trim();
+  if (typeof req.query.keyword === "string" && req.query.keyword.trim()) {
+    const kw = escapeRegex(req.query.keyword);
     filter.$or = [
       { fullName: { $regex: kw, $options: "i" } },
       { email: { $regex: kw, $options: "i" } },
@@ -349,7 +352,8 @@ const postAiDraftInterviewInvite = async (req, res) => {
 
     return res.json({ success: true, ...draft });
   } catch (err) {
-    return res.status(500).json({ success: false, message: "Lỗi tạo thư mời bằng AI: " + err.message });
+    const msg = env.NODE_ENV === "production" ? "Lỗi tạo thư mời bằng AI. Vui lòng thử lại." : "Lỗi tạo thư mời bằng AI: " + err.message;
+    return res.status(500).json({ success: false, message: msg });
   }
 };
 
@@ -376,7 +380,8 @@ const postAiDraftRejection = async (req, res) => {
 
     return res.json({ success: true, ...draft });
   } catch (err) {
-    return res.status(500).json({ success: false, message: "Lỗi tạo lời nhắn từ chối: " + err.message });
+    const msg = env.NODE_ENV === "production" ? "Lỗi tạo lời nhắn từ chối. Vui lòng thử lại." : "Lỗi tạo lời nhắn từ chối: " + err.message;
+    return res.status(500).json({ success: false, message: msg });
   }
 };
 
@@ -510,15 +515,16 @@ const postScheduleInterview = async (req, res) => {
 
   const duration = parseInt(durationMinutes, 10) || 60;
   const isOnline = locationType === "online";
+  const cleanMeetingLink = safeUrl(meetingLink);
   const finalLocation = isOnline
-    ? (meetingLink ? `Google Meet / Zoom: ${meetingLink.trim()}` : "Online Meeting")
+    ? (cleanMeetingLink ? `Google Meet / Zoom: ${cleanMeetingLink}` : "Online Meeting")
     : (locationAddress ? locationAddress.trim() : (req.user.address || "Văn phòng công ty"));
 
   application.interviewSchedule = {
     scheduledAt,
     durationMinutes: duration,
     locationType: isOnline ? "online" : "offline",
-    meetingLink: meetingLink ? meetingLink.trim() : "",
+    meetingLink: cleanMeetingLink,
     locationAddress: locationAddress ? locationAddress.trim() : "",
     interviewers: interviewers ? interviewers.trim() : (req.user.companyName || "Hội đồng tuyển dụng"),
     notes: notes ? notes.trim() : "",

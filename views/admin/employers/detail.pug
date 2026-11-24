@@ -120,7 +120,7 @@ block main
                             each job in jobs
                                 tr(class="hover:bg-gray-50 transition-colors")
                                     td(class="py-[14px] px-[20px] font-[600] text-[#111827]")
-                                        a(href="/jobs/" + job.slug target="_blank" class="hover:text-[#0088FF]") #{job.title}
+                                        a(href="/jobs/" + job.slug target="_blank" rel="noopener noreferrer" class="hover:text-[#0088FF]") #{job.title}
                                     td(class="py-[14px] px-[20px] text-[#0088FF] font-[500]") #{formatSalary(job.salaryMin, job.salaryMax)}
                                     td(class="py-[14px] px-[20px] text-[#4B5563]") #{labels.getPositionLabel(job.position)}
                                     td(class="py-[14px] px-[20px]")
