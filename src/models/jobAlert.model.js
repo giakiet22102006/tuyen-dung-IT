@@ -32,7 +32,7 @@ const jobAlertSchema = new mongoose.Schema(
     },
     frequency: {
       type: String,
-      enum: ["instant", "daily"],
+      enum: ["instant", "daily", "weekly"],
       default: "instant",
     },
     isActive: {

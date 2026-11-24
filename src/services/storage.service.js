@@ -3,6 +3,9 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const sharp = require("sharp");
+const mongoose = require("mongoose");
+const env = require("../config/env");
+const StoredFile = require("../models/storedFile.model");
 
 const isVercel = Boolean(process.env.VERCEL);
 const BASE_UPLOAD_DIR = isVercel ? "/tmp/uploads" : path.join(__dirname, "../../public/uploads");
@@ -142,9 +145,9 @@ async function checkPdf(buffer) {
     return false;
   }
 
-  // Chặn Active PDF Actions có thể thực thi JS khi trình duyệt mở PDF inline
-  const rawLatin1 = buffer.toString("latin1");
-  if (/\/(?:JavaScript|JS|Launch|RichMedia|XFA)\b/.test(rawLatin1)) {
+  // Chặn Active PDF Actions trong dictionary/object PDF (bỏ qua URI https://.../JavaScript trong CV dev)
+  const rawLatin1 = buffer.toString("latin1").replace(/https?:\/\/[^\s()<>"]+/gi, " ");
+  if (/<<[\s\S]{0,2048}?\/(?:JavaScript|JS|Launch|RichMedia|XFA)\b/.test(rawLatin1)) {
     return false;
   }
 
@@ -161,10 +164,63 @@ async function checkPdf(buffer) {
   return true;
 }
 
-/**
- * Xử lý và lưu trữ ảnh Logo (resize tối đa 400x400, format WebP)
- */
-async function uploadLogo(file) {
+function isCloudinaryReady() {
+  return Boolean(
+    env.STORAGE_DRIVER === "cloudinary" &&
+      env.CLOUDINARY_CLOUD_NAME &&
+      env.CLOUDINARY_API_KEY &&
+      env.CLOUDINARY_API_SECRET
+  );
+}
+
+async function persistStoredFile(key, folder, contentType, buffer) {
+  if (mongoose.connection.readyState !== 1 || !Buffer.isBuffer(buffer)) return;
+  try {
+    await StoredFile.findOneAndUpdate(
+      { key },
+      {
+        $set: {
+          folder,
+          contentType,
+          size: buffer.length,
+          data: buffer,
+        },
+      },
+      { upsert: true, new: false }
+    );
+  } catch (err) {
+    console.warn(`[Storage] Không thể lưu bản sao DB cho ${key}:`, err.message);
+  }
+}
+
+async function uploadToCloudinary(buffer, folder, filename, resourceType = "image") {
+  const timestamp = Math.floor(Date.now() / 1000);
+  const publicId = `${folder}/${filename.replace(/\.[^.]+$/, "")}`;
+  const signaturePayload = `public_id=${publicId}&timestamp=${timestamp}${env.CLOUDINARY_API_SECRET}`;
+  const signature = crypto.createHash("sha1").update(signaturePayload).digest("hex");
+
+  const form = new FormData();
+  const mime = resourceType === "raw" ? "application/pdf" : "image/webp";
+  form.append("file", new Blob([buffer], { type: mime }), filename);
+  form.append("api_key", env.CLOUDINARY_API_KEY);
+  form.append("timestamp", String(timestamp));
+  form.append("public_id", publicId);
+  form.append("signature", signature);
+
+  const endpoint = `https://api.cloudinary.com/v1_1/${encodeURIComponent(env.CLOUDINARY_CLOUD_NAME)}/${resourceType}/upload`;
+  const resp = await fetch(endpoint, {
+    method: "POST",
+    body: form,
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!resp.ok) {
+    const errText = await resp.text().catch(() => resp.statusText);
+    throw new Error(`Cloudinary upload failed (${resp.status}): ${errText.slice(0, 120)}`);
+  }
+  return resp.json();
+}
+
+async function savePublicWebpAsset(file, { subfolder, prefix, width, height = null, fit = "inside" }) {
   if (!file || !file.buffer) return null;
 
   const valid = await checkFileType(file.buffer, ["image/jpeg", "image/png", "image/webp"]);
@@ -172,97 +228,100 @@ async function uploadLogo(file) {
     throw new Error("Định dạng file không hợp lệ. Chỉ chấp nhận JPG, PNG hoặc WebP.");
   }
 
-  const filename = `logo-${crypto.randomBytes(12).toString("hex")}.webp`;
-  const absolutePath = path.join(LOGOS_DIR, filename);
+  const filename = `${prefix}-${crypto.randomBytes(12).toString("hex")}.webp`;
+  const targetDir = path.join(BASE_UPLOAD_DIR, subfolder);
+  const absolutePath = path.join(targetDir, filename);
 
-  await sharp(file.buffer)
-    .resize(400, 400, { fit: "inside", withoutEnlargement: true })
+  const sharpOptions = height
+    ? { fit, ...(fit === "inside" ? { withoutEnlargement: true } : {}) }
+    : { withoutEnlargement: true };
+
+  const webpBuffer = await sharp(file.buffer)
+    .resize(width, height, sharpOptions)
     .webp({ quality: 85 })
-    .toFile(absolutePath);
+    .toBuffer();
+
+  if (isCloudinaryReady()) {
+    try {
+      const cloudRes = await uploadToCloudinary(webpBuffer, `vnitjobs/${subfolder}`, filename, "image");
+      return {
+        url: cloudRes.secure_url || `/uploads/${subfolder}/${filename}`,
+        key: filename,
+      };
+    } catch (err) {
+      console.warn(`[Storage] Fallback local/DB cho ${subfolder}:`, err.message);
+    }
+  }
+
+  try {
+    if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
+    await fs.promises.writeFile(absolutePath, webpBuffer);
+  } catch (err) {
+    console.warn(`[Storage] Ghi file ${absolutePath}:`, err.message);
+  }
+
+  // Lưu kèm vào MongoDB để không bị mất sau cold-start Vercel /tmp
+  await persistStoredFile(filename, subfolder, "image/webp", webpBuffer);
 
   return {
-    url: `/uploads/logos/${filename}`,
+    url: `/uploads/${subfolder}/${filename}`,
     key: filename,
   };
+}
+
+/**
+ * Xử lý và lưu trữ ảnh Logo (resize tối đa 400x400, format WebP)
+ */
+async function uploadLogo(file) {
+  return savePublicWebpAsset(file, {
+    subfolder: "logos",
+    prefix: "logo",
+    width: 400,
+    height: 400,
+    fit: "inside",
+  });
 }
 
 /**
  * Xử lý và lưu trữ ảnh Avatar Ứng viên (resize tối đa 400x400, format WebP)
  */
 async function uploadAvatar(file) {
-  if (!file || !file.buffer) return null;
-
-  const valid = await checkFileType(file.buffer, ["image/jpeg", "image/png", "image/webp"]);
-  if (!valid) {
-    throw new Error("Định dạng file không hợp lệ. Chỉ chấp nhận JPG, PNG hoặc WebP.");
-  }
-
-  const filename = `avatar-${crypto.randomBytes(12).toString("hex")}.webp`;
-  const absolutePath = path.join(AVATARS_DIR, filename);
-
-  await sharp(file.buffer)
-    .resize(400, 400, { fit: "cover" })
-    .webp({ quality: 85 })
-    .toFile(absolutePath);
-
-  return {
-    url: `/uploads/avatars/${filename}`,
-    key: filename,
-  };
+  return savePublicWebpAsset(file, {
+    subfolder: "avatars",
+    prefix: "avatar",
+    width: 400,
+    height: 400,
+    fit: "cover",
+  });
 }
 
 /**
  * Xử lý và lưu trữ ảnh Thumbnail bài viết Cẩm Nang IT (resize 1200x675 tỉ lệ 16:9, format WebP)
  */
 async function uploadArticleThumbnail(file) {
-  if (!file || !file.buffer) return null;
-
-  const valid = await checkFileType(file.buffer, ["image/jpeg", "image/png", "image/webp"]);
-  if (!valid) {
-    throw new Error("Định dạng file không hợp lệ. Chỉ chấp nhận JPG, PNG hoặc WebP.");
-  }
-
-  const filename = `article-thumb-${crypto.randomBytes(12).toString("hex")}.webp`;
-  const absolutePath = path.join(ARTICLES_DIR, filename);
-
-  await sharp(file.buffer)
-    .resize(1200, 675, { fit: "cover" })
-    .webp({ quality: 85 })
-    .toFile(absolutePath);
-
-  return {
-    url: `/uploads/articles/${filename}`,
-    key: filename,
-  };
+  return savePublicWebpAsset(file, {
+    subfolder: "articles",
+    prefix: "article-thumb",
+    width: 1200,
+    height: 675,
+    fit: "cover",
+  });
 }
 
 /**
  * Xử lý và lưu trữ ảnh Job (chiều rộng tối đa 1280px, format WebP)
  */
 async function uploadJobImage(file) {
-  if (!file || !file.buffer) return null;
-
-  const valid = await checkFileType(file.buffer, ["image/jpeg", "image/png", "image/webp"]);
-  if (!valid) {
-    throw new Error("Định dạng file không hợp lệ. Chỉ chấp nhận JPG, PNG hoặc WebP.");
-  }
-
-  const filename = `job-${crypto.randomBytes(12).toString("hex")}.webp`;
-  const absolutePath = path.join(JOBS_DIR, filename);
-
-  await sharp(file.buffer)
-    .resize(1280, null, { withoutEnlargement: true })
-    .webp({ quality: 85 })
-    .toFile(absolutePath);
-
-  return {
-    url: `/uploads/jobs/${filename}`,
-    key: filename,
-  };
+  return savePublicWebpAsset(file, {
+    subfolder: "jobs",
+    prefix: "job",
+    width: 1280,
+    height: null,
+  });
 }
 
 /**
- * Lưu trữ file PDF CV vào thư mục riêng biệt bảo mật (storage/private/cv/)
+ * Lưu trữ file PDF CV vào thư mục riêng biệt bảo mật (storage/private/cv/) + bản sao DB bền vững
  */
 async function uploadCV(file) {
   if (!file || !file.buffer) return null;
@@ -275,7 +334,14 @@ async function uploadCV(file) {
   const filename = `cv-${crypto.randomBytes(16).toString("hex")}.pdf`;
   const absolutePath = path.join(CV_STORAGE_DIR, filename);
 
-  await fs.promises.writeFile(absolutePath, file.buffer);
+  try {
+    if (!fs.existsSync(CV_STORAGE_DIR)) fs.mkdirSync(CV_STORAGE_DIR, { recursive: true });
+    await fs.promises.writeFile(absolutePath, file.buffer);
+  } catch (err) {
+    console.warn(`[Storage] Ghi CV ${absolutePath}:`, err.message);
+  }
+
+  await persistStoredFile(filename, "cv", "application/pdf", file.buffer);
 
   return {
     key: filename,
@@ -293,7 +359,14 @@ async function saveCvBuffer(buffer, originalName = "IT_Profile_CV.pdf") {
   const filename = `cv-${crypto.randomBytes(16).toString("hex")}.pdf`;
   const absolutePath = path.join(CV_STORAGE_DIR, filename);
 
-  await fs.promises.writeFile(absolutePath, buffer);
+  try {
+    if (!fs.existsSync(CV_STORAGE_DIR)) fs.mkdirSync(CV_STORAGE_DIR, { recursive: true });
+    await fs.promises.writeFile(absolutePath, buffer);
+  } catch (err) {
+    console.warn(`[Storage] Ghi buffer CV ${absolutePath}:`, err.message);
+  }
+
+  await persistStoredFile(filename, "cv", "application/pdf", Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer));
 
   return {
     key: filename,
@@ -327,6 +400,90 @@ function getCVPath(key) {
 }
 
 /**
+ * Đọc Buffer PDF an toàn: ưu tiên ổ đĩa/tmp cache, fallback khôi phục từ MongoDB StoredFile sau cold start
+ */
+async function ensureCVBuffer(key) {
+  if (!key || typeof key !== "string" || key.length > 255) return null;
+  if (/[\0/\\]/.test(key) || key.includes("..") || !SAFE_CV_KEY_REGEX.test(key)) return null;
+
+  const diskPath = getCVPath(key);
+  if (diskPath) {
+    try {
+      return await fs.promises.readFile(diskPath);
+    } catch {
+      // Fallback sang MongoDB bên dưới
+    }
+  }
+
+  if (mongoose.connection.readyState === 1) {
+    try {
+      const stored = await StoredFile.findOne({ key, folder: "cv" }).lean();
+      if (stored && stored.data) {
+        const buf = Buffer.isBuffer(stored.data) ? stored.data : Buffer.from(stored.data.buffer || stored.data);
+        try {
+          if (!fs.existsSync(CV_STORAGE_DIR)) fs.mkdirSync(CV_STORAGE_DIR, { recursive: true });
+          await fs.promises.writeFile(path.join(CV_STORAGE_DIR, key), buf);
+        } catch {
+          // Bỏ qua nếu hệ thống file read-only
+        }
+        return buf;
+      }
+    } catch (err) {
+      console.warn(`[Storage] Lỗi khôi phục CV ${key} từ DB:`, err.message);
+    }
+  }
+  return null;
+}
+
+/**
+ * Phục hồi file ảnh public từ StoredFile khi Vercel /tmp bị xóa sau cold start
+ */
+async function getStoredPublicFile(subfolder, key) {
+  if (!ALLOWED_UPLOAD_SUBFOLDERS.has(subfolder)) return null;
+  if (!key || typeof key !== "string" || key.length > 255) return null;
+  if (/[\0/\\]/.test(key) || key.includes("..") || !SAFE_PUBLIC_KEY_REGEX.test(key)) return null;
+  if (mongoose.connection.readyState !== 1) return null;
+
+  try {
+    const stored = await StoredFile.findOne({ key, folder: subfolder }).lean();
+    if (!stored || !stored.data) return null;
+    const buf = Buffer.isBuffer(stored.data) ? stored.data : Buffer.from(stored.data.buffer || stored.data);
+    try {
+      const targetDir = path.join(BASE_UPLOAD_DIR, subfolder);
+      if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
+      await fs.promises.writeFile(path.join(targetDir, key), buf);
+    } catch {
+      // Bỏ qua lỗi cache disk
+    }
+    return {
+      buffer: buf,
+      contentType: stored.contentType || "image/webp",
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Thiết lập HTTP response headers an toàn cho phép nhúng <iframe> cùng origin khi xem PDF CV
+ */
+function setPdfInlineHeaders(res, filename = "CV.pdf") {
+  const safeName = sanitizeOriginalFilename(filename, "CV.pdf");
+  const asciiName = safeName.replace(/[^\x20-\x7E]/g, "_").replace(/"/g, "");
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader(
+    "Content-Disposition",
+    `inline; filename="${asciiName}"; filename*=UTF-8''${encodeURIComponent(safeName)}`
+  );
+  res.setHeader("X-Frame-Options", "SAMEORIGIN");
+  res.setHeader(
+    "Content-Security-Policy",
+    "default-src 'self'; frame-ancestors 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; object-src 'self' blob:"
+  );
+  res.setHeader("Cache-Control", "private, max-age=300");
+}
+
+/**
  * Xóa file CV trong storage riêng
  */
 function deleteCV(key) {
@@ -338,6 +495,9 @@ function deleteCV(key) {
     }
   } catch (err) {
     console.error(`Không thể xóa CV ${key}:`, err.message);
+  }
+  if (mongoose.connection.readyState === 1 && typeof key === "string") {
+    StoredFile.deleteOne({ key, folder: "cv" }).catch(() => {});
   }
 }
 
@@ -359,6 +519,9 @@ function deleteFile(key, subfolder = "logos") {
   } catch (err) {
     console.error(`Không thể xóa file ${key}:`, err.message);
   }
+  if (mongoose.connection.readyState === 1) {
+    StoredFile.deleteOne({ key, folder: subfolder }).catch(() => {});
+  }
 }
 
 module.exports = {
@@ -373,6 +536,9 @@ module.exports = {
   uploadCV,
   saveCvBuffer,
   getCVPath,
+  ensureCVBuffer,
+  getStoredPublicFile,
+  setPdfInlineHeaders,
   deleteCV,
   deleteFile,
 };

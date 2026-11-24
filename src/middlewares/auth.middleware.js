@@ -2,9 +2,10 @@
 const mongoose = require("mongoose");
 const { verifyUserToken, verifyAdminToken } = require("../services/auth.service");
 const { Candidate, Employer, Admin } = require("../models");
-const { CANDIDATE_STATUS, EMPLOYER_STATUS, ADMIN_STATUS, ADMIN_ROLES } = require("../config/constants");
+const { ADMIN_STATUS, ADMIN_ROLES, CANDIDATE_STATUS, EMPLOYER_STATUS } = require("../config/constants");
 const env = require("../config/env");
 const isSafeRedirect = require("../utils/sanitizeRedirect");
+const { getSafeBackRedirect } = require("../utils/securityHelpers");
 
 const AUTH_COOKIE_CLEAR_OPTIONS = {
   httpOnly: true,
@@ -36,7 +37,10 @@ function isApiRequest(req) {
 }
 
 function getSafeReturnUrl(req) {
-  const candidateUrl = req.originalUrl || "/";
+  const candidateUrl =
+    req && req.method === "GET"
+      ? req.originalUrl || "/"
+      : getSafeBackRedirect(req, "/");
   return encodeURIComponent(isSafeRedirect(candidateUrl) ? candidateUrl : "/");
 }
 
@@ -247,13 +251,55 @@ function requireEmployerAdmin(req, res, next) {
     if (isApiRequest(req)) {
       return res.status(403).json({
         success: false,
-        message: "Chỉ Quản trị viên công ty mới có quyền quản lý đội ngũ tuyển dụng.",
+        message: "Chỉ Quản trị viên công ty mới có quyền thực hiện thao tác này.",
       });
     }
     if (req.flash) {
-      req.flash("error", "Chỉ Quản trị viên công ty mới có quyền quản lý đội ngũ tuyển dụng.");
+      req.flash("error", "Chỉ Quản trị viên công ty mới có quyền thực hiện thao tác này.");
     }
     return res.redirect("/employer/company-profile");
+  }
+  next();
+}
+
+/**
+ * Bắt buộc tài khoản Chủ sở hữu công ty (Employer Owner — không phải teamMember phụ)
+ */
+function requireEmployerOwner(req, res, next) {
+  if (!req.user || req.role !== "employer") {
+    return requireEmployer(req, res, next);
+  }
+  if (req.user.currentMember) {
+    if (isApiRequest(req)) {
+      return res.status(403).json({
+        success: false,
+        message: "Chỉ tài khoản Chủ công ty mới có quyền thực hiện thao tác này.",
+      });
+    }
+    if (req.flash) {
+      req.flash("error", "Chỉ tài khoản Chủ công ty mới có quyền thực hiện thao tác này.");
+    }
+    return res.redirect("/employer/team");
+  }
+  next();
+}
+
+/**
+ * Bắt buộc công ty đã được duyệt (status === "active") trước khi đăng/sửa tin, dùng AI tạo JD hoặc săn ứng viên
+ */
+function requireActiveEmployer(req, res, next) {
+  if (!req.user || req.role !== "employer") {
+    return requireEmployer(req, res, next);
+  }
+  if (req.user.status !== EMPLOYER_STATUS.ACTIVE) {
+    const msg = "Tài khoản công ty đang chờ phê duyệt nên chưa thể thực hiện thao tác này.";
+    if (isApiRequest(req)) {
+      return res.status(403).json({ success: false, message: msg });
+    }
+    if (req.flash) {
+      req.flash("error", msg);
+    }
+    return res.redirect("/employer/jobs");
   }
   next();
 }
@@ -331,12 +377,43 @@ function adminSecurityHeaders(req, res, next) {
  */
 function requireGuest(req, res, next) {
   if (req.user) {
+    const base = req.baseUrl || "";
+    const isCandidateRoute = base.startsWith("/candidate");
+    const isEmployerRoute = base.startsWith("/employer");
+
     if (req.role === "employer") {
+      if (isCandidateRoute && req.flash) {
+        req.flash("error", "Bạn đang đăng nhập bằng tài khoản Nhà tuyển dụng. Vui lòng đăng xuất trước nếu muốn chuyển sang tài khoản Ứng viên.");
+      }
       return res.redirect("/employer/jobs");
+    }
+    if (req.role === "candidate") {
+      if (isEmployerRoute && req.flash) {
+        req.flash("error", "Bạn đang đăng nhập bằng tài khoản Ứng viên. Vui lòng đăng xuất trước nếu muốn chuyển sang tài khoản Nhà tuyển dụng.");
+      }
+      return res.redirect("/");
     }
     return res.redirect("/");
   }
   next();
+}
+
+/**
+ * Nếu phiên đã hết hạn/đã đăng xuất từ tab khác trước khi bấm Đăng xuất, tránh trả lỗi 403 CSRF
+ */
+function bypassCsrfIfLoggedOut(type = "user", fallbackRedirect = "/") {
+  return (req, res, next) => {
+    const isAuthenticated = type === "admin" ? Boolean(req.admin) : Boolean(req.user);
+    if (!isAuthenticated) {
+      const cookieName = type === "admin" ? "itj_admin_token" : "itj_token";
+      clearCookieCleanly(req, res, cookieName);
+      if (req.flash) {
+        req.flash("success", "Phiên làm việc đã kết thúc.");
+      }
+      return res.redirect(fallbackRedirect);
+    }
+    next();
+  };
 }
 
 module.exports = {
@@ -345,8 +422,11 @@ module.exports = {
   requireCandidate,
   requireEmployer,
   requireEmployerAdmin,
+  requireEmployerOwner,
+  requireActiveEmployer,
   requireAdmin,
   requireSuperAdmin,
   adminSecurityHeaders,
   requireGuest,
+  bypassCsrfIfLoggedOut,
 };

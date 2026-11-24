@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @source "../../views";
+@source "../../public/assets/js";
 
 @theme {
   --breakpoint-*: initial;

@@ -17,7 +17,7 @@ const envSchema = z.object({
   ADMIN_JWT_SECRET: z.string({
     required_error: "ADMIN_JWT_SECRET là biến môi trường bắt buộc",
   }).min(32, "ADMIN_JWT_SECRET phải có ít nhất 32 ký tự"),
-  ADMIN_PATH: z.string().default("admin"),
+  ADMIN_PATH: z.string().default("admin").transform((v) => (v || "admin").replace(/^\/+|\/+$/g, "") || "admin"),
   EMPLOYER_REQUIRE_APPROVAL: z.string().transform((v) => v === "true" || v === "1").default("true"),
   STORAGE_DRIVER: z.enum(["local", "cloudinary"]).default("local"),
   CLOUDINARY_CLOUD_NAME: z.string().optional(),

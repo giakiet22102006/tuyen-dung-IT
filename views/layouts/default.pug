@@ -36,8 +36,8 @@ html(lang="vi")
         link(rel="dns-prefetch" href="https://fonts.googleapis.com")
         link(rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&display=swap")
         link(rel="stylesheet", href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css")
-        link(rel="stylesheet", href="/assets/css/tailwind.css?v=2.10")
-        link(rel="stylesheet", href="/assets/css/style.css?v=2.10")
+        link(rel="stylesheet" href="/assets/css/tailwind.css?v=2.11")
+        link(rel="stylesheet" href="/assets/css/style.css?v=2.11")
         script(type="application/ld+json").
             {
               "@context": "https://schema.org",
@@ -126,11 +126,12 @@ html(lang="vi")
                 <i class="fa-solid fa-circle-exclamation mr-[8px]"></i>
                 | Tài khoản công ty của bạn đang chờ quản trị viên phê duyệt. Trong thời gian này, bạn chưa thể đăng hoặc chỉnh sửa việc làm.
 
-        //- Flash messages toàn cục (nếu có)
-        if flash && flash.success && !currentPath.includes("/login") && !currentPath.includes("/signup") && !currentPath.includes("/change-password")
+        //- Flash messages toàn cục (nếu có) — trang Auth card tự hiển thị bên trong card
+        - const isAuthCardPath = ["/login", "/signup", "/change-password", "/forgot-password", "/verify-otp", "/reset-password", "/verify-registration"].some((p) => currentPath && currentPath.includes(p))
+        if flash && flash.success && !isAuthCardPath
             .contain(class="mt-[20px]")
                 div(class="p-[12px] bg-[#E8F5E9] border border-[#A5D6A7] text-[#2E7D32] rounded-[4px] text-[14px]") #{flash.success}
-        if flash && flash.error && !currentPath.includes("/login") && !currentPath.includes("/signup") && !currentPath.includes("/change-password")
+        if flash && flash.error && !isAuthCardPath
             .contain(class="mt-[20px]")
                 div(class="p-[12px] bg-[#FFEBEE] border border-[#FFCDD2] text-[#C62828] rounded-[4px] text-[14px]") #{flash.error}
 
@@ -148,5 +149,5 @@ html(lang="vi")
         //- Root-level Modals (Portal outside <main> stacking context)
         block modals
 
-        script(src="/assets/js/main.js?v=2.6")
-        script(src="/assets/js/ai-features.js?v=2.3")
+        script(src="/assets/js/main.js?v=2.7")
+        script(src="/assets/js/ai-features.js?v=2.4")

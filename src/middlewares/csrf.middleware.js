@@ -15,14 +15,10 @@ function isAdminRouteContext(req) {
 }
 
 /**
- * Định danh phiên CSRF dựa trên danh tính đã xác thực (req.admin / req.user + tokenVersion),
- * tuyệt đối không tin tưởng trực tiếp chuỗi cookie thô chưa qua verify chữ ký JWT để chống Cookie/Session Fixation.
+ * Định danh phiên CSRF riêng cho User/Public (tuyệt đối tách biệt với Admin để chống ghi đè cookie khi mở song song 2 vai trò)
  */
-function resolveCsrfSessionIdentifier(req) {
-  if (req.admin && req.admin._id && (isAdminRouteContext(req) || !req.user)) {
-    return `admin:${req.admin._id}:${req.admin.tokenVersion || 0}`;
-  }
-  if (req.user && req.user._id) {
+function resolveUserCsrfSessionIdentifier(req) {
+  if (req && req.user && req.user._id) {
     const tv = req.user.currentMember
       ? req.user.currentMember.tokenVersion || 0
       : req.user.tokenVersion || 0;
@@ -31,9 +27,38 @@ function resolveCsrfSessionIdentifier(req) {
   return "anonymous";
 }
 
-const { generateCsrfToken, doubleCsrfProtection: rawDoubleCsrfProtection } = doubleCsrf({
+/**
+ * Định danh phiên CSRF riêng cho Admin Panel & Admin AI Endpoints
+ */
+function resolveAdminCsrfSessionIdentifier(req) {
+  if (req && req.admin && req.admin._id) {
+    return `admin:${req.admin._id}:${req.admin.tokenVersion || 0}`;
+  }
+  return "anonymous_admin";
+}
+
+/**
+ * Định danh phiên CSRF thống nhất (giữ export cho unit tests và chẩn đoán)
+ */
+function resolveCsrfSessionIdentifier(req) {
+  if (isAdminRouteContext(req)) {
+    return resolveAdminCsrfSessionIdentifier(req);
+  }
+  if (req && req.admin && req.admin._id && !req.user) {
+    return resolveAdminCsrfSessionIdentifier(req);
+  }
+  return resolveUserCsrfSessionIdentifier(req);
+}
+
+function extractCsrfTokenFromRequest(req) {
+  const bodyToken = req.body && typeof req.body._csrf === "string" ? req.body._csrf : "";
+  if (bodyToken) return bodyToken;
+  const headerToken = req.headers && typeof req.headers["x-csrf-token"] === "string" ? req.headers["x-csrf-token"] : "";
+  return headerToken || undefined;
+}
+
+const commonDoubleCsrfOptions = {
   getSecret: () => env.COOKIE_SECRET,
-  cookieName: "itj_csrf",
   cookieOptions: {
     sameSite: "lax",
     secure: env.NODE_ENV === "production",
@@ -43,31 +68,42 @@ const { generateCsrfToken, doubleCsrfProtection: rawDoubleCsrfProtection } = dou
   size: 32,
   ignoredMethods: ["GET", "HEAD", "OPTIONS"],
   // Chỉ nhận CSRF token từ body hoặc header x-csrf-token (loại bỏ req.query._csrf để tránh lộ token qua URL/Referer/Log)
-  getCsrfTokenFromRequest: (req) => {
-    const bodyToken = req.body && typeof req.body._csrf === "string" ? req.body._csrf : "";
-    if (bodyToken) return bodyToken;
-    const headerToken = req.headers && typeof req.headers["x-csrf-token"] === "string" ? req.headers["x-csrf-token"] : "";
-    return headerToken || undefined;
-  },
-  getSessionIdentifier: resolveCsrfSessionIdentifier,
+  getCsrfTokenFromRequest: extractCsrfTokenFromRequest,
+};
+
+const userCsrf = doubleCsrf({
+  ...commonDoubleCsrfOptions,
+  cookieName: "itj_csrf",
+  getSessionIdentifier: resolveUserCsrfSessionIdentifier,
+});
+
+const adminCsrf = doubleCsrf({
+  ...commonDoubleCsrfOptions,
+  cookieName: "itj_admin_csrf",
+  getSessionIdentifier: resolveAdminCsrfSessionIdentifier,
 });
 
 function generateToken(req, res, options) {
   if (!req.cookies) {
     req.cookies = {};
   }
-  return generateCsrfToken(req, res, options);
+  const instance = isAdminRouteContext(req) ? adminCsrf : userCsrf;
+  return instance.generateCsrfToken(req, res, options);
 }
 
 function doubleCsrfProtection(req, res, next) {
   if (!req.cookies) {
     req.cookies = {};
   }
-  return rawDoubleCsrfProtection(req, res, next);
+  const instance = isAdminRouteContext(req) ? adminCsrf : userCsrf;
+  return instance.doubleCsrfProtection(req, res, next);
 }
 
 module.exports = {
   generateToken,
   doubleCsrfProtection,
   resolveCsrfSessionIdentifier,
+  resolveUserCsrfSessionIdentifier,
+  resolveAdminCsrfSessionIdentifier,
+  isAdminRouteContext,
 };

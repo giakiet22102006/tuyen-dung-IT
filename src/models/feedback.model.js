@@ -5,7 +5,7 @@ const feedbackSchema = new mongoose.Schema(
   {
     type: {
       type: String,
-      enum: ["bug", "rating", "suggestion"],
+      enum: ["bug", "rating", "suggestion", "contact"],
       default: "bug",
       index: true,
     },

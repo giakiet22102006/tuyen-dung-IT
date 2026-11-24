@@ -13,6 +13,7 @@ const SavedJob = require("./savedJob.model");
 const JobAlert = require("./jobAlert.model");
 const CompanyFollow = require("./companyFollow.model");
 const Notification = require("./notification.model");
+const StoredFile = require("./storedFile.model");
 const { Setting } = require("./setting.model");
 const {
   Article,
@@ -37,6 +38,7 @@ module.exports = {
   JobAlert,
   CompanyFollow,
   Notification,
+  StoredFile,
   Setting,
   Article,
   ARTICLE_CATEGORIES,

@@ -28,7 +28,37 @@ function sanitizeLocalUser(user) {
   return plain;
 }
 
+const STATIC_OR_MACHINE_PATHS = new Set([
+  "/mcp",
+  "/sitemap.xml",
+  "/robots.txt",
+  "/llms.txt",
+  "/llms-full.txt",
+  "/openapi.json",
+  "/favicon.ico",
+  "/health",
+  "/healthz",
+]);
+
+function shouldSkipLocalsMiddleware(req) {
+  const p = req.path || "/";
+  if (STATIC_OR_MACHINE_PATHS.has(p)) return true;
+  if (
+    p.startsWith("/api/") ||
+    p.startsWith("/.well-known/") ||
+    p.startsWith("/uploads/") ||
+    p.startsWith("/assets/")
+  ) {
+    return true;
+  }
+  return false;
+}
+
 async function localsMiddleware(req, res, next) {
+  if (shouldSkipLocalsMiddleware(req)) {
+    return next();
+  }
+
   res.locals.currentUser = sanitizeLocalUser(req.user);
   res.locals.role = req.role || null;
   res.locals.currentAdmin = sanitizeLocalUser(req.admin);
@@ -65,11 +95,11 @@ async function localsMiddleware(req, res, next) {
   res.locals.safeJson = safeJsonForScript;
   res.locals.formatDate = (date) => {
     if (!date) return "";
-    return new Date(date).toLocaleDateString("vi-VN");
+    return new Date(date).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
   };
   res.locals.formatDateTime = (date) => {
     if (!date) return "";
-    return new Date(date).toLocaleString("vi-VN");
+    return new Date(date).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
   };
 
   // CSRF token

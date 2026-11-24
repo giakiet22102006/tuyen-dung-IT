@@ -175,6 +175,23 @@ app.use(
 const uploadStaticDir = process.env.VERCEL ? "/tmp/uploads" : path.join(__dirname, "../public/uploads");
 app.use("/uploads", express.static(uploadStaticDir));
 
+// Phục hồi ảnh đã upload từ StoredFile (MongoDB) nếu Vercel /tmp cold-start làm mất file cache
+const { getStoredPublicFile } = require("./services/storage.service");
+app.get("/uploads/:subfolder/:key", async (req, res, next) => {
+  try {
+    if (mongoose.connection.readyState !== 1) {
+      await connectDB();
+    }
+    const stored = await getStoredPublicFile(req.params.subfolder, req.params.key);
+    if (!stored) return next();
+    res.setHeader("Content-Type", stored.contentType || "image/webp");
+    res.setHeader("Cache-Control", "public, max-age=604800");
+    return res.send(stored.buffer);
+  } catch {
+    return next();
+  }
+});
+
 // View engine với Pug compiled view cache
 app.set("views", path.join(__dirname, "../views"));
 app.set("view engine", "pug");
@@ -284,7 +301,20 @@ app.use((err, req, res, _next) => {
         : "Đã xảy ra lỗi máy chủ nội bộ: " + err.message;
     return res.status(500).json({ success: false, message });
   }
-  res.status(500).send("Đã xảy ra lỗi máy chủ nội bộ (500)");
+  res.status(500).render(
+    "pages/500",
+    {
+      title: "500 - Lỗi máy chủ nội bộ | VN.ITJobs",
+      message: env.NODE_ENV === "production" ? "" : err.message,
+    },
+    (renderErr, html) => {
+      if (renderErr) {
+        return res.send("Đã xảy ra lỗi máy chủ nội bộ (500)");
+      }
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      return res.send(html);
+    }
+  );
 });
 
 module.exports = app;

@@ -2,7 +2,7 @@
   "regions": ["sin1"],
   "functions": {
     "api/index.js": {
-      "includeFiles": "views/**",
+      "includeFiles": "{views,src/assets}/**",
       "memory": 1024,
       "maxDuration": 60
     }
@@ -26,6 +26,15 @@
         {
           "key": "Strict-Transport-Security",
           "value": "max-age=31536000; includeSubDomains; preload"
+        }
+      ]
+    },
+    {
+      "source": "/(employer/cvs/.*/pdf|employer/candidates/.*/pdf|candidate/applied-jobs/.*/pdf|candidate/it-profile/pdf)",
+      "headers": [
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
         }
       ]
     },

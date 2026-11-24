@@ -20,6 +20,10 @@ function paginate(totalItems, page = 1, limit = 9) {
     skip,
     hasNext: validPage < totalPages,
     hasPrev: validPage > 1,
+    hasNextPage: validPage < totalPages,
+    hasPrevPage: validPage > 1,
+    nextPage: validPage < totalPages ? validPage + 1 : totalPages,
+    prevPage: validPage > 1 ? validPage - 1 : 1,
   };
 }
 
