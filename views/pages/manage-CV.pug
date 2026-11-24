@@ -11,17 +11,41 @@ block main
                 div(class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-[16px] mb-[20px]")
                     h1(class="font-[700] text-[20px] sm:text-[28px] text-[#121212]") Quản lý CV
                     div(class="flex items-center gap-[8px] bg-white p-[4px] rounded-[8px] border border-gray-200 shadow-2xs")
-                        a(href="/employer/pipeline" class="inline-flex items-center gap-[6px] px-[14px] py-[7px] rounded-[6px] text-[13px] font-[500] text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition")
+                        a(href="/employer/pipeline" class="inline-flex items-center gap-[6px] px-[14px] py-[7px] rounded-[6px] text-[13px] font-[500] text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition whitespace-nowrap")
                             i(class="fa-solid fa-table-columns")
                             | Bảng Kanban
-                        a(href="/employer/cvs" class="inline-flex items-center gap-[6px] px-[14px] py-[7px] rounded-[6px] text-[13px] font-[600] bg-[#0088FF] text-white shadow-xs")
+                        a(href="/employer/cvs" class="inline-flex items-center gap-[6px] px-[14px] py-[7px] rounded-[6px] text-[13px] font-[600] bg-[#0088FF] text-white shadow-xs whitespace-nowrap")
                             i(class="fa-solid fa-list")
                             | Dạng danh sách
 
-                if flash && flash.success
-                    div(class="mb-[20px] p-[12px] bg-[#E8F5E9] border border-[#A5D6A7] text-[#2E7D32] rounded-[4px] text-[14px]") #{flash.success}
-                if flash && flash.error
-                    div(class="mb-[20px] p-[12px] bg-[#FFEBEE] border border-[#FFCDD2] text-[#C62828] rounded-[4px] text-[14px]") #{flash.error}
+                //- Flash hiển thị tập trung ở layouts/default.pug (QA-m01)
+                - const isRecruiterRole = Boolean(currentUser && currentUser.currentMember && currentUser.currentMember.role !== 'admin')
+                - const stageLabels = statusLabels || { pending: 'Chờ duyệt', approved: 'Phù hợp', interviewing: 'Phỏng vấn', offered: 'Đề nghị (Offer)', hired: 'Đã tuyển', rejected: 'Từ chối' }
+                - const stageList = statusOptions || ['pending', 'approved', 'interviewing', 'offered', 'hired', 'rejected']
+                - const stageStyles = { pending: 'text-[#B7791F]', approved: 'text-[#0088FF]', interviewing: 'text-purple-700', offered: 'text-indigo-700', hired: 'text-[#2E7D32]', rejected: 'text-[#C62828]' }
+                - const stageIcons = { pending: 'fa-clock', approved: 'fa-circle-check', interviewing: 'fa-comments', offered: 'fa-file-signature', hired: 'fa-user-check', rejected: 'fa-circle-xmark' }
+
+                //- Thanh lọc theo Công việc & Trạng thái (QA-P04)
+                form(action="/employer/cvs" method="GET" class="bg-white rounded-[10px] p-[14px] mb-[20px] border border-gray-200 shadow-2xs grid grid-cols-1 sm:grid-cols-3 gap-[12px] items-end")
+                    div
+                        label(for="filterJobId" class="block text-[12px] font-[600] text-gray-600 mb-[4px]") Vị trí tuyển dụng
+                        select(id="filterJobId" name="jobId" class="w-full border border-gray-300 rounded-[8px] py-[9px] px-[12px] text-[13px] bg-white cursor-pointer")
+                            option(value="") Tất cả vị trí
+                            if jobs && jobs.length > 0
+                                each j in jobs
+                                    option(value=j._id selected=(filterJobId && filterJobId.toString() === j._id.toString())) #{j.title}
+                    div
+                        label(for="filterStatus" class="block text-[12px] font-[600] text-gray-600 mb-[4px]") Trạng thái hồ sơ
+                        select(id="filterStatus" name="status" class="w-full border border-gray-300 rounded-[8px] py-[9px] px-[12px] text-[13px] bg-white cursor-pointer")
+                            option(value="") Tất cả trạng thái
+                            each st in stageList
+                                option(value=st selected=(filterStatus === st)) #{stageLabels[st] || st}
+                    div(class="flex items-center gap-[8px]")
+                        button(type="submit" class="flex-1 bg-[#0088FF] hover:bg-[#0070D2] text-white font-[600] text-[13px] px-[16px] py-[9px] rounded-[8px] cursor-pointer whitespace-nowrap inline-flex items-center justify-center gap-[6px]")
+                            i(class="fa-solid fa-filter")
+                            | Lọc hồ sơ
+                        if filterJobId || filterStatus
+                            a(href="/employer/cvs" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-[500] text-[13px] px-[12px] py-[9px] rounded-[8px] whitespace-nowrap") Xóa lọc
 
                 div(class="grid xl:grid-cols-3 lg:grid-cols-2 grid-cols-1 gap-[20px]")
                     if applications && applications.length > 0
@@ -43,14 +67,12 @@ block main
                                 else
                                     div(class="font-[500] text-[13px] text-[#2E7D32] text-center mt-[6px]") <i class="fa-solid fa-eye mr-[4px]"></i> Đã xem
 
-                                if app.status === 'pending'
-                                    div(class="font-[500] text-[13px] text-[#FFB200] text-center mt-[6px]") <i class="fa-solid fa-clock mr-[4px]"></i> Chưa duyệt
-                                else if app.status === 'approved'
-                                    div(class="font-[500] text-[13px] text-[#2E7D32] text-center mt-[6px]") <i class="fa-solid fa-circle-check mr-[4px]"></i> Đã duyệt phù hợp
-                                else if app.status === 'rejected'
-                                    div(class="font-[500] text-[13px] text-[#C62828] text-center mt-[6px]") <i class="fa-solid fa-circle-xmark mr-[4px]"></i> Đã từ chối
-                                    if app.rejectionReason
-                                        div(class="text-[12px] text-gray-600 text-center truncate px-[6px] mt-[2px]" title=app.rejectionReason) Lý do: #{app.rejectionReason}
+                                - const appStage = app.status || 'pending'
+                                div(class=`font-[600] text-[13px] text-center mt-[6px] whitespace-nowrap ${stageStyles[appStage] || stageStyles.pending}`)
+                                    i(class=`fa-solid ${stageIcons[appStage] || 'fa-clock'} mr-[4px]`)
+                                    | #{stageLabels[appStage] || appStage}
+                                if appStage === 'rejected' && app.rejectionReason
+                                    div(class="text-[12px] text-gray-600 text-center truncate px-[6px] mt-[2px]" title=app.rejectionReason) Lý do: #{app.rejectionReason}
                                 
                                 div(class="grid grid-cols-2 sm:flex sm:flex-wrap justify-center gap-[6px] sm:gap-[8px] mt-[14px]")
                                     a(href="/employer/cvs/" + app._id class="bg-[#0088FF] hover:bg-[#0070d6] rounded-[4px] py-[8px] px-[12px] cursor-pointer font-[500] text-[13px] text-white flex items-center justify-center text-center shadow-xs") Xem
@@ -64,11 +86,17 @@ block main
                                         <i class="fa-solid fa-ban text-[11px]"></i>
                                         span Từ chối
 
-                                    form(action="/employer/cvs/" + app._id + "/delete" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa hồ sơ CV này không?');" class="inline")
-                                        input(type="hidden" name="_csrf" value=csrfToken)
-                                        button(type="submit" class="bg-[#FF0000] hover:bg-[#d60000] rounded-[4px] py-[8px] px-[12px] cursor-pointer font-[500] text-[13px] text-white w-full shadow-xs") Xóa
+                                    //- Chỉ Chủ công ty / Quản trị nhóm mới được xóa hồ sơ (route có requireEmployerAdmin)
+                                    if !isRecruiterRole
+                                        form(action="/employer/cvs/" + app._id + "/delete" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa hồ sơ CV này không?');" class="inline")
+                                            input(type="hidden" name="_csrf" value=csrfToken)
+                                            button(type="submit" class="bg-[#FF0000] hover:bg-[#d60000] rounded-[4px] py-[8px] px-[12px] cursor-pointer font-[500] text-[13px] text-white w-full shadow-xs") Xóa
                     else
-                        div(class="col-span-full py-[40px] text-center text-[#717171] text-[16px]") Hiện tại chưa có ứng viên nào nộp hồ sơ ứng tuyển.
+                        div(class="col-span-full py-[40px] text-center text-[#717171] text-[16px]")
+                            if filterJobId || filterStatus
+                                | Không có hồ sơ nào khớp bộ lọc hiện tại.
+                            else
+                                | Hiện tại chưa có ứng viên nào nộp hồ sơ ứng tuyển.
 
                 if pagination && pagination.totalPages > 1
                     div(class="mt-[30px]")

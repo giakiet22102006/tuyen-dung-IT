@@ -24,15 +24,7 @@ block main
                         <i class="fa-solid fa-plus"></i>
                         span Đăng Tin Tuyển Mới
 
-            //- Flash messages
-            if flash && flash.success
-                div(class="mb-[20px] p-[14px] bg-[#E8F5E9] border border-[#A5D6A7] text-[#2E7D32] rounded-[8px] text-[14px] font-[500] flex items-center gap-[8px]")
-                    <i class="fa-solid fa-circle-check"></i>
-                    span #{flash.success}
-            if flash && flash.error
-                div(class="mb-[20px] p-[14px] bg-[#FFEBEE] border border-[#FFCDD2] text-[#C62828] rounded-[8px] text-[14px] font-[500] flex items-center gap-[8px]")
-                    <i class="fa-solid fa-circle-exclamation"></i>
-                    span #{flash.error}
+            //- Flash hiển thị tập trung ở layouts/default.pug (QA-m01)
 
             //- Bộ lọc nâng cao (Search & Filter Bar)
             div(class="bg-white p-[18px] sm:p-[24px] rounded-[14px] border border-gray-200 shadow-xs mb-[28px]")
@@ -59,7 +51,7 @@ block main
 
                     div(class="lg:col-span-2")
                         label(class="block text-[12px] font-[700] uppercase tracking-wider text-gray-600 mb-[6px]") Kỹ năng cốt lõi
-                        input(type="text" name="skill" value=selectedSkill placeholder="VD: ReactJS, NodeJS" class="w-full h-[42px] px-[12px] rounded-[8px] border border-gray-300 font-[500] text-[14px] text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#0088FF]")
+                        input(type="text" name="skill" value=selectedSkill placeholder="VD: ReactJS, NodeJS" title="Nhập nhiều kỹ năng, phân tách bằng dấu phẩy hoặc chấm phẩy" class="w-full h-[42px] px-[12px] rounded-[8px] border border-gray-300 font-[500] text-[14px] text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#0088FF]")
 
                     div(class="lg:col-span-2 flex items-end")
                         button(type="submit" class="w-full h-[42px] bg-[#000065] hover:bg-[#000085] text-white font-[700] text-[14px] rounded-[8px] flex items-center justify-center gap-[6px] transition-colors cursor-pointer shadow-sm")
@@ -112,30 +104,38 @@ block main
                                             if it.skills.length > 5
                                                 span(class="bg-gray-100 text-gray-600 text-[11px] font-[600] px-[6px] py-[2px] rounded-[6px]") +#{it.skills.length - 5}
 
-                            //- Footer Card: Nút mời ứng tuyển
-                            div(class="pt-[14px] border-t border-gray-100 flex items-center justify-between gap-[8px]")
+                            //- Footer Card: Xem hồ sơ đầy đủ, PDF & Mời ứng tuyển
+                            div(class="pt-[14px] border-t border-gray-100 flex items-center justify-between gap-[8px] flex-wrap")
                                 div(class="text-[12px] text-gray-500 flex items-center gap-[4px]")
                                     <i class="fa-solid fa-location-dot text-gray-400"></i>
                                     span #{labels.getCityLabel(it.preferredCity || 'ha-noi')}
                                 
-                                button(type="button" data-candidate-id=cand._id data-candidate-name=cand.fullName class="btn-open-invite-modal inline-flex items-center gap-[6px] bg-[#0088FF] hover:bg-[#0070d6] text-white font-[700] text-[13px] px-[14px] py-[8px] rounded-[8px] transition-all cursor-pointer shadow-xs")
-                                    <i class="fa-solid fa-paper-plane text-[11px]"></i>
-                                    span Mời Ứng Tuyển
-
-                //- Phân trang
+                                div(class="flex items-center gap-[6px]")
+                                    button(type="button" data-candidate-id=cand._id class="btn-view-profile inline-flex items-center gap-[6px] bg-white border border-gray-300 hover:border-[#0088FF] text-gray-700 hover:text-[#0088FF] font-[600] text-[12.5px] px-[10px] py-[7px] rounded-[8px] transition-all cursor-pointer whitespace-nowrap")
+                                        <i class="fa-solid fa-id-card text-[11px]"></i>
+                                        span Xem hồ sơ
+                                    a(href=`/employer/candidates/${cand._id}/pdf` target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-[4px] bg-white border border-gray-300 hover:border-red-400 text-gray-700 hover:text-red-600 font-[600] text-[12.5px] px-[10px] py-[7px] rounded-[8px] transition-all whitespace-nowrap" title="Xem PDF IT Profile")
+                                        <i class="fa-solid fa-file-pdf text-red-500 text-[11px]"></i>
+                                        span PDF
+                                    button(type="button" data-candidate-id=cand._id data-candidate-name=cand.fullName class="btn-open-invite-modal inline-flex items-center gap-[6px] bg-[#0088FF] hover:bg-[#0070d6] text-white font-[700] text-[12.5px] px-[12px] py-[7px] rounded-[8px] transition-all cursor-pointer shadow-xs whitespace-nowrap")
+                                        <i class="fa-solid fa-paper-plane text-[11px]"></i>
+                                        span Mời
+                
+                //- Phân trang (encodeURIComponent cho C++/C#; dùng prevPage/nextPage từ utils/pagination)
                 if pagination.totalPages > 1
-                    div(class="flex items-center justify-center gap-[6px] mt-[36px]")
+                    - const qs = filterQuery ? `&${filterQuery}` : ""
+                    nav(class="flex items-center justify-center gap-[6px] mt-[36px] flex-wrap" aria-label="Phân trang ứng viên")
                         if pagination.hasPrevPage
-                            a(href=`/employer/candidates?page=${pagination.prevPage}&keyword=${keyword}&level=${selectedLevel}&city=${selectedCity}&skill=${selectedSkill}` class="px-[14px] py-[8px] rounded-[6px] border border-gray-200 bg-white hover:bg-gray-50 text-[13px] font-[600] text-gray-700") Trước
+                            a(href=`/employer/candidates?page=${pagination.prevPage}${qs}` class="px-[14px] py-[8px] rounded-[6px] border border-gray-200 bg-white hover:bg-gray-50 text-[13px] font-[600] text-gray-700") Trước
                         
                         each p in Array.from({length: pagination.totalPages}, (_, i) => i + 1)
                             if p === pagination.currentPage
-                                span(class="px-[14px] py-[8px] rounded-[6px] bg-[#0088FF] text-white text-[13px] font-[700]") #{p}
+                                span(class="px-[14px] py-[8px] rounded-[6px] bg-[#0088FF] text-white text-[13px] font-[700]" aria-current="page") #{p}
                             else
-                                a(href=`/employer/candidates?page=${p}&keyword=${keyword}&level=${selectedLevel}&city=${selectedCity}&skill=${selectedSkill}` class="px-[14px] py-[8px] rounded-[6px] border border-gray-200 bg-white hover:bg-gray-50 text-[13px] font-[600] text-gray-700") #{p}
+                                a(href=`/employer/candidates?page=${p}${qs}` class="px-[14px] py-[8px] rounded-[6px] border border-gray-200 bg-white hover:bg-gray-50 text-[13px] font-[600] text-gray-700") #{p}
                         
                         if pagination.hasNextPage
-                            a(href=`/employer/candidates?page=${pagination.nextPage}&keyword=${keyword}&level=${selectedLevel}&city=${selectedCity}&skill=${selectedSkill}` class="px-[14px] py-[8px] rounded-[6px] border border-gray-200 bg-white hover:bg-gray-50 text-[13px] font-[600] text-gray-700") Sau
+                            a(href=`/employer/candidates?page=${pagination.nextPage}${qs}` class="px-[14px] py-[8px] rounded-[6px] border border-gray-200 bg-white hover:bg-gray-50 text-[13px] font-[600] text-gray-700") Sau
             else
                 div(class="bg-white rounded-[14px] border border-gray-200 p-[48px] text-center max-w-[560px] mx-auto")
                     div(class="w-[64px] h-[64px] rounded-full bg-blue-50 text-[#0088FF] flex items-center justify-center text-[24px] mx-auto mb-[16px]")
@@ -156,7 +156,7 @@ block main
                     div
                         h3(class="font-[700] text-[16px]") Mời Ứng Viên Ứng Tuyển
                         p(id="modalCandidateName" class="text-[12px] text-white/80") Ứng viên: Lê Văn A
-                button(type="button" onclick="closeInviteModal()" class="text-white/80 hover:text-white p-[6px] rounded cursor-pointer")
+                button(type="button" data-close-invite="1" aria-label="Đóng" class="text-white/80 hover:text-white p-[6px] rounded cursor-pointer")
                     <i class="fa-solid fa-xmark text-[18px]"></i>
 
             form(id="inviteCandidateForm" method="POST" action="" class="p-[20px] sm:p-[24px] space-y-[16px]")
@@ -177,33 +177,174 @@ block main
                     textarea(name="message" rows="4" placeholder="VD: Công ty chúng tôi rất ấn tượng với profile của bạn và nhận thấy bạn rất phù hợp với dự án Fintech sắp tới..." class="w-full p-[12px] rounded-[8px] border border-gray-300 font-[400] text-[14px] text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#0088FF]")
                 
                 div(class="flex items-center justify-end gap-[10px] pt-[10px] border-t border-gray-100")
-                    button(type="button" onclick="closeInviteModal()" class="px-[18px] py-[10px] rounded-[8px] border border-gray-300 text-gray-700 font-[600] text-[13.5px] hover:bg-gray-50 transition cursor-pointer") Hủy
+                    button(type="button" data-close-invite="1" class="px-[18px] py-[10px] rounded-[8px] border border-gray-300 text-gray-700 font-[600] text-[13.5px] hover:bg-gray-50 transition cursor-pointer") Hủy
                     if activeJobs && activeJobs.length > 0
                         button(type="submit" class="px-[22px] py-[10px] rounded-[8px] bg-[#0088FF] hover:bg-[#0070d6] text-white font-[700] text-[13.5px] shadow-sm transition cursor-pointer flex items-center gap-[6px]")
                             <i class="fa-solid fa-paper-plane"></i>
                             span Gửi Lời Mời
 
+
+    //- Modal Xem Hồ Sơ IT Đầy Đủ (QA-M12) — nội dung dựng bằng textContent để chống XSS
+    div(id="candidateProfileModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs items-center justify-center p-[16px]" role="dialog" aria-modal="true" aria-labelledby="profileModalName")
+        div(class="bg-white rounded-[16px] shadow-2xl border border-gray-100 max-w-[760px] w-full max-h-[90vh] flex flex-col overflow-hidden text-left")
+            div(class="bg-[#000065] p-[18px] sm:p-[20px] text-white flex items-start justify-between gap-[12px]")
+                div
+                    h3(id="profileModalName" class="font-[800] text-[18px]") Hồ sơ ứng viên
+                    p(id="profileModalTitle" class="text-[13px] text-white/80 mt-[2px]")
+                div(class="flex items-center gap-[8px] shrink-0")
+                    a(id="profileModalPdf" href="#" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-[6px] bg-white/10 hover:bg-white/20 text-white font-[600] text-[12.5px] px-[12px] py-[7px] rounded-[8px] whitespace-nowrap")
+                        <i class="fa-solid fa-file-pdf"></i>
+                        span Xem / Tải PDF
+                    button(type="button" id="btnCloseProfileModal" aria-label="Đóng" class="text-white/80 hover:text-white p-[6px] rounded cursor-pointer")
+                        <i class="fa-solid fa-xmark text-[18px]"></i>
+            div(id="profileModalBody" class="p-[20px] sm:p-[24px] overflow-y-auto flex-1 space-y-[18px] text-[14px] text-gray-700")
+                div(class="text-center text-gray-400 py-[30px]") Đang tải hồ sơ...
+
     script.
-        function openInviteModal(candidateId, candidateName) {
-            const modal = document.getElementById('inviteCandidateModal');
-            const form = document.getElementById('inviteCandidateForm');
-            const nameEl = document.getElementById('modalCandidateName');
-            if (modal && form) {
-                form.action = `/employer/candidates/${candidateId}/invite`;
-                if (nameEl) nameEl.textContent = `Ứng viên: ${candidateName}`;
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
+        (function () {
+            var inviteModal = document.getElementById('inviteCandidateModal');
+            var profileModal = document.getElementById('candidateProfileModal');
+            var profileBody = document.getElementById('profileModalBody');
+            var profileName = document.getElementById('profileModalName');
+            var profileTitle = document.getElementById('profileModalTitle');
+            var profilePdf = document.getElementById('profileModalPdf');
+
+            function showModal(el) { if (el) { el.classList.remove('hidden'); el.classList.add('flex'); } }
+            function hideModal(el) { if (el) { el.classList.add('hidden'); el.classList.remove('flex'); } }
+
+            function openInviteModal(candidateId, candidateName) {
+                var form = document.getElementById('inviteCandidateForm');
+                var nameEl = document.getElementById('modalCandidateName');
+                if (inviteModal && form) {
+                    form.action = '/employer/candidates/' + encodeURIComponent(candidateId) + '/invite';
+                    if (nameEl) nameEl.textContent = 'Ứng viên: ' + candidateName;
+                    showModal(inviteModal);
+                }
             }
-        }
-        function closeInviteModal() {
-            const modal = document.getElementById('inviteCandidateModal');
-            if (modal) {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-            }
-        }
-        document.querySelectorAll('.btn-open-invite-modal').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                openInviteModal(btn.dataset.candidateId || '', btn.dataset.candidateName || '');
+
+            document.querySelectorAll('.btn-open-invite-modal').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    openInviteModal(btn.dataset.candidateId || '', btn.dataset.candidateName || '');
+                });
             });
-        });
+            document.querySelectorAll('[data-close-invite]').forEach(function (btn) {
+                btn.addEventListener('click', function () { hideModal(inviteModal); });
+            });
+
+            function el(tag, cls, text) {
+                var node = document.createElement(tag);
+                if (cls) node.className = cls;
+                if (text !== undefined && text !== null) node.textContent = String(text);
+                return node;
+            }
+
+            function section(title, items, renderItem) {
+                if (!items || !items.length) return null;
+                var wrap = el('div');
+                wrap.appendChild(el('h4', 'text-[12px] font-[800] uppercase tracking-wider text-[#000065] mb-[8px]', title));
+                var list = el('div', 'space-y-[10px]');
+                items.forEach(function (item) { list.appendChild(renderItem(item)); });
+                wrap.appendChild(list);
+                return wrap;
+            }
+
+            function card(lines) {
+                var box = el('div', 'p-[12px] rounded-[10px] border border-gray-200 bg-gray-50/60');
+                lines.forEach(function (ln) { if (ln) box.appendChild(ln); });
+                return box;
+            }
+
+            function renderProfile(c) {
+                profileName.textContent = c.fullName || 'Ứng viên';
+                profileTitle.textContent = [c.title, c.level ? c.level.toUpperCase() : '', (c.yearsOfExperience || 0) + ' năm kinh nghiệm'].filter(Boolean).join(' • ');
+                profilePdf.href = c.pdfUrl;
+                profileBody.textContent = '';
+
+                var contact = el('div', 'grid grid-cols-1 sm:grid-cols-2 gap-[8px]');
+                contact.appendChild(el('div', '', 'Email: ' + (c.email || '—')));
+                contact.appendChild(el('div', '', 'Điện thoại: ' + (c.phone || '—')));
+                if (c.expectedSalary) contact.appendChild(el('div', '', 'Lương kỳ vọng: ' + Number(c.expectedSalary).toLocaleString('vi-VN') + ' USD/tháng'));
+                [['GitHub', c.githubUrl], ['LinkedIn', c.linkedinUrl], ['Portfolio', c.portfolioUrl]].forEach(function (pair) {
+                    if (!pair[1]) return;
+                    var row = el('div');
+                    row.appendChild(document.createTextNode(pair[0] + ': '));
+                    var a = el('a', 'text-[#0088FF] underline break-all', pair[1]);
+                    a.href = pair[1]; a.target = '_blank'; a.rel = 'noopener noreferrer nofollow';
+                    row.appendChild(a);
+                    contact.appendChild(row);
+                });
+                profileBody.appendChild(contact);
+
+                if (c.bio) profileBody.appendChild(el('p', 'italic bg-gray-50 p-[10px] rounded-[8px] whitespace-pre-line', c.bio));
+
+                if (c.skills && c.skills.length) {
+                    var skills = el('div', 'flex flex-wrap gap-[6px]');
+                    c.skills.forEach(function (s) { skills.appendChild(el('span', 'bg-blue-50 text-[#0066CC] border border-blue-100 text-[12px] font-[600] px-[8px] py-[2px] rounded-[6px]', s)); });
+                    profileBody.appendChild(skills);
+                }
+
+                [
+                    section('Kinh nghiệm làm việc', c.workExperience, function (w) {
+                        return card([
+                            el('div', 'font-[700] text-gray-900', [w.position, w.company].filter(Boolean).join(' @ ')),
+                            el('div', 'text-[12px] text-gray-500', [w.startDate, w.isCurrent ? 'Hiện tại' : w.endDate].filter(Boolean).join(' → ')),
+                            w.description ? el('div', 'mt-[4px] whitespace-pre-line', w.description) : null,
+                        ]);
+                    }),
+                    section('Dự án nổi bật', c.projects, function (p) {
+                        var linkNode = null;
+                        if (p.link) {
+                            linkNode = el('a', 'text-[#0088FF] underline text-[12px] break-all', p.link);
+                            linkNode.href = p.link; linkNode.target = '_blank'; linkNode.rel = 'noopener noreferrer nofollow';
+                        }
+                        return card([
+                            el('div', 'font-[700] text-gray-900', [p.name, p.role].filter(Boolean).join(' — ')),
+                            p.techStack ? el('div', 'text-[12px] text-gray-500', 'Tech stack: ' + p.techStack) : null,
+                            p.description ? el('div', 'mt-[4px] whitespace-pre-line', p.description) : null,
+                            linkNode,
+                        ]);
+                    }),
+                    section('Học vấn', c.education, function (e) {
+                        return card([el('div', 'font-[700] text-gray-900', [e.school, e.major].filter(Boolean).join(' — ')), e.gradYear ? el('div', 'text-[12px] text-gray-500', 'Tốt nghiệp: ' + e.gradYear) : null]);
+                    }),
+                    section('Chứng chỉ', c.certificates, function (ct) {
+                        return card([el('div', 'font-[700] text-gray-900', ct.name), el('div', 'text-[12px] text-gray-500', [ct.organization, ct.year].filter(Boolean).join(' • '))]);
+                    }),
+                ].forEach(function (node) { if (node) profileBody.appendChild(node); });
+            }
+
+            async function openProfile(candidateId) {
+                profileName.textContent = 'Hồ sơ ứng viên';
+                profileTitle.textContent = '';
+                profileBody.textContent = 'Đang tải hồ sơ...';
+                profilePdf.href = '/employer/candidates/' + encodeURIComponent(candidateId) + '/pdf';
+                showModal(profileModal);
+                try {
+                    var res = await fetch('/employer/candidates/' + encodeURIComponent(candidateId), {
+                        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                    });
+                    var data = await res.json().catch(function () { return {}; });
+                    if (!res.ok || !data.success) {
+                        profileBody.textContent = data.message || 'Không tải được hồ sơ ứng viên.';
+                        return;
+                    }
+                    renderProfile(data.candidate);
+                } catch (err) {
+                    profileBody.textContent = 'Lỗi kết nối máy chủ, vui lòng thử lại.';
+                }
+            }
+
+            document.querySelectorAll('.btn-view-profile').forEach(function (btn) {
+                btn.addEventListener('click', function () { openProfile(btn.dataset.candidateId || ''); });
+            });
+            var btnCloseProfile = document.getElementById('btnCloseProfileModal');
+            if (btnCloseProfile) btnCloseProfile.addEventListener('click', function () { hideModal(profileModal); });
+
+            [inviteModal, profileModal].forEach(function (m) {
+                if (!m) return;
+                m.addEventListener('click', function (e) { if (e.target === m) hideModal(m); });
+            });
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') { hideModal(inviteModal); hideModal(profileModal); }
+            });
+        })();

@@ -115,5 +115,5 @@ block main
                                 button(type="submit" class="bg-[#0088FF] hover:bg-[#0070d6] py-[12px] px-[20px] rounded-[8px] font-[700] text-[15px] sm:text-[16px] text-white text-center w-full cursor-pointer shadow-sm hover:shadow-md transition-all") Đăng nhập Nhà tuyển dụng
 
                         div(class="mt-[20px] text-center font-[400] text-[14px] text-slate-600") Doanh nghiệp mới? 
-                            a(href="/employer/signup" class="text-[#0088FF] font-[600] hover:underline ml-[4px]") Đăng ký công ty ngay
+                            a(href="/employer/signup" + (next ? "?next=" + encodeURIComponent(next) : "") class="text-[#0088FF] font-[600] hover:underline ml-[4px]") Đăng ký công ty ngay
     //- Hết Đăng nhập

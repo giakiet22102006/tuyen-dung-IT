@@ -7,10 +7,7 @@ block main
     //- Chỉnh sửa công việc
     div(class="py-[60px]")
         .contain
-            if flash && flash.error
-                div(class="mb-[20px] p-[12px] bg-[#FFEBEE] border border-[#FFCDD2] text-[#C62828] rounded-[4px] text-[14px]") #{flash.error}
-            if flash && flash.success
-                div(class="mb-[20px] p-[12px] bg-[#E8F5E9] border border-[#A5D6A7] text-[#2E7D32] rounded-[4px] text-[14px]") #{flash.success}
+            //- Flash hiển thị tập trung ở layouts/default.pug (QA-m01)
 
             div(class="border border-[#DEDEDE] rounded-[8px] p-[20px]")    
                 div(class="flex flex-col sm:flex-row justify-between mb-[20px] gap-[20px]")
@@ -28,11 +25,14 @@ block main
 
                     div(class="grid sm:grid-cols-2 grid-cols-1 sm:gap-[20px] gap-[15px] mb-[15px]")
                         div(class="")
-                            label(for="salaryMin" class="font-[500] text-[14px] mb-[5px]") Mức lương tối thiểu ($)
+                            label(for="salaryMin" class="font-[500] text-[14px] mb-[5px] block whitespace-nowrap overflow-hidden text-ellipsis") Mức lương tối thiểu ($)
                             input(type="number" min="0" id="salaryMin" name="salaryMin" value=(job && job.salaryMin !== null && job.salaryMin !== undefined ? job.salaryMin : "") placeholder="Ví dụ: 1000" class="border border-[#DEDEDE] rounded-[4px] py-[11px] px-[20px] block w-full")  
+                            if errors && errors.salaryMin
+                                div(class="text-[#FF0000] text-[13px] mt-[4px]") #{errors.salaryMin}
                         div(class="")
-                            label(for="salaryMax" class="font-[500] text-[14px] mb-[5px]") Mức lương tối đa ($) <span class="text-gray-500 font-normal text-[12px]">(Để trống nếu thỏa thuận theo năng lực)</span>
+                            label(for="salaryMax" class="font-[500] text-[14px] mb-[5px] block whitespace-nowrap overflow-hidden text-ellipsis" title="Để trống nếu thỏa thuận theo năng lực") Mức lương tối đa ($)
                             input(type="number" min="0" id="salaryMax" name="salaryMax" value=(job && job.salaryMax !== null && job.salaryMax !== undefined ? job.salaryMax : "") placeholder="Để trống nếu thỏa thuận theo năng lực" class="border border-[#DEDEDE] rounded-[4px] py-[11px] px-[20px] block w-full") 
+                            p(class="text-[12px] text-gray-500 mt-[4px]") Để trống nếu lương thỏa thuận theo năng lực (không nhập số âm).
                             if errors && errors.salaryMax
                                 div(class="text-[#FF0000] text-[13px] mt-[4px]") #{errors.salaryMax}
 

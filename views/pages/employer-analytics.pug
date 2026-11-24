@@ -51,9 +51,9 @@ block main
                 div(class="bg-white p-[20px] rounded-[14px] border border-gray-200 shadow-xs flex items-center justify-between")
                     div
                         div(class="text-[12px] font-[700] uppercase tracking-wider text-gray-500 mb-[4px]") Tỷ lệ chuyển đổi (CV/View)
-                        div(class="text-[26px] sm:text-[30px] font-[800] text-[#0088FF] leading-tight") #{conversionRate}%
+                        div(class="text-[26px] sm:text-[30px] font-[800] text-[#0088FF] leading-tight") #{totalViews > 0 ? conversionRate + '%' : '—'}
                         div(class="text-[11.5px] text-blue-600 font-[600] mt-[4px]")
-                            span Chuẩn ngành IT: 1.5% - 4%
+                            span #{totalViews > 0 ? 'Chuẩn ngành IT: 1.5% - 4%' : 'Chưa có lượt xem để tính tỷ lệ'}
                     div(class="w-[50px] h-[50px] rounded-[12px] bg-purple-50 text-purple-600 flex items-center justify-center text-[22px] shrink-0")
                         <i class="fa-solid fa-bullseye"></i>
 
@@ -63,7 +63,7 @@ block main
                         div(class="text-[12px] font-[700] uppercase tracking-wider text-gray-500 mb-[4px]") Đang trong phỏng vấn
                         div(class="text-[26px] sm:text-[30px] font-[800] text-amber-600 leading-tight") #{pipelineStats.interviewing || 0}
                         div(class="text-[11.5px] text-gray-500 font-[500] mt-[4px]")
-                            span #{pipelineStats.approved || 0} đã duyệt phù hợp
+                            span #{pipelineStats.offered || 0} offer • #{pipelineStats.hired || 0} đã tuyển
                     div(class="w-[50px] h-[50px] rounded-[12px] bg-amber-50 text-amber-600 flex items-center justify-center text-[22px] shrink-0")
                         <i class="fa-solid fa-comments"></i>
 
@@ -75,22 +75,16 @@ block main
                         span Phễu Tuyển Dụng & Trạng Thái Ứng Viên
                     span(class="text-[12px] text-gray-500") Cập nhật theo thời gian thực
 
-                div(class="grid grid-cols-2 sm:grid-cols-5 gap-[12px]")
-                    div(class="p-[14px] rounded-[10px] bg-amber-50 border border-amber-200 text-center")
-                        div(class="text-[20px] font-[800] text-amber-700") #{pipelineStats.pending || 0}
-                        div(class="text-[12px] font-[600] text-amber-900 mt-[2px]") Chưa xem xét
-                    div(class="p-[14px] rounded-[10px] bg-blue-50 border border-blue-200 text-center")
-                        div(class="text-[20px] font-[800] text-[#0088FF]") #{pipelineStats.reviewing || 0}
-                        div(class="text-[12px] font-[600] text-blue-900 mt-[2px]") Đang đánh giá
-                    div(class="p-[14px] rounded-[10px] bg-purple-50 border border-purple-200 text-center")
-                        div(class="text-[20px] font-[800] text-purple-700") #{pipelineStats.interviewing || 0}
-                        div(class="text-[12px] font-[600] text-purple-900 mt-[2px]") Phỏng vấn
-                    div(class="p-[14px] rounded-[10px] bg-emerald-50 border border-emerald-200 text-center")
-                        div(class="text-[20px] font-[800] text-emerald-700") #{pipelineStats.approved || 0}
-                        div(class="text-[12px] font-[600] text-emerald-900 mt-[2px]") Trúng tuyển / Phù hợp
-                    div(class="p-[14px] rounded-[10px] bg-red-50 border border-red-200 text-center col-span-2 sm:col-span-1")
-                        div(class="text-[20px] font-[800] text-red-700") #{pipelineStats.rejected || 0}
-                        div(class="text-[12px] font-[600] text-red-900 mt-[2px]") Đã từ chối
+                //- Đủ 6 vòng ATS (pending → approved → interviewing → offered → hired / rejected)
+                - const funnelStages = pipelineStages || ['pending', 'approved', 'interviewing', 'offered', 'hired', 'rejected']
+                - const funnelLabels = statusLabels || { pending: 'Chờ duyệt', approved: 'Phù hợp', interviewing: 'Phỏng vấn', offered: 'Đề nghị (Offer)', hired: 'Đã tuyển', rejected: 'Từ chối' }
+                - const funnelStyles = { pending: ['bg-amber-50 border-amber-200', 'text-amber-700', 'text-amber-900'], approved: ['bg-blue-50 border-blue-200', 'text-[#0088FF]', 'text-blue-900'], interviewing: ['bg-purple-50 border-purple-200', 'text-purple-700', 'text-purple-900'], offered: ['bg-indigo-50 border-indigo-200', 'text-indigo-700', 'text-indigo-900'], hired: ['bg-emerald-50 border-emerald-200', 'text-emerald-700', 'text-emerald-900'], rejected: ['bg-red-50 border-red-200', 'text-red-700', 'text-red-900'] }
+                div(class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-[12px]")
+                    each st in funnelStages
+                        - const sty = funnelStyles[st] || funnelStyles.pending
+                        a(href=`/employer/cvs?status=${st}` class=`p-[14px] rounded-[10px] border text-center hover:shadow-sm transition ${sty[0]}` data-stage=st)
+                            div(class=`text-[20px] font-[800] ${sty[1]}`) #{pipelineStats[st] || 0}
+                            div(class=`text-[12px] font-[600] mt-[2px] whitespace-nowrap ${sty[2]}`) #{funnelLabels[st] || st}
 
             //- Bảng thống kê chi tiết theo từng tin tuyển dụng
             div(class="bg-white rounded-[14px] border border-gray-200 shadow-xs overflow-hidden")
@@ -130,7 +124,10 @@ block main
                                         td(class="py-[14px] px-[14px] text-right font-[700] text-gray-700") #{(j.viewsCount || 0).toLocaleString('vi-VN')}
                                         td(class="py-[14px] px-[14px] text-right font-[800] text-[#0088FF]") #{j.applicationsCount}
                                         td(class="py-[14px] px-[14px] text-right")
-                                            span(class="font-[700] px-[8px] py-[2px] rounded-full text-[12px] " + (parseFloat(j.conversionRate) >= 3 ? "bg-emerald-50 text-emerald-700" : (parseFloat(j.conversionRate) >= 1 ? "bg-blue-50 text-[#0088FF]" : "bg-gray-100 text-gray-600"))) #{j.conversionRate}%
+                                            if (j.viewsCount || 0) > 0
+                                                span(class="font-[700] px-[8px] py-[2px] rounded-full text-[12px] " + (j.conversionRate >= 3 ? "bg-emerald-50 text-emerald-700" : (j.conversionRate >= 1 ? "bg-blue-50 text-[#0088FF]" : "bg-gray-100 text-gray-600"))) #{j.conversionRate}%
+                                            else
+                                                span(class="font-[600] text-gray-400 text-[12px]" title="Chưa có lượt xem") —
                                         td(class="py-[14px] px-[18px] text-center")
                                             a(href=`/employer/pipeline?jobId=${j._id}` class="inline-flex items-center gap-[4px] text-[#0088FF] hover:underline font-[600] text-[12.5px]")
                                                 <i class="fa-solid fa-users text-[11px]"></i>

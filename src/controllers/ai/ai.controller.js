@@ -1,9 +1,8 @@
 // src/controllers/ai/ai.controller.js
-const fs = require("fs");
 const { Job, Application, Employer, Candidate } = require("../../models");
 const { JOB_MODERATION } = require("../../config/constants");
 const aiService = require("../../services/ai.service");
-const { getCVPath, checkPdf } = require("../../services/storage.service");
+const { checkPdf, ensureCVBuffer } = require("../../services/storage.service");
 const { isValidObjectId } = require("../../utils/securityHelpers");
 const env = require("../../config/env");
 
@@ -151,21 +150,34 @@ const postScreenCv = async (req, res) => {
       return res.status(404).json({ success: false, message: "Không tìm thấy hồ sơ ứng tuyển của bạn." });
     }
 
+    // Đọc PDF thật (ổ đĩa/tmp → MongoDB StoredFile). Thiếu file thì báo lỗi rõ ràng (422),
+    // tuyệt đối không gửi vài chữ họ tên cho AI rồi chấm ứng viên "10% - Không phù hợp".
+    const buffer = await ensureCVBuffer(application.cv && application.cv.key);
+    if (!buffer) {
+      return res.status(422).json({
+        success: false,
+        code: "CV_FILE_MISSING",
+        message: "Không tìm thấy file CV PDF của hồ sơ này trên hệ thống lưu trữ nên AI không thể sàng lọc. Vui lòng yêu cầu ứng viên nộp lại CV.",
+      });
+    }
+
     let cvText = "";
-    if (application.cv && application.cv.key) {
-      const cvFilePath = getCVPath(application.cv.key);
-      if (cvFilePath && fs.existsSync(cvFilePath)) {
-        const buffer = await fs.promises.readFile(cvFilePath);
-        cvText = await aiService.extractTextFromPdf(buffer);
-      }
+    try {
+      cvText = (await aiService.extractTextFromPdf(buffer)) || "";
+    } catch (parseErr) {
+      console.warn("AI postScreenCv: không trích xuất được text PDF:", parseErr.message);
+      cvText = "";
     }
 
-    if (!cvText) {
-      // Fallback: Tạo text tổng hợp từ thông tin ứng viên
-      cvText = `Họ tên: ${application.fullName}. Email: ${application.email}. Số điện thoại: ${application.phone}. Vị trí ứng tuyển: ${application.jobId ? application.jobId.title : ""}`;
+    if (!cvText || cvText.trim().length < 20) {
+      return res.status(422).json({
+        success: false,
+        code: "CV_TEXT_UNREADABLE",
+        message: "Không đọc được nội dung chữ trong file CV (có thể là PDF dạng ảnh scan). AI chưa thể sàng lọc hồ sơ này — vui lòng xem trực tiếp file PDF.",
+      });
     }
 
-    const result = await aiService.screenAndSummarizeCv(cvText, application.jobId);
+    const result = await aiService.screenAndSummarizeCv(cvText.slice(0, 20000), application.jobId);
     return res.status(200).json({ success: true, data: result });
   } catch (err) {
     console.error("AI postScreenCv error:", err);
