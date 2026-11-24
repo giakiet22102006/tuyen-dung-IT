@@ -312,7 +312,7 @@ describe("Phase 5: Candidate Profile, Application & Employer CV Management Tests
       expect(deleteRes.headers.location).toBe("/candidate/applied-jobs");
 
       const check = await Application.findById(appDoc._id);
-      expect(check.hiddenByCandidate).toBe(true);
+      expect(check).toBeNull();
 
       // Danh sách applied-jobs của candidate không còn hiển thị nữa
       const listRes = await request(app).get("/candidate/applied-jobs").set("Cookie", page.cookies);

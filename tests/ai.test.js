@@ -201,7 +201,7 @@ describe("Hệ thống Trí Tuệ Nhân Tạo (VN.ITJobs AI Suite)", () => {
 
     const detail = await aiTools.executeTool("get_job_details", { slug: "senior-golang-developer-cgv" });
     expect(detail.title).toBe("Senior Golang Developer");
-    expect(detail.salaryFormatted).toBe("2200$ - 3200$");
+    expect(detail.salaryFormatted).toBe("2.200$ - 3.200$");
     expect(detail.company.name).toBe("CGV");
 
     const info = await aiTools.executeTool("get_platform_info");
@@ -255,7 +255,7 @@ describe("Hệ thống Trí Tuệ Nhân Tạo (VN.ITJobs AI Suite)", () => {
       },
     });
     expect(ctxReply).toContain("Data Scientist / AI Engineer");
-    expect(ctxReply).toContain("1600$ - 2900$");
+    expect(ctxReply).toContain("1.600$ - 2.900$");
     expect(ctxReply).toContain("Python");
   });
 });
