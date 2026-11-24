@@ -1,0 +1,128 @@
+extends ../../layouts/admin.pug
+
+block title
+    title #{title || "Kiểm duyệt Đánh giá công ty - VN.ITJobs Admin"}
+
+block main
+    div(class="space-y-[24px]")
+        //- Header
+        div(class="flex flex-col sm:flex-row sm:items-center justify-between gap-[16px]")
+            div
+                h1(class="font-[700] text-[24px] text-[#111827]") Kiểm duyệt Đánh giá công ty
+                p(class="text-[14px] text-[#6B7280] mt-[4px]") Quản lý, phê duyệt các đánh giá bị bộ lọc tự động tạm ẩn và loại bỏ đánh giá vi phạm quy chuẩn cộng đồng
+
+        //- Stat Cards
+        div(class="grid grid-cols-1 sm:grid-cols-3 gap-[16px] sm:gap-[20px]")
+            div(class="admin-stat-card bg-white p-[22px] rounded-[12px] border border-[#E5E7EB] shadow-xs flex items-center justify-between")
+                div
+                    p(class="text-[13px] font-[500] text-[#6B7280]") Tổng đánh giá
+                    p(class="text-[28px] font-[700] text-[#111827] mt-[4px]") #{counts.total || 0}
+                div(class="w-[48px] h-[48px] rounded-full bg-blue-50 text-[#0088FF] flex items-center justify-center text-[20px] shrink-0")
+                    <i class="fa-solid fa-comments"></i>
+
+            div(class="admin-stat-card bg-white p-[22px] rounded-[12px] border border-emerald-200 bg-emerald-50/20 shadow-xs flex items-center justify-between")
+                div
+                    p(class="text-[13px] font-[600] text-emerald-700") Đang hiển thị (Đã duyệt)
+                    p(class="text-[28px] font-[700] text-emerald-600 mt-[4px]") #{counts.countApproved || 0}
+                div(class="w-[48px] h-[48px] rounded-full bg-emerald-100/80 text-emerald-600 flex items-center justify-center text-[20px] shrink-0")
+                    <i class="fa-solid fa-circle-check"></i>
+
+            div(class="admin-stat-card bg-white p-[22px] rounded-[12px] border border-amber-200 bg-amber-50/20 shadow-xs flex items-center justify-between")
+                div
+                    p(class="text-[13px] font-[600] text-amber-700") Đang ẩn (Chờ kiểm duyệt)
+                    p(class="text-[28px] font-[700] text-amber-600 mt-[4px]") #{counts.countHidden || 0}
+                div(class="w-[48px] h-[48px] rounded-full bg-amber-100/80 text-amber-600 flex items-center justify-center text-[20px] shrink-0")
+                    <i class="fa-solid fa-eye-slash"></i>
+
+        //- Filter Bar
+        div(class="bg-white p-[20px] rounded-[10px] border border-[#E5E7EB] shadow-xs")
+            form(action=`/${adminPath}/reviews` method="GET" class="grid grid-cols-1 sm:grid-cols-3 gap-[16px]")
+                div
+                    label(for="reviewKeyword" class="block text-[13px] font-[500] text-[#374151] mb-[6px]") Từ khóa nội dung / tác giả
+                    input(type="text" id="reviewKeyword" name="keyword" value=filter.keyword placeholder="Tiêu đề, ưu/nhược điểm, người gửi..." class="w-full border border-[#D1D5DB] rounded-[6px] px-[14px] py-[9px] text-[14px] focus:outline-none focus:border-[#0088FF]")
+
+                div
+                    label(for="reviewStatus" class="block text-[13px] font-[500] text-[#374151] mb-[6px]") Trạng thái hiển thị
+                    select(id="reviewStatus" name="status" class="w-full border border-[#D1D5DB] rounded-[6px] px-[14px] py-[9px] text-[14px] focus:outline-none focus:border-[#0088FF] cursor-pointer")
+                        option(value="all" selected=(filter.status === "all" || !filter.status)) -- Tất cả đánh giá --
+                        option(value="hidden" selected=(filter.status === "hidden")) Đang ẩn (Chờ duyệt)
+                        option(value="approved" selected=(filter.status === "approved")) Đã duyệt hiển thị
+
+                div(class="flex items-end gap-[10px]")
+                    button(type="submit" class="flex-1 bg-[#000065] hover:bg-[#000050] text-white py-[9px] px-[16px] rounded-[6px] font-[600] text-[14px] transition-colors cursor-pointer flex items-center justify-center gap-[6px] whitespace-nowrap")
+                        <i class="fa-solid fa-filter"></i>
+                        span Lọc đánh giá
+                    a(href=`/${adminPath}/reviews` class="bg-gray-100 hover:bg-gray-200 text-[#4B5563] py-[9px] px-[16px] rounded-[6px] font-[500] text-[14px] transition-colors whitespace-nowrap") Đặt lại
+
+        //- Reviews Table
+        div(class="bg-white rounded-[10px] border border-[#E5E7EB] shadow-xs overflow-hidden")
+            div(class="overflow-x-auto")
+                table(class="w-full text-left border-collapse text-[13px]")
+                    thead(class="bg-[#F9FAFB] text-[#4B5563] text-[12px] uppercase font-[600] border-b border-[#E5E7EB]")
+                        tr
+                            th(class="py-[12px] px-[16px]") Thời gian
+                            th(class="py-[12px] px-[16px]") Công ty được đánh giá
+                            th(class="py-[12px] px-[16px]") Tác giả & Điểm
+                            th(class="py-[12px] px-[16px]") Nội dung đánh giá
+                            th(class="py-[12px] px-[16px]") Trạng thái
+                            th(class="py-[12px] px-[16px] text-right") Thao tác
+                    tbody(class="divide-y divide-[#E5E7EB]")
+                        if reviews && reviews.length > 0
+                            each rev in reviews
+                                tr(class="hover:bg-gray-50 transition-colors align-top")
+                                    td(class="py-[14px] px-[16px] text-[#6B7280] whitespace-nowrap") #{formatDate(rev.createdAt)}
+                                    td(class="py-[14px] px-[16px]")
+                                        if rev.employerId
+                                            a(href=`/${adminPath}/employers/${rev.employerId._id}` class="font-[600] text-[#111827] hover:text-[#0088FF] block") #{rev.employerId.companyName}
+                                            if rev.employerId.slug
+                                                a(href=`/companies/${rev.employerId.slug}` target="_blank" rel="noopener noreferrer" class="text-[11px] text-[#0088FF] hover:underline") Xem trang công ty ↗
+                                        else
+                                            span(class="text-gray-400 italic") Công ty không còn tồn tại
+                                    td(class="py-[14px] px-[16px] whitespace-nowrap")
+                                        div(class="font-[600] text-[#111827]") #{rev.authorName}
+                                        div(class="text-[12px] font-[700] text-amber-500 mt-[2px]") #{rev.rating} / 5 ⭐
+                                        div(class="text-[11px] text-gray-400") #{rev.authorRole === 'employer' ? 'Nhà tuyển dụng' : 'Ứng viên'}
+                                    td(class="py-[14px] px-[16px] max-w-[380px]")
+                                        div(class="font-[700] text-[#111827] mb-[4px]") #{rev.title}
+                                        if rev.pros
+                                            p(class="text-[12.5px] text-emerald-800 bg-emerald-50/70 px-[8px] py-[4px] rounded mb-[4px] line-clamp-3")
+                                                strong Ưu điểm: 
+                                                span #{rev.pros}
+                                        if rev.cons
+                                            p(class="text-[12.5px] text-rose-800 bg-rose-50/70 px-[8px] py-[4px] rounded line-clamp-3")
+                                                strong Góp ý: 
+                                                span #{rev.cons}
+                                    td(class="py-[14px] px-[16px] whitespace-nowrap")
+                                        if rev.isApproved
+                                            span(class="inline-block whitespace-nowrap px-[10px] py-[3px] rounded-full text-[11px] font-[600] bg-emerald-50 text-emerald-700 border border-emerald-200") Đã duyệt
+                                        else
+                                            span(class="inline-block whitespace-nowrap px-[10px] py-[3px] rounded-full text-[11px] font-[600] bg-amber-50 text-amber-700 border border-amber-300") Đang ẩn
+                                        if rev.toxicityScore > 0
+                                            div(class="text-[11px] text-amber-700 mt-[4px]") Mức nghi vấn: #{rev.toxicityScore}%
+                                    td(class="py-[14px] px-[16px] text-right whitespace-nowrap")
+                                        div(class="inline-flex items-center gap-[6px]")
+                                            form(action=`/${adminPath}/reviews/${rev._id}/toggle` method="POST" class="inline")
+                                                input(type="hidden" name="_csrf" value=csrfToken)
+                                                if rev.isApproved
+                                                    button(type="submit" class="px-[10px] py-[5px] rounded bg-amber-100 hover:bg-amber-200 text-amber-800 text-[12px] font-[600] cursor-pointer whitespace-nowrap" title="Ẩn đánh giá này") Ẩn
+                                                else
+                                                    button(type="submit" class="px-[10px] py-[5px] rounded bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-[600] cursor-pointer whitespace-nowrap" title="Phê duyệt hiển thị") Duyệt
+                                            form(action=`/${adminPath}/reviews/${rev._id}/delete` method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn đánh giá này?');" class="inline")
+                                                input(type="hidden" name="_csrf" value=csrfToken)
+                                                button(type="submit" class="px-[10px] py-[5px] rounded bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-[12px] font-[600] cursor-pointer whitespace-nowrap" title="Xóa đánh giá") Xóa
+                        else
+                            tr
+                                td(colspan="6" class="py-[36px] text-center text-[#6B7280]") Không có đánh giá công ty nào phù hợp với bộ lọc hiện tại.
+
+        //- Pagination
+        if pagination && pagination.totalPages > 1
+            - const revQuerySuffix = (filter.status && filter.status !== 'all' ? '&status=' + encodeURIComponent(filter.status) : '') + (filter.keyword ? '&keyword=' + encodeURIComponent(filter.keyword) : '')
+            div(class="mt-[20px] flex flex-col sm:flex-row items-center justify-between gap-[12px]")
+                div(class="text-[13px] text-[#6B7280]") Hiển thị trang #{pagination.currentPage} / #{pagination.totalPages} (Tổng #{pagination.totalItems} đánh giá)
+                div(class="flex items-center gap-[6px] flex-wrap")
+                    if pagination.hasPrevPage
+                        a(href=`/${adminPath}/reviews?page=${pagination.prevPage}${revQuerySuffix}` class="px-[12px] py-[6px] border border-[#D1D5DB] rounded bg-white text-[13px] hover:bg-gray-50") Trước
+                    - for (let p = 1; p <= pagination.totalPages; p++)
+                        a(href=`/${adminPath}/reviews?page=${p}${revQuerySuffix}` class="px-[12px] py-[6px] border rounded text-[13px] " + (pagination.currentPage === p ? "bg-[#0088FF] text-white border-[#0088FF] font-[600]" : "bg-white text-[#374151] border-[#D1D5DB] hover:bg-gray-50")) #{p}
+                    if pagination.hasNextPage
+                        a(href=`/${adminPath}/reviews?page=${pagination.nextPage}${revQuerySuffix}` class="px-[12px] py-[6px] border border-[#D1D5DB] rounded bg-white text-[13px] hover:bg-gray-50") Sau

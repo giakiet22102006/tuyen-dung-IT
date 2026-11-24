@@ -9,22 +9,32 @@ const renderFeedbacks = async (req, res) => {
   const { type, status } = req.query;
 
   const filter = {};
-  if (type && ["bug", "rating", "suggestion"].includes(type)) {
+  if (type && ["bug", "rating", "suggestion", "contact"].includes(type)) {
     filter.type = type;
   }
   if (status && ["new", "in_progress", "resolved", "closed"].includes(status)) {
     filter.status = status;
   }
 
-  const [total, countNew, countInProgress, countResolved, countBugs, countRatings] =
-    await Promise.all([
-      Feedback.countDocuments(filter),
-      Feedback.countDocuments({ status: "new" }),
-      Feedback.countDocuments({ status: "in_progress" }),
-      Feedback.countDocuments({ status: "resolved" }),
-      Feedback.countDocuments({ type: "bug" }),
-      Feedback.countDocuments({ type: "rating" }),
-    ]);
+  const [
+    total,
+    totalAllCount,
+    countNew,
+    countInProgress,
+    countResolved,
+    countBugs,
+    countRatings,
+    countContacts,
+  ] = await Promise.all([
+    Feedback.countDocuments(filter),
+    Feedback.countDocuments({}),
+    Feedback.countDocuments({ status: "new" }),
+    Feedback.countDocuments({ status: "in_progress" }),
+    Feedback.countDocuments({ status: "resolved" }),
+    Feedback.countDocuments({ type: "bug" }),
+    Feedback.countDocuments({ type: "rating" }),
+    Feedback.countDocuments({ type: "contact" }),
+  ]);
 
   const pagination = paginate(total, page, 15);
 
@@ -38,17 +48,20 @@ const renderFeedbacks = async (req, res) => {
     title: "Quản lý Báo cáo sự cố & Đánh giá web - Admin VN.ITJobs",
     feedbacks,
     pagination,
+    totalAllCount,
     filter: {
       type: type || "",
       status: status || "",
     },
     counts: {
       total,
+      totalAllCount,
       countNew,
       countInProgress,
       countResolved,
       countBugs,
       countRatings,
+      countContacts,
     },
   });
 };

@@ -34,3 +34,12 @@ block main
 
                 div(class="mt-[20px] text-center font-[400] text-[14px] text-[#414042]") Chưa nhận được mã? 
                     a(href=`/${userRole}/forgot-password` class="text-[#0088FF] hover:underline font-[600] ml-[4px]") Gửi lại mã mới
+    - const canonicalVerifyOtpUrl = `/${userRole}/verify-otp` + (email ? `?email=${encodeURIComponent(email)}` : "")
+    div(id="verifyOtpReplaceState" data-url=canonicalVerifyOtpUrl class="hidden")
+    script.
+        (function () {
+            var el = document.getElementById("verifyOtpReplaceState");
+            if (el && el.dataset.url && window.history && window.history.replaceState) {
+                window.history.replaceState(null, "", el.dataset.url);
+            }
+        })();

@@ -36,9 +36,14 @@ const postForgotPassword = (userType) => async (req, res) => {
 
   const cleanEmail = email.toLowerCase().trim();
 
-  // Kiểm tra tài khoản có tồn tại không
+  // Kiểm tra tài khoản có tồn tại không (với Employer, tìm cả teamMembers phụ)
   const Model = userType === "employer" ? Employer : Candidate;
-  const user = await Model.findOne({ email: cleanEmail, deletedAt: null });
+  let user = await Model.findOne({ email: cleanEmail, deletedAt: null });
+  if (!user && userType === "employer") {
+    user = await Employer.findOne({ "teamMembers.email": cleanEmail, deletedAt: null }).select(
+      "+teamMembers.password"
+    );
+  }
 
   if (!user) {
     return res.status(400).render("pages/forgot-password", {
@@ -266,9 +271,21 @@ const postResetPassword = (userType) => async (req, res) => {
     return res.redirect(`/${userType}/forgot-password`);
   }
 
-  // Cập nhật mật khẩu tài khoản (từ chối tài khoản đã xóa mềm hoặc bị khóa)
-  const Model = userType === "employer" ? Employer : Candidate;
-  const user = await Model.findOne({ email: cleanEmail, deletedAt: null });
+  // Cập nhật mật khẩu tài khoản (từ chối tài khoản đã xóa mềm hoặc bị khóa; hỗ trợ cả HR teamMember)
+  let user = null;
+  let isTeamMember = false;
+
+  if (userType === "employer") {
+    user = await Employer.findOne({ email: cleanEmail, deletedAt: null }).select("+teamMembers.password");
+    if (!user) {
+      user = await Employer.findOne({ "teamMembers.email": cleanEmail, deletedAt: null }).select(
+        "+teamMembers.password"
+      );
+      isTeamMember = Boolean(user);
+    }
+  } else {
+    user = await Candidate.findOne({ email: cleanEmail, deletedAt: null });
+  }
 
   if (!user || user.status === "banned") {
     await Otp.deleteMany({ email: cleanEmail, userType, type: "forgot_password" });
@@ -276,9 +293,24 @@ const postResetPassword = (userType) => async (req, res) => {
     return res.redirect(`/${userType}/login`);
   }
 
-  user.password = await hashPassword(newPassword);
-  user.tokenVersion = (user.tokenVersion || 0) + 1; // Hủy mọi session cũ
-  await user.save();
+  if (isTeamMember) {
+    const member = (user.teamMembers || []).find(
+      (m) => m.email && m.email.toLowerCase().trim() === cleanEmail
+    );
+    if (!member) {
+      await Otp.deleteMany({ email: cleanEmail, userType, type: "forgot_password" });
+      req.flash("error", "Không tìm thấy tài khoản thành viên tương ứng.");
+      return res.redirect(`/${userType}/login`);
+    }
+    member.password = await hashPassword(newPassword);
+    member.tokenVersion = (member.tokenVersion || 0) + 1;
+    await user.save();
+  } else {
+    user.password = await hashPassword(newPassword);
+    user.tokenVersion = (user.tokenVersion || 0) + 1; // Hủy mọi session cũ
+    user.isEmailVerified = true; // Đã chứng minh quyền sở hữu hòm thư qua mã OTP
+    await user.save();
+  }
 
   // Xóa sạch mọi OTP forgot_password còn sót lại của email này
   await Otp.deleteMany({ email: cleanEmail, userType, type: "forgot_password" });

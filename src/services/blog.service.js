@@ -400,14 +400,15 @@ async function getArticleById(id) {
  * Tạo mới bài viết
  */
 async function createArticle(data) {
-  let baseSlug = (data.slug && data.slug.trim()) || slugify(data.title);
-  if (!baseSlug) baseSlug = `bai-viet-${Date.now()}`;
+  const rawSlug = typeof data.slug === "string" ? data.slug.trim() : "";
+  let baseSlug = rawSlug ? slugify(rawSlug) : slugify(data.title);
+  if (!baseSlug) baseSlug = slugify(data.title) || `bai-viet-${Date.now()}`;
 
   // Kiểm tra trùng lặp slug
   let finalSlug = baseSlug;
   const existing = await Article.findOne({ slug: finalSlug });
   if (existing) {
-    finalSlug = slugify(data.title, true);
+    finalSlug = slugify(rawSlug || data.title, true) || `${baseSlug}-${Date.now().toString(36)}`;
   }
 
   const tags = Array.isArray(data.tags)
@@ -452,12 +453,15 @@ async function updateArticle(id, data) {
   }
 
   if (data.title) article.title = data.title.trim();
-  if (data.slug && data.slug.trim() && data.slug.trim() !== article.slug) {
-    const slugExists = await Article.findOne({ slug: data.slug.trim(), _id: { $ne: id } });
-    if (slugExists) {
-      article.slug = slugify(data.slug.trim(), true);
-    } else {
-      article.slug = data.slug.trim();
+  if (typeof data.slug === "string" && data.slug.trim()) {
+    const normalizedSlug = slugify(data.slug.trim());
+    if (normalizedSlug && normalizedSlug !== article.slug) {
+      const slugExists = await Article.findOne({ slug: normalizedSlug, _id: { $ne: id } });
+      if (slugExists) {
+        article.slug = slugify(data.slug.trim(), true);
+      } else {
+        article.slug = normalizedSlug;
+      }
     }
   }
   if (data.category) article.category = normalizeCategory(data.category);

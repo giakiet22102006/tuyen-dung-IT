@@ -12,11 +12,11 @@ block main
 
         //- Thẻ thống kê
         div(class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[16px] sm:gap-[20px]")
-            //- Tổng phản hồi
+            //- Tổng phản hồi (toàn cục, không bị thu hẹp theo bộ lọc)
             div(class="admin-stat-card bg-white p-[22px] rounded-[12px] border border-[#E5E7EB] shadow-xs flex items-center justify-between")
                 div
                     p(class="text-[13px] font-[500] text-[#6B7280]") Tổng phản hồi
-                    p(class="text-[28px] font-[700] text-[#111827] mt-[4px]") #{counts.total || 0}
+                    p(class="text-[28px] font-[700] text-[#111827] mt-[4px]") #{counts.totalAllCount !== undefined ? counts.totalAllCount : (counts.total || 0)}
                 div(class="w-[48px] h-[48px] rounded-full bg-gray-100 text-[#4B5563] flex items-center justify-center text-[20px] shrink-0")
                     <i class="fa-solid fa-comments"></i>
 
@@ -54,6 +54,7 @@ block main
                         option(value="bug" selected=(filter.type === "bug")) 🐞 Báo cáo sự cố kỹ thuật
                         option(value="rating" selected=(filter.type === "rating")) ⭐ Đánh giá chất lượng web
                         option(value="suggestion" selected=(filter.type === "suggestion")) 💡 Đề xuất tính năng mới
+                        option(value="contact" selected=(filter.type === "contact")) 📩 Liên hệ hợp tác / Hỗ trợ
 
                 div
                     label(for="filterStatus" class="block text-[13px] font-[500] text-[#374151] mb-[6px]") Trạng thái xử lý
@@ -88,18 +89,21 @@ block main
                                 tr(class="hover:bg-gray-50 transition-colors")
                                     td(class="py-[12px] px-[16px] text-[#6B7280] whitespace-nowrap")
                                         | #{labels.formatDate ? labels.formatDate(fb.createdAt) : new Date(fb.createdAt).toLocaleDateString('vi-VN')}
-                                    td(class="py-[12px] px-[16px]")
+                                    td(class="py-[12px] px-[16px] whitespace-nowrap")
                                         if fb.type === 'bug'
-                                            span(class="px-[8px] py-[3px] rounded text-[11px] font-[600] bg-rose-50 text-rose-700 border border-rose-200 inline-flex items-center gap-[4px]")
+                                            span(class="whitespace-nowrap px-[8px] py-[3px] rounded text-[11px] font-[600] bg-rose-50 text-rose-700 border border-rose-200 inline-flex items-center gap-[4px]")
                                                 <i class="fa-solid fa-bug"></i> Báo lỗi web
                                         else if fb.type === 'rating'
                                             div(class="space-y-[2px]")
-                                                span(class="px-[8px] py-[3px] rounded text-[11px] font-[600] bg-amber-50 text-amber-700 border border-amber-200 inline-flex items-center gap-[4px]")
+                                                span(class="whitespace-nowrap px-[8px] py-[3px] rounded text-[11px] font-[600] bg-amber-50 text-amber-700 border border-amber-200 inline-flex items-center gap-[4px]")
                                                     <i class="fa-solid fa-star text-amber-500"></i> Đánh giá web
                                                 if fb.rating
                                                     div(class="text-[12px] font-[700] text-amber-600") #{fb.rating} / 5 ⭐
+                                        else if fb.type === 'contact'
+                                            span(class="whitespace-nowrap px-[8px] py-[3px] rounded text-[11px] font-[600] bg-indigo-50 text-indigo-700 border border-indigo-200 inline-flex items-center gap-[4px]")
+                                                span 📩 Liên hệ
                                         else
-                                            span(class="px-[8px] py-[3px] rounded text-[11px] font-[600] bg-blue-50 text-blue-700 border border-blue-200 inline-flex items-center gap-[4px]")
+                                            span(class="whitespace-nowrap px-[8px] py-[3px] rounded text-[11px] font-[600] bg-blue-50 text-blue-700 border border-blue-200 inline-flex items-center gap-[4px]")
                                                 <i class="fa-solid fa-lightbulb"></i> Đề xuất
                                     td(class="py-[12px] px-[16px]")
                                         div(class="font-[600] text-gray-900") #{fb.contactName || "Người dùng ẩn danh"}
@@ -118,14 +122,17 @@ block main
                                         if fb.adminNote
                                             div(class="mt-[6px] p-[6px] bg-yellow-50 text-yellow-800 text-[11px] rounded border border-yellow-200")
                                                 span <strong>Ghi chú Admin:</strong> #{fb.adminNote}
-                                    td(class="py-[12px] px-[16px]")
-                                        form(action="/" + adminPath + "/feedbacks/" + fb._id + "/status" method="POST" class="inline")
+                                    td(class="py-[12px] px-[16px] min-w-[220px]")
+                                        form(action="/" + adminPath + "/feedbacks/" + fb._id + "/status" method="POST" class="space-y-[6px]")
                                             input(type="hidden" name="_csrf" value=csrfToken)
-                                            select(name="status" onchange="this.form.submit()" class="text-[12px] font-[600] rounded-[6px] px-[8px] py-[4px] border cursor-pointer " + (fb.status === 'new' ? 'bg-amber-50 text-amber-800 border-amber-300' : (fb.status === 'in_progress' ? 'bg-blue-50 text-blue-800 border-blue-300' : 'bg-emerald-50 text-emerald-800 border-emerald-300')))
-                                                option(value="new" selected=(fb.status === "new")) Mới nhận
-                                                option(value="in_progress" selected=(fb.status === "in_progress")) Đang xử lý
-                                                option(value="resolved" selected=(fb.status === "resolved")) Đã giải quyết
-                                                option(value="closed" selected=(fb.status === "closed")) Đóng
+                                            div(class="flex items-center gap-[6px]")
+                                                select(name="status" class="flex-1 text-[12px] font-[600] rounded-[6px] px-[8px] py-[5px] border cursor-pointer " + (fb.status === 'new' ? 'bg-amber-50 text-amber-800 border-amber-300' : (fb.status === 'in_progress' ? 'bg-blue-50 text-blue-800 border-blue-300' : 'bg-emerald-50 text-emerald-800 border-emerald-300')))
+                                                    option(value="new" selected=(fb.status === "new")) Mới nhận
+                                                    option(value="in_progress" selected=(fb.status === "in_progress")) Đang xử lý
+                                                    option(value="resolved" selected=(fb.status === "resolved")) Đã giải quyết
+                                                    option(value="closed" selected=(fb.status === "closed")) Đóng
+                                                button(type="submit" class="px-[10px] py-[5px] rounded-[6px] bg-[#000065] hover:bg-[#000080] text-white text-[11px] font-[600] cursor-pointer whitespace-nowrap") Lưu
+                                            input(type="text" name="adminNote" value=(fb.adminNote || "") maxlength="500" placeholder="Ghi chú nội bộ Admin..." class="w-full text-[11.5px] border border-gray-200 rounded-[5px] px-[8px] py-[4px] focus:outline-none focus:border-[#0088FF]")
                                     td(class="py-[12px] px-[16px] text-right whitespace-nowrap")
                                         form(action="/" + adminPath + "/feedbacks/" + fb._id + "/delete" method="POST" onsubmit="return confirm('Bạn có chắc muốn xóa phản hồi này?');" class="inline")
                                             input(type="hidden" name="_csrf" value=csrfToken)
@@ -137,10 +144,13 @@ block main
 
         //- Phân trang
         if pagination && pagination.totalPages > 1
-            div(class="flex justify-center mt-[24px]")
-                div(class="flex items-center gap-[6px]")
-                    if pagination.hasPrev
-                        a(href="/" + adminPath + "/feedbacks?page=" + pagination.prevPage + (filter.type ? "&type=" + filter.type : "") + (filter.status ? "&status=" + filter.status : "") class="px-[12px] py-[6px] bg-white border border-[#D1D5DB] rounded-[6px] text-[13px] font-[500] text-[#374151] hover:bg-gray-50") Trang trước
-                    span(class="px-[12px] py-[6px] text-[13px] font-[600] text-[#0088FF]") Trang #{pagination.currentPage} / #{pagination.totalPages}
-                    if pagination.hasNext
-                        a(href="/" + adminPath + "/feedbacks?page=" + pagination.nextPage + (filter.type ? "&type=" + filter.type : "") + (filter.status ? "&status=" + filter.status : "") class="px-[12px] py-[6px] bg-white border border-[#D1D5DB] rounded-[6px] text-[13px] font-[500] text-[#374151] hover:bg-gray-50") Trang sau
+            - const fbQuerySuffix = (filter.type ? "&type=" + encodeURIComponent(filter.type) : "") + (filter.status ? "&status=" + encodeURIComponent(filter.status) : "")
+            div(class="mt-[20px] flex flex-col sm:flex-row items-center justify-between gap-[12px]")
+                div(class="text-[13px] text-[#6B7280]") Hiển thị trang #{pagination.currentPage} / #{pagination.totalPages} (Tổng #{pagination.totalItems} phản hồi)
+                div(class="flex items-center gap-[6px] flex-wrap")
+                    if pagination.hasPrevPage
+                        a(href=`/${adminPath}/feedbacks?page=${pagination.prevPage}${fbQuerySuffix}` class="px-[12px] py-[6px] bg-white border border-[#D1D5DB] rounded-[6px] text-[13px] font-[500] text-[#374151] hover:bg-gray-50") Trước
+                    - for (let p = 1; p <= pagination.totalPages; p++)
+                        a(href=`/${adminPath}/feedbacks?page=${p}${fbQuerySuffix}` class="px-[12px] py-[6px] border rounded-[6px] text-[13px] " + (pagination.currentPage === p ? "bg-[#0088FF] text-white border-[#0088FF] font-[600]" : "bg-white text-[#374151] border-[#D1D5DB] hover:bg-gray-50")) #{p}
+                    if pagination.hasNextPage
+                        a(href=`/${adminPath}/feedbacks?page=${pagination.nextPage}${fbQuerySuffix}` class="px-[12px] py-[6px] bg-white border border-[#D1D5DB] rounded-[6px] text-[13px] font-[500] text-[#374151] hover:bg-gray-50") Sau

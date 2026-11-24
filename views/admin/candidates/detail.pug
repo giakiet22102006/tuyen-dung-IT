@@ -76,6 +76,12 @@ block main
                 div
                     p(class="text-[13px] text-[#6B7280]") Email đăng nhập
                     p(class="font-[600] text-[15px] text-[#111827] mt-[2px]") #{candidate.email}
+                    if candidate.isEmailVerified
+                        span(class="inline-flex items-center gap-[4px] text-[11px] font-[600] text-emerald-700 mt-[3px]")
+                            <i class="fa-solid fa-circle-check"></i> Đã xác thực email
+                    else
+                        span(class="inline-flex items-center gap-[4px] text-[11px] font-[600] text-amber-700 mt-[3px]")
+                            <i class="fa-solid fa-clock"></i> Chưa xác thực email
                 div
                     p(class="text-[13px] text-[#6B7280]") Số điện thoại
                     p(class="font-[600] text-[15px] text-[#111827] mt-[2px]") #{candidate.phone || "Chưa có"}
@@ -116,15 +122,21 @@ block main
                                         else
                                             span Không rõ
                                     td(class="py-[14px] px-[20px] text-[#4B5563]") #{formatDate(app.createdAt)}
-                                    td(class="py-[14px] px-[20px]")
+                                    td(class="py-[14px] px-[20px] whitespace-nowrap")
                                         if app.status === 'pending'
-                                            span(class="px-[8px] py-[2px] rounded text-[12px] font-[600] bg-amber-50 text-amber-700") Chờ duyệt
+                                            span(class="inline-block whitespace-nowrap px-[8px] py-[2px] rounded text-[12px] font-[600] bg-amber-50 text-amber-700") Chờ duyệt
                                         else if app.status === 'approved'
-                                            span(class="px-[8px] py-[2px] rounded text-[12px] font-[600] bg-emerald-50 text-emerald-700") Phù hợp
+                                            span(class="inline-block whitespace-nowrap px-[8px] py-[2px] rounded text-[12px] font-[600] bg-emerald-50 text-emerald-700") Phù hợp
+                                        else if app.status === 'interviewing'
+                                            span(class="inline-block whitespace-nowrap px-[8px] py-[2px] rounded text-[12px] font-[600] bg-blue-50 text-blue-700") Phỏng vấn
+                                        else if app.status === 'offered'
+                                            span(class="inline-block whitespace-nowrap px-[8px] py-[2px] rounded text-[12px] font-[600] bg-indigo-50 text-indigo-700") Đề nghị (Offer)
+                                        else if app.status === 'hired'
+                                            span(class="inline-block whitespace-nowrap px-[8px] py-[2px] rounded text-[12px] font-[600] bg-teal-50 text-teal-700") Đã tuyển
                                         else if app.status === 'rejected'
-                                            span(class="px-[8px] py-[2px] rounded text-[12px] font-[600] bg-red-50 text-red-700 block text-center") Từ chối
+                                            span(class="inline-block whitespace-nowrap px-[8px] py-[2px] rounded text-[12px] font-[600] bg-red-50 text-red-700") Từ chối
                                             if app.rejectionReason
-                                                span(class="text-[11px] text-gray-500 block text-center truncate max-w-[150px] mx-auto" title=app.rejectionReason) #{app.rejectionReason}
+                                                span(class="text-[11px] text-gray-500 block truncate max-w-[160px] mt-[2px]" title=app.rejectionReason) #{app.rejectionReason}
                         else
                             tr
                                 td(colspan="4" class="py-[24px] text-center text-[#6B7280]") Ứng viên chưa nộp hồ sơ vào công việc nào.

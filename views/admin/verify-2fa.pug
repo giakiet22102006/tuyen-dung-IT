@@ -51,3 +51,7 @@ html(lang="vi")
             div(class="mt-[24px] pt-[20px] border-t border-[#F3F4F6] text-center")
                 a(href="/" + adminPath + "/login" class="text-[13px] text-[#6B7280] hover:text-[#0088FF] transition-colors")
                     <i class="fa-solid fa-arrow-left mr-[4px]"></i> Đăng nhập bằng tài khoản khác
+        script.
+            if (window.history && window.history.replaceState) {
+                window.history.replaceState(null, "", "/#{adminPath}/verify-2fa");
+            }

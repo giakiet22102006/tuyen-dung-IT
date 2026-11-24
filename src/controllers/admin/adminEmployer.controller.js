@@ -1,10 +1,21 @@
 // src/controllers/admin/adminEmployer.controller.js
 const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
-const { Employer, Job, Application, AuditLog } = require("../../models");
+const {
+  Employer,
+  Job,
+  Application,
+  AuditLog,
+  SavedJob,
+  CompanyFollow,
+  Review,
+  JobAlert,
+  Notification,
+  Otp,
+} = require("../../models");
 const { EMPLOYER_STATUS, CITIES, ADMIN_ROLES, JOB_MODERATION } = require("../../config/constants");
 const { logAdminAction } = require("../../services/audit.service");
-const { deleteFile } = require("../../services/storage.service");
+const storageService = require("../../services/storage.service");
 const { clearStatsCache } = require("../../services/job.service");
 const { clearMenuCache } = require("../../services/menu.service");
 const slugify = require("../../utils/slugify");
@@ -153,16 +164,23 @@ const postCreate = async (req, res) => {
   const passwordHash = await bcrypt.hash(tempPassword, 12);
   const slug = slugify(companyName, true);
 
+  const finalStatus =
+    status && Object.values(EMPLOYER_STATUS).includes(status) ? status : EMPLOYER_STATUS.ACTIVE;
+  const isApprovedNow = finalStatus === EMPLOYER_STATUS.ACTIVE;
+
   const newEmp = await Employer.create({
     companyName: companyName.trim(),
     slug,
-    email: email.toLowerCase().trim(),
+    email: cleanEmail,
     password: passwordHash,
     city: city || "ha-noi",
     address: (address || "").trim(),
     phone: (phone || "").trim(),
     companyModel: (companyModel || "").trim(),
-    status: status || EMPLOYER_STATUS.ACTIVE,
+    status: finalStatus,
+    isEmailVerified: true,
+    approvedAt: isApprovedNow ? new Date() : null,
+    approvedBy: isApprovedNow ? req.admin._id : null,
   });
 
   await logAdminAction({
@@ -170,7 +188,12 @@ const postCreate = async (req, res) => {
     action: "employer.create",
     targetType: "Employer",
     targetId: newEmp._id,
-    meta: { companyName: newEmp.companyName, email: newEmp.email },
+    meta: {
+      companyName: newEmp.companyName,
+      email: newEmp.email,
+      status: newEmp.status,
+      isEmailVerified: true,
+    },
     ip: req.ip,
   });
 
@@ -253,9 +276,11 @@ const postEdit = async (req, res) => {
 
 const postApprove = async (req, res) => {
   const adminPath = env.ADMIN_PATH || "admin";
-  const employer = await Employer.findById(req.params.id);
+  const employer = await Employer.findOne({ _id: req.params.id, deletedAt: null }).select(
+    "+teamMembers.password"
+  );
   if (!employer) {
-    req.flash("error", "Không tìm thấy Nhà tuyển dụng.");
+    req.flash("error", "Không tìm thấy Nhà tuyển dụng hoặc tài khoản đã bị xóa mềm.");
     return res.redirect(`/${adminPath}/employers`);
   }
 
@@ -297,10 +322,14 @@ const postBan = async (req, res) => {
     return res.redirect(`/${adminPath}/employers`);
   }
 
-  employer.status = EMPLOYER_STATUS.BANNED;
-  employer.banReason = reason.trim();
-  employer.tokenVersion += 1; // Đá người dùng ra khỏi phiên ngay lập tức
-  await employer.save();
+  const cleanReason = reason.trim();
+  await Employer.updateOne(
+    { _id: employer._id },
+    {
+      $set: { status: EMPLOYER_STATUS.BANNED, banReason: cleanReason },
+      $inc: { tokenVersion: 1, "teamMembers.$[].tokenVersion": 1 },
+    }
+  );
 
   // Ẩn toàn bộ job của NTD này
   await Job.updateMany({ employerId: employer._id }, { employerActive: false });
@@ -310,7 +339,7 @@ const postBan = async (req, res) => {
     action: "employer.ban",
     targetType: "Employer",
     targetId: employer._id,
-    meta: { companyName: employer.companyName, reason: employer.banReason },
+    meta: { companyName: employer.companyName, reason: cleanReason },
     ip: req.ip,
   });
 
@@ -323,32 +352,43 @@ const postBan = async (req, res) => {
 
 const postUnban = async (req, res) => {
   const adminPath = env.ADMIN_PATH || "admin";
-  const employer = await Employer.findById(req.params.id);
+  const employer = await Employer.findOne({ _id: req.params.id, deletedAt: null }).select(
+    "+teamMembers.password"
+  );
   if (!employer) {
-    req.flash("error", "Không tìm thấy Nhà tuyển dụng.");
+    req.flash("error", "Không tìm thấy Nhà tuyển dụng hoặc tài khoản đã bị xóa mềm.");
     return res.redirect(`/${adminPath}/employers`);
   }
 
-  employer.status = EMPLOYER_STATUS.ACTIVE;
+  const shouldRestoreActive = employer.approvedAt != null || !env.EMPLOYER_REQUIRE_APPROVAL;
+  employer.status = shouldRestoreActive ? EMPLOYER_STATUS.ACTIVE : EMPLOYER_STATUS.PENDING;
   employer.banReason = "";
   await employer.save();
 
-  // Mở lại hiển thị job công khai
-  await Job.updateMany({ employerId: employer._id, deletedAt: null }, { employerActive: true });
+  if (shouldRestoreActive) {
+    await Job.updateMany({ employerId: employer._id, deletedAt: null }, { employerActive: true });
+  } else {
+    await Job.updateMany({ employerId: employer._id }, { employerActive: false });
+  }
 
   await logAdminAction({
     adminId: req.admin._id,
     action: "employer.unban",
     targetType: "Employer",
     targetId: employer._id,
-    meta: { companyName: employer.companyName },
+    meta: { companyName: employer.companyName, restoredStatus: employer.status },
     ip: req.ip,
   });
 
   clearStatsCache();
   clearMenuCache();
 
-  req.flash("success", `Đã mở khóa tài khoản công ty ${employer.companyName}.`);
+  req.flash(
+    "success",
+    shouldRestoreActive
+      ? `Đã mở khóa tài khoản công ty ${employer.companyName}.`
+      : `Đã mở khóa tài khoản công ty ${employer.companyName} (chuyển về trạng thái Chờ phê duyệt).`
+  );
   res.redirect(getSafeBackRedirect(req, `/${adminPath}/employers/${employer._id}`));
 };
 
@@ -361,9 +401,14 @@ const postResetPassword = async (req, res) => {
   }
 
   const tempPassword = `Itj@${crypto.randomBytes(4).toString("hex")}`;
-  employer.password = await bcrypt.hash(tempPassword, 12);
-  employer.tokenVersion += 1;
-  await employer.save();
+  const passwordHash = await bcrypt.hash(tempPassword, 12);
+  await Employer.updateOne(
+    { _id: employer._id },
+    {
+      $set: { password: passwordHash },
+      $inc: { tokenVersion: 1, "teamMembers.$[].tokenVersion": 1 },
+    }
+  );
 
   await logAdminAction({
     adminId: req.admin._id,
@@ -389,9 +434,13 @@ const postSoftDelete = async (req, res) => {
     return res.redirect(`/${adminPath}/employers`);
   }
 
-  employer.deletedAt = new Date();
-  employer.tokenVersion += 1;
-  await employer.save();
+  await Employer.updateOne(
+    { _id: employer._id },
+    {
+      $set: { deletedAt: new Date() },
+      $inc: { tokenVersion: 1, "teamMembers.$[].tokenVersion": 1 },
+    }
+  );
 
   // Ẩn job công khai
   await Job.updateMany({ employerId: employer._id }, { employerActive: false });
@@ -414,7 +463,7 @@ const postSoftDelete = async (req, res) => {
 
 const postRestore = async (req, res) => {
   const adminPath = env.ADMIN_PATH || "admin";
-  const employer = await Employer.findById(req.params.id);
+  const employer = await Employer.findById(req.params.id).select("+teamMembers.password");
   if (!employer) {
     req.flash("error", "Không tìm thấy Nhà tuyển dụng.");
     return res.redirect(`/${adminPath}/employers`);
@@ -422,12 +471,15 @@ const postRestore = async (req, res) => {
 
   employer.deletedAt = null;
   if (employer.status === EMPLOYER_STATUS.BANNED) {
-    employer.status = EMPLOYER_STATUS.ACTIVE;
+    const shouldRestoreActive = employer.approvedAt != null || !env.EMPLOYER_REQUIRE_APPROVAL;
+    employer.status = shouldRestoreActive ? EMPLOYER_STATUS.ACTIVE : EMPLOYER_STATUS.PENDING;
   }
   await employer.save();
 
   if (employer.status === EMPLOYER_STATUS.ACTIVE) {
     await Job.updateMany({ employerId: employer._id, deletedAt: null }, { employerActive: true });
+  } else {
+    await Job.updateMany({ employerId: employer._id }, { employerActive: false });
   }
 
   await logAdminAction({
@@ -435,7 +487,7 @@ const postRestore = async (req, res) => {
     action: "employer.restore",
     targetType: "Employer",
     targetId: employer._id,
-    meta: { companyName: employer.companyName },
+    meta: { companyName: employer.companyName, status: employer.status },
     ip: req.ip,
   });
 
@@ -459,14 +511,53 @@ const postHardDelete = async (req, res) => {
     return res.redirect(`/${adminPath}/employers`);
   }
 
-  // Dọn dẹp logo
+  // Dọn dẹp logo công ty
   if (employer.logo && employer.logo.key) {
-    deleteFile(employer.logo.key, "logos");
+    storageService.deleteFile(employer.logo.key, "logos");
   }
 
-  // Xóa cascade jobs và applications
-  await Job.deleteMany({ employerId: employer._id });
-  await Application.deleteMany({ employerId: employer._id });
+  // Dọn dẹp ảnh job & file CV vật lý trong các đơn ứng tuyển
+  const employerJobs = await Job.find({ employerId: employer._id }).select("_id images").lean();
+  const jobIds = employerJobs.map((j) => j._id);
+  employerJobs.forEach((j) => {
+    (j.images || []).forEach((img) => {
+      if (img && img.key) {
+        storageService.deleteFile(img.key, "jobs");
+      }
+    });
+  });
+
+  const appFilter = jobIds.length
+    ? { $or: [{ employerId: employer._id }, { jobId: { $in: jobIds } }] }
+    : { employerId: employer._id };
+  const applications = await Application.find(appFilter).select("cv").lean();
+  applications.forEach((appItem) => {
+    if (appItem.cv && appItem.cv.key) {
+      storageService.deleteCV(appItem.cv.key);
+    }
+  });
+
+  const employerEmails = [
+    employer.email,
+    ...(employer.teamMembers || []).map((m) => m.email),
+  ]
+    .filter(Boolean)
+    .map((e) => e.toLowerCase().trim());
+
+  // Xóa cascade toàn bộ dữ liệu phụ liên quan
+  await Promise.all([
+    Application.deleteMany(appFilter),
+    jobIds.length ? SavedJob.deleteMany({ jobId: { $in: jobIds } }) : Promise.resolve(),
+    CompanyFollow.deleteMany({ employerId: employer._id }),
+    Review.deleteMany({ $or: [{ employerId: employer._id }, { authorEmployerId: employer._id }] }),
+    employerEmails.length ? JobAlert.deleteMany({ email: { $in: employerEmails } }) : Promise.resolve(),
+    Notification.deleteMany({ recipientId: employer._id, recipientType: "employer" }),
+    employerEmails.length
+      ? Otp.deleteMany({ email: { $in: employerEmails }, userType: "employer" })
+      : Promise.resolve(),
+    Job.deleteMany({ employerId: employer._id }),
+  ]);
+
   await Employer.findByIdAndDelete(employer._id);
 
   await logAdminAction({
@@ -497,26 +588,49 @@ const postBulkAction = async (req, res) => {
   }
 
   if (action === "approve") {
-    await Employer.updateMany(
-      { _id: { $in: targetIds }, status: EMPLOYER_STATUS.PENDING },
-      { status: EMPLOYER_STATUS.ACTIVE, approvedAt: new Date(), approvedBy: req.admin._id }
-    );
-    await Job.updateMany({ employerId: { $in: targetIds }, deletedAt: null }, { employerActive: true });
+    const pendingEmployers = await Employer.find({
+      _id: { $in: targetIds },
+      status: EMPLOYER_STATUS.PENDING,
+      deletedAt: null,
+    })
+      .select("_id")
+      .lean();
+    const pendingIds = pendingEmployers.map((e) => e._id);
+
+    if (pendingIds.length > 0) {
+      await Employer.updateMany(
+        { _id: { $in: pendingIds }, status: EMPLOYER_STATUS.PENDING, deletedAt: null },
+        {
+          $set: {
+            status: EMPLOYER_STATUS.ACTIVE,
+            approvedAt: new Date(),
+            approvedBy: req.admin._id,
+          },
+        }
+      );
+      await Job.updateMany(
+        { employerId: { $in: pendingIds }, deletedAt: null },
+        { $set: { employerActive: true } }
+      );
+    }
 
     await logAdminAction({
       adminId: req.admin._id,
       action: "employer.bulkApprove",
       targetType: "Employer",
       targetId: "bulk",
-      meta: { count: targetIds.length, ids: targetIds },
+      meta: { count: pendingIds.length, ids: pendingIds, requestedIds: targetIds },
       ip: req.ip,
     });
-    req.flash("success", `Đã phê duyệt hàng loạt ${targetIds.length} Nhà tuyển dụng.`);
+    req.flash("success", `Đã phê duyệt hàng loạt ${pendingIds.length} Nhà tuyển dụng chờ duyệt.`);
   } else if (action === "ban") {
     const reason = req.body.reason || "Khóa hàng loạt bởi Quản trị viên";
     await Employer.updateMany(
       { _id: { $in: targetIds } },
-      { status: EMPLOYER_STATUS.BANNED, banReason: reason, $inc: { tokenVersion: 1 } }
+      {
+        $set: { status: EMPLOYER_STATUS.BANNED, banReason: reason },
+        $inc: { tokenVersion: 1, "teamMembers.$[].tokenVersion": 1 },
+      }
     );
     await Job.updateMany({ employerId: { $in: targetIds } }, { employerActive: false });
 

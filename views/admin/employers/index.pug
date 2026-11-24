@@ -16,7 +16,7 @@ block main
 
         //- Bộ lọc tìm kiếm
         div(class="bg-white p-[20px] rounded-[10px] border border-[#E5E7EB] shadow-xs")
-            form(action="/" + adminPath + "/employers" method="GET" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[16px]")
+            form(action="/" + adminPath + "/employers" method="GET" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-[16px]")
                 div
                     label(for="keyword" class="block text-[13px] font-[500] text-[#374151] mb-[6px]") Tìm kiếm từ khóa
                     input(type="text" id="keyword" name="keyword" value=filter.keyword placeholder="Tên công ty, email, SĐT..." class="w-full border border-[#D1D5DB] rounded-[6px] px-[14px] py-[9px] text-[14px] focus:outline-none focus:border-[#0088FF]")
@@ -37,11 +37,19 @@ block main
                         each c in cities
                             option(value=c.value selected=(filter.city === c.value)) #{c.label}
 
+                div
+                    label(for="sort" class="block text-[13px] font-[500] text-[#374151] mb-[6px]") Sắp xếp
+                    select(id="sort" name="sort" class="w-full border border-[#D1D5DB] rounded-[6px] px-[14px] py-[9px] text-[14px] focus:outline-none focus:border-[#0088FF] cursor-pointer")
+                        option(value="" selected=(!filter.sort || filter.sort === 'newest')) Mới nhất trước
+                        option(value="oldest" selected=(filter.sort === 'oldest')) Cũ nhất trước
+                        option(value="name-asc" selected=(filter.sort === 'name-asc')) Tên công ty (A → Z)
+                        option(value="name-desc" selected=(filter.sort === 'name-desc')) Tên công ty (Z → A)
+
                 div(class="flex items-end gap-[10px]")
-                    button(type="submit" class="flex-1 bg-[#000065] hover:bg-[#000050] text-white py-[9px] px-[16px] rounded-[6px] font-[600] text-[14px] transition-colors cursor-pointer flex items-center justify-center gap-[6px]")
+                    button(type="submit" class="flex-1 bg-[#000065] hover:bg-[#000050] text-white py-[9px] px-[16px] rounded-[6px] font-[600] text-[14px] transition-colors cursor-pointer flex items-center justify-center gap-[6px] whitespace-nowrap")
                         <i class="fa-solid fa-filter"></i>
                         span Lọc
-                    a(href="/" + adminPath + "/employers" class="bg-gray-100 hover:bg-gray-200 text-[#4B5563] py-[9px] px-[16px] rounded-[6px] font-[500] text-[14px] transition-colors") Đặt lại
+                    a(href="/" + adminPath + "/employers" class="bg-gray-100 hover:bg-gray-200 text-[#4B5563] py-[9px] px-[16px] rounded-[6px] font-[500] text-[14px] transition-colors whitespace-nowrap") Đặt lại
 
         //- Bảng danh sách & Thao tác hàng loạt
         form(action="/" + adminPath + "/employers/bulk" method="POST" id="bulkForm")
@@ -85,18 +93,21 @@ block main
                                     td(class="py-[14px] px-[16px] text-[#4B5563]") #{labels.getCityLabel(emp.city)}
                                     td(class="py-[14px] px-[16px] text-center")
                                         span(class="font-[600] text-[#111827]") #{emp.jobCount || 0}
-                                    td(class="py-[14px] px-[16px]")
+                                    td(class="py-[14px] px-[16px] whitespace-nowrap")
                                         if emp.deletedAt
-                                            span(class="px-[10px] py-[3px] rounded-full text-[12px] font-[600] bg-gray-100 text-gray-700 border border-gray-300") Đã xóa mềm
+                                            span(class="inline-block whitespace-nowrap px-[10px] py-[3px] rounded-full text-[12px] font-[600] bg-gray-100 text-gray-700 border border-gray-300") Đã xóa mềm
                                         else if emp.status === 'pending'
-                                            span(class="px-[10px] py-[3px] rounded-full text-[12px] font-[600] bg-amber-50 text-amber-700 border border-amber-300") Chờ duyệt
+                                            span(class="inline-block whitespace-nowrap px-[10px] py-[3px] rounded-full text-[12px] font-[600] bg-amber-50 text-amber-700 border border-amber-300") Chờ duyệt
                                         else if emp.status === 'active'
-                                            span(class="px-[10px] py-[3px] rounded-full text-[12px] font-[600] bg-emerald-50 text-emerald-700 border border-emerald-300") Hoạt động
+                                            span(class="inline-block whitespace-nowrap px-[10px] py-[3px] rounded-full text-[12px] font-[600] bg-emerald-50 text-emerald-700 border border-emerald-300") Hoạt động
                                         else if emp.status === 'banned'
-                                            span(class="px-[10px] py-[3px] rounded-full text-[12px] font-[600] bg-red-50 text-red-700 border border-red-300") Đã khóa
-                                    td(class="py-[14px] px-[16px] text-[#4B5563] text-[13px]") #{formatDate(emp.createdAt)}
-                                    td(class="py-[14px] px-[16px] text-right")
+                                            span(class="inline-block whitespace-nowrap px-[10px] py-[3px] rounded-full text-[12px] font-[600] bg-red-50 text-red-700 border border-red-300") Đã khóa
+                                    td(class="py-[14px] px-[16px] text-[#4B5563] text-[13px] whitespace-nowrap") #{formatDate(emp.createdAt)}
+                                    td(class="py-[14px] px-[16px] text-right whitespace-nowrap")
                                         div(class="flex items-center justify-end gap-[8px]")
+                                            if !emp.deletedAt && emp.status === 'pending'
+                                                button(type="submit" formaction="/" + adminPath + "/employers/" + emp._id + "/approve" formmethod="POST" class="px-[10px] py-[5px] bg-[#059669] hover:bg-[#047857] text-white rounded text-[12px] font-[600] cursor-pointer whitespace-nowrap transition-colors" title="Phê duyệt nhanh tài khoản này")
+                                                    <i class="fa-solid fa-check mr-[4px]"></i> Duyệt nhanh
                                             a(href="/" + adminPath + "/employers/" + emp._id class="p-[6px] text-[#4B5563] hover:text-[#0088FF] hover:bg-gray-100 rounded" title="Xem chi tiết")
                                                 <i class="fa-solid fa-eye"></i>
                                             a(href="/" + adminPath + "/employers/" + emp._id + "/edit" class="p-[6px] text-[#4B5563] hover:text-amber-600 hover:bg-gray-100 rounded" title="Chỉnh sửa")
@@ -107,15 +118,16 @@ block main
 
         //- Phân trang
         if pagination && pagination.totalPages > 1
-            div(class="mt-[20px] flex items-center justify-between")
+            - const empQuerySuffix = (filter.keyword ? "&keyword=" + encodeURIComponent(filter.keyword) : "") + (filter.status ? "&status=" + encodeURIComponent(filter.status) : "") + (filter.city ? "&city=" + encodeURIComponent(filter.city) : "") + (filter.sort ? "&sort=" + encodeURIComponent(filter.sort) : "")
+            div(class="mt-[20px] flex flex-col sm:flex-row items-center justify-between gap-[12px]")
                 div(class="text-[13px] text-[#6B7280]") Hiển thị trang #{pagination.currentPage} / #{pagination.totalPages} (Tổng #{pagination.totalItems} NTD)
-                div(class="flex gap-[6px]")
+                div(class="flex gap-[6px] flex-wrap")
                     if pagination.hasPrevPage
-                        a(href="?page=" + pagination.prevPage + (filter.keyword ? "&keyword=" + filter.keyword : "") + (filter.status ? "&status=" + filter.status : "") + (filter.city ? "&city=" + filter.city : "") class="px-[12px] py-[6px] border border-[#D1D5DB] rounded bg-white text-[13px] hover:bg-gray-50") Trước
+                        a(href=`/${adminPath}/employers?page=${pagination.prevPage}${empQuerySuffix}` class="px-[12px] py-[6px] border border-[#D1D5DB] rounded bg-white text-[13px] hover:bg-gray-50") Trước
                     - for (let p = 1; p <= pagination.totalPages; p++)
-                        a(href="?page=" + p + (filter.keyword ? "&keyword=" + filter.keyword : "") + (filter.status ? "&status=" + filter.status : "") + (filter.city ? "&city=" + filter.city : "") class="px-[12px] py-[6px] border rounded text-[13px] " + (pagination.currentPage === p ? "bg-[#0088FF] text-white border-[#0088FF] font-[600]" : "bg-white text-[#374151] border-[#D1D5DB] hover:bg-gray-50")) #{p}
+                        a(href=`/${adminPath}/employers?page=${p}${empQuerySuffix}` class="px-[12px] py-[6px] border rounded text-[13px] " + (pagination.currentPage === p ? "bg-[#0088FF] text-white border-[#0088FF] font-[600]" : "bg-white text-[#374151] border-[#D1D5DB] hover:bg-gray-50")) #{p}
                     if pagination.hasNextPage
-                        a(href="?page=" + pagination.nextPage + (filter.keyword ? "&keyword=" + filter.keyword : "") + (filter.status ? "&status=" + filter.status : "") + (filter.city ? "&city=" + filter.city : "") class="px-[12px] py-[6px] border border-[#D1D5DB] rounded bg-white text-[13px] hover:bg-gray-50") Sau
+                        a(href=`/${adminPath}/employers?page=${pagination.nextPage}${empQuerySuffix}` class="px-[12px] py-[6px] border border-[#D1D5DB] rounded bg-white text-[13px] hover:bg-gray-50") Sau
 
     script.
         const selectAll = document.getElementById('selectAll');

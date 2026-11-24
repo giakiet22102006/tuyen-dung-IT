@@ -8,13 +8,23 @@ const adminEmployer = require("../controllers/admin/adminEmployer.controller");
 const adminCandidate = require("../controllers/admin/adminCandidate.controller");
 const adminLog = require("../controllers/admin/adminLog.controller");
 const adminFeedback = require("../controllers/admin/adminFeedback.controller");
+const adminReview = require("../controllers/admin/adminReview.controller");
 const adminArticle = require("../controllers/admin/adminArticle.controller");
 const adminSetting = require("../controllers/admin/adminSetting.controller");
 
-const { requireAdmin, requireSuperAdmin, adminSecurityHeaders } = require("../middlewares/auth.middleware");
+const {
+  requireAdmin,
+  requireSuperAdmin,
+  adminSecurityHeaders,
+  bypassCsrfIfLoggedOut,
+} = require("../middlewares/auth.middleware");
 const { doubleCsrfProtection } = require("../middlewares/csrf.middleware");
 const { uploadArticleThumbnailMiddleware } = require("../middlewares/upload.middleware");
-const { adminLoginRateLimiter } = require("../middlewares/rateLimit.middleware");
+const {
+  adminLoginRateLimiter,
+  admin2faVerifyRateLimiter,
+  aiRateLimiter,
+} = require("../middlewares/rateLimit.middleware");
 const asyncHandler = require("../utils/asyncHandler");
 const { isValidObjectId } = require("../utils/securityHelpers");
 const env = require("../config/env");
@@ -41,9 +51,16 @@ router.param("id", (req, res, next, id) => {
 router.get("/login", adminAuth.renderLogin);
 router.post("/login", adminLoginRateLimiter, doubleCsrfProtection, asyncHandler(adminAuth.postLogin));
 router.get("/verify-2fa", adminAuth.renderVerify2Fa);
-router.post("/verify-2fa", adminLoginRateLimiter, doubleCsrfProtection, asyncHandler(adminAuth.postVerify2Fa));
+router.post("/verify-2fa", admin2faVerifyRateLimiter, doubleCsrfProtection, asyncHandler(adminAuth.postVerify2Fa));
 router.post("/resend-2fa", adminLoginRateLimiter, doubleCsrfProtection, asyncHandler(adminAuth.postResend2Fa));
-router.post("/logout", doubleCsrfProtection, asyncHandler(adminAuth.postLogout));
+router.get("/change-password", requireAdmin, adminAuth.renderChangePassword);
+router.post("/change-password", requireAdmin, doubleCsrfProtection, asyncHandler(adminAuth.postChangePassword));
+router.post(
+  "/logout",
+  bypassCsrfIfLoggedOut("admin", "/" + (env.ADMIN_PATH || "admin") + "/login"),
+  doubleCsrfProtection,
+  asyncHandler(adminAuth.postLogout)
+);
 
 // Dashboard
 router.get("/", requireAdmin, asyncHandler(adminDashboard.renderDashboard));
@@ -88,6 +105,11 @@ router.get("/feedbacks", requireAdmin, asyncHandler(adminFeedback.renderFeedback
 router.post("/feedbacks/:id/status", requireAdmin, doubleCsrfProtection, asyncHandler(adminFeedback.postUpdateStatus));
 router.post("/feedbacks/:id/delete", requireAdmin, doubleCsrfProtection, asyncHandler(adminFeedback.postDeleteFeedback));
 
+// Kiểm duyệt Đánh giá công ty (Company Reviews)
+router.get("/reviews", requireAdmin, asyncHandler(adminReview.renderReviews));
+router.post("/reviews/:id/toggle", requireAdmin, doubleCsrfProtection, asyncHandler(adminReview.postToggleReview));
+router.post("/reviews/:id/delete", requireAdmin, doubleCsrfProtection, asyncHandler(adminReview.postDeleteReview));
+
 // Quản lý Cẩm nang IT & Trợ lý AI Biên tập
 router.get("/articles", requireAdmin, asyncHandler(adminArticle.renderList));
 router.get("/articles/create", requireAdmin, adminArticle.renderCreate);
@@ -96,8 +118,8 @@ router.get("/articles/:id/edit", requireAdmin, asyncHandler(adminArticle.renderE
 router.post("/articles/:id/edit", requireAdmin, uploadArticleThumbnailMiddleware, doubleCsrfProtection, asyncHandler(adminArticle.postEdit));
 router.post("/articles/:id/toggle-publish", requireAdmin, doubleCsrfProtection, asyncHandler(adminArticle.postTogglePublish));
 router.post("/articles/:id/delete", requireAdmin, doubleCsrfProtection, asyncHandler(adminArticle.postDelete));
-router.post("/articles/ai-generate", requireAdmin, doubleCsrfProtection, asyncHandler(adminArticle.postAiGenerate));
-router.post("/articles/ai-curate", requireAdmin, doubleCsrfProtection, asyncHandler(adminArticle.postAiCurate));
+router.post("/articles/ai-generate", requireAdmin, aiRateLimiter, doubleCsrfProtection, asyncHandler(adminArticle.postAiGenerate));
+router.post("/articles/ai-curate", requireAdmin, aiRateLimiter, doubleCsrfProtection, asyncHandler(adminArticle.postAiCurate));
 
 // Cấu hình hệ thống & Trang Về chúng tôi
 router.get("/settings/about", requireAdmin, asyncHandler(adminSetting.renderAboutSettings));

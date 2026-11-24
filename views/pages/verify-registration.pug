@@ -23,6 +23,8 @@ block main
                 form(action=`/${userRole}/verify-registration` method="POST" class="mt-[24px]") 
                     input(type="hidden" name="_csrf" value=csrfToken)
                     input(type="hidden" name="email" value=email)
+                    if typeof next === "string" && next
+                        input(type="hidden" name="next" value=next)
 
                     div(class="")
                         label(for="otp" class="font-[500] text-[14px] block text-center mb-[8px]") Nhập mã xác nhận (6 chữ số):
@@ -35,5 +37,16 @@ block main
                 form(action=`/${userRole}/resend-registration-otp` method="POST" class="mt-[20px] text-center")
                     input(type="hidden" name="_csrf" value=csrfToken)
                     input(type="hidden" name="email" value=email)
+                    if typeof next === "string" && next
+                        input(type="hidden" name="next" value=next)
                     span(class="font-[400] text-[14px] text-[#414042]") Bạn chưa nhận được email? 
                     button(type="submit" class="text-[#0088FF] hover:underline font-[600] text-[14px] bg-transparent border-0 cursor-pointer ml-[4px]") Gửi lại mã OTP
+    - const canonicalVerifyRegUrl = `/${userRole}/verify-registration` + (email ? `?email=${encodeURIComponent(email)}` + (typeof next === "string" && next ? `&next=${encodeURIComponent(next)}` : "") : "")
+    div(id="verifyRegReplaceState" data-url=canonicalVerifyRegUrl class="hidden")
+    script.
+        (function () {
+            var el = document.getElementById("verifyRegReplaceState");
+            if (el && el.dataset.url && window.history && window.history.replaceState) {
+                window.history.replaceState(null, "", el.dataset.url);
+            }
+        })();

@@ -1,10 +1,20 @@
 // src/controllers/admin/adminCandidate.controller.js
 const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
-const { Candidate, Application, AuditLog } = require("../../models");
+const {
+  Candidate,
+  Application,
+  AuditLog,
+  SavedJob,
+  CompanyFollow,
+  Review,
+  JobAlert,
+  Notification,
+  Otp,
+} = require("../../models");
 const { CANDIDATE_STATUS, ADMIN_ROLES } = require("../../config/constants");
 const { logAdminAction } = require("../../services/audit.service");
-const { deleteFile } = require("../../services/storage.service");
+const storageService = require("../../services/storage.service");
 const paginate = require("../../utils/pagination");
 const env = require("../../config/env");
 const { escapeRegex, isValidObjectId, getSafeBackRedirect } = require("../../utils/securityHelpers");
@@ -132,12 +142,16 @@ const postCreate = async (req, res) => {
   const tempPassword = `Itj@${crypto.randomBytes(4).toString("hex")}`;
   const passwordHash = await bcrypt.hash(tempPassword, 12);
 
+  const finalStatus =
+    status && Object.values(CANDIDATE_STATUS).includes(status) ? status : CANDIDATE_STATUS.ACTIVE;
+
   const newCand = await Candidate.create({
     fullName: fullName.trim(),
     email: email.toLowerCase().trim(),
     password: passwordHash,
     phone: (phone || "").trim(),
-    status: status || CANDIDATE_STATUS.ACTIVE,
+    status: finalStatus,
+    isEmailVerified: true,
   });
 
   await logAdminAction({
@@ -145,7 +159,12 @@ const postCreate = async (req, res) => {
     action: "candidate.create",
     targetType: "Candidate",
     targetId: newCand._id,
-    meta: { fullName: newCand.fullName, email: newCand.email },
+    meta: {
+      fullName: newCand.fullName,
+      email: newCand.email,
+      status: newCand.status,
+      isEmailVerified: true,
+    },
     ip: req.ip,
   });
 
@@ -357,10 +376,33 @@ const postHardDelete = async (req, res) => {
   }
 
   if (candidate.avatar && candidate.avatar.key) {
-    deleteFile(candidate.avatar.key, "avatars");
+    storageService.deleteFile(candidate.avatar.key, "avatars");
   }
 
-  await Application.deleteMany({ candidateId: candidate._id });
+  const candidateApps = await Application.find({ candidateId: candidate._id }).select("cv").lean();
+  candidateApps.forEach((appItem) => {
+    if (appItem.cv && appItem.cv.key) {
+      storageService.deleteCV(appItem.cv.key);
+    }
+  });
+
+  const cleanCandEmail = candidate.email ? candidate.email.toLowerCase().trim() : "";
+  const alertFilter = cleanCandEmail
+    ? { $or: [{ candidateId: candidate._id }, { email: cleanCandEmail }] }
+    : { candidateId: candidate._id };
+
+  await Promise.all([
+    Application.deleteMany({ candidateId: candidate._id }),
+    SavedJob.deleteMany({ candidateId: candidate._id }),
+    CompanyFollow.deleteMany({ candidateId: candidate._id }),
+    Review.deleteMany({ authorCandidateId: candidate._id }),
+    JobAlert.deleteMany(alertFilter),
+    Notification.deleteMany({ recipientId: candidate._id, recipientType: "candidate" }),
+    cleanCandEmail
+      ? Otp.deleteMany({ email: cleanCandEmail, userType: "candidate" })
+      : Promise.resolve(),
+  ]);
+
   await Candidate.findByIdAndDelete(candidate._id);
 
   await logAdminAction({

@@ -86,6 +86,12 @@ block main
                 div
                     p(class="text-[13px] text-[#6B7280]") Email đăng nhập
                     p(class="font-[600] text-[15px] text-[#111827] mt-[2px]") #{employer.email}
+                    if employer.isEmailVerified
+                        span(class="inline-flex items-center gap-[4px] text-[11px] font-[600] text-emerald-700 mt-[3px]")
+                            <i class="fa-solid fa-circle-check"></i> Đã xác thực email
+                    else
+                        span(class="inline-flex items-center gap-[4px] text-[11px] font-[600] text-amber-700 mt-[3px]")
+                            <i class="fa-solid fa-clock"></i> Chưa xác thực email
                 div
                     p(class="text-[13px] text-[#6B7280]") Số điện thoại
                     p(class="font-[600] text-[15px] text-[#111827] mt-[2px]") #{employer.phone || "Chưa có"}
@@ -118,25 +124,31 @@ block main
                     tbody(class="divide-y divide-[#E5E7EB]")
                         if jobs && jobs.length > 0
                             each job in jobs
-                                tr(class="hover:bg-gray-50 transition-colors")
-                                    td(class="py-[14px] px-[20px] font-[600] text-[#111827]")
-                                        a(href="/jobs/" + job.slug target="_blank" rel="noopener noreferrer" class="hover:text-[#0088FF]") #{job.title}
-                                    td(class="py-[14px] px-[20px] text-[#0088FF] font-[500]") #{formatSalary(job.salaryMin, job.salaryMax)}
-                                    td(class="py-[14px] px-[20px] text-[#4B5563]") #{labels.getPositionLabel(job.position)}
+                                tr(class="hover:bg-gray-50 transition-colors align-top")
                                     td(class="py-[14px] px-[20px]")
+                                        div(class="font-[600] text-[#111827]")
+                                            a(href="/jobs/" + job.slug target="_blank" rel="noopener noreferrer" class="hover:text-[#0088FF]") #{job.title}
+                                        div(id=`aiModResult-${job._id}` class="hidden mt-[8px] p-[10px] rounded-[6px] text-[12.5px] border")
+                                    td(class="py-[14px] px-[20px] text-[#0088FF] font-[500] whitespace-nowrap") #{formatSalary(job.salaryMin, job.salaryMax)}
+                                    td(class="py-[14px] px-[20px] text-[#4B5563] whitespace-nowrap") #{labels.getPositionLabel(job.position)}
+                                    td(class="py-[14px] px-[20px] whitespace-nowrap")
                                         if job.deletedAt
-                                            span(class="px-[8px] py-[2px] rounded text-[12px] font-[600] bg-gray-100 text-gray-600") Đã xóa
+                                            span(class="inline-block whitespace-nowrap px-[8px] py-[2px] rounded text-[12px] font-[600] bg-gray-100 text-gray-600") Đã xóa
                                         else if job.moderation === 'visible'
-                                            span(class="px-[8px] py-[2px] rounded text-[12px] font-[600] bg-emerald-50 text-emerald-700") Công khai
+                                            span(class="inline-block whitespace-nowrap px-[8px] py-[2px] rounded text-[12px] font-[600] bg-emerald-50 text-emerald-700") Công khai
                                         else
-                                            span(class="px-[8px] py-[2px] rounded text-[12px] font-[600] bg-red-50 text-red-700") Đã ẩn
-                                    td(class="py-[14px] px-[20px] text-right space-x-[6px]")
-                                        form(action="/" + adminPath + "/jobs/" + job._id + "/moderation" method="POST" class="inline")
-                                            input(type="hidden" name="_csrf" value=csrfToken)
-                                            if job.moderation === 'visible'
-                                                button(type="submit" class="px-[12px] py-[5px] bg-amber-100 hover:bg-amber-200 text-amber-800 rounded text-[12px] font-[600] cursor-pointer") Ẩn bài
-                                            else
-                                                button(type="submit" class="px-[12px] py-[5px] bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded text-[12px] font-[600] cursor-pointer") Hiện bài
+                                            span(class="inline-block whitespace-nowrap px-[8px] py-[2px] rounded text-[12px] font-[600] bg-red-50 text-red-700") Đã ẩn
+                                    td(class="py-[14px] px-[20px] text-right whitespace-nowrap")
+                                        div(class="inline-flex items-center justify-end gap-[6px]")
+                                            button(type="button" class="btn-ai-moderate-job px-[12px] py-[5px] bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded text-[12px] font-[600] cursor-pointer whitespace-nowrap transition-colors inline-flex items-center gap-[4px]" data-job-id=job._id)
+                                                <i class="fa-solid fa-robot text-[11px]"></i>
+                                                span AI Kiểm duyệt
+                                            form(action="/" + adminPath + "/jobs/" + job._id + "/moderation" method="POST" class="inline")
+                                                input(type="hidden" name="_csrf" value=csrfToken)
+                                                if job.moderation === 'visible'
+                                                    button(type="submit" class="px-[12px] py-[5px] bg-amber-100 hover:bg-amber-200 text-amber-800 rounded text-[12px] font-[600] cursor-pointer whitespace-nowrap") Ẩn bài
+                                                else
+                                                    button(type="submit" class="px-[12px] py-[5px] bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded text-[12px] font-[600] cursor-pointer whitespace-nowrap") Hiện bài
                         else
                             tr
                                 td(colspan="5" class="py-[24px] text-center text-[#6B7280]") Công ty chưa đăng tin tuyển dụng nào.
@@ -177,3 +189,47 @@ block main
                 div(class="flex justify-end gap-[10px]")
                     button(type="button" onclick="document.getElementById('banModal').classList.add('hidden')" class="px-[16px] py-[8px] bg-gray-100 hover:bg-gray-200 text-[#374151] rounded text-[13px] font-[500] cursor-pointer") Hủy bỏ
                     button(type="submit" class="px-[16px] py-[8px] bg-[#DC2626] hover:bg-[#B91C1C] text-white rounded text-[13px] font-[600] cursor-pointer") Xác nhận khóa
+
+    script.
+        (function () {
+            var csrfMeta = document.querySelector('meta[name="csrf-token"]');
+            var csrfVal = csrfMeta ? csrfMeta.getAttribute("content") : "";
+            document.querySelectorAll(".btn-ai-moderate-job").forEach(function (btn) {
+                btn.addEventListener("click", async function () {
+                    var jobId = btn.getAttribute("data-job-id");
+                    var box = document.getElementById("aiModResult-" + jobId);
+                    if (!jobId || !box) return;
+                    btn.disabled = true;
+                    box.className = "mt-[8px] p-[10px] rounded-[6px] text-[12.5px] border bg-blue-50 border-blue-200 text-blue-800";
+                    box.textContent = "🤖 AI đang phân tích mức độ an toàn của tin tuyển dụng...";
+                    try {
+                        var resp = await fetch("/api/ai/moderate-job/" + encodeURIComponent(jobId), {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "Accept": "application/json",
+                                "x-csrf-token": csrfVal
+                            },
+                            body: JSON.stringify({})
+                        });
+                        var json = await resp.json();
+                        if (!resp.ok || !json.success || !json.data) {
+                            throw new Error((json && json.message) || "Không thể kiểm duyệt tin tuyển dụng lúc này.");
+                        }
+                        var d = json.data;
+                        var isSafe = Boolean(d.isSafe);
+                        var score = typeof d.score === "number" ? d.score : (isSafe ? 95 : 30);
+                        var flags = Array.isArray(d.flags) && d.flags.length ? " • Cảnh báo: " + d.flags.join(", ") : "";
+                        box.className = isSafe
+                            ? "mt-[8px] p-[10px] rounded-[6px] text-[12.5px] border bg-emerald-50 border-emerald-200 text-emerald-900"
+                            : "mt-[8px] p-[10px] rounded-[6px] text-[12.5px] border bg-rose-50 border-rose-200 text-rose-900";
+                        box.textContent = (isSafe ? "✅ An toàn" : "⚠️ Nghi vấn rủi ro") + " (Điểm: " + score + "/100)" + flags + " — " + (d.assessment || "");
+                    } catch (err) {
+                        box.className = "mt-[8px] p-[10px] rounded-[6px] text-[12.5px] border bg-amber-50 border-amber-200 text-amber-900";
+                        box.textContent = "Lỗi AI Kiểm duyệt: " + (err.message || "Vui lòng thử lại sau.");
+                    } finally {
+                        btn.disabled = false;
+                    }
+                });
+            });
+        })();

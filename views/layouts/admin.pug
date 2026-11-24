@@ -39,33 +39,42 @@ html(lang="vi")
                         <i class="fa-solid fa-xmark"></i>
 
                 nav(class="space-y-[8px]")
-                    a(href="/" + adminPath class="flex items-center gap-[12px] px-[16px] py-[12px] rounded-[6px] text-[15px] font-[500] hover:bg-white/10 transition-colors " + (currentPath === "/" + adminPath ? "bg-[#0088FF] text-white font-[600]" : "text-white/80"))
+                    - const safeCurPath = currentPath || ""
+                    a(href="/" + adminPath class="flex items-center gap-[12px] px-[16px] py-[12px] rounded-[6px] text-[15px] font-[500] hover:bg-white/10 transition-colors " + (safeCurPath === "/" + adminPath ? "bg-[#0088FF] text-white font-[600]" : "text-white/80"))
                         <i class="fa-solid fa-chart-pie w-[20px]"></i>
                         span Bảng điều khiển
 
-                    a(href="/" + adminPath + "/employers" class="flex items-center gap-[12px] px-[16px] py-[12px] rounded-[6px] text-[15px] font-[500] hover:bg-white/10 transition-colors " + (currentPath.startsWith("/" + adminPath + "/employers") ? "bg-[#0088FF] text-white font-[600]" : "text-white/80"))
+                    a(href="/" + adminPath + "/employers" class="flex items-center gap-[12px] px-[16px] py-[12px] rounded-[6px] text-[15px] font-[500] hover:bg-white/10 transition-colors " + (safeCurPath.startsWith("/" + adminPath + "/employers") ? "bg-[#0088FF] text-white font-[600]" : "text-white/80"))
                         <i class="fa-solid fa-building w-[20px]"></i>
                         span Nhà tuyển dụng
 
-                    a(href="/" + adminPath + "/candidates" class="flex items-center gap-[12px] px-[16px] py-[12px] rounded-[6px] text-[15px] font-[500] hover:bg-white/10 transition-colors " + (currentPath.startsWith("/" + adminPath + "/candidates") ? "bg-[#0088FF] text-white font-[600]" : "text-white/80"))
+                    a(href="/" + adminPath + "/candidates" class="flex items-center gap-[12px] px-[16px] py-[12px] rounded-[6px] text-[15px] font-[500] hover:bg-white/10 transition-colors " + (safeCurPath.startsWith("/" + adminPath + "/candidates") ? "bg-[#0088FF] text-white font-[600]" : "text-white/80"))
                         <i class="fa-solid fa-users w-[20px]"></i>
                         span Ứng viên
 
-                    a(href="/" + adminPath + "/logs" class="flex items-center gap-[12px] px-[16px] py-[12px] rounded-[6px] text-[15px] font-[500] hover:bg-white/10 transition-colors " + (currentPath.startsWith("/" + adminPath + "/logs") ? "bg-[#0088FF] text-white font-[600]" : "text-white/80"))
+                    a(href="/" + adminPath + "/reviews" class="flex items-center gap-[12px] px-[16px] py-[12px] rounded-[6px] text-[15px] font-[500] hover:bg-white/10 transition-colors " + (safeCurPath.startsWith("/" + adminPath + "/reviews") ? "bg-[#0088FF] text-white font-[600]" : "text-white/80"))
+                        <i class="fa-solid fa-star-half-stroke w-[20px]"></i>
+                        span Đánh giá công ty
+
+                    a(href="/" + adminPath + "/logs" class="flex items-center gap-[12px] px-[16px] py-[12px] rounded-[6px] text-[15px] font-[500] hover:bg-white/10 transition-colors " + (safeCurPath.startsWith("/" + adminPath + "/logs") ? "bg-[#0088FF] text-white font-[600]" : "text-white/80"))
                         <i class="fa-solid fa-clock-rotate-left w-[20px]"></i>
                         span Nhật ký hệ thống
 
-                    a(href="/" + adminPath + "/feedbacks" class="flex items-center gap-[12px] px-[16px] py-[12px] rounded-[6px] text-[15px] font-[500] hover:bg-white/10 transition-colors " + (currentPath.startsWith("/" + adminPath + "/feedbacks") ? "bg-[#0088FF] text-white font-[600]" : "text-white/80"))
+                    a(href="/" + adminPath + "/feedbacks" class="flex items-center gap-[12px] px-[16px] py-[12px] rounded-[6px] text-[15px] font-[500] hover:bg-white/10 transition-colors " + (safeCurPath.startsWith("/" + adminPath + "/feedbacks") ? "bg-[#0088FF] text-white font-[600]" : "text-white/80"))
                         <i class="fa-solid fa-headset w-[20px]"></i>
                         span Sự cố & Đánh giá web
 
-                    a(href="/" + adminPath + "/articles" class="flex items-center gap-[12px] px-[16px] py-[12px] rounded-[6px] text-[15px] font-[500] hover:bg-white/10 transition-colors " + (currentPath.startsWith("/" + adminPath + "/articles") ? "bg-[#0088FF] text-white font-[600]" : "text-white/80"))
+                    a(href="/" + adminPath + "/articles" class="flex items-center gap-[12px] px-[16px] py-[12px] rounded-[6px] text-[15px] font-[500] hover:bg-white/10 transition-colors " + (safeCurPath.startsWith("/" + adminPath + "/articles") ? "bg-[#0088FF] text-white font-[600]" : "text-white/80"))
                         <i class="fa-solid fa-newspaper w-[20px]"></i>
                         span Cẩm nang IT
 
-                    a(href="/" + adminPath + "/settings/about" class="flex items-center gap-[12px] px-[16px] py-[12px] rounded-[6px] text-[15px] font-[500] hover:bg-white/10 transition-colors " + (currentPath.startsWith("/" + adminPath + "/settings") ? "bg-[#0088FF] text-white font-[600]" : "text-white/80"))
+                    a(href="/" + adminPath + "/settings/about" class="flex items-center gap-[12px] px-[16px] py-[12px] rounded-[6px] text-[15px] font-[500] hover:bg-white/10 transition-colors " + (safeCurPath.startsWith("/" + adminPath + "/settings") ? "bg-[#0088FF] text-white font-[600]" : "text-white/80"))
                         <i class="fa-solid fa-sliders w-[20px]"></i>
                         span Cấu hình Về chúng tôi
+
+                    a(href="/" + adminPath + "/change-password" class="flex items-center gap-[12px] px-[16px] py-[12px] rounded-[6px] text-[15px] font-[500] hover:bg-white/10 transition-colors " + (safeCurPath.startsWith("/" + adminPath + "/change-password") ? "bg-[#0088FF] text-white font-[600]" : "text-white/80"))
+                        <i class="fa-solid fa-key w-[20px]"></i>
+                        span Đổi mật khẩu
 
                     div(class="pt-[16px] mt-[16px] border-t border-white/10")
                         a(href="/" target="_blank" rel="noopener noreferrer" class="flex items-center gap-[12px] px-[16px] py-[12px] rounded-[6px] text-[14px] text-white/70 hover:bg-white/10 transition-colors")
@@ -95,8 +104,11 @@ html(lang="vi")
                         <i class="fa-solid fa-bars"></i>
                     div(class="font-[600] text-[18px] text-[#111827]") Hệ thống Quản trị VN.ITJobs
 
-                div(class="flex items-center gap-[16px]")
+                div(class="flex items-center gap-[12px]")
                     if currentAdmin
+                        a(href="/" + adminPath + "/change-password" class="text-[13px] text-[#4B5563] hover:text-[#0088FF] font-[500] px-[10px] py-[4px] rounded-full border border-gray-200 hover:border-blue-300 transition-colors flex items-center gap-[5px]")
+                            <i class="fa-solid fa-key text-[12px]"></i>
+                            span(class="hidden sm:inline") Đổi mật khẩu
                         span(class="text-[13px] bg-blue-50 text-blue-700 font-[500] px-[10px] py-[4px] rounded-full border border-blue-200")
                             <i class="fa-solid fa-shield-halved mr-[4px]"></i> #{currentAdmin.email}
 

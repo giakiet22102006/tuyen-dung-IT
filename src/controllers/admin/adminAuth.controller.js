@@ -6,7 +6,7 @@ const { Admin, Otp } = require("../../models");
 const { ADMIN_STATUS } = require("../../config/constants");
 const { signAdminToken } = require("../../services/auth.service");
 const { logAdminAction } = require("../../services/audit.service");
-const { sendAdmin2faOtpEmail } = require("../../services/mail.service");
+const mailService = require("../../services/mail.service");
 const env = require("../../config/env");
 
 const isProd = env.NODE_ENV === "production" || Boolean(process.env.VERCEL);
@@ -157,8 +157,20 @@ const postLogin = async (req, res) => {
     expiresAt: new Date(Date.now() + 5 * 60 * 1000),
   });
 
-  // Gửi email 2FA
-  await sendAdmin2faOtpEmail(admin.email, otpCode, admin.fullName);
+  // Gửi email 2FA (không nuốt lỗi SMTP và báo thành công giả)
+  try {
+    const mailResult = await mailService.sendAdmin2faOtpEmail(admin.email, otpCode, admin.fullName);
+    if (mailResult && mailResult.success === false) {
+      throw new Error(mailResult.error || "Không thể gửi email xác thực 2FA.");
+    }
+  } catch (err) {
+    await Otp.deleteMany({ email: admin.email, userType: "admin", type: "admin_login_2fa" }).catch(() => {});
+    return res.status(500).render("admin/login", {
+      title: "Đăng nhập Quản trị viên - VN.ITJobs",
+      errors: { general: "Không thể gửi email xác thực 2FA lúc này. Vui lòng thử lại sau." },
+      old: { email: admin.email },
+    });
+  }
 
   // Cấp cookie challenge đã ký để chứng minh đã vượt qua bước xác thực mật khẩu (chống 2FA Password Bypass)
   const challengeToken = signAdmin2faChallenge(admin);
@@ -326,6 +338,16 @@ const postResend2Fa = async (req, res) => {
   const otpCode = crypto.randomInt(100000, 999999).toString();
   const otpHash = await bcrypt.hash(otpCode, 10);
 
+  try {
+    const mailResult = await mailService.sendAdmin2faOtpEmail(admin.email, otpCode, admin.fullName);
+    if (mailResult && mailResult.success === false) {
+      throw new Error(mailResult.error || "Không thể gửi email xác thực 2FA.");
+    }
+  } catch (err) {
+    req.flash("error", "Không thể gửi email xác thực 2FA lúc này. Vui lòng thử lại sau.");
+    return res.redirect(`/${adminPath}/verify-2fa`);
+  }
+
   await Otp.deleteMany({ email: admin.email, userType: "admin", type: "admin_login_2fa" });
   await Otp.create({
     email: admin.email,
@@ -335,13 +357,89 @@ const postResend2Fa = async (req, res) => {
     expiresAt: new Date(Date.now() + 5 * 60 * 1000),
   });
 
-  await sendAdmin2faOtpEmail(admin.email, otpCode, admin.fullName);
-
   // Gia hạn challenge cookie mới khớp với mã OTP mới
   res.cookie(ADMIN_2FA_COOKIE, signAdmin2faChallenge(admin), ADMIN_2FA_COOKIE_OPTIONS);
 
   req.flash("success", `Đã gửi mã xác thực 2FA mới tới email ${maskEmail(admin.email)}. Vui lòng kiểm tra hòm thư!`);
   res.redirect(`/${adminPath}/verify-2fa`);
+};
+
+const renderChangePassword = (req, res) => {
+  const adminPath = env.ADMIN_PATH || "admin";
+  res.render("admin/change-password", {
+    title: "Đổi mật khẩu Quản trị viên - VN.ITJobs Admin",
+    currentPath: `/${adminPath}/change-password`,
+    errors: {},
+  });
+};
+
+const postChangePassword = async (req, res) => {
+  const adminPath = env.ADMIN_PATH || "admin";
+  const { currentPassword, newPassword, confirmPassword } = req.body;
+
+  const renderFormError = (errors) =>
+    res.status(400).render("admin/change-password", {
+      title: "Đổi mật khẩu Quản trị viên - VN.ITJobs Admin",
+      currentPath: `/${adminPath}/change-password`,
+      errors,
+    });
+
+  if (typeof currentPassword !== "string" || !currentPassword) {
+    return renderFormError({ currentPassword: "Vui lòng nhập mật khẩu hiện tại." });
+  }
+
+  const admin = await Admin.findOne({
+    _id: req.admin._id,
+    status: ADMIN_STATUS.ACTIVE,
+  }).select("+password");
+
+  if (!admin) {
+    req.flash("error", "Phiên quản trị viên không hợp lệ. Vui lòng đăng nhập lại.");
+    return res.redirect(`/${adminPath}/login`);
+  }
+
+  const isCurrentMatch = await bcrypt.compare(currentPassword, admin.password);
+  if (!isCurrentMatch) {
+    return renderFormError({ currentPassword: "Mật khẩu hiện tại không chính xác." });
+  }
+
+  if (typeof newPassword !== "string" || newPassword.length < 8) {
+    return renderFormError({ newPassword: "Mật khẩu mới phải có ít nhất 8 ký tự." });
+  }
+
+  if (!/(?=.*[a-zA-Z])(?=.*[0-9])/.test(newPassword)) {
+    return renderFormError({
+      newPassword: "Mật khẩu mới phải chứa ít nhất một chữ cái và một chữ số.",
+    });
+  }
+
+  if (newPassword !== confirmPassword) {
+    return renderFormError({ confirmPassword: "Mật khẩu xác nhận không khớp." });
+  }
+
+  admin.password = await bcrypt.hash(newPassword, 12);
+  admin.tokenVersion = (admin.tokenVersion || 0) + 1;
+  await admin.save();
+
+  const freshToken = signAdminToken(admin);
+  res.cookie("itj_admin_token", freshToken, {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: "lax",
+    maxAge: 24 * 60 * 60 * 1000,
+  });
+
+  await logAdminAction({
+    adminId: admin._id,
+    action: "admin.changePassword",
+    targetType: "System",
+    targetId: admin._id,
+    meta: { email: admin.email },
+    ip: req.ip,
+  });
+
+  req.flash("success", "Đổi mật khẩu Quản trị viên thành công!");
+  return res.redirect(`/${adminPath}/change-password`);
 };
 
 const postLogout = async (req, res) => {
@@ -367,5 +465,7 @@ module.exports = {
   renderVerify2Fa,
   postVerify2Fa,
   postResend2Fa,
+  renderChangePassword,
+  postChangePassword,
   postLogout,
 };
