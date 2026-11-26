@@ -1,171 +1,109 @@
-# VN.ITJobs - Nền Tảng Tuyển Dụng IT & Cổng Quản Trị Chuyên Biệt
+# VN.ITJobs — Nền Tảng Tuyển Dụng IT, ATS & Cổng Quản Trị Chuyên Biệt
 
-[![Node.js Version](https://img.shields.io/badge/Node.js-%3E%3D18.0.0-green.svg)](https://nodejs.org/)
-[![Express](https://img.shields.io/badge/Express-4.21-lightgrey.svg)](https://expressjs.com/)
-[![TailwindCSS v4](https://img.shields.io/badge/TailwindCSS-v4.3-blue.svg)](https://tailwindcss.com/)
-[![MongoDB & Mongoose](https://img.shields.io/badge/Mongoose-8.13-brightgreen.svg)](https://mongoosejs.com/)
-[![CI Pipeline](https://img.shields.io/badge/CI-Passing-brightgreen.svg)]()
-[![Test Coverage](https://img.shields.io/badge/Tests-151%20Passed%20(100%25)-success.svg)]()
-[![Code Style](https://img.shields.io/badge/Code%20Style-ESLint%20%7C%20Prettier-blueviolet.svg)]()
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-tuyen--dung--it.vercel.app-0f172a?style=flat&logo=vercel)](https://tuyen-dung-it.vercel.app/)
+[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D18.0.0-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![Express](https://img.shields.io/badge/Express-4.21-000000?logo=express&logoColor=white)](https://expressjs.com/)
+[![TailwindCSS v4](https://img.shields.io/badge/TailwindCSS-v4.1-38bdf8?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![MongoDB & Mongoose](https://img.shields.io/badge/Mongoose-8.13-47a248?logo=mongodb&logoColor=white)](https://mongoosejs.com/)
+[![Docker](https://img.shields.io/badge/Docker-Multi--Stage-2496ed?logo=docker&logoColor=white)](./Dockerfile)
+[![Tests](https://img.shields.io/badge/Tests-326%2F326%20Passed%20(25%20Suites)-16a34a)](#6-kiểm-thử-tự-động--hiệu-năng)
+[![Code Style](https://img.shields.io/badge/Code%20Style-ESLint%20%7C%20Prettier-6366f1)](#5-các-lệnh-thực-thi-hệ-thống)
+[![License: MIT](https://img.shields.io/badge/License-MIT-eab308)](LICENSE)
 
-**VN.ITJobs** là ứng dụng web tuyển dụng công nghệ thông tin toàn diện và bảo mật cao, được xây dựng theo kiến trúc **Server-Side Rendering (SSR)** với **Express.js**, **Pug Template Engine**, **Tailwind CSS v4** và **MongoDB/Mongoose**. Hệ thống tích hợp đầy đủ phân hệ Công khai, cổng thông tin Ứng viên, cổng Nhà tuyển dụng và cổng Quản trị Admin chuyên biệt.
+> **Live Demo:** [https://tuyen-dung-it.vercel.app/](https://tuyen-dung-it.vercel.app/) · **API Spec:** `/openapi.json` · **Agent Context:** `/llms.txt`
 
-Dự án tuân thủ nghiêm ngặt nguyên tắc **Zero Redesign**: giữ nguyên $100\%$ bố cục, cây cấu trúc DOM, lớp CSS và phong cách thẩm mỹ của bộ template gốc.
-
----
-
-## 1. Công Nghệ Sử Dụng (Tech Stack)
-
-- **Backend Runtime:** Node.js (CommonJS, tương thích Node 18, 20, 22, 24).
-- **Web Framework:** Express.js 4.x (SSR, Router đa tầng, Middleware kiến trúc sạch).
-- **Template Engine:** Pug (Jade) kết hợp hệ thống Mixins tái sử dụng.
-- **Styling:** Tailwind CSS v4 CLI (Biên dịch tối ưu hóa `--minify`, phông chữ Google Fonts `Lexend`).
-- **Database & ODM:** MongoDB với Mongoose 8.x (Compound Indexes, Multikey Indexes, TTL Indexes).
-- **Bộ nhớ đệm (Caching):** In-Memory `node-cache` (TTL 300s cho danh mục, thành phố, kỹ năng).
-- **Xác thực & Bảo mật:**
-  - JWT qua cookie `HttpOnly` độc lập (`itj_token` cho người dùng, `itj_admin_token` cho Quản trị viên).
-  - Cơ chế **TokenVersion** thu hồi phiên tức thời khi đổi mật khẩu hoặc bị khóa.
-  - Chống tấn công CSRF bằng thư viện hiện đại `csrf-csrf` (Double Submit Cookie).
-  - Bảo vệ HTTP Headers qua `helmet`, chống crawl trang admin bằng `X-Robots-Tag: noindex, nofollow`.
-  - Giới hạn tần suất request (`express-rate-limit`) chống brute-force đăng nhập.
-  - Khử độc dữ liệu HTML (`sanitize-html`) chống tấn công XSS trong bài đăng tuyển dụng.
-- **Xử lý Tệp & Lưu trữ:**
-  - `multer` (bộ nhớ RAM `memoryStorage`) kết hợp `file-type` kiểm tra magic bytes thực tế.
-  - `sharp` tự động nén và chuẩn hóa ảnh Logo / Avatar / Việc làm sang định dạng **WebP**.
-  - File CV của ứng viên được lưu trữ tại thư mục riêng tư bảo mật `storage/private/cv/`, chỉ phục vụ qua route stream có xác thực quyền sở hữu.
-- **Kiểm thử Tự động:** Jest + Supertest (Bao phủ $100\%$ các luồng nghiệp vụ với 58/58 test cases).
-- **Môi trường cơ sở dữ liệu:** Tự động fallback sang `mongodb-memory-server` nếu chưa cài đặt hoặc chưa khởi động dịch vụ MongoDB cục bộ.
+**VN.ITJobs** là nền tảng tuyển dụng công nghệ thông tin full-stack kết hợp hệ thống quản trị ứng viên (**ATS**) và trợ lý **AI (Google Gemini)**, được thiết kế theo kiến trúc **Server-Side Rendering (SSR)** với **Express.js**, **Pug**, **Tailwind CSS v4** và **MongoDB/Mongoose**. Hệ thống bao phủ trọn vẹn 4 phân hệ: **Cổng công khai (Public)**, **Ứng viên (Candidate)**, **Nhà tuyển dụng (Employer ATS)** và **Quản trị viên (Admin CMS)** — chú trọng thực chiến vào **Bảo mật đa tầng**, **Hiệu năng truy vấn (Zero COLLSCAN)** và **Khả năng vận hành Production (Docker + CI/CD)**.
 
 ---
 
-## 2. Cấu Trúc Thư Mục Dự Án
+## 1. Kiến Trúc Hệ Thống
 
-```text
-vn-itjobs/
-├── .github/
-│   ├── workflows/ci.yml        # CI Pipeline tự động kiểm thử và kiểm tra cú pháp
-│   ├── ISSUE_TEMPLATE/         # Biểu mẫu báo lỗi và đề xuất tính năng
-│   └── pull_request_template.md# Quy chuẩn Pull Request cho đội ngũ
-├── docs/                       # Tài liệu đặc tả kỹ thuật & kiến trúc
-│   ├── SPECIFICATIONS.md       # Báo cáo đặc tả hệ thống và nghiệp vụ
-│   ├── DECISIONS.md            # Architectural Decision Records (ADR)
-│   └── PERFORMANCE.md          # Kết quả benchmark và chiến lược tối ưu
-├── bin/                        # CLI công cụ dòng lệnh (vn-itjobs)
-├── public/
-│   ├── assets/                 # CSS/JS/Images tĩnh
-│   ├── uploads/                # File tải lên công khai (Avatar, Logo, Banner)
-│   ├── openapi.json            # OpenAPI 3.1 Specification cho API
-│   └── llms.txt                # Agent Context & System Prompt Spec
-├── storage/
-│   └── private/cv/             # File CV ứng viên (bảo mật, stream có thẩm quyền)
-├── src/
-│   ├── app.js                  # Cấu hình Express app & bảo mật middlewares
-│   ├── server.js               # Điểm khởi động HTTP Server
-│   ├── config/                 # Cấu hình ENV, Database, Hằng số Enum
-│   ├── controllers/            # Tầng Controller (client, candidate, employer, admin, ai, mcp)
-│   ├── middlewares/            # Auth, CSRF, Upload, RateLimit, Locals, Flash
-│   ├── models/                 # Mongoose ODM Models & Indexes
-│   ├── routes/                 # Express Router phân hệ
-│   ├── services/               # Business Logic & Third-party Integrations
-│   ├── utils/                  # Helpers & Tiện ích dùng chung
-│   └── scripts/                # Seed, benchmark, export, tạo tài khoản
-├── tests/                      # 17 test suites với 151 test cases tự động (Jest + Supertest)
-├── views/                      # Template Pug SSR giao diện responsive
-│   ├── layouts/                # Base layouts (default & admin)
-│   ├── pages/                  # Các màn hình Client, Candidate, Employer
-│   ├── admin/                  # Cổng Quản trị Admin
-│   ├── partials/               # Header, Footer, Flash alerts, Chatbot
-│   └── mixins/                 # Reusable component mixins
-└── README.md                   # Tài liệu tổng quan dự án
+```mermaid
+flowchart TB
+    Client["Trình duyệt / Mobile / AI Agent"] --> Edge["Vercel Serverless / Docker Container"]
+    Edge --> Sec["Security Pipeline<br/>Helmet · Rate Limit (IPv6 /64) · CSRF Double-Submit · HPP · Mongo Sanitize"]
+    Sec --> Auth["Auth & RBAC<br/>HttpOnly JWT · TokenVersion · 2FA/OTP · Google OAuth"]
+
+    Auth --> M1["Public Portal<br/>Fuzzy Search · Salary Benchmark · Blog"]
+    Auth --> M2["Candidate Portal<br/>IT Profile · Unicode PDF Builder · Job Alerts"]
+    Auth --> M3["Employer ATS<br/>Job Ops · CV Pipeline · Rating · Talent Pool · Analytics"]
+    Auth --> M4["Admin CMS<br/>Approval · Moderation · Audit Logs · Settings"]
+    Auth --> M5["AI & Agent Layer<br/>Gemini Chatbot · CV Screening · Interview Prep · MCP"]
+
+    M1 & M2 & M3 & M4 --> DB[("MongoDB / Mongoose<br/>18 Models · Compound & TTL Indexes")]
+    M1 --> Cache["Node-Cache (In-Memory TTL)"]
+    M2 & M3 --> Storage["Storage Service<br/>Magic-Bytes Check · Sharp WebP · Private CV Stream"]
+    M5 --> Gemini["Google Gemini API<br/>(+ Fallback nội bộ)"]
+    M2 & M3 & M4 --> Mail["Nodemailer SMTP<br/>(OTP · Interview Invite · Job Alerts)"]
 ```
 
 ---
 
-## 3. Hướng Dẫn Cài Đặt & Khởi Chạy
+## 2. Tính Năng Nổi Bật Theo Phân Hệ
 
-### 3.1. Yêu cầu Tiên quyết
-- Node.js phiên bản $\ge 18.0.0$ (Khuyến nghị Node 20 LTS hoặc 22 LTS).
-- Trình quản lý gói `npm`.
-- (Tùy chọn) Dịch vụ MongoDB chạy tại `mongodb://localhost:27017`. Nếu chưa có, hệ thống sẽ tự động kích hoạt **MongoDB In-Memory** không cần cài đặt.
-
-### 3.2. Cài đặt Thư viện
-```bash
-npm install
-```
-
-### 3.3. Cấu hình Môi trường (.env)
-Tạo file `.env` tại thư mục gốc của dự án với nội dung mẫu:
-```env
-PORT=3000
-NODE_ENV=development
-TRUST_PROXY=false
-
-# Kết nối Cơ sở dữ liệu (Nếu không kết nối được sẽ tự bật In-Memory MongoDB)
-MONGODB_URI=mongodb://localhost:27017/vn_itjobs
-
-# Khóa bí mật Cookie & JWT (Tối thiểu 32 ký tự ngẫu nhiên)
-COOKIE_SECRET=itjobs_super_secret_cookie_key_32chars_min!
-JWT_SECRET=itjobs_jwt_secret_token_key_for_users_32chars_min!
-ADMIN_JWT_SECRET=itjobs_admin_jwt_secret_token_key_32chars_min!
-
-# Tiền tố đường dẫn Quản trị viên
-ADMIN_PATH=admin
-
-# Yêu cầu Quản trị viên phê duyệt Nhà tuyển dụng trước khi đăng tin
-EMPLOYER_REQUIRE_APPROVAL=true
-
-# Trình điều khiển lưu trữ file
-STORAGE_DRIVER=local
-```
-
-### 3.4. Biên dịch Giao diện Tailwind CSS v4
-```bash
-# Biên dịch một lần (Minified)
-npm run build:css
-
-# Hoặc bật chế độ theo dõi thay đổi (Watch mode)
-npm run watch:css
-```
-
-### 3.5. Nạp Dữ Liệu Mẫu (Database Seeding)
-Hệ thống cung cấp sẵn dữ liệu mẫu thực tế tiếng Việt phong phú:
-```bash
-# Chế độ tiêu chuẩn (44 kỹ năng, 10 công ty, 30 ứng viên, 40 việc làm, 25 CV)
-npm run seed
-
-# Hoặc chế độ Dữ liệu lớn BIG DATA (10.000 việc làm, 500 công ty, 2.000 ứng viên, 2.000 CV)
-npm run seed -- --big
-```
-
-### 3.6. Tạo Tài khoản Superadmin Đầu Tiên
-Khởi tạo tài khoản Quản trị viên cao cấp nhất qua giao diện dòng lệnh tương tác hoặc tham số CLI:
-```bash
-npm run create-admin
-# Nhập Email và Mật khẩu (tối thiểu 8 ký tự) theo lời nhắc trên màn hình
-```
-
-### 3.7. Khởi động Ứng dụng
-```bash
-# Chế độ phát triển (Tự động tải lại với Nodemon)
-npm run dev
-
-# Chế độ sản phẩm (Production)
-npm start
-```
-Ứng dụng sẽ hoạt động tại địa chỉ: `http://localhost:3000`  
-Cổng Quản trị Admin tại: `http://localhost:3000/admin`
+| Phân hệ | Tính năng cốt lõi |
+| :--- | :--- |
+| **Công khai (Public)** | Tìm kiếm việc làm đa chiều (thành phố, cấp bậc, hình thức, kỹ năng, tìm kiếm tiếng Việt không dấu/fuzzy), trang chi tiết công ty & đánh giá, **Salary Benchmark** (thống kê dải lương IT), **Blog công nghệ**, SEO chuẩn (`sitemap.xml`, `robots.txt`, OpenGraph), và giao diện tương thích AI Agent (`/openapi.json`, `/llms.txt`, MCP endpoint). |
+| **Ứng viên (Candidate)** | Đăng ký xác thực OTP / **Google OAuth 2.0**, quản lý hồ sơ IT, **tạo & xuất CV PDF hỗ trợ Unicode tiếng Việt** (`pdfkit`), nộp CV PDF riêng tư, theo dõi trạng thái & rút hồ sơ, lưu việc làm, theo dõi công ty, đăng ký **Job Alert** theo tần suất (`instant`/`daily`/`weekly`). |
+| **Nhà tuyển dụng (Employer ATS)** | Quy trình duyệt tài khoản trước khi đăng tin, quản lý tin tuyển dụng, **ATS xem xét CV** (xem PDF inline an toàn, chấm điểm/rating, ghi chú, chuyển trạng thái pipeline), **đặt lịch & gửi thư mời phỏng vấn**, phân quyền đội ngũ (**Team RBAC**), **Talent Pool** và thống kê hiệu quả tuyển dụng (**Analytics**). |
+| **Quản trị (Admin CMS)** | Cổng tách biệt hoàn toàn (`ADMIN_PATH`, cookie `itj_admin_token` và `ADMIN_JWT_SECRET` riêng), bảo vệ **2FA/OTP**, phê duyệt/khóa NTD, kiểm duyệt tin & đánh giá, quản lý bài viết Blog, phản hồi người dùng, cấu hình hệ thống động và **Audit Logs** tự động hết hạn sau 365 ngày (TTL Index). |
+| **AI Assistant (Gemini)** | Trợ lý chat hỗ trợ có tool-calling, **sàng lọc & chấm điểm CV** (trích xuất văn bản bằng `pdf-parse` + fallback OCR đa phương thức), gợi ý **luyện phỏng vấn** theo JD — có cơ chế fallback an toàn khi thiếu API key hoặc mất kết nối. |
 
 ---
 
-## 4. Tài Khoản Dùng Thử Mẫu (Sau khi Seed)
+## 3. Điểm Nhấn Kỹ Thuật & Bảo Mật (Engineering Highlights)
 
-| Vai trò | Email đăng nhập | Mật khẩu | Chức năng chính |
+- **Xác thực & Thu hồi phiên tức thời:** JWT lưu trong cookie `HttpOnly`, tách độc lập cookie User (`itj_token`) và Admin (`itj_admin_token`). Cơ chế **`tokenVersion`** giúp vô hiệu hóa toàn bộ phiên đăng nhập ngay lập tức khi đổi mật khẩu hoặc bị khóa tài khoản mà không cần thêm hạ tầng session phức tạp.
+- **Phòng thủ đa tầng (Defense-in-Depth):**
+  - Chống CSRF chuẩn hiện đại bằng **`csrf-csrf` (Double Submit Cookie)** tương thích cả form thường lẫn `multipart/form-data`.
+  - **Rate Limiting đa lớp** (`express-rate-limit`): gom nhóm IPv6 `/64` chống xoay IP, kết hợp giới hạn theo cặp `IP + Email` chống Credential Stuffing & OTP Bombing.
+  - **Kiểm tra Magic Bytes nhị phân khi Upload:** Không tin tưởng `Content-Type` hay đuôi file; kiểm tra chữ ký nhị phân (JPEG/PNG/WebP/`%PDF-` + `%%EOF`), chặn PDF polyglot/JS độc hại, xử lý lại ảnh qua `sharp` sang **WebP**, và lưu CV ở thư mục riêng tư `storage/private/cv/` chỉ stream khi xác thực đúng quyền sở hữu.
+  - Chống XSS (`sanitize-html`), NoSQL Injection (`express-mongo-sanitize`), HTTP Parameter Pollution (`hpp`), và cấu hình HTTP security headers (`helmet`, `X-Robots-Tag: noindex, nofollow` cho trang Admin).
+- **Tối ưu Database (Zero COLLSCAN & Zero N+1):** Thiết kế Compound Index theo quy tắc **ESR (Equality → Sort → Range)**, Multikey Index cho kỹ năng, TTL Index cho Audit Log/OTP, và dùng MongoDB Aggregation (`$group`) khử hoàn toàn N+1 query ở các trang danh sách.
+- **Production-Ready DevOps:** `Dockerfile` multi-stage 3 tầng (non-root user `node`, `HEALTHCHECK` dùng `fetch` nội bộ, exec-form PID 1 nhận `SIGTERM` graceful shutdown) kèm GitHub Actions CI chạy matrix Node 20/22 + container smoke test.
+
+---
+
+## 4. Hướng Dẫn Cài Đặt & Khởi Chạy
+
+### Cách 1: Chạy nhanh bằng Docker Compose (Khuyến nghị)
+Chỉ cần cài [Docker Desktop](https://www.docker.com/products/docker-desktop/), toàn bộ ứng dụng và MongoDB 7.0 sẽ tự động build, kết nối và chạy healthcheck:
+
+```bash
+docker compose up --build -d
+```
+Truy cập ứng dụng tại `http://localhost:3000` (cổng quản trị: `http://localhost:3000/admin`).
+
+### Cách 2: Chạy Local (Node.js ≥ 18)
+
+1. **Cài đặt thư viện & cấu hình môi trường:**
+   ```bash
+   npm install
+   cp .env.example .env
+   ```
+   *(Nếu chưa cài MongoDB cục bộ, ứng dụng sẽ tự động kích hoạt **MongoDB In-Memory** để chạy thử ngay lập tức).*
+
+2. **Biên dịch CSS (Tailwind CSS v4) & nạp dữ liệu mẫu:**
+   ```bash
+   npm run build:css
+   npm run seed          # Dữ liệu chuẩn tiếng Việt
+   # Hoặc: npm run seed -- --big   (10.000 việc làm, 500 công ty, 2.000 ứng viên)
+   ```
+
+3. **Khởi động server:**
+   ```bash
+   npm run dev           # Môi trường phát triển (nodemon)
+   # Hoặc: npm start     # Môi trường production
+   ```
+
+### Tài Khoản Dùng Thử Mẫu (Sau khi chạy `npm run seed`)
+
+| Vai trò | Email đăng nhập | Mật khẩu | Mô tả |
 | :--- | :--- | :--- | :--- |
-| **Superadmin** | `superadmin@admin.vn` | `AdminPass123` | Quản trị toàn hệ thống, Dashboard, Phê duyệt/Khóa NTD, Audit Logs, Xóa vĩnh viễn |
-| **Nhà tuyển dụng (Active)** | `lgcns@gmail.com` | `Password123` | Hồ sơ công ty, Đăng tin, Chỉnh sửa/Xóa việc làm, Quản lý & Xem xét CV ứng tuyển |
-| **Nhà tuyển dụng (Pending)** | `contact@nexttech.vn` | `Password123` | Tài khoản chờ duyệt (Hiển thị banner cảnh báo, bị chặn tạo tin mới) |
-| **Ứng viên** | `levana@gmail.com` | `Password123` | Cập nhật hồ sơ, Nộp CV file PDF, Theo dõi danh sách việc làm đã nộp, Rút hồ sơ |
+| **Superadmin** | `superadmin@admin.vn` | `AdminPass123` | Quản trị toàn hệ thống, duyệt NTD, Audit Logs, CMS |
+| **Nhà tuyển dụng (Active)** | `lgcns@gmail.com` | `Password123` | Đăng tin, ATS duyệt CV, đặt lịch phỏng vấn, Analytics |
+| **Nhà tuyển dụng (Pending)** | `contact@nexttech.vn` | `Password123` | Tài khoản chờ duyệt (bị chặn đăng tin mới) |
+| **Ứng viên** | `levana@gmail.com` | `Password123` | Hồ sơ IT, xuất CV PDF, nộp đơn, lưu việc & Job Alert |
 
 ---
 
@@ -173,22 +111,49 @@ Cổng Quản trị Admin tại: `http://localhost:3000/admin`
 
 | Câu lệnh | Mô tả tác vụ |
 | :--- | :--- |
-| `npm run dev` | Khởi động server phát triển cùng nodemon tại cổng 3000 |
-| `npm start` | Chạy server môi trường chính thức |
-| `npm run build:css` | Biên dịch tối ưu hóa Tailwind CSS v4 sang `public/assets/css/tailwind.css` |
-| `npm run seed` | Làm sạch DB và nạp bộ dữ liệu mẫu chuẩn |
-| `npm run seed -- --big`| Nạp bộ dữ liệu thử tải lớn: 10.000 tin tuyển dụng |
-| `npm run benchmark` | Chạy kịch bản đo lường hiệu năng truy vấn, chứng minh Zero COLLSCAN |
-| `npm run create-admin`| Script tương tác tạo tài khoản Superadmin an toàn |
-| `npm test` | Chạy toàn bộ 151 bài kiểm thử tự động với Jest & Supertest |
-| `npm run lint` | Kiểm tra cú pháp và chất lượng mã nguồn với ESLint (0 errors) |
-| `npm run format` | Tự động định dạng mã nguồn theo chuẩn Prettier |
+| `npm run dev` | Chạy server phát triển với `nodemon` tại cổng `3000` |
+| `npm start` | Khởi động server chế độ production |
+| `npm run build:css` | Biên dịch & nén Tailwind CSS v4 ra `public/assets/css/tailwind.css` |
+| `npm run seed` | Nạp dữ liệu mẫu tiêu chuẩn tiếng Việt |
+| `npm run seed -- --big` | Nạp bộ dữ liệu thử tải lớn (10.000 việc làm) |
+| `npm run benchmark` | Đo hiệu năng truy vấn với `explain("executionStats")` (Zero COLLSCAN) |
+| `npm run create-admin` | Tạo tài khoản Superadmin qua CLI tương tác |
+| `npm test` | Chạy toàn bộ **25 test suites / 326 test cases** (Jest + Supertest) |
+| `npm run lint` | Kiểm tra chất lượng mã nguồn với ESLint (0 errors) |
+| `npm run format` | Định dạng mã nguồn tự động với Prettier |
 
 ---
 
-## 6. Kết Quả Kiểm Chuẩn & Đảm Bảo Chất Lượng
+## 6. Kiểm Thử Tự Động & Hiệu Năng
 
-- **Kiểm thử tự động (Unit & Integration Tests):** 100% vượt qua 151 test cases trên 17 bộ kiểm thử toàn diện.
-- **Zero N+1 Query:** Toàn bộ các thao tác đếm số việc làm và đếm số CV ở trang danh sách đều được tối ưu hóa qua 1 lệnh aggregation duy nhất.
-- **Tốc độ truy vấn trên 10.000 bản ghi:** Xem chi tiết tại [**PERFORMANCE.md**](./docs/PERFORMANCE.md) (Thời gian phản hồi truy vấn từ $1 - 5\text{ms}$, 100% sử dụng IXSCAN, ZERO COLLSCAN).
-- **Quyết định kiến trúc & Đặc tả:** Xem chi tiết tại [**DECISIONS.md**](./docs/DECISIONS.md) và [**SPECIFICATIONS.md**](./docs/SPECIFICATIONS.md).
+- **Automated Testing:** **326/326 test cases vượt qua (100%) trên 25 test suites** — bao phủ unit, integration, phân quyền RBAC, phiên đăng nhập đồng thời, bảo mật red-team (`tests/redteam_security.test.js`, `tests/security_audit.test.js`), và hồi quy QA 4 phân hệ.
+- **Database Benchmark (10.000 việc làm):** Các truy vấn lọc đa chiều, quản lý tin NTD và quản lý CV ứng viên đều đạt **`IXSCAN` 100% (ZERO COLLSCAN)** với độ trễ **1–5 ms** (chi tiết trong [`docs/PERFORMANCE.md`](./docs/PERFORMANCE.md)).
+- **CI/CD Pipeline:** Tự động chạy ESLint, build CSS, toàn bộ Jest suites trên **Node 20.x & 22.x**, build Docker image, kiểm tra `/healthz` + `/health` và xác minh container thoát sạch mã `0` khi nhận tín hiệu `SIGTERM` ([`.github/workflows/ci.yml`](./.github/workflows/ci.yml)).
+
+---
+
+## 7. Cấu Trúc Thư Mục & Tài Liệu Kỹ Thuật
+
+```text
+vn-itjobs/
+├── .github/workflows/ci.yml   # CI Pipeline (Test matrix + Docker SIGTERM smoke test)
+├── docs/
+│   ├── SPECIFICATIONS.md      # Đặc tả nghiệp vụ & phân hệ
+│   ├── DECISIONS.md           # Architectural Decision Records (ADR)
+│   └── PERFORMANCE.md         # Báo cáo benchmark 10.000 bản ghi & Index Matrix
+├── api/index.js               # Entrypoint triển khai Vercel Serverless
+├── public/                    # Static assets, OpenAPI 3.1 spec, llms.txt
+├── src/
+│   ├── app.js & server.js     # Express app, middlewares & graceful shutdown
+│   ├── config/                # ENV validation, DB connection, Constants
+│   ├── controllers/           # 29 controllers (client, candidate, employer, admin, ai, mcp)
+│   ├── middlewares/           # Auth, CSRF, Upload, RateLimit, Locals, Flash
+│   ├── models/                # 18 Mongoose models & Compound/TTL indexes
+│   ├── routes/                # 5 bộ router phân hệ
+│   ├── services/              # 15 services (AI, PDF, Storage, FuzzySearch, Mail, Audit...)
+│   └── scripts/               # Seed, Benchmark, Create-admin, Export SQL
+├── tests/                     # 25 test suites (326 test cases)
+├── views/                     # Pug SSR layouts, pages, admin, partials & mixins
+├── Dockerfile                 # Multi-stage production container (non-root)
+└── docker-compose.yml         # Orchestration App + MongoDB 7.0
+```
