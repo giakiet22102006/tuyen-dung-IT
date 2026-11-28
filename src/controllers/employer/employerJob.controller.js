@@ -105,8 +105,8 @@ async function syncJobSkills(skills) {
 
   for (const raw of rawSkills) {
     const skSlug = slugify(raw);
-    // Kỹ năng toàn ký tự đặc biệt cho slug rỗng → bỏ qua thay vì upsert Skill slug "" (lỗi 500 / ghi đè chéo)
-    if (!skSlug) continue;
+    // Kỹ năng toàn ký tự đặc biệt cho slug rỗng hoặc bị trùng slug trong cùng input → bỏ qua
+    if (!skSlug || bulkOpsBySlug.has(skSlug)) continue;
 
     skillList.push({ name: raw, slug: skSlug });
     bulkOpsBySlug.set(skSlug, {
