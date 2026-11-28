@@ -93,6 +93,39 @@ function validateSalaryRange(salaryMin, salaryMax, errors) {
 }
 
 /**
+ * Parse chuỗi kỹ năng phân tách bởi dấu phẩy, bỏ qua skill có slug rỗng
+ * và gom toàn bộ upsert thành 1 lần Skill.bulkWrite duy nhất.
+ */
+async function syncJobSkills(skills) {
+  if (!skills || typeof skills !== "string") return [];
+
+  const rawSkills = skills.split(",").map((s) => s.trim()).filter(Boolean);
+  const skillList = [];
+  const bulkOpsBySlug = new Map();
+
+  for (const raw of rawSkills) {
+    const skSlug = slugify(raw);
+    // Kỹ năng toàn ký tự đặc biệt cho slug rỗng → bỏ qua thay vì upsert Skill slug "" (lỗi 500 / ghi đè chéo)
+    if (!skSlug) continue;
+
+    skillList.push({ name: raw, slug: skSlug });
+    bulkOpsBySlug.set(skSlug, {
+      updateOne: {
+        filter: { slug: skSlug },
+        update: { $set: { name: raw, slug: skSlug } },
+        upsert: true,
+      },
+    });
+  }
+
+  if (bulkOpsBySlug.size > 0) {
+    await Skill.bulkWrite(Array.from(bulkOpsBySlug.values()), { ordered: false });
+  }
+
+  return skillList;
+}
+
+/**
  * Báo chuông cho các ứng viên đang theo dõi công ty khi có tin tuyển dụng mới (chạy nền)
  */
 async function notifyCompanyFollowers(employer, job) {
@@ -297,22 +330,7 @@ const postCreateJob = async (req, res) => {
   }
 
   // Xử lý skills (chuỗi phân tách bởi dấu phẩy)
-  const skillList = [];
-  if (skills && typeof skills === "string") {
-    const rawSkills = skills.split(",").map((s) => s.trim()).filter(Boolean);
-    for (const raw of rawSkills) {
-      const skSlug = slugify(raw);
-      // Kỹ năng toàn ký tự đặc biệt cho slug rỗng → bỏ qua thay vì upsert Skill slug "" (lỗi 500 / ghi đè chéo)
-      if (!skSlug) continue;
-      // Upsert vào Skill collection
-      await Skill.findOneAndUpdate(
-        { slug: skSlug },
-        { name: raw, slug: skSlug },
-        { upsert: true, new: true }
-      );
-      skillList.push({ name: raw, slug: skSlug });
-    }
-  }
+  const skillList = await syncJobSkills(skills);
 
   // Xử lý upload danh sách ảnh
   const images = [];
@@ -457,21 +475,7 @@ const postEditJob = async (req, res) => {
   }
 
   // Xử lý skills
-  const skillList = [];
-  if (skills && typeof skills === "string") {
-    const rawSkills = skills.split(",").map((s) => s.trim()).filter(Boolean);
-    for (const raw of rawSkills) {
-      const skSlug = slugify(raw);
-      // Kỹ năng toàn ký tự đặc biệt cho slug rỗng → bỏ qua thay vì upsert Skill slug "" (lỗi 500 / ghi đè chéo)
-      if (!skSlug) continue;
-      await Skill.findOneAndUpdate(
-        { slug: skSlug },
-        { name: raw, slug: skSlug },
-        { upsert: true, new: true }
-      );
-      skillList.push({ name: raw, slug: skSlug });
-    }
-  }
+  const skillList = await syncJobSkills(skills);
 
   // Xử lý upload thêm ảnh mới nếu có
   if (req.files && req.files.length > 0) {
